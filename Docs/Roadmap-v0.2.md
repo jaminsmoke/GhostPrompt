@@ -1,5 +1,7 @@
 # Roadmap v0.2 - GhostPrompt
 
+> **Estado:** Ciclo v0.2 **completado**; la extensión correspondiente es **v0.2.0**. Este documento conserva el plan y el historial de entregas.
+
 ## Objetivo de v0.2
 
 Hacer que el flujo de sugerencias en webview sea robusto, observable y predecible, eliminando fallos silenciosos y mejorando la experiencia de escritura (sin perdida de foco), para dejar una base estable para iteraciones futuras.

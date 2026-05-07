@@ -2,6 +2,9 @@
 
 > Ghost-text completions for your Copilot prompts — write faster, think clearer.
 
+<!-- markdownlint-disable-next-line MD036 -->
+**Version 0.2.0**
+
 ---
 
 ## Why GhostPrompt
@@ -18,7 +21,39 @@ Writing prompts in Copilot Chat is often repetitive and context-switch heavy.
 
 ## Preview
 
-![GhostPrompt extension icon and inline composer overview](./ImagesReadme1.png)
+Screenshots are **collapsed by default** so the README stays scannable; click a title to expand. Display size uses a fixed width in markup—you can replace the PNG files with your own scaled exports without editing paths.
+
+<!-- markdownlint-disable MD033 -->
+
+<details>
+<summary><strong>1 · Icon and inline composer</strong></summary>
+
+<img src="./ImagesReadme1.png" alt="GhostPrompt extension icon and inline composer overview" width="560">
+
+</details>
+
+<details>
+<summary><strong>2 · Inline continuation in action</strong></summary>
+
+<img src="./ImagesReadme2.png" alt="GhostPrompt inline ghost-text continuation" width="560">
+
+</details>
+
+<details>
+<summary><strong>3 · Next to Copilot Chat</strong></summary>
+
+<img src="./ImagesReadme3.png" alt="GhostPrompt panel near Copilot integration" width="560">
+
+</details>
+
+<details>
+<summary><strong>4 · Quick controls (model, style, context)</strong></summary>
+
+<img src="./ImagesReadme4.png" alt="GhostPrompt quick control strip" width="560">
+
+</details>
+
+<!-- markdownlint-enable MD033 -->
 
 ---
 
@@ -48,13 +83,13 @@ Writing prompts in Copilot Chat is often repetitive and context-switch heavy.
 3. Press `Tab` to accept the suggestion and append it to your prompt.
 4. Press `Enter` to send the final prompt to **Copilot Chat**.
 
-![GhostPrompt in action with inline continuation](./ImagesReadme2.png)
+*Screenshots: expand **2 · Inline continuation** in [Preview](#preview) above.*
 
 ### Integrated with Copilot
 
 You can keep GhostPrompt near Copilot Chat and move quickly between drafting and sending prompts.
 
-![GhostPrompt integrated in panel near Copilot](./ImagesReadme3.png)
+*See **3 · Next to Copilot Chat** in [Preview](#preview).*
 
 ---
 
@@ -96,48 +131,26 @@ You can keep GhostPrompt near Copilot Chat and move quickly between drafting and
 - Output channel: `GhostPrompt Suggestions`
 - Setting: `ghostPrompt.debugSuggestions`
 
-Inside the webview mini-input, you can also change policy/style/context/debug from the `Opciones` controls.
+Inside the webview mini-input, you can also change policy, style, context, and debug from the **control strip** (chips at the top). See **4 · Quick controls** in [Preview](#preview).
 
-![GhostPrompt quick controls for policy, style, and context](./ImagesReadme4.png)
+## Roadmap
 
----
-
-## Marketplace checklist (recommended)
-
-- Add a clean hero screenshot and 2-3 short GIFs
-- Keep README first screen focused on value + quick start
-- Use clear tags/keywords in `package.json`
-- Add concise release notes per version
-- Validate package size and ignored files before publish
-
----
-
-## Development
-
-```bash
-npm install
-npm run compile
-# Press F5 in VS Code to launch the Extension Development Host
-```
-
-Run full validation before committing:
-
-```bash
-npm run validate   # lint + compile
-npm run test       # unit/integration tests with vitest
-npm run check      # validate + tests
-```
-
----
-
-## Known limitations
-
-- Completions require a Copilot model to be available; if no model is found the ghost-text area stays empty.
-- Conversation history and accepted suggestions are stored privately but not exposed in dedicated UI yet.
+v0.2 is **shipped**; the milestone log is archived in [`Docs/Roadmap-v0.2.md`](./Docs/Roadmap-v0.2.md).
 
 ---
 
 ## Release notes
+
+### 0.2.0
+
+- **Inline ghost-text** in the composer, including scroll/height behavior for long suggestions.
+- **Suggestion pipeline**: typed results (`suggestion`, `empty`, `error`, `loading`), no silent failures.
+- **Request governor** (dedupe, cache, cooldown, rate limit, session budget) to limit accidental over-calling.
+- **Model policy**: default **non-premium** selection with optional `anyModel` override; commands and settings for policy/debug.
+- **Quality controls**: suggestion style (`concise` / `balanced` / `detailed`), `maxSuggestionChars`, optional **session context** (`contextMode`).
+- **Webview UX**: compact chip controls, keyboard/a11y polish, layout fixes for narrow Activity Bar views.
+- **Tests**: Vitest suite (`npm run test` / `npm run check`).
+- **Docs**: debug flow guide, README screenshots (collapsible), repository metadata for marketplace.
 
 ### 0.0.1
 
