@@ -4,20 +4,32 @@
 
 ---
 
-## What it does
+## Why GhostPrompt
 
-**GhostPrompt** embeds a small input panel inside VS Code — in both the Activity Bar and the bottom Panel — where you can type prompts and get real-time Copilot completions as you write, just like ghost-text in an editor.
+Writing prompts in Copilot Chat is often repetitive and context-switch heavy.  
+**GhostPrompt** gives you an inline mini-composer inside VS Code with ghost-text suggestions, so you can draft faster and send to Copilot Chat without breaking flow.
 
-Once you're happy with your prompt, press **Enter** and it goes straight to GitHub Copilot Chat.
+### Benefits at a glance
+
+- Faster prompt drafting with inline continuation suggestions
+- Safer usage controls (non-premium policy, request governor)
+- Better writing flow with keyboard-first interactions (`Tab`, `Enter`)
+- Compact controls directly inside the composer (policy/style/context/debug)
+
+## Preview
+
+![GhostPrompt extension icon and inline composer overview](./ImagesReadme1.png)
 
 ---
 
-## Features
+## Key features
 
-- **Ghost-text completions** — as you type, Copilot suggests how to continue your prompt. Press `Tab` to accept.
+- **Inline ghost-text completions** — suggestions appear as continuation of your current text. Press `Tab` to accept.
 - **Always visible** — the input lives in the Activity Bar sidebar *and* the bottom Panel; pick whichever fits your layout.
 - **One-key send** — `Enter` sends your prompt to Copilot Chat. `Shift+Enter` adds a newline.
-- **Non-intrusive** — completions are fetched in the background via the `vscode.lm` API; no editor windows are opened, no focus is stolen.
+- **Request safety controls** — dedupe, cache, cooldown, rate-limit, and session budget to prevent over-calling.
+- **Model policy controls** — force non-premium models by default, with optional override.
+- **Non-intrusive** — completions run via `vscode.lm`; no draft editor tabs, no focus stealing.
 - **Private logs** — accepted suggestions and sent prompts are saved in the extension's private storage (not inside your project).
 
 ---
@@ -29,31 +41,48 @@ Once you're happy with your prompt, press **Enter** and it goes straight to GitH
 
 ---
 
-## Usage
+## Quick start (30 seconds)
 
 1. Open the **GhostPrompt** panel from the Activity Bar (chat-bubble icon) or from the bottom Panel tabs.
-2. Start typing your prompt — after a short pause, a ghost-text completion appears below the input.
+2. Start typing your prompt — after a short pause, a ghost-text continuation appears inline.
 3. Press `Tab` to accept the suggestion and append it to your prompt.
 4. Press `Enter` to send the final prompt to **Copilot Chat**.
 
-### Suggestion model policy
+![GhostPrompt in action with inline continuation](./ImagesReadme2.png)
 
-GhostPrompt includes a safety setting to control which models can be used for inline suggestions:
+### Integrated with Copilot
+
+You can keep GhostPrompt near Copilot Chat and move quickly between drafting and sending prompts.
+
+![GhostPrompt integrated in panel near Copilot](./ImagesReadme3.png)
+
+---
+
+## Keyboard shortcuts
+
+| Key           | Action                                   |
+| ------------- | ---------------------------------------- |
+| `Tab`         | Accept the current ghost-text suggestion |
+| `Enter`       | Send prompt to Copilot Chat              |
+| `Shift+Enter` | Insert a newline in the prompt           |
+
+---
+
+## Settings
+
+### Model policy
 
 - `ghostPrompt.suggestionModelPolicy = nonPremiumOnly` (default): only non-premium-like models are allowed.
 - `ghostPrompt.suggestionModelPolicy = anyModel`: uses the first available model (may consume premium quota).
 
-### Debug mode
-
-- Run command: `GhostPrompt: Toggle Debug`
-- Output channel: `GhostPrompt Suggestions`
-- Setting: `ghostPrompt.debugSuggestions`
-
-Optional tuning:
+### Suggestion quality
 
 - `ghostPrompt.maxSuggestionChars` (default `180`)
 - `ghostPrompt.suggestionStyle` (`concise` | `balanced` | `detailed`, default `balanced`)
 - `ghostPrompt.contextMode` (`off` | `basic`, default `basic`)
+
+### Request governor (cost/frequency protection)
+
 - `ghostPrompt.minCharsForSuggestion` (default `6`)
 - `ghostPrompt.requestCooldownMs` (default `700`)
 - `ghostPrompt.cacheTtlMs` (default `45000`)
@@ -61,15 +90,25 @@ Optional tuning:
 - `ghostPrompt.rateLimitWindowMs` (default `600000`)
 - `ghostPrompt.sessionRequestBudget` (default `120`)
 
-Inside the webview mini-input, you can also configure policy/style/context/debug from the `Opciones` menu.
+### Debug mode
 
-### Keyboard shortcuts
+- Run command: `GhostPrompt: Toggle Debug`
+- Output channel: `GhostPrompt Suggestions`
+- Setting: `ghostPrompt.debugSuggestions`
 
-| Key           | Action                                   |
-| ------------- | ---------------------------------------- |
-| `Tab`         | Accept the current ghost-text suggestion |
-| `Enter`       | Send prompt to Copilot Chat              |
-| `Shift+Enter` | Insert a newline in the prompt           |
+Inside the webview mini-input, you can also change policy/style/context/debug from the `Opciones` controls.
+
+![GhostPrompt quick controls for policy, style, and context](./ImagesReadme4.png)
+
+---
+
+## Marketplace checklist (recommended)
+
+- Add a clean hero screenshot and 2-3 short GIFs
+- Keep README first screen focused on value + quick start
+- Use clear tags/keywords in `package.json`
+- Add concise release notes per version
+- Validate package size and ignored files before publish
 
 ---
 
@@ -91,10 +130,10 @@ npm run check      # validate + tests
 
 ---
 
-## Known limitations (v0.1)
+## Known limitations
 
 - Completions require a Copilot model to be available; if no model is found the ghost-text area stays empty.
-- The conversation history and accepted suggestions log are not yet exposed in the UI (coming in v0.2).
+- Conversation history and accepted suggestions are stored privately but not exposed in dedicated UI yet.
 
 ---
 

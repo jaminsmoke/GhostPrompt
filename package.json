@@ -3,6 +3,10 @@
   "displayName": "GhostPrompt",
   "description": "Ghost-text completions for your Copilot prompts — write faster, think clearer.",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jaminsmoke/GhostPrompt.git"
+  },
   "engines": {
     "vscode": "^1.90.0"
   },
