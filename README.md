@@ -1,5 +1,11 @@
 # GhostPrompt
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.2.0-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![VS Code](https://img.shields.io/badge/VS%20Code-1.90%2B-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
+[![GitHub Copilot](https://img.shields.io/badge/Uses-GitHub_Copilot-24292f?logo=github&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
+
 > Ghost-text completions for your Copilot prompts — write faster, think clearer.
 
 <!-- markdownlint-disable-next-line MD036 -->
@@ -21,35 +27,35 @@ Writing prompts in Copilot Chat is often repetitive and context-switch heavy.
 
 ## Preview
 
-Screenshots are **collapsed by default** so the README stays scannable; click a title to expand. Display size uses a fixed width in markup—you can replace the PNG files with your own scaled exports without editing paths.
+Screenshots are **collapsed by default** so the README stays scannable; click a title to expand. Images are shown at **native resolution** (no `width` scaling in markup) so text stays sharp; swap the PNG files if you want smaller repo size.
 
 <!-- markdownlint-disable MD033 -->
 
 <details>
 <summary><strong>1 · Icon and inline composer</strong></summary>
 
-<img src="./ImagesReadme1.png" alt="GhostPrompt extension icon and inline composer overview" width="560">
+<img src="./ImagesReadme1.png" alt="GhostPrompt extension icon and inline composer overview">
 
 </details>
 
 <details>
 <summary><strong>2 · Inline continuation in action</strong></summary>
 
-<img src="./ImagesReadme2.png" alt="GhostPrompt inline ghost-text continuation" width="560">
+<img src="./ImagesReadme2.png" alt="GhostPrompt inline ghost-text continuation">
 
 </details>
 
 <details>
 <summary><strong>3 · Next to Copilot Chat</strong></summary>
 
-<img src="./ImagesReadme3.png" alt="GhostPrompt panel near Copilot integration" width="560">
+<img src="./ImagesReadme3.png" alt="GhostPrompt panel near Copilot integration">
 
 </details>
 
 <details>
 <summary><strong>4 · Quick controls (model, style, context)</strong></summary>
 
-<img src="./ImagesReadme4.png" alt="GhostPrompt quick control strip" width="560">
+<img src="./ImagesReadme4.png" alt="GhostPrompt quick control strip">
 
 </details>
 
@@ -160,4 +166,17 @@ Initial release: dual-panel registration (Activity Bar + bottom Panel), ghost-te
 
 ## License
 
-MIT
+This project is released under the [MIT License](./LICENSE).
+
+Badges are **informational only** (versions, stack, and links). They do not imply endorsement by Microsoft, GitHub, or the VS Code team. **GitHub**, **GitHub Copilot**, and **Visual Studio Code** are trademarks of their respective owners.
+
+### Forks, clones, and renaming
+
+The MIT License **allows** others to copy, modify, and redistribute the code, including under a different product name, **as long as they include the original copyright notice and a copy of the MIT license** in the substantial portions they distribute. That means someone could fork the repo and publish “AutoCompletion”-style marketing or chase SEO: that is legally permitted for the **code** under MIT, provided the license terms are honored.
+
+What MIT does **not** automatically grant:
+
+- exclusive use of the name **GhostPrompt** (that is trademark territory; a registered mark offers stronger protection than OSS license alone);
+- any rights to use **third-party trademarks** (Copilot, VS Code logos, etc.) beyond what those companies allow in their brand guidelines.
+
+If you want stronger naming protection, consider registering a trademark for the product name in your jurisdiction and publishing clear branding in the Marketplace listing first.
