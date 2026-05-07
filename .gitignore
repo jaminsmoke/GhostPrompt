@@ -40,6 +40,7 @@ Thumbs.db
 # PNGs ignorados por defecto (capturas locales), excepto assets del README.
 *.png
 !ImagesReadme*.png
+!img/icon.png
 
 # Exclude extension private storage (if any)
 .globalStorage/
