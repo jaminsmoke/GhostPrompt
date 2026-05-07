@@ -57,7 +57,14 @@ describe("CopilotCompletion", () => {
       "Hola mundo,",
       12,
     );
-    expect(normalized).toBe("ahora seguim");
+    expect(normalized).toBe(" ahora segui");
+  });
+
+  it("preserva espacio o salto inicial tras quitar prefijo duplicado", () => {
+    expect(normalizeSuggestion("para la siguiente iteración", "para", 100)).toBe(
+      " la siguiente iteración",
+    );
+    expect(normalizeSuggestion("línea\nnueva", "línea", 100)).toBe("\nnueva");
   });
 
   it("devuelve suggestion cuando el modelo responde texto", async () => {
@@ -72,7 +79,7 @@ describe("CopilotCompletion", () => {
       maxSuggestionChars: 50,
     });
 
-    expect(result).toEqual({ kind: "suggestion", suggestion: "continuacion util" });
+    expect(result).toEqual({ kind: "suggestion", suggestion: " continuacion util" });
     expect(sendRequest).toHaveBeenCalledOnce();
     expect(userMessageMock).toHaveBeenCalledOnce();
   });

@@ -38,6 +38,46 @@
   /** Temporizador de debounce para las solicitudes de suggestion. */
   let debounceTimer = null;
 
+  /** Ghost visible solo con foco en el textarea y cursor al final (sin selección). */
+  function isGhostUiAllowed() {
+    if (document.activeElement !== input) {
+      return false;
+    }
+    const len = input.value.length;
+    return input.selectionStart === len && input.selectionEnd === len;
+  }
+
+  /** Si hace falta, inserta un espacio entre el contexto y la sugerencia (evita "parala"). */
+  function joinSeparatorBeforeSuggestion(context, suggestion) {
+    if (!suggestion) {
+      return "";
+    }
+    const first = suggestion[0];
+    if (/\s/.test(first)) {
+      return "";
+    }
+    if (!context) {
+      return "";
+    }
+    const last = context[context.length - 1];
+    if (/\s/.test(last)) {
+      return "";
+    }
+    if (isWordChar(last) && isWordChar(first)) {
+      return " ";
+    }
+    return "";
+  }
+
+  function isWordChar(char) {
+    return /[\p{L}\p{N}_]/u.test(char);
+  }
+
+  function refreshGhostPresentation() {
+    renderInlineGhost();
+    syncComposerHeight();
+  }
+
   // ── Envío de suggestion al host (con debounce) ───────────────────────────
 
   function requestSuggestion() {
@@ -81,7 +121,7 @@
   }
 
   function renderInlineGhost() {
-    if (!pendingSuggestion) {
+    if (!pendingSuggestion || !isGhostUiAllowed()) {
       ghostInline.innerHTML = "";
       return;
     }
@@ -95,7 +135,10 @@
   }
 
   function syncComposerHeight() {
-    const combined = `${input.value}${pendingSuggestion}`;
+    const ghostVisible = Boolean(pendingSuggestion) && isGhostUiAllowed();
+    const combined = ghostVisible
+      ? `${input.value}${pendingSuggestion}`
+      : input.value;
     ghostMeasure.textContent = combined || " ";
     const measured = Math.max(MIN_COMPOSER_HEIGHT, ghostMeasure.scrollHeight + 2);
     input.style.height = `${measured}px`;
@@ -131,15 +174,17 @@
   // ── Aceptar suggestion con Tab ───────────────────────────────────────────
 
   function acceptSuggestion() {
-    if (!pendingSuggestion) {
+    if (!pendingSuggestion || !isGhostUiAllowed()) {
       return false;
     }
     const context = input.value;
-    input.value += pendingSuggestion;
+    const gap = joinSeparatorBeforeSuggestion(context, pendingSuggestion);
+    const inserted = gap + pendingSuggestion;
+    input.value += inserted;
     vscode.postMessage({
       type: "accept",
       context,
-      suggestion: pendingSuggestion,
+      suggestion: inserted,
     });
     clearGhost();
     clearStatus();
@@ -164,6 +209,16 @@
   // ── Event listeners ──────────────────────────────────────────────────────
 
   input.addEventListener("input", requestSuggestion);
+  input.addEventListener("keyup", refreshGhostPresentation);
+  input.addEventListener("click", refreshGhostPresentation);
+  input.addEventListener("focus", refreshGhostPresentation);
+  input.addEventListener("blur", refreshGhostPresentation);
+  document.addEventListener("selectionchange", () => {
+    if (document.activeElement !== input) {
+      return;
+    }
+    refreshGhostPresentation();
+  });
   inputStack.addEventListener("scroll", () => {
     ghostInline.scrollTop = inputStack.scrollTop;
     ghostInline.scrollLeft = inputStack.scrollLeft;
@@ -171,8 +226,10 @@
 
   input.addEventListener("keydown", (e) => {
     if (e.key === "Tab") {
-      e.preventDefault();
-      acceptSuggestion();
+      if (pendingSuggestion && isGhostUiAllowed()) {
+        e.preventDefault();
+        acceptSuggestion();
+      }
       return;
     }
     if (e.key === "Enter" && !e.shiftKey) {

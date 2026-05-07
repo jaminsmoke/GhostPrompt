@@ -1,9 +1,0 @@
-Nos vamos acercando, pero todavía tenemos algunos fallos evidentes de funcionamiento... recomiendo hacer unos tests de vitest o jest para que nos aseguremos que todo funciona si es posible. De momento veo dos bugs importantes que delimitan la funcionalidad mucho, la hacen casi impracticable.
-
-1. Siguen sin llegar las suggestions a nuestro webview. El proceso de captura de suggestions no funciona, lo que hace que el mini-input pierda su funcionalidad principal (mostrar completions inline). Esto es crítico para la propuesta de valor de la extensión.
-2. Cuando escribimos algo en cualquiera de nuestros dos inputs de la webview, el foco se pierde y se va al editor de draft.md. Esto es un gran problema de UX que dificulta mucho la redacción fluida de prompts. El cursor debería permanecer en el input donde el usuario está escribiendo, sin saltar a otro lado.
-3. Los md si que están abiertos como text editor y si reciben los inputs del usuario, pero no deberían ser visibles, aunque como debug me ha servido para ver que funcionan mal. y Tambien veo que no se aceptan las suggestions, lo que es un gran problema porque es la funcionalidad principal de la extensión, porque por lo tanto tampoco se extraen ni se ponen como ghost-text en el mini-input.
-
-Resolvemos estos problemas?? si me confirmas que quieres que me ponga con ello, me pongo a ello y te voy comentando los avances. Creo que lo ideal sería centrarnos primero en el punto 1, que es el más crítico, y una vez resuelto ese tema, ya podemos abordar el tema del foco (punto 2) y luego el tema de las suggestions (punto 3). ¿Qué te parece? 
-
-yo creo que 

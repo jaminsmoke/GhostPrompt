@@ -160,7 +160,7 @@ export function normalizeSuggestion(
   userText: string,
   maxChars: number,
 ): string {
-  let normalized = rawSuggestion.trim();
+  let normalized = rawSuggestion.replace(/\r\n/g, "\n").trimEnd();
   const prefix = userText.trim();
 
   if (!normalized) {
@@ -168,10 +168,11 @@ export function normalizeSuggestion(
   }
 
   if (prefix && normalized.toLowerCase().startsWith(prefix.toLowerCase())) {
-    normalized = normalized.slice(prefix.length).trimStart();
+    normalized = normalized.slice(prefix.length);
+    /* No trimStart: la continuación suele empezar con espacio o \n respecto a la última palabra. */
   }
 
-  if (!normalized) {
+  if (!normalized.trim()) {
     return "";
   }
 
