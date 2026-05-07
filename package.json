@@ -3,8 +3,13 @@
   "displayName": "GhostPrompt",
   "description": "Ghost-text completions for your Copilot prompts — write faster, think clearer.",
   "version": "0.2.1",
+  "publisher": "jorge-martin",
   "author": "JaminSmoke",
   "icon": "img/icon.png",
+  "galleryBanner": {
+    "color": "#140a1e",
+    "theme": "dark"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
