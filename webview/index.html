@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src {{cspSource}} 'nonce-{{nonce}}'; script-src 'nonce-{{nonce}}';"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="{{styleUri}}" />
+    <title>GhostPrompt</title>
+  </head>
+  <body>
+    <div class="container">
+      <textarea
+        id="prompt-input"
+        placeholder="Escribe tu prompt…"
+        rows="3"
+        autofocus
+        spellcheck="false"
+      ></textarea>
+      <div id="ghost-text" class="ghost-text" style="display: none"></div>
+      <div class="toolbar">
+        <span class="hint"
+          >Tab: aceptar sugerencia · Enter: enviar · Shift+Enter: nueva
+          línea</span
+        >
+        <button id="send-btn" title="Enviar al chat de Copilot">
+          Enviar ↵
+        </button>
+      </div>
+    </div>
+    <script nonce="{{nonce}}" src="{{scriptUri}}"></script>
+  </body>
+</html>

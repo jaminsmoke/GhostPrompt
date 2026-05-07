@@ -1,0 +1,97 @@
+/*
+ * Styles for the GhostPrompt webview.
+ * Uses VS Code CSS variables exclusively — no hard-coded colours.
+ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: transparent;
+  color: var(--vscode-foreground);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  padding: 6px 8px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 56px;
+  background: var(--vscode-input-background);
+  color: var(--vscode-input-foreground);
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-radius: 2px;
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.5;
+  outline: none;
+}
+
+textarea:focus {
+  border-color: var(--vscode-focusBorder);
+}
+
+.ghost-text {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.5;
+  color: var(
+    --vscode-editorGhostText-foreground,
+    var(--vscode-descriptionForeground)
+  );
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-top: none;
+  border-radius: 0 0 2px 2px;
+  padding: 4px 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0.75;
+}
+
+textarea::placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hint {
+  font-size: 0.82em;
+  color: var(--vscode-descriptionForeground);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+button {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+}
+
+button:hover {
+  background: var(--vscode-button-hoverBackground);
+}

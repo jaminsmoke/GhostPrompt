@@ -1,0 +1,8 @@
+Docs/**
+src/**
+.vscode/**
+**/*.map
+**/*.ts
+.eslintrc.json
+tsconfig.json
+media/**

@@ -1,0 +1,41 @@
+# Node
+node_modules/
+.npm/
+
+# VS Code
+.vscode/
+.history/
+*.code-workspace
+
+# Build outputs
+out/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+*.snap
+
+# Extension packaging
+*.vsix
+
+# Private
+.env
+.env.*
+
+# Misc
+*.swp
+*.swo
+
+# Exclude extension private storage (if any)
+.globalStorage/

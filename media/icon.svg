@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none">
+    <!-- Ghost body: rounded head + scalloped bottom -->
+    <path fill="currentColor" d="
+    M8 1
+    C4.69 1 2 3.69 2 7
+    v6
+    l1.33-1.33
+    L4.67 13
+    L6 11.67
+    L7.33 13
+    L8 12.33
+    L8.67 13
+    L10 11.67
+    L11.33 13
+    L12.67 11.67
+    L14 13
+    V7
+    C14 3.69 11.31 1 8 1z
+  "/>
+    <!-- Eyes (cutouts) -->
+    <circle cx="6" cy="7" r="1.1" fill="var(--vscode-editor-background,#1e1e1e)"/>
+    <circle cx="10" cy="7" r="1.1" fill="var(--vscode-editor-background,#1e1e1e)"/>
+    <!-- Ghost-text line: faint dash below, evokes the ghost-text concept -->
+    <rect x="4.5" y="10" width="7" height="1" rx="0.5" fill="var(--vscode-editor-background,#1e1e1e)" opacity="0.4"/>
+</svg>
