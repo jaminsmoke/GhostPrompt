@@ -1,8 +1,10 @@
 Docs/**
 src/**
+tests/**
+.gitignore
 .vscode/**
 **/*.map
 **/*.ts
 .eslintrc.json
 tsconfig.json
-media/**
+vitest.config.ts

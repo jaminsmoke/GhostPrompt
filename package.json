@@ -153,9 +153,12 @@
     "lint": "eslint src --ext ts",
     "validate": "npm run lint && npm run compile",
     "test": "vitest run",
-    "check": "npm run validate && npm run test"
+    "check": "npm run validate && npm run test",
+    "vscode:prepublish": "npm run compile",
+    "vsix": "vsce package --no-dependencies"
   },
   "devDependencies": {
+    "@vscode/vsce": "^3.7.1",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
