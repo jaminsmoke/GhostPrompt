@@ -12,14 +12,95 @@
   </head>
   <body>
     <div class="container">
-      <textarea
-        id="prompt-input"
-        placeholder="Escribe tu prompt…"
-        rows="3"
-        autofocus
-        spellcheck="false"
-      ></textarea>
-      <div id="ghost-text" class="ghost-text" style="display: none"></div>
+      <div class="settings-strip" aria-label="Opciones rápidas">
+        <div class="setting-group" data-key="suggestionModelPolicy">
+          <span class="setting-label">Modelo</span>
+          <button
+            type="button"
+            class="chip"
+            data-value="nonPremiumOnly"
+            aria-pressed="false"
+          >
+            No premium
+          </button>
+          <button
+            type="button"
+            class="chip"
+            data-value="anyModel"
+            aria-pressed="false"
+          >
+            Cualquiera
+          </button>
+        </div>
+
+        <div class="setting-group" data-key="suggestionStyle">
+          <span class="setting-label">Estilo</span>
+          <button
+            type="button"
+            class="chip"
+            data-value="concise"
+            aria-pressed="false"
+          >
+            Breve
+          </button>
+          <button
+            type="button"
+            class="chip"
+            data-value="balanced"
+            aria-pressed="false"
+          >
+            Normal
+          </button>
+          <button
+            type="button"
+            class="chip"
+            data-value="detailed"
+            aria-pressed="false"
+          >
+            Extenso
+          </button>
+        </div>
+
+        <div class="setting-group" data-key="contextMode">
+          <span class="setting-label">Contexto</span>
+          <button
+            type="button"
+            class="chip"
+            data-value="basic"
+            aria-pressed="false"
+          >
+            On
+          </button>
+          <button
+            type="button"
+            class="chip"
+            data-value="off"
+            aria-pressed="false"
+          >
+            Off
+          </button>
+        </div>
+
+        <button id="debug-btn" type="button" class="chip chip-debug">
+          Debug: off
+        </button>
+      </div>
+      <div class="input-stack">
+        <pre id="ghost-inline" class="ghost-inline" aria-hidden="true"></pre>
+        <pre
+          id="ghost-measure"
+          class="ghost-measure"
+          aria-hidden="true"
+        ></pre>
+        <textarea
+          id="prompt-input"
+          placeholder="Escribe tu prompt…"
+          rows="3"
+          autofocus
+          spellcheck="false"
+        ></textarea>
+      </div>
+      <div id="status-text" class="status-text" style="display: none"></div>
       <div class="toolbar">
         <span class="hint"
           >Tab: aceptar sugerencia · Enter: enviar · Shift+Enter: nueva

@@ -3,10 +3,22 @@
  * Uses VS Code CSS variables exclusively — no hard-coded colours.
  */
 
+:root {
+  --gp-gap-xs: 4px;
+  --gp-gap-sm: 6px;
+  --gp-chip-pad-y: 2px;
+  --gp-chip-pad-x: 8px;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
@@ -15,49 +27,123 @@ body {
   font-family: var(--vscode-font-family);
   font-size: var(--vscode-font-size);
   padding: 6px 8px;
+  overflow: hidden;
 }
 
 .container {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--gp-gap-sm);
+  height: 100%;
+  min-height: 0;
+}
+
+.settings-strip {
+  display: flex;
+  align-items: center;
+  gap: var(--gp-gap-sm);
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.setting-group {
+  display: flex;
+  align-items: center;
+  gap: var(--gp-gap-xs);
+  white-space: nowrap;
+}
+
+.setting-label {
+  font-size: 0.8em;
+  color: var(--vscode-descriptionForeground);
+  margin-right: 2px;
 }
 
 textarea {
+  grid-area: composer;
   width: 100%;
-  resize: vertical;
+  resize: none;
   min-height: 56px;
-  background: var(--vscode-input-background);
+  background: transparent;
   color: var(--vscode-input-foreground);
-  border: 1px solid var(--vscode-input-border, transparent);
-  border-radius: 2px;
+  border: none;
+  border-radius: 0;
   padding: 6px 8px;
   font-family: inherit;
   font-size: inherit;
   line-height: 1.5;
   outline: none;
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
 }
 
-textarea:focus {
+.input-stack {
+  position: relative;
+  display: grid;
+  grid-template-areas: "composer";
+  flex: 1;
+  min-height: 56px;
+  max-height: 220px;
+  overflow: auto;
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-radius: 2px;
+}
+
+.input-stack:focus-within {
   border-color: var(--vscode-focusBorder);
 }
 
-.ghost-text {
+.ghost-inline {
+  grid-area: composer;
+  margin: 0;
   font-family: inherit;
   font-size: inherit;
   line-height: 1.5;
+  padding: 6px 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 1;
+}
+
+.ghost-inline .typed {
+  color: transparent;
+}
+
+.ghost-inline .suggestion {
   color: var(
     --vscode-editorGhostText-foreground,
     var(--vscode-descriptionForeground)
   );
-  background: var(--vscode-input-background);
-  border: 1px solid var(--vscode-input-border, transparent);
-  border-top: none;
-  border-radius: 0 0 2px 2px;
-  padding: 4px 8px;
+  opacity: 0.8;
+}
+
+.ghost-measure {
+  position: absolute;
+  inset: -9999px auto auto -9999px;
+  width: calc(100% - 16px);
+  margin: 0;
+  padding: 6px 8px;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;
-  opacity: 0.75;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.status-text {
+  font-size: 0.86em;
+  color: var(--vscode-descriptionForeground);
+  padding: 0 2px;
+}
+
+.status-text.error {
+  color: var(--vscode-errorForeground, #f48771);
 }
 
 textarea::placeholder {
@@ -68,7 +154,9 @@ textarea::placeholder {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--gp-gap-sm);
+  flex-shrink: 0;
+  padding-top: 2px;
 }
 
 .hint {
@@ -80,7 +168,38 @@ textarea::placeholder {
   text-overflow: ellipsis;
 }
 
-button {
+.chip {
+  flex-shrink: 0;
+  padding: var(--gp-chip-pad-y) var(--gp-chip-pad-x);
+  background: var(--vscode-inputOption-activeBorder, transparent);
+  color: var(--vscode-foreground);
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.8em;
+}
+
+.chip:hover {
+  border-color: var(--vscode-focusBorder);
+}
+
+.chip:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 1px;
+}
+
+.chip.active {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border-color: var(--vscode-button-background);
+}
+
+.chip-debug {
+  margin-left: auto;
+}
+
+#send-btn {
   flex-shrink: 0;
   padding: 4px 12px;
   background: var(--vscode-button-background);
@@ -92,6 +211,6 @@ button {
   font-size: inherit;
 }
 
-button:hover {
+#send-btn:hover {
   background: var(--vscode-button-hoverBackground);
 }

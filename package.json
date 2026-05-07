@@ -9,7 +9,6 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -45,13 +44,112 @@
           "when": "true"
         }
       ]
+    },
+    "commands": [
+      {
+        "command": "ghostPrompt.openSuggestionPolicySettings",
+        "title": "GhostPrompt: Open Suggestion Policy Settings"
+      },
+      {
+        "command": "ghostPrompt.toggleSuggestionDebug",
+        "title": "GhostPrompt: Toggle Debug"
+      }
+    ],
+    "configuration": {
+      "title": "GhostPrompt",
+      "properties": {
+        "ghostPrompt.suggestionModelPolicy": {
+          "type": "string",
+          "enum": [
+            "nonPremiumOnly",
+            "anyModel"
+          ],
+          "default": "nonPremiumOnly",
+          "markdownDescription": "Policy to choose Copilot model for inline suggestions. `nonPremiumOnly` (safe default) avoids premium-capable models; `anyModel` allows first available model and may consume premium quota."
+        },
+        "ghostPrompt.debugSuggestions": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Enable structured debug logs for suggestion lifecycle in the `GhostPrompt Suggestions` output channel."
+        },
+        "ghostPrompt.maxSuggestionChars": {
+          "type": "number",
+          "default": 180,
+          "minimum": 40,
+          "maximum": 500,
+          "markdownDescription": "Maximum number of characters for each inline suggestion after normalization."
+        },
+        "ghostPrompt.suggestionStyle": {
+          "type": "string",
+          "enum": [
+            "concise",
+            "balanced",
+            "detailed"
+          ],
+          "default": "balanced",
+          "markdownDescription": "Controls how specific and long inline suggestions should be. `concise` keeps short continuations, `balanced` keeps practical context-rich responses, `detailed` allows richer multi-sentence continuations."
+        },
+        "ghostPrompt.contextMode": {
+          "type": "string",
+          "enum": [
+            "off",
+            "basic"
+          ],
+          "default": "basic",
+          "markdownDescription": "Controls whether local context from the current session is used to shape inline suggestions."
+        },
+        "ghostPrompt.minCharsForSuggestion": {
+          "type": "number",
+          "default": 6,
+          "minimum": 1,
+          "maximum": 100,
+          "markdownDescription": "Minimum normalized character count required before requesting a suggestion."
+        },
+        "ghostPrompt.requestCooldownMs": {
+          "type": "number",
+          "default": 700,
+          "minimum": 100,
+          "maximum": 5000,
+          "markdownDescription": "Minimum cooldown between repeated identical suggestion inputs."
+        },
+        "ghostPrompt.cacheTtlMs": {
+          "type": "number",
+          "default": 45000,
+          "minimum": 1000,
+          "maximum": 300000,
+          "markdownDescription": "How long suggestion cache entries are kept in memory (milliseconds)."
+        },
+        "ghostPrompt.rateLimitMaxRequests": {
+          "type": "number",
+          "default": 40,
+          "minimum": 1,
+          "maximum": 500,
+          "markdownDescription": "Maximum suggestion requests allowed within the configured rate limit window."
+        },
+        "ghostPrompt.rateLimitWindowMs": {
+          "type": "number",
+          "default": 600000,
+          "minimum": 10000,
+          "maximum": 3600000,
+          "markdownDescription": "Window size in milliseconds used by rate limiting."
+        },
+        "ghostPrompt.sessionRequestBudget": {
+          "type": "number",
+          "default": 120,
+          "minimum": 1,
+          "maximum": 2000,
+          "markdownDescription": "Maximum number of suggestion model requests allowed per extension session."
+        }
+      }
     }
   },
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
-    "validate": "npm run lint && npm run compile"
+    "validate": "npm run lint && npm run compile",
+    "test": "vitest run",
+    "check": "npm run validate && npm run test"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -59,6 +157,7 @@
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^4.1.5"
   }
 }

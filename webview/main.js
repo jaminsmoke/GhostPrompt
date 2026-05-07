@@ -3,7 +3,10 @@
  * Communicates with the extension host exclusively via VS Code's postMessage API.
  *
  * Inbound  (host → webview):
+ *   { type: 'loading', captureId: number }
  *   { type: 'suggestion', suggestion: string, captureId: number }
+ *   { type: 'empty', reason: 'no-model' | 'no-non-premium-model' | 'premium-quota-blocked' | 'empty-response' | 'too-short' | 'duplicate-input' | 'rate-limited' | 'session-budget-exhausted', captureId: number }
+ *   { type: 'error', message: string, captureId: number }
  *   { type: 'clear' }
  *
  * Outbound (webview → host):
@@ -18,13 +21,19 @@
   const input = /** @type {HTMLTextAreaElement} */ (
     document.getElementById("prompt-input")
   );
+  const inputStack = document.querySelector(".input-stack");
+  const ghostInline = document.getElementById("ghost-inline");
+  const ghostMeasure = document.getElementById("ghost-measure");
   const sendBtn = document.getElementById("send-btn");
-  const ghostEl = document.getElementById("ghost-text");
+  const statusEl = document.getElementById("status-text");
+  const settingGroups = Array.from(document.querySelectorAll(".setting-group"));
+  const debugBtn = document.getElementById("debug-btn");
 
   /** ID de la última solicitud de suggestion enviada al host. */
   let currentCaptureId = 0;
   /** Texto de la suggestion actualmente mostrada (vacío si no hay ninguna). */
   let pendingSuggestion = "";
+  const MIN_COMPOSER_HEIGHT = 56;
 
   /** Temporizador de debounce para las solicitudes de suggestion. */
   let debounceTimer = null;
@@ -34,7 +43,9 @@
   function requestSuggestion() {
     clearTimeout(debounceTimer);
     clearGhost();
+    clearStatus();
     const text = input.value;
+    syncComposerHeight();
     if (!text.trim()) {
       return;
     }
@@ -52,14 +63,69 @@
 
   function showGhost(text) {
     pendingSuggestion = text;
-    ghostEl.textContent = text;
-    ghostEl.style.display = "block";
+    renderInlineGhost();
+    syncComposerHeight();
   }
 
   function clearGhost() {
     pendingSuggestion = "";
-    ghostEl.textContent = "";
-    ghostEl.style.display = "none";
+    renderInlineGhost();
+    syncComposerHeight();
+  }
+
+  function escapeHtml(value) {
+    return value
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;");
+  }
+
+  function renderInlineGhost() {
+    if (!pendingSuggestion) {
+      ghostInline.innerHTML = "";
+      return;
+    }
+    const typed = escapeHtml(input.value);
+    const suggestion = escapeHtml(pendingSuggestion);
+    ghostInline.innerHTML =
+      `<span class="typed">${typed}</span>` +
+      `<span class="suggestion">${suggestion}</span>`;
+    ghostInline.scrollTop = inputStack.scrollTop;
+    ghostInline.scrollLeft = inputStack.scrollLeft;
+  }
+
+  function syncComposerHeight() {
+    const combined = `${input.value}${pendingSuggestion}`;
+    ghostMeasure.textContent = combined || " ";
+    const measured = Math.max(MIN_COMPOSER_HEIGHT, ghostMeasure.scrollHeight + 2);
+    input.style.height = `${measured}px`;
+    ghostInline.style.minHeight = `${measured}px`;
+  }
+
+  function showStatus(text, isError = false) {
+    statusEl.textContent = text;
+    statusEl.classList.toggle("error", isError);
+    statusEl.style.display = "block";
+  }
+
+  function toUserErrorMessage(rawMessage) {
+    if (!rawMessage) {
+      return "Error al generar sugerencia.";
+    }
+    const normalized = String(rawMessage).trim();
+    // Evitar mensajes demasiado largos o poco legibles en la UI.
+    const compact = normalized.replace(/\s+/g, " ");
+    const maxLen = 140;
+    if (compact.length <= maxLen) {
+      return `Error: ${compact}`;
+    }
+    return `Error: ${compact.slice(0, maxLen - 3)}...`;
+  }
+
+  function clearStatus() {
+    statusEl.textContent = "";
+    statusEl.classList.remove("error");
+    statusEl.style.display = "none";
   }
 
   // ── Aceptar suggestion con Tab ───────────────────────────────────────────
@@ -76,6 +142,7 @@
       suggestion: pendingSuggestion,
     });
     clearGhost();
+    clearStatus();
     // Mover cursor al final.
     input.selectionStart = input.selectionEnd = input.value.length;
     return true;
@@ -89,6 +156,7 @@
       return;
     }
     clearGhost();
+    clearStatus();
     clearTimeout(debounceTimer);
     vscode.postMessage({ type: "send", text });
   }
@@ -96,6 +164,10 @@
   // ── Event listeners ──────────────────────────────────────────────────────
 
   input.addEventListener("input", requestSuggestion);
+  inputStack.addEventListener("scroll", () => {
+    ghostInline.scrollTop = inputStack.scrollTop;
+    ghostInline.scrollLeft = inputStack.scrollLeft;
+  });
 
   input.addEventListener("keydown", (e) => {
     if (e.key === "Tab") {
@@ -110,23 +182,132 @@
   });
 
   sendBtn.addEventListener("click", send);
+  settingGroups.forEach((group) => {
+    group.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        return;
+      }
+      const button = target.closest(".chip");
+      if (!(button instanceof HTMLButtonElement)) {
+        return;
+      }
+      const key = group.getAttribute("data-key");
+      const value = button.getAttribute("data-value");
+      if (!key || !value) {
+        return;
+      }
+      vscode.postMessage({
+        type: "updateSetting",
+        key,
+        value,
+      });
+    });
+    group.addEventListener("keydown", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLButtonElement)) {
+        return;
+      }
+      if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") {
+        return;
+      }
+      event.preventDefault();
+      const chips = Array.from(group.querySelectorAll(".chip"));
+      const index = chips.indexOf(target);
+      if (index < 0) {
+        return;
+      }
+      const delta = event.key === "ArrowRight" ? 1 : -1;
+      const nextIndex = (index + delta + chips.length) % chips.length;
+      const next = chips[nextIndex];
+      if (next instanceof HTMLButtonElement) {
+        next.focus();
+        next.click();
+      }
+    });
+  });
+  debugBtn.addEventListener("click", () => {
+    const next = debugBtn.dataset.enabled !== "true";
+    vscode.postMessage({
+      type: "updateSetting",
+      key: "debugSuggestions",
+      value: next,
+    });
+  });
+  vscode.postMessage({ type: "init" });
+  syncComposerHeight();
 
   // ── Mensajes desde el host ───────────────────────────────────────────────
 
   window.addEventListener("message", (event) => {
     const message = event.data;
-    if (message.type === "suggestion") {
+    if (
+      typeof message.captureId === "number" &&
+      message.captureId !== currentCaptureId
+    ) {
+      return;
+    }
+
+    if (message.type === "loading") {
+      showStatus("Buscando sugerencia...");
+    } else if (message.type === "suggestion") {
       // Descartar si llegó fuera de tiempo (usuario ya siguió escribiendo).
-      if (message.captureId !== currentCaptureId) {
-        return;
-      }
       if (message.suggestion) {
+        clearStatus();
         showGhost(message.suggestion);
       }
+    } else if (message.type === "empty") {
+      clearGhost();
+      if (message.reason === "no-model") {
+        showStatus("Copilot no disponible en esta sesión.");
+      } else if (message.reason === "no-non-premium-model") {
+        showStatus("No hay modelo no premium disponible para suggestions.");
+      } else if (message.reason === "premium-quota-blocked") {
+        showStatus("Suggestions pausadas para evitar consumo de cuota premium.");
+      } else if (message.reason === "too-short") {
+        showStatus("Escribe un poco más para sugerir mejor.");
+      } else if (message.reason === "duplicate-input") {
+        showStatus("Esperando cambios en el texto...");
+      } else if (message.reason === "rate-limited") {
+        showStatus("Pausado temporalmente para evitar demasiadas llamadas.");
+      } else if (message.reason === "session-budget-exhausted") {
+        showStatus("Límite de sugerencias de esta sesión alcanzado.");
+      } else {
+        showStatus("Sin sugerencia para este texto.");
+      }
+    } else if (message.type === "error") {
+      clearGhost();
+      showStatus(toUserErrorMessage(message.message), true);
+    } else if (message.type === "settings") {
+      const settings = message.settings ?? {};
+      setActiveChip("suggestionModelPolicy", settings.suggestionModelPolicy);
+      setActiveChip("suggestionStyle", settings.suggestionStyle);
+      setActiveChip("contextMode", settings.contextMode);
+      const isDebug = Boolean(settings.debugSuggestions);
+      debugBtn.dataset.enabled = String(isDebug);
+      debugBtn.textContent = isDebug ? "Debug: on" : "Debug: off";
     } else if (message.type === "clear") {
       input.value = "";
       clearGhost();
+      clearStatus();
+      syncComposerHeight();
+      inputStack.scrollTop = 0;
       input.focus();
     }
   });
+
+  function setActiveChip(key, value) {
+    if (!value) {
+      return;
+    }
+    const group = document.querySelector(`.setting-group[data-key="${key}"]`);
+    if (!group) {
+      return;
+    }
+    group.querySelectorAll(".chip").forEach((chip) => {
+      const isActive = chip.getAttribute("data-value") === value;
+      chip.classList.toggle("active", isActive);
+      chip.setAttribute("aria-pressed", isActive ? "true" : "false");
+    });
+  }
 })();

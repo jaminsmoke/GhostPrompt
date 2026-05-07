@@ -8,46 +8,228 @@
  */
 import * as vscode from "vscode";
 
+export type SuggestionModelPolicy = "nonPremiumOnly" | "anyModel";
+export type SuggestionStyle = "concise" | "balanced" | "detailed";
+
+export type CompletionResult =
+  | { kind: "suggestion"; suggestion: string }
+  | {
+      kind: "empty";
+      reason:
+        | "no-model"
+        | "no-non-premium-model"
+        | "premium-quota-blocked"
+        | "empty-response"
+        | "too-short"
+        | "duplicate-input"
+        | "rate-limited"
+        | "session-budget-exhausted";
+    }
+  | { kind: "error"; message: string };
+
+let premiumQuotaBlocked = false;
+const DEFAULT_MAX_SUGGESTION_CHARS = 180;
+
+export interface CompletionRequestOptions {
+  token: vscode.CancellationToken;
+  policy: SuggestionModelPolicy;
+  maxSuggestionChars?: number;
+  style?: SuggestionStyle;
+  context?: SuggestionContext;
+}
+
+export interface SuggestionContext {
+  lastAcceptedSuggestion?: string;
+  lastSentPrompt?: string;
+}
+
 /**
  * Solicita al modelo Copilot una continuación corta del texto parcial del usuario.
  *
  * @param userText - Texto que el usuario está escribiendo en el mini-input.
- * @returns La continuación sugerida, o cadena vacía si no hay modelo disponible.
+ * @param token - Token de cancelación para abortar requests previas.
+ * @returns Resultado tipado para que la webview no quede en silencio.
  */
-export async function requestCompletion(userText: string): Promise<string> {
-  const models = await vscode.lm.selectChatModels({ vendor: "copilot" });
-  if (!models.length) {
-    return "";
+export async function requestCompletion(
+  userText: string,
+  options: CompletionRequestOptions,
+): Promise<CompletionResult> {
+  const {
+    token,
+    policy,
+    maxSuggestionChars = DEFAULT_MAX_SUGGESTION_CHARS,
+    style = "balanced",
+    context,
+  } = options;
+  if (policy === "nonPremiumOnly" && premiumQuotaBlocked) {
+    return { kind: "empty", reason: "premium-quota-blocked" };
   }
 
-  const model = models[0];
-  const tokenSource = new vscode.CancellationTokenSource();
+  const models = await vscode.lm.selectChatModels({ vendor: "copilot" });
+  if (!models.length) {
+    return { kind: "empty", reason: "no-model" };
+  }
+
+  const model = selectModelByPolicy(models, policy);
+  if (!model) {
+    return { kind: "empty", reason: "no-non-premium-model" };
+  }
 
   try {
-    const instruction =
-      "You are a prompt completion assistant. " +
-      "The user is typing a prompt for GitHub Copilot Chat. " +
-      "Predict and return ONLY the natural continuation of the following partial text. " +
-      "Never repeat what was already written. " +
-      "Return at most one short sentence. " +
-      "Do not add explanations, greetings, or any metadata.\n\n" +
-      "Partial text to continue: " +
-      userText;
+    const instruction = buildCompletionInstruction(userText, style, context);
 
     const response = await model.sendRequest(
       [vscode.LanguageModelChatMessage.User(instruction)],
       {},
-      tokenSource.token,
+      token,
     );
 
-    let completion = "";
-    for await (const chunk of response.text) {
-      completion += chunk;
+    const completion = await collectResponseText(response);
+    const suggestion = normalizeSuggestion(
+      completion,
+      userText,
+      maxSuggestionChars,
+    );
+    if (!suggestion) {
+      return { kind: "empty", reason: "empty-response" };
     }
-    return completion.trim();
-  } catch {
-    return "";
-  } finally {
-    tokenSource.dispose();
+    return { kind: "suggestion", suggestion };
+  } catch (error) {
+    if (token.isCancellationRequested) {
+      throw error;
+    }
+    const message = error instanceof Error ? error.message : "Unknown error";
+    if (policy === "nonPremiumOnly" && isPremiumQuotaError(message)) {
+      premiumQuotaBlocked = true;
+      return { kind: "empty", reason: "premium-quota-blocked" };
+    }
+    return { kind: "error", message };
   }
+}
+
+export function buildCompletionInstruction(
+  userText: string,
+  style: SuggestionStyle = "balanced",
+  context?: SuggestionContext,
+): string {
+  const styleDirective =
+    style === "concise"
+      ? "Keep the completion short and practical (1 sentence)."
+      : style === "detailed"
+        ? "Provide a richer continuation with concrete details (1-3 sentences when useful)."
+        : "Provide a balanced continuation with specific intent and moderate detail (1-2 sentences).";
+
+  const recentContext: string[] = [];
+  if (context?.lastSentPrompt?.trim()) {
+    recentContext.push(`Recent prompt sent by user: ${context.lastSentPrompt}`);
+  }
+  if (context?.lastAcceptedSuggestion?.trim()) {
+    recentContext.push(
+      `Recent accepted suggestion style: ${context.lastAcceptedSuggestion}`,
+    );
+  }
+
+  return (
+    "You are a prompt completion assistant. " +
+    "The user is typing a prompt for GitHub Copilot Chat. " +
+    "Predict and return ONLY the natural continuation of the following partial text. " +
+    styleDirective +
+    "Never repeat what was already written. " +
+    "Keep context and intent specific, avoiding generic filler. " +
+    "Do not add explanations, greetings, or any metadata.\n\n" +
+    (recentContext.length
+      ? `Relevant recent context:\n- ${recentContext.join("\n- ")}\n\n`
+      : "") +
+    "Partial text to continue: " +
+    userText
+  );
+}
+
+export async function collectResponseText(
+  response: vscode.LanguageModelChatResponse,
+): Promise<string> {
+  let completion = "";
+  for await (const chunk of response.text) {
+    completion += chunk;
+  }
+  return completion;
+}
+
+export function normalizeSuggestion(
+  rawSuggestion: string,
+  userText: string,
+  maxChars: number,
+): string {
+  let normalized = rawSuggestion.trim();
+  const prefix = userText.trim();
+
+  if (!normalized) {
+    return "";
+  }
+
+  if (prefix && normalized.toLowerCase().startsWith(prefix.toLowerCase())) {
+    normalized = normalized.slice(prefix.length).trimStart();
+  }
+
+  if (!normalized) {
+    return "";
+  }
+
+  if (normalized.length > maxChars) {
+    normalized = normalized.slice(0, maxChars).trimEnd();
+  }
+
+  return normalized;
+}
+
+export function selectModelByPolicy(
+  models: readonly vscode.LanguageModelChat[],
+  policy: SuggestionModelPolicy,
+): vscode.LanguageModelChat | undefined {
+  if (policy === "anyModel") {
+    return models[0];
+  }
+  return models.find((candidate) => isNonPremiumModel(candidate));
+}
+
+function isNonPremiumModel(model: unknown): boolean {
+  const data = model as { id?: string; family?: string; name?: string };
+  const fingerprint = `${data.id ?? ""} ${data.family ?? ""} ${data.name ?? ""}`
+    .toLowerCase()
+    .trim();
+
+  if (!fingerprint) {
+    return false;
+  }
+
+  // Lista conservadora: permitimos solo variantes tipicamente "economicas".
+  const allowMarkers = ["mini", "nano", "haiku", "flash"];
+  const hasAllowMarker = allowMarkers.some((marker) =>
+    fingerprint.includes(marker),
+  );
+  if (!hasAllowMarker) {
+    return false;
+  }
+
+  const denyMarkers = [
+    "premium",
+    "pro",
+    "opus",
+    "sonnet",
+    "gpt-5",
+    "gpt-4.1",
+    "o1",
+    "o3",
+    "o4",
+  ];
+  return !denyMarkers.some((marker) => fingerprint.includes(marker));
+}
+
+function isPremiumQuotaError(message: string): boolean {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("premium model quota") ||
+    normalized.includes("additional paid premium requests") ||
+    normalized.includes("allowance to renew")
+  );
 }

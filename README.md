@@ -36,6 +36,33 @@ Once you're happy with your prompt, press **Enter** and it goes straight to GitH
 3. Press `Tab` to accept the suggestion and append it to your prompt.
 4. Press `Enter` to send the final prompt to **Copilot Chat**.
 
+### Suggestion model policy
+
+GhostPrompt includes a safety setting to control which models can be used for inline suggestions:
+
+- `ghostPrompt.suggestionModelPolicy = nonPremiumOnly` (default): only non-premium-like models are allowed.
+- `ghostPrompt.suggestionModelPolicy = anyModel`: uses the first available model (may consume premium quota).
+
+### Debug mode
+
+- Run command: `GhostPrompt: Toggle Debug`
+- Output channel: `GhostPrompt Suggestions`
+- Setting: `ghostPrompt.debugSuggestions`
+
+Optional tuning:
+
+- `ghostPrompt.maxSuggestionChars` (default `180`)
+- `ghostPrompt.suggestionStyle` (`concise` | `balanced` | `detailed`, default `balanced`)
+- `ghostPrompt.contextMode` (`off` | `basic`, default `basic`)
+- `ghostPrompt.minCharsForSuggestion` (default `6`)
+- `ghostPrompt.requestCooldownMs` (default `700`)
+- `ghostPrompt.cacheTtlMs` (default `45000`)
+- `ghostPrompt.rateLimitMaxRequests` (default `40`)
+- `ghostPrompt.rateLimitWindowMs` (default `600000`)
+- `ghostPrompt.sessionRequestBudget` (default `120`)
+
+Inside the webview mini-input, you can also configure policy/style/context/debug from the `Opciones` menu.
+
 ### Keyboard shortcuts
 
 | Key           | Action                                   |
@@ -58,6 +85,8 @@ Run full validation before committing:
 
 ```bash
 npm run validate   # lint + compile
+npm run test       # unit/integration tests with vitest
+npm run check      # validate + tests
 ```
 
 ---
