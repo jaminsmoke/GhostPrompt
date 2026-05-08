@@ -8,13 +8,22 @@ All notable changes to this project are documented in this file.
 
 - Runtime pricing metadata exposure in suggestion model descriptors (`pricing`, e.g. `0x`, `0.33x`, `1x`) for UI transparency.
 - Included/Premium/Unknown tier rendering in webview model selector and runtime model label.
+- Loading spinner in status line while a suggestion request is in progress (`Buscando sugerencia...`).
 
 ### Changed
 
 - Model tier classification now prioritizes passive pricing metadata (no active model probing required).
 - Safe policy behavior (`nonPremiumOnly`) now targets included models (`pricing=0x`) when metadata exists, with conservative fallback.
 - Empty reason terminology updated from `no-non-premium-model` to `no-included-model`.
+- Model selector deduplicates repeated entries that resolve to the same visible model/tier/pricing combination.
+- Model selector options are grouped by inferred provider and sorted for faster scanning.
+- Tier visualization refined for readability using compact textual tokens (`[INCLUDED 0x]`, `[PREMIUM 1x]`, `[UNKNOWN]`) instead of dot indicators.
+- Slow or stalled model responses now fail gracefully with timeout feedback instead of indefinite loading.
 - Product version bumped to `0.2.4`.
+
+### Known issues
+
+- `gpt-5-mini` and `raptor` may timeout in some sessions and return no suggestion. GhostPrompt now exits cleanly from loading state and shows a retry/model-switch hint.
 
 ### Docs
 

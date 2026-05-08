@@ -122,6 +122,21 @@ Cerrar puntos finos de calidad percibida en suggestions para que la experiencia 
 - [x] `npm run vsix` verde.
 - [ ] Flujo de suggestions estable y explicable para usuario final. *(pendiente smoke/manual checks de Sprint 6).*
 
+### Sprint 7 - Hotfix (Deduplicacion de modelos visibles)
+
+- [x] Deduplicar lista de modelos del selector para evitar entradas repetidas del mismo modelo visible.
+- [x] Usar clave canonica de visualizacion (label + tier + pricing) en la lista mostrada.
+- [x] Añadir test de regresion para repetir `GPT-4o` con IDs distintos y comprobar colapso a una sola opcion.
+- [x] Ordenar/agrupar selector por proveedor inferido para mejorar escaneabilidad.
+- [x] Refinar visualizacion final del tier/coste con tokens textuales compactos (`[INCLUDED 0x]`, `[PREMIUM 1x]`, `[UNKNOWN]`).
+
+#### Criterios de aceptacion Hotfix
+
+- [x] El selector no muestra el mismo modelo visible varias veces.
+- [x] El selector muestra bloques por proveedor con orden estable.
+- [x] Tier/coste legible a primera vista sin ruido visual de indicadores redundantes.
+- [x] `npm run check` verde.
+
 ## Metricas de exito (v0.2.3)
 
 - Reducir incidencias de suggestion pegada por puntuacion.

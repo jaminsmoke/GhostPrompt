@@ -13,12 +13,14 @@ export type SuggestionStyle = "concise" | "balanced" | "detailed";
 export type SuggestionLanguageMode = "auto" | "manual";
 export type SupportedSuggestionLanguage = "es" | "en";
 export type SuggestionModelTier = "included" | "premium" | "unknown";
+const DEFAULT_MODEL_REQUEST_TIMEOUT_MS = 12000;
 
 export interface SuggestionModelDescriptor {
   id: string;
   label: string;
   tier: SuggestionModelTier;
   pricing?: string;
+  provider?: string;
 }
 
 type LanguageConfidence = "low" | "medium" | "high";
@@ -37,6 +39,7 @@ export type CompletionResult =
         | "no-included-model"
         | "premium-quota-blocked"
         | "empty-response"
+        | "request-timeout"
         | "too-short"
         | "duplicate-input"
         | "rate-limited"
@@ -54,6 +57,7 @@ export interface CompletionRequestOptions {
   maxSuggestionChars?: number;
   style?: SuggestionStyle;
   context?: SuggestionContext;
+  requestTimeoutMs?: number;
 }
 
 export interface SuggestionContext {
@@ -85,6 +89,7 @@ export async function requestCompletion(
     maxSuggestionChars = DEFAULT_MAX_SUGGESTION_CHARS,
     style = "balanced",
     context,
+    requestTimeoutMs = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
   } = options;
   if (policy === "nonPremiumOnly" && premiumQuotaBlocked) {
     return { kind: "empty", reason: "premium-quota-blocked" };
@@ -101,27 +106,43 @@ export async function requestCompletion(
   }
 
   try {
+    const requestTokenSource = new vscode.CancellationTokenSource();
+    const requestCancellation = token.onCancellationRequested(() => {
+      requestTokenSource.cancel();
+    });
+    const timeoutHandle = setTimeout(() => {
+      requestTokenSource.cancel();
+    }, requestTimeoutMs);
+
     const instruction = buildCompletionInstruction(userText, style, context);
+    try {
+      const response = await model.sendRequest(
+        [vscode.LanguageModelChatMessage.User(instruction)],
+        {},
+        requestTokenSource.token,
+      );
 
-    const response = await model.sendRequest(
-      [vscode.LanguageModelChatMessage.User(instruction)],
-      {},
-      token,
-    );
-
-    const completion = await collectResponseText(response);
-    const suggestion = normalizeSuggestion(
-      completion,
-      userText,
-      maxSuggestionChars,
-    );
-    if (!suggestion) {
-      return { kind: "empty", reason: "empty-response" };
+      const completion = await collectResponseText(response, requestTimeoutMs);
+      const suggestion = normalizeSuggestion(
+        completion,
+        userText,
+        maxSuggestionChars,
+      );
+      if (!suggestion) {
+        return { kind: "empty", reason: "empty-response" };
+      }
+      return { kind: "suggestion", suggestion, model: describeModel(model) };
+    } finally {
+      clearTimeout(timeoutHandle);
+      requestCancellation.dispose();
+      requestTokenSource.dispose();
     }
-    return { kind: "suggestion", suggestion, model: describeModel(model) };
   } catch (error) {
     if (token.isCancellationRequested) {
       throw error;
+    }
+    if (error instanceof Error && /request-timeout/i.test(error.message)) {
+      return { kind: "empty", reason: "request-timeout" };
     }
     const message = error instanceof Error ? error.message : "Unknown error";
     if (policy === "nonPremiumOnly" && isPremiumQuotaError(message)) {
@@ -307,12 +328,39 @@ function truncateInline(value: string, maxChars: number): string {
 
 export async function collectResponseText(
   response: vscode.LanguageModelChatResponse,
+  timeoutMs: number = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
 ): Promise<string> {
   let completion = "";
-  for await (const chunk of response.text) {
-    completion += chunk;
+  const iterator = response.text[Symbol.asyncIterator]();
+  while (true) {
+    const nextChunk = await awaitNextChunkWithTimeout(iterator, timeoutMs);
+    if (nextChunk.done) {
+      break;
+    }
+    completion += nextChunk.value;
   }
   return completion;
+}
+
+async function awaitNextChunkWithTimeout(
+  iterator: AsyncIterator<string>,
+  timeoutMs: number,
+): Promise<IteratorResult<string>> {
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      iterator.next(),
+      new Promise<IteratorResult<string>>((_, reject) => {
+        timeoutHandle = setTimeout(() => {
+          reject(new Error("request-timeout"));
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+    }
+  }
 }
 
 export function normalizeSuggestion(
@@ -443,10 +491,11 @@ export async function listSuggestionModels(
   const descriptors: SuggestionModelDescriptor[] = [];
   for (const candidate of filtered) {
     const descriptor = describeModel(candidate);
-    if (seen.has(descriptor.id)) {
+    const dedupeKey = buildModelDedupeKey(descriptor);
+    if (seen.has(dedupeKey)) {
       continue;
     }
-    seen.add(descriptor.id);
+    seen.add(dedupeKey);
     descriptors.push(descriptor);
   }
   return descriptors;
@@ -463,11 +512,13 @@ function describeModel(model: unknown): SuggestionModelDescriptor {
   const label = data.name?.trim() || data.family?.trim() || id;
   const pricing = normalizePricing(data.pricing);
   const tier = classifyModelTier(model);
+  const provider = inferModelProvider(model);
   return {
     id,
     label,
     tier,
     ...(pricing ? { pricing } : {}),
+    ...(provider ? { provider } : {}),
   };
 }
 
@@ -554,6 +605,45 @@ function parsePricingMultiplier(pricing: string): number | undefined {
   }
   const parsed = Number(match[1]);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function buildModelDedupeKey(model: SuggestionModelDescriptor): string {
+  const normalize = (value: string | undefined): string =>
+    (value ?? "").trim().toLowerCase();
+  return [normalize(model.provider), normalize(model.label), model.tier, normalize(model.pricing)].join(
+    "|",
+  );
+}
+
+function inferModelProvider(model: unknown): string | undefined {
+  const data = model as { id?: string; family?: string; name?: string };
+  const fingerprint = `${data.id ?? ""} ${data.family ?? ""} ${data.name ?? ""}`
+    .toLowerCase()
+    .trim();
+  if (!fingerprint) {
+    return undefined;
+  }
+  if (
+    fingerprint.includes("gpt") ||
+    fingerprint.includes("o1") ||
+    fingerprint.includes("o3") ||
+    fingerprint.includes("o4")
+  ) {
+    return "OpenAI";
+  }
+  if (fingerprint.includes("claude")) {
+    return "Anthropic";
+  }
+  if (fingerprint.includes("gemini")) {
+    return "Google";
+  }
+  if (fingerprint.includes("grok")) {
+    return "xAI";
+  }
+  if (fingerprint.includes("raptor") || fingerprint.includes("oswe")) {
+    return "GitHub";
+  }
+  return "Other";
 }
 
 function isPremiumQuotaError(message: string): boolean {

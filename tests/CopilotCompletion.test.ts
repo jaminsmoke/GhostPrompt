@@ -12,6 +12,16 @@ vi.mock("vscode", () => ({
   LanguageModelChatMessage: {
     User: userMessageMock,
   },
+  CancellationTokenSource: class {
+    token = {
+      isCancellationRequested: false,
+      onCancellationRequested: () => ({ dispose: () => {} }),
+    };
+    cancel() {
+      this.token.isCancellationRequested = true;
+    }
+    dispose() {}
+  },
 }));
 
 import {
@@ -34,8 +44,21 @@ function createTextStream(chunks: string[]): AsyncIterable<string> {
   };
 }
 
+function createHangingTextStream(): AsyncIterable<string> {
+  return {
+    [Symbol.asyncIterator]() {
+      return {
+        next: () => new Promise<IteratorResult<string>>(() => {}),
+      };
+    },
+  };
+}
+
 function createToken() {
-  return { isCancellationRequested: false };
+  return {
+    isCancellationRequested: false,
+    onCancellationRequested: () => ({ dispose: () => {} }),
+  };
 }
 
 describe("CopilotCompletion", () => {
@@ -125,6 +148,21 @@ describe("CopilotCompletion", () => {
     expect(userMessageMock).toHaveBeenCalledOnce();
   });
 
+  it("devuelve request-timeout si el modelo no responde en el tiempo limite", async () => {
+    const sendRequest = vi.fn().mockResolvedValue({
+      text: createHangingTextStream(),
+    });
+    selectChatModelsMock.mockResolvedValueOnce([{ sendRequest }]);
+
+    const result = await requestCompletion("Escribe", {
+      token: createToken() as never,
+      policy: "anyModel",
+      requestTimeoutMs: 20,
+    });
+
+    expect(result).toEqual({ kind: "empty", reason: "request-timeout" });
+  });
+
   it("selectModelByPolicy prioriza modelo no premium en modo seguro", () => {
     const models = [
       { id: "gpt-5-pro" },
@@ -157,7 +195,30 @@ describe("CopilotCompletion", () => {
     selectChatModelsMock.mockResolvedValueOnce([{ id: "gpt-4o-mini", name: "GPT-4o mini" }]);
     const models = await listSuggestionModels("anyModel");
     expect(models).toEqual([
-      { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "included" },
+      { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "included", provider: "OpenAI" },
+    ]);
+  });
+
+  it("listSuggestionModels elimina modelos duplicados por etiqueta visible", async () => {
+    selectChatModelsMock.mockResolvedValueOnce([
+      { id: "gpt-4o", name: "GPT-4o", pricing: "0x" },
+      { id: "copilot-fast-gpt4o", name: "GPT-4o", pricing: "0x" },
+      { id: "gpt-4o-alt", name: "GPT-4o", pricing: "0x" },
+    ]);
+    const models = await listSuggestionModels("anyModel");
+    expect(models).toEqual([
+      { id: "gpt-4o", label: "GPT-4o", tier: "included", pricing: "0x", provider: "OpenAI" },
+    ]);
+  });
+
+  it("listSuggestionModels deduplica ids versionados del mismo modelo visible", async () => {
+    selectChatModelsMock.mockResolvedValueOnce([
+      { id: "gpt-4o", name: "GPT-4o", pricing: "0x" },
+      { id: "gpt-4o-2024-11-20", name: "GPT-4o", pricing: "0x" },
+    ]);
+    const models = await listSuggestionModels("anyModel");
+    expect(models).toEqual([
+      { id: "gpt-4o", label: "GPT-4o", tier: "included", pricing: "0x", provider: "OpenAI" },
     ]);
   });
 

@@ -165,8 +165,13 @@ Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 - **Pricing-aware model tiers**: model classification now uses passive runtime metadata (`pricing`, e.g. `0x`, `0.33x`, `1x`) without extra model generation requests.
 - **No hidden quota usage for tier sync**: GhostPrompt does not probe models for pricing; it only reads model catalog metadata.
 - **UI tier clarity**: model labels now use `Included / Premium / Unknown` and display pricing multiplier when available.
+- **Model list deduplication**: repeated model entries (same visible label/tier/pricing) are collapsed so the selector does not show duplicates like multiple `GPT-4o`.
+- **Provider grouping**: model selector is grouped and ordered by inferred provider (OpenAI, Anthropic, Google, xAI, GitHub, Other) for quicker navigation.
+- **Final token UX polish**: selector rows now show tier/cost with compact textual chips (`[INCLUDED 0x]`, `[PREMIUM 1x]`, `[UNKNOWN]`) for faster visual scan.
+- **Loading feedback polish**: status line now shows a spinner while suggestions are being generated (`Buscando sugerencia...`).
 - **Terminology and reason cleanup**: empty reason updated to `no-included-model` and user-facing messages aligned to included-model policy.
 - **Dev tooling isolation**: pricing audit helper remains under `Scripts/` and is not part of production extension packaging.
+- **Known runtime limitation**: in some environments `gpt-5-mini` and `raptor` can timeout without returning suggestion chunks; GhostPrompt now recovers gracefully and prompts retry/model switch.
 
 ### 0.2.3
 

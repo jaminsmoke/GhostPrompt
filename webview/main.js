@@ -4,8 +4,8 @@
  *
  * Inbound  (host → webview):
  *   { type: 'loading', captureId: number }
- *   { type: 'suggestion', suggestion: string, captureId: number, model?: { id: string, label: string, tier: 'included' | 'premium' | 'unknown', pricing?: string } }
- *   { type: 'empty', reason: 'no-model' | 'no-included-model' | 'premium-quota-blocked' | 'empty-response' | 'too-short' | 'duplicate-input' | 'rate-limited' | 'session-budget-exhausted', captureId: number }
+ *   { type: 'suggestion', suggestion: string, captureId: number, model?: { id: string, label: string, tier: 'included' | 'premium' | 'unknown', pricing?: string, provider?: string } }
+ *   { type: 'empty', reason: 'no-model' | 'no-included-model' | 'premium-quota-blocked' | 'empty-response' | 'request-timeout' | 'too-short' | 'duplicate-input' | 'rate-limited' | 'session-budget-exhausted', captureId: number }
  *   { type: 'error', message: string, captureId: number }
  *   { type: 'clear' }
  *
@@ -170,9 +170,10 @@
     ghostInline.style.minHeight = `${measured}px`;
   }
 
-  function showStatus(text, isError = false) {
+  function showStatus(text, isError = false, isLoading = false) {
     statusEl.textContent = text;
     statusEl.classList.toggle("error", isError);
+    statusEl.classList.toggle("loading", isLoading && !isError);
     statusEl.style.display = "block";
   }
 
@@ -193,6 +194,7 @@
   function clearStatus() {
     statusEl.textContent = "";
     statusEl.classList.remove("error");
+    statusEl.classList.remove("loading");
     statusEl.style.display = "none";
   }
 
@@ -352,7 +354,7 @@
     }
 
     if (message.type === "loading") {
-      showStatus("Buscando sugerencia...");
+      showStatus("Buscando sugerencia...", false, true);
     } else if (message.type === "suggestion") {
       // Descartar si llegó fuera de tiempo (usuario ya siguió escribiendo).
       if (message.suggestion) {
@@ -376,6 +378,8 @@
         showStatus("Pausado temporalmente por limite de llamadas. Puedes ampliar el limite en Settings.");
       } else if (message.reason === "session-budget-exhausted") {
         showStatus("Se alcanzo el limite de suggestions de esta sesion. Ajustalo en Settings si necesitas mas.");
+      } else if (message.reason === "request-timeout") {
+        showStatus("El modelo tardo demasiado en responder. Prueba otro modelo o vuelve a intentarlo.");
       } else {
         showStatus("Sin sugerencia para este texto.");
       }
@@ -444,36 +448,70 @@
     const models = Array.isArray(availableModels) ? availableModels : [];
     const selected = typeof selectedModelId === "string" ? selectedModelId : "auto";
 
-    const options = [{ value: "auto", label: "Auto (policy)" }].concat(
-      models.map((model) => {
-        const tier =
-          model?.tier === "premium"
-            ? "Premium"
-            : model?.tier === "included"
-              ? "Included"
-              : "Unknown";
-        const pricing =
-          typeof model?.pricing === "string" && model.pricing.trim()
-            ? ` ${model.pricing.trim()}`
-            : "";
+    const byProvider = new Map();
+    for (const model of models) {
+      const provider =
+        typeof model?.provider === "string" && model.provider.trim()
+          ? model.provider.trim()
+          : "Other";
+      const current = byProvider.get(provider) || [];
+      current.push(model);
+      byProvider.set(provider, current);
+    }
+
+    const providerOrder = ["OpenAI", "Anthropic", "Google", "xAI", "GitHub", "Other"];
+    const sortedProviders = Array.from(byProvider.keys()).sort((a, b) => {
+      const ia = providerOrder.indexOf(a);
+      const ib = providerOrder.indexOf(b);
+      const pa = ia === -1 ? 999 : ia;
+      const pb = ib === -1 ? 999 : ib;
+      if (pa !== pb) {
+        return pa - pb;
+      }
+      return a.localeCompare(b);
+    });
+
+    const providerOptions = sortedProviders
+      .map((provider) => {
+        const rows = (byProvider.get(provider) || [])
+          .slice()
+          .sort((a, b) => {
+            const la =
+              typeof a?.label === "string" ? a.label.toLowerCase() : String(a?.id ?? "");
+            const lb =
+              typeof b?.label === "string" ? b.label.toLowerCase() : String(b?.id ?? "");
+            return la.localeCompare(lb);
+          })
+          .map((model) => {
+        const tier = model?.tier;
+        const pricing = typeof model?.pricing === "string" ? model.pricing.trim() : "";
         const id = typeof model?.id === "string" ? model.id : "";
         const labelRaw = typeof model?.label === "string" ? model.label : id || "unknown";
         return {
           value: id,
-          label: `${labelRaw} [${tier}${pricing}]`,
+          label: `${labelRaw}  ${formatTierToken(tier, pricing)}`,
         };
-      }),
-    );
-
-    modelSelect.innerHTML = options
-      .filter((option) => option.value)
-      .map(
-        (option) =>
-          `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`,
-      )
+          })
+          .filter((option) => option.value);
+        if (!rows.length) {
+          return "";
+        }
+        const optionsHtml = rows
+          .map(
+            (option) =>
+              `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`,
+          )
+          .join("");
+        return `<optgroup label="${escapeHtml(formatProviderTitle(provider))}">${optionsHtml}</optgroup>`;
+      })
       .join("");
 
-    const hasSelected = options.some((option) => option.value === selected);
+    modelSelect.innerHTML =
+      `<option value="auto">${escapeHtml("Auto (policy)")}</option>` + providerOptions;
+
+    const hasSelected = models.some(
+      (option) => typeof option?.id === "string" && option.id === selected,
+    );
     modelSelect.value = hasSelected ? selected : "auto";
   }
 
@@ -491,16 +529,27 @@
         : typeof model.id === "string"
           ? model.id
           : "unknown";
-    const tier =
-      model.tier === "premium"
-        ? "Premium"
-        : model.tier === "included"
-          ? "Included"
-          : "Unknown";
-    const pricing =
-      typeof model.pricing === "string" && model.pricing.trim()
-        ? ` ${model.pricing.trim()}`
+    const tier = model.tier;
+    const pricing = typeof model.pricing === "string" ? model.pricing.trim() : "";
+    const provider =
+      typeof model.provider === "string" && model.provider.trim()
+        ? `${model.provider.trim()} · `
         : "";
-    modelRuntimeLabel.textContent = `Modelo: ${labelRaw} [${tier}${pricing}]`;
+    modelRuntimeLabel.textContent = `Modelo: ${provider}${labelRaw} · ${formatTierToken(tier, pricing)}`;
+  }
+
+  function formatProviderTitle(provider) {
+    return `▸ ${provider}`;
+  }
+
+  function formatTierToken(tier, pricing) {
+    const normalizedPricing = typeof pricing === "string" && pricing ? ` ${pricing}` : "";
+    if (tier === "premium") {
+      return `[PREMIUM${normalizedPricing}]`;
+    }
+    if (tier === "included") {
+      return `[INCLUDED${normalizedPricing || " 0x"}]`;
+    }
+    return `[UNKNOWN${normalizedPricing}]`;
   }
 })();
