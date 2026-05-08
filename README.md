@@ -1,7 +1,7 @@
 # GhostPrompt
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.2.3.1-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
+[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.2.4-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.90%2B-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
 [![GitHub Copilot](https://img.shields.io/badge/Uses-GitHub_Copilot-24292f?logo=github&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
@@ -11,7 +11,7 @@
 > Ghost-text completions for your Copilot prompts — write faster, think clearer.
 
 <!-- markdownlint-disable-next-line MD036 -->
-**Version 0.2.3.1**
+**Version 0.2.4**
 
 ---
 
@@ -160,7 +160,7 @@ Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## Release notes
 
-### 0.2.3.1
+### 0.2.4
 
 - **Pricing-aware model tiers**: model classification now uses passive runtime metadata (`pricing`, e.g. `0x`, `0.33x`, `1x`) without extra model generation requests.
 - **No hidden quota usage for tier sync**: GhostPrompt does not probe models for pricing; it only reads model catalog metadata.

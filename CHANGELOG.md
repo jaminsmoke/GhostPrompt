@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented in this file.
 
-## [0.2.3.1] - 2026-05-08
+## [0.2.4] - 2026-05-08
 
 ### Added
 
@@ -14,11 +14,11 @@ All notable changes to this project are documented in this file.
 - Model tier classification now prioritizes passive pricing metadata (no active model probing required).
 - Safe policy behavior (`nonPremiumOnly`) now targets included models (`pricing=0x`) when metadata exists, with conservative fallback.
 - Empty reason terminology updated from `no-non-premium-model` to `no-included-model`.
-- Product version bumped to `0.2.3.1`.
+- Product version bumped to `0.2.4`.
 
 ### Docs
 
-- README updated for `0.2.3.1` with pricing-aware tier behavior and terminology alignment.
+- README updated for `0.2.4` with pricing-aware tier behavior and terminology alignment.
 - Debug guide updated to reflect `no-included-model`.
 - Development audit tooling documented as isolated under `Scripts/` (not part of packaged extension).
 
