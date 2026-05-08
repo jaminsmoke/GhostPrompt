@@ -17,9 +17,11 @@ import * as vscode from "vscode";
 import { sendToChat } from "./ChatBridge";
 import { append as appendLog } from "./ConversationLog";
 import {
+  listSuggestionModels,
   requestCompletion,
   resolveSuggestionLanguage,
   SuggestionLanguageMode,
+  SuggestionModelDescriptor,
   SuggestionModelPolicy,
   SuggestionStyle,
   SupportedSuggestionLanguage,
@@ -38,6 +40,7 @@ type WebviewMessage =
       type: "updateSetting";
       key:
         | "suggestionModelPolicy"
+        | "selectedModelId"
         | "suggestionStyle"
         | "contextMode"
         | "suggestionLanguageChoice"
@@ -57,6 +60,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   private _lastSentPrompt = "";
   private readonly _recentSentPrompts: string[] = [];
   private _lastEffectiveSuggestionLanguage: SupportedSuggestionLanguage = "en";
+  private _lastEffectiveModel?: SuggestionModelDescriptor;
 
   constructor(private readonly _context: vscode.ExtensionContext) {}
 
@@ -65,6 +69,13 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
       .getConfiguration("ghostPrompt")
       .get<string>("suggestionModelPolicy", "nonPremiumOnly");
     return value === "anyModel" ? "anyModel" : "nonPremiumOnly";
+  }
+
+  private _getSelectedModelId(): string {
+    const value = vscode.workspace
+      .getConfiguration("ghostPrompt")
+      .get<string>("selectedModelId", "auto");
+    return value?.trim() || "auto";
   }
 
   private _getMaxSuggestionChars(): number {
@@ -152,15 +163,25 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     return `${normalized.slice(0, Math.max(0, maxChars - 3))}...`;
   }
 
-  private _postSettings(webview: vscode.Webview): void {
+  private async _postSettings(webview: vscode.Webview): Promise<void> {
+    const policy = this._getSuggestionModelPolicy();
+    let availableModels: SuggestionModelDescriptor[] = [];
+    try {
+      availableModels = await listSuggestionModels(policy);
+    } catch {
+      availableModels = [];
+    }
     webview.postMessage({
       type: "settings",
       settings: {
-        suggestionModelPolicy: this._getSuggestionModelPolicy(),
+        suggestionModelPolicy: policy,
+        selectedModelId: this._getSelectedModelId(),
+        availableModels,
         suggestionStyle: this._getSuggestionStyle(),
         contextMode: this._getContextMode(),
         suggestionLanguageChoice: this._getSuggestionLanguageChoice(),
         effectiveSuggestionLanguage: this._lastEffectiveSuggestionLanguage,
+        effectiveModel: this._lastEffectiveModel,
         debugSuggestions: isSuggestionDebugEnabled(),
       },
     });
@@ -178,6 +199,11 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         value,
         vscode.ConfigurationTarget.Global,
       );
+      return;
+    }
+    if (message.key === "selectedModelId") {
+      const value = typeof message.value === "string" ? message.value : "auto";
+      await config.update("selectedModelId", value, vscode.ConfigurationTarget.Global);
       return;
     }
     if (message.key === "suggestionStyle") {
@@ -253,18 +279,36 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
       if (message.type === "init") {
-        this._postSettings(webviewView.webview);
+        await this._postSettings(webviewView.webview);
       } else if (message.type === "updateSetting") {
         await this._updateSetting(message);
-        this._postSettings(webviewView.webview);
+        await this._postSettings(webviewView.webview);
       } else if (message.type === "suggest") {
         const { text, captureId } = message;
         if (!text) {
           return;
         }
+        const policy = this._getSuggestionModelPolicy();
+        const selectedModelId = this._getSelectedModelId();
+        const style = this._getSuggestionStyle();
+        const contextMode = this._getContextMode();
+        const languageMode = this._getSuggestionLanguageMode();
+        const effectiveLanguage = resolveSuggestionLanguage(
+          languageMode,
+          this._getSuggestionLanguage(),
+          text,
+            this._lastEffectiveSuggestionLanguage,
+        );
+
         const governor = SuggestionRequestGovernor.shared;
         const governorConfig = SuggestionRequestGovernor.fromWorkspace();
-        const decision = governor.decide(text, governorConfig);
+        const decision = governor.decide(text, governorConfig, {
+          language: effectiveLanguage,
+          style,
+          contextMode,
+          modelPolicy: policy,
+          selectedModelId,
+        });
         const usage = governor.getUsageSnapshot(governorConfig);
 
         if (decision.kind === "serve-cache") {
@@ -277,6 +321,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
             webviewView.webview.postMessage({
               type: "suggestion",
               suggestion: decision.result.suggestion,
+              ...(decision.result.model ? { model: decision.result.model } : {}),
               captureId,
             });
           } else if (decision.result.kind === "empty") {
@@ -313,7 +358,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         logSuggestionDebug(
           captureId,
           "request-start",
-          `chars=${text.length} policy=${this._getSuggestionModelPolicy()} style=${this._getSuggestionStyle()} metrics=${JSON.stringify(governor.getMetrics())} usage=${JSON.stringify(usage)}`,
+          `chars=${text.length} policy=${policy} selectedModelId=${selectedModelId} style=${style} lang=${effectiveLanguage} metrics=${JSON.stringify(governor.getMetrics())} usage=${JSON.stringify(usage)}`,
         );
         this._activeSuggestionRequest?.cancel();
         this._activeSuggestionRequest?.dispose();
@@ -324,13 +369,6 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.postMessage({ type: "loading", captureId });
 
         try {
-          const contextMode = this._getContextMode();
-          const languageMode = this._getSuggestionLanguageMode();
-          const effectiveLanguage = resolveSuggestionLanguage(
-            languageMode,
-            this._getSuggestionLanguage(),
-            text,
-          );
           this._lastEffectiveSuggestionLanguage = effectiveLanguage;
           webviewView.webview.postMessage({
             type: "languageEffective",
@@ -340,9 +378,10 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
             contextMode === "project" ? this._collectProjectContext() : {};
           const result = await requestCompletion(text, {
             token: tokenSource.token,
-            policy: this._getSuggestionModelPolicy(),
+            policy,
+            preferredModelId: selectedModelId === "auto" ? undefined : selectedModelId,
             maxSuggestionChars: this._getMaxSuggestionChars(),
-            style: this._getSuggestionStyle(),
+            style,
             context: {
               lastAcceptedSuggestion:
                 contextMode === "off" ? undefined : this._lastAcceptedSuggestion,
@@ -366,14 +405,16 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
           }
 
           if (result.kind === "suggestion") {
+            this._lastEffectiveModel = result.model;
             logSuggestionDebug(
               captureId,
               "request-success",
-              `suggestionChars=${result.suggestion.length} usage=${JSON.stringify(governor.getUsageSnapshot(governorConfig))}`,
+              `suggestionChars=${result.suggestion.length} model=${result.model?.id ?? "unknown"} modelTier=${result.model?.tier ?? "unknown"} usage=${JSON.stringify(governor.getUsageSnapshot(governorConfig))}`,
             );
             webviewView.webview.postMessage({
               type: "suggestion",
               suggestion: result.suggestion,
+              ...(result.model ? { model: result.model } : {}),
               captureId,
             });
           } else if (result.kind === "empty") {

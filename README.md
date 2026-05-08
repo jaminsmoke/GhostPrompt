@@ -1,7 +1,7 @@
 # GhostPrompt
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.2.2-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
+[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.2.3-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.90%2B-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
 [![GitHub Copilot](https://img.shields.io/badge/Uses-GitHub_Copilot-24292f?logo=github&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
@@ -11,7 +11,7 @@
 > Ghost-text completions for your Copilot prompts — write faster, think clearer.
 
 <!-- markdownlint-disable-next-line MD036 -->
-**Version 0.2.2**
+**Version 0.2.3**
 
 ---
 
@@ -159,6 +159,15 @@ Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 ---
 
 ## Release notes
+
+### 0.2.3
+
+- **Punctuation boundary polish**: better spacing when suggestions continue after punctuation (e.g. `:`, `;`, `,`) with no extra duplicated separators.
+- **Model selector redesign**: model dropdown with explicit `Free/Premium` tier labels and persisted preferred model selection.
+- **Model transparency**: effective model metadata is now traceable in pipeline/debug and visible in webview runtime status.
+- **Scoped cache keys**: cache now separates suggestions by language/style/context/model dimensions to avoid cross-configuration collisions.
+- **Language stability**: auto language detection now uses confidence threshold + hysteresis + fallback for short/mixed inputs.
+- **Validation and packaging**: `npm run check` and VSIX packaging verified for `0.2.3`.
 
 ### 0.2.2
 

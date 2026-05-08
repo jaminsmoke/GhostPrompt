@@ -4,7 +4,7 @@
  *
  * Inbound  (host → webview):
  *   { type: 'loading', captureId: number }
- *   { type: 'suggestion', suggestion: string, captureId: number }
+ *   { type: 'suggestion', suggestion: string, captureId: number, model?: { id: string, label: string, tier: 'free' | 'premium' } }
  *   { type: 'empty', reason: 'no-model' | 'no-non-premium-model' | 'premium-quota-blocked' | 'empty-response' | 'too-short' | 'duplicate-input' | 'rate-limited' | 'session-budget-exhausted', captureId: number }
  *   { type: 'error', message: string, captureId: number }
  *   { type: 'clear' }
@@ -28,6 +28,10 @@
   const statusEl = document.getElementById("status-text");
   const settingGroups = Array.from(document.querySelectorAll(".setting-group"));
   const debugBtn = document.getElementById("debug-btn");
+  const modelRuntimeLabel = document.getElementById("model-runtime-label");
+  const modelSelect = /** @type {HTMLSelectElement | null} */ (
+    document.getElementById("model-select")
+  );
 
   /** ID de la última solicitud de suggestion enviada al host. */
   let currentCaptureId = 0;
@@ -274,6 +278,13 @@
   });
 
   sendBtn.addEventListener("click", send);
+  modelSelect?.addEventListener("change", () => {
+    vscode.postMessage({
+      type: "updateSetting",
+      key: "selectedModelId",
+      value: modelSelect.value || "auto",
+    });
+  });
   settingGroups.forEach((group) => {
     group.addEventListener("click", (event) => {
       const target = event.target;
@@ -347,6 +358,7 @@
       if (message.suggestion) {
         clearStatus();
         showGhost(message.suggestion);
+        setRuntimeModelLabel(message.model);
       }
     } else if (message.type === "empty") {
       clearGhost();
@@ -373,10 +385,12 @@
     } else if (message.type === "settings") {
       const settings = message.settings ?? {};
       setActiveChip("suggestionModelPolicy", settings.suggestionModelPolicy);
+      setModelOptions(settings.availableModels, settings.selectedModelId);
       setActiveChip("suggestionStyle", settings.suggestionStyle);
       setActiveChip("contextMode", settings.contextMode);
       setActiveChip("suggestionLanguageChoice", settings.suggestionLanguageChoice);
       setLanguageAutoLabel(settings.effectiveSuggestionLanguage);
+      setRuntimeModelLabel(settings.effectiveModel);
       const isDebug = Boolean(settings.debugSuggestions);
       debugBtn.dataset.enabled = String(isDebug);
       debugBtn.textContent = isDebug ? "Debug: on" : "Debug: off";
@@ -421,5 +435,54 @@
     const code =
       effectiveLanguage === "es" ? "ES" : effectiveLanguage === "en" ? "EN" : "...";
     autoChip.textContent = `Auto (${code})`;
+  }
+
+  function setModelOptions(availableModels, selectedModelId) {
+    if (!(modelSelect instanceof HTMLSelectElement)) {
+      return;
+    }
+    const models = Array.isArray(availableModels) ? availableModels : [];
+    const selected = typeof selectedModelId === "string" ? selectedModelId : "auto";
+
+    const options = [{ value: "auto", label: "Auto (policy)" }].concat(
+      models.map((model) => {
+        const tier = model?.tier === "premium" ? "Premium" : "Free";
+        const id = typeof model?.id === "string" ? model.id : "";
+        const labelRaw = typeof model?.label === "string" ? model.label : id || "unknown";
+        return {
+          value: id,
+          label: `${labelRaw} [${tier}]`,
+        };
+      }),
+    );
+
+    modelSelect.innerHTML = options
+      .filter((option) => option.value)
+      .map(
+        (option) =>
+          `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`,
+      )
+      .join("");
+
+    const hasSelected = options.some((option) => option.value === selected);
+    modelSelect.value = hasSelected ? selected : "auto";
+  }
+
+  function setRuntimeModelLabel(model) {
+    if (!(modelRuntimeLabel instanceof HTMLElement)) {
+      return;
+    }
+    if (!model || typeof model !== "object") {
+      modelRuntimeLabel.textContent = "Modelo: --";
+      return;
+    }
+    const labelRaw =
+      typeof model.label === "string" && model.label.trim()
+        ? model.label.trim()
+        : typeof model.id === "string"
+          ? model.id
+          : "unknown";
+    const tier = model.tier === "premium" ? "Premium" : "Free";
+    modelRuntimeLabel.textContent = `Modelo: ${labelRaw} [${tier}]`;
   }
 })();

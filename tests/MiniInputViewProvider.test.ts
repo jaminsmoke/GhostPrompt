@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const {
   requestCompletionMock,
   resolveSuggestionLanguageMock,
+  listSuggestionModelsMock,
   appendSuggestionMock,
   appendLogMock,
   sendToChatMock,
@@ -12,6 +13,7 @@ const {
 } = vi.hoisted(() => ({
   requestCompletionMock: vi.fn(),
   resolveSuggestionLanguageMock: vi.fn(() => "en"),
+  listSuggestionModelsMock: vi.fn(async () => []),
   appendSuggestionMock: vi.fn(),
   appendLogMock: vi.fn(),
   sendToChatMock: vi.fn(),
@@ -38,6 +40,7 @@ vi.mock("fs", () => ({
 vi.mock("../src/CopilotCompletion", () => ({
   requestCompletion: requestCompletionMock,
   resolveSuggestionLanguage: resolveSuggestionLanguageMock,
+  listSuggestionModels: listSuggestionModelsMock,
 }));
 
 vi.mock("../src/SuggestionLog", () => ({
@@ -54,6 +57,7 @@ vi.mock("../src/ChatBridge", () => ({
 
 vi.mock("../src/SuggestionDebug", () => ({
   logSuggestionDebug: logSuggestionDebugMock,
+  isSuggestionDebugEnabled: () => false,
 }));
 
 vi.mock("vscode", () => ({
@@ -117,6 +121,7 @@ describe("MiniInputViewProvider", () => {
     requestCompletionMock.mockResolvedValueOnce({
       kind: "suggestion",
       suggestion: "continuacion",
+      model: { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "free" },
     });
 
     provider.resolveWebviewView(view as never, {} as never, {} as never);
@@ -133,6 +138,7 @@ describe("MiniInputViewProvider", () => {
     expect(postMessageMock).toHaveBeenNthCalledWith(3, {
       type: "suggestion",
       suggestion: "continuacion",
+      model: { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "free" },
       captureId: 1,
     });
   });
@@ -171,6 +177,7 @@ describe("MiniInputViewProvider", () => {
     requestCompletionMock.mockResolvedValueOnce({
       kind: "suggestion",
       suggestion: "continuacion valida",
+      model: { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "free" },
     });
 
     provider.resolveWebviewView(view as never, {} as never, {} as never);
@@ -195,8 +202,32 @@ describe("MiniInputViewProvider", () => {
     expect(postMessageMock).toHaveBeenNthCalledWith(4, {
       type: "suggestion",
       suggestion: "continuacion valida",
+      model: { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "free" },
       captureId: 4,
     });
     expect(requestCompletionMock).toHaveBeenCalledOnce();
+  });
+
+  it("publica metadata de modelo en settings iniciales", async () => {
+    const view = createView();
+    const provider = new MiniInputViewProvider({
+      extensionUri: { fsPath: "/ext" },
+      storageUri: { fsPath: "/storage" },
+      globalStorageUri: { fsPath: "/global" },
+    } as never);
+
+    listSuggestionModelsMock.mockResolvedValueOnce([
+      { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "free" },
+    ]);
+
+    provider.resolveWebviewView(view as never, {} as never, {} as never);
+    await suggestHandler?.({ type: "init" });
+
+    expect(postMessageMock).toHaveBeenCalledWith({
+      type: "settings",
+      settings: expect.objectContaining({
+        availableModels: [{ id: "gpt-4o-mini", label: "GPT-4o mini", tier: "free" }],
+      }),
+    });
   });
 });

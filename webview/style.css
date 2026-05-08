@@ -199,6 +199,19 @@ textarea::placeholder {
   margin-left: auto;
 }
 
+.model-select {
+  max-width: 210px;
+  min-width: 130px;
+}
+
+.chip-runtime {
+  cursor: default;
+  opacity: 0.85;
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 #send-btn {
   flex-shrink: 0;
   padding: 4px 12px;

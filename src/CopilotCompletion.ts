@@ -12,9 +12,23 @@ export type SuggestionModelPolicy = "nonPremiumOnly" | "anyModel";
 export type SuggestionStyle = "concise" | "balanced" | "detailed";
 export type SuggestionLanguageMode = "auto" | "manual";
 export type SupportedSuggestionLanguage = "es" | "en";
+export type SuggestionModelTier = "free" | "premium";
+
+export interface SuggestionModelDescriptor {
+  id: string;
+  label: string;
+  tier: SuggestionModelTier;
+}
+
+type LanguageConfidence = "low" | "medium" | "high";
+const LANGUAGE_DETECTION_MIN_CHARS = 12;
 
 export type CompletionResult =
-  | { kind: "suggestion"; suggestion: string }
+  | {
+      kind: "suggestion";
+      suggestion: string;
+      model?: SuggestionModelDescriptor;
+    }
   | {
       kind: "empty";
       reason:
@@ -35,6 +49,7 @@ const DEFAULT_MAX_SUGGESTION_CHARS = 180;
 export interface CompletionRequestOptions {
   token: vscode.CancellationToken;
   policy: SuggestionModelPolicy;
+  preferredModelId?: string;
   maxSuggestionChars?: number;
   style?: SuggestionStyle;
   context?: SuggestionContext;
@@ -65,6 +80,7 @@ export async function requestCompletion(
   const {
     token,
     policy,
+    preferredModelId,
     maxSuggestionChars = DEFAULT_MAX_SUGGESTION_CHARS,
     style = "balanced",
     context,
@@ -78,7 +94,7 @@ export async function requestCompletion(
     return { kind: "empty", reason: "no-model" };
   }
 
-  const model = selectModelByPolicy(models, policy);
+  const model = selectModelByPolicy(models, policy, preferredModelId);
   if (!model) {
     return { kind: "empty", reason: "no-non-premium-model" };
   }
@@ -101,7 +117,7 @@ export async function requestCompletion(
     if (!suggestion) {
       return { kind: "empty", reason: "empty-response" };
     }
-    return { kind: "suggestion", suggestion };
+    return { kind: "suggestion", suggestion, model: describeModel(model) };
   } catch (error) {
     if (token.isCancellationRequested) {
       throw error;
@@ -190,17 +206,24 @@ export function buildCompletionInstruction(
 export function detectSuggestionLanguageFromInput(
   input: string,
 ): SupportedSuggestionLanguage {
+  return detectLanguageSignal(input).language;
+}
+
+function detectLanguageSignal(input: string): {
+  language: SupportedSuggestionLanguage;
+  confidence: LanguageConfidence;
+} {
   const normalized = input
     .toLowerCase()
     .replace(/[`*_~>#()[\]{}\\/|]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   if (!normalized) {
-    return "en";
+    return { language: "en", confidence: "low" };
   }
 
   if (/[ñáéíóúü¿¡]/u.test(normalized)) {
-    return "es";
+    return { language: "es", confidence: "high" };
   }
 
   const spanishHits = countWordHits(normalized, [
@@ -234,18 +257,38 @@ export function detectSuggestionLanguageFromInput(
     " build ",
   ]);
 
-  return spanishHits >= englishHits ? "es" : "en";
+  const language: SupportedSuggestionLanguage =
+    spanishHits >= englishHits ? "es" : "en";
+  const bestHits = Math.max(spanishHits, englishHits);
+  const diff = Math.abs(spanishHits - englishHits);
+  const confidence: LanguageConfidence =
+    normalized.length < LANGUAGE_DETECTION_MIN_CHARS || bestHits === 0
+      ? "low"
+      : diff >= 2 && bestHits >= 2
+        ? "high"
+        : diff >= 1
+          ? "medium"
+          : "low";
+  return { language, confidence };
 }
 
 export function resolveSuggestionLanguage(
   mode: SuggestionLanguageMode,
   manualLanguage: SupportedSuggestionLanguage,
   input: string,
+  previousEffectiveLanguage?: SupportedSuggestionLanguage,
 ): SupportedSuggestionLanguage {
   if (mode === "manual") {
     return manualLanguage;
   }
-  return detectSuggestionLanguageFromInput(input);
+  const signal = detectLanguageSignal(input);
+  if (signal.confidence === "high") {
+    return signal.language;
+  }
+  if (signal.confidence === "medium") {
+    return signal.language;
+  }
+  return previousEffectiveLanguage ?? manualLanguage;
 }
 
 function countWordHits(text: string, needles: string[]): number {
@@ -305,11 +348,47 @@ export function normalizeSuggestion(
     return "";
   }
 
+  if (shouldInsertSpaceAfterPunctuation(userText, normalized)) {
+    normalized = ` ${normalized}`;
+  }
+
   if (normalized.length > maxChars) {
     normalized = normalized.slice(0, maxChars).trimEnd();
   }
 
   return normalized;
+}
+
+function shouldInsertSpaceAfterPunctuation(
+  userText: string,
+  suggestion: string,
+): boolean {
+  if (!suggestion) {
+    return false;
+  }
+  const first = suggestion[0];
+  if (/\s/.test(first)) {
+    return false;
+  }
+  if (!/[\p{L}\p{N}_]/u.test(first)) {
+    return false;
+  }
+  if (/\s$/.test(userText)) {
+    return false;
+  }
+  const last = getLastNonWhitespaceChar(userText);
+  if (!last) {
+    return false;
+  }
+  return /[:;,.!?]/.test(last);
+}
+
+function getLastNonWhitespaceChar(text: string): string {
+  const trimmed = text.replace(/\s+$/g, "");
+  if (!trimmed) {
+    return "";
+  }
+  return trimmed[trimmed.length - 1];
 }
 
 function findSuffixPrefixOverlap(left: string, right: string): number {
@@ -332,11 +411,60 @@ function getTrailingWord(text: string): string {
 export function selectModelByPolicy(
   models: readonly vscode.LanguageModelChat[],
   policy: SuggestionModelPolicy,
+  preferredModelId?: string,
 ): vscode.LanguageModelChat | undefined {
+  if (preferredModelId) {
+    const preferred = models.find(
+      (candidate) => getModelId(candidate) === preferredModelId,
+    );
+    if (preferred) {
+      if (policy === "anyModel" || isNonPremiumModel(preferred)) {
+        return preferred;
+      }
+    }
+  }
+
   if (policy === "anyModel") {
     return models[0];
   }
   return models.find((candidate) => isNonPremiumModel(candidate));
+}
+
+export async function listSuggestionModels(
+  policy: SuggestionModelPolicy,
+): Promise<SuggestionModelDescriptor[]> {
+  const models = await vscode.lm.selectChatModels({ vendor: "copilot" });
+  const filtered =
+    policy === "anyModel"
+      ? models
+      : models.filter((candidate) => isNonPremiumModel(candidate));
+  const seen = new Set<string>();
+  const descriptors: SuggestionModelDescriptor[] = [];
+  for (const candidate of filtered) {
+    const descriptor = describeModel(candidate);
+    if (seen.has(descriptor.id)) {
+      continue;
+    }
+    seen.add(descriptor.id);
+    descriptors.push(descriptor);
+  }
+  return descriptors;
+}
+
+function describeModel(model: unknown): SuggestionModelDescriptor {
+  const data = model as { id?: string; family?: string; name?: string };
+  const id = getModelId(model);
+  const label = data.name?.trim() || data.family?.trim() || id;
+  return {
+    id,
+    label,
+    tier: isNonPremiumModel(model) ? "free" : "premium",
+  };
+}
+
+function getModelId(model: unknown): string {
+  const data = model as { id?: string; family?: string; name?: string };
+  return data.id?.trim() || data.family?.trim() || data.name?.trim() || "unknown";
 }
 
 function isNonPremiumModel(model: unknown): boolean {

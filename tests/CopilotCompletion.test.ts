@@ -15,6 +15,7 @@ vi.mock("vscode", () => ({
 }));
 
 import {
+  listSuggestionModels,
   normalizeSuggestion,
   requestCompletion,
   buildCompletionInstruction,
@@ -87,6 +88,21 @@ describe("CopilotCompletion", () => {
     expect(normalized).toBe("cación robusta para API");
   });
 
+  it("inserta espacio tras puntuacion cuando suggestion empieza en palabra", () => {
+    expect(normalizeSuggestion("continuacion", "Ejemplo:", 100)).toBe(" continuacion");
+    expect(normalizeSuggestion("item", "Lista,", 100)).toBe(" item");
+    expect(normalizeSuggestion("valor", "Clave;", 100)).toBe(" valor");
+  });
+
+  it("no inserta espacio extra si ya existe separacion", () => {
+    expect(normalizeSuggestion(" continuacion", "Ejemplo:", 100)).toBe(
+      " continuacion",
+    );
+    expect(normalizeSuggestion("continuacion", "Ejemplo: ", 100)).toBe(
+      "continuacion",
+    );
+  });
+
   it("devuelve suggestion cuando el modelo responde texto", async () => {
     const sendRequest = vi.fn().mockResolvedValue({
       text: createTextStream([" continuacion ", "util"]),
@@ -99,7 +115,12 @@ describe("CopilotCompletion", () => {
       maxSuggestionChars: 50,
     });
 
-    expect(result).toEqual({ kind: "suggestion", suggestion: " continuacion util" });
+    expect(result).toEqual(
+      expect.objectContaining({
+        kind: "suggestion",
+        suggestion: " continuacion util",
+      }),
+    );
     expect(sendRequest).toHaveBeenCalledOnce();
     expect(userMessageMock).toHaveBeenCalledOnce();
   });
@@ -112,6 +133,32 @@ describe("CopilotCompletion", () => {
 
     const selected = selectModelByPolicy(models, "nonPremiumOnly");
     expect(selected).toEqual(models[1]);
+  });
+
+  it("selectModelByPolicy respeta preferredModelId cuando es compatible", () => {
+    const models = [
+      { id: "gpt-4o-mini" },
+      { id: "claude-3.5-haiku" },
+    ] as never[];
+    const selected = selectModelByPolicy(models, "nonPremiumOnly", "claude-3.5-haiku");
+    expect(selected).toEqual(models[1]);
+  });
+
+  it("selectModelByPolicy ignora preferred premium en modo seguro", () => {
+    const models = [
+      { id: "gpt-5-pro" },
+      { id: "gpt-4o-mini" },
+    ] as never[];
+    const selected = selectModelByPolicy(models, "nonPremiumOnly", "gpt-5-pro");
+    expect(selected).toEqual(models[1]);
+  });
+
+  it("listSuggestionModels devuelve label con tier", async () => {
+    selectChatModelsMock.mockResolvedValueOnce([{ id: "gpt-4o-mini", name: "GPT-4o mini" }]);
+    const models = await listSuggestionModels("anyModel");
+    expect(models).toEqual([
+      { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "free" },
+    ]);
   });
 
   it("buildCompletionInstruction incluye directiva de estilo y contexto reciente", () => {
@@ -160,5 +207,24 @@ describe("CopilotCompletion", () => {
     expect(resolveSuggestionLanguage("auto", "en", "Quiero una propuesta")).toBe(
       "es",
     );
+  });
+
+  it("en auto mantiene idioma previo con input corto de baja confianza", () => {
+    expect(resolveSuggestionLanguage("auto", "en", "ok", "es")).toBe("es");
+  });
+
+  it("en auto usa fallback manual si no hay idioma previo", () => {
+    expect(resolveSuggestionLanguage("auto", "en", "ok")).toBe("en");
+  });
+
+  it("en auto resuelve ingles para prompt tecnico claro", () => {
+    expect(
+      resolveSuggestionLanguage(
+        "auto",
+        "es",
+        "Please create a REST endpoint with authentication and validation",
+        "es",
+      ),
+    ).toBe("en");
   });
 });

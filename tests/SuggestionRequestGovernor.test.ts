@@ -53,6 +53,42 @@ describe("SuggestionRequestGovernor", () => {
     expect(second.kind).toBe("serve-cache");
   });
 
+  it("no colisiona cache entre idioma/estilo/contexto/modelo distintos", () => {
+    const governor = new SuggestionRequestGovernor();
+    const relaxedConfig = { ...config, rateLimitMaxRequests: 10 };
+    const baseScope = {
+      language: "es",
+      style: "balanced",
+      contextMode: "project",
+      modelPolicy: "nonPremiumOnly",
+      selectedModelId: "auto",
+    };
+    const first = governor.decide("hola mundo", relaxedConfig, baseScope);
+    expect(first.kind).toBe("request");
+    if (first.kind === "request") {
+      governor.saveResult(
+        first.key,
+        { kind: "suggestion", suggestion: "continuacion" },
+        relaxedConfig,
+      );
+    }
+
+    const sameScope = governor.decide("hola mundo", relaxedConfig, baseScope);
+    expect(sameScope.kind).toBe("serve-cache");
+
+    const changedLanguage = governor.decide("hola mundo", relaxedConfig, {
+      ...baseScope,
+      language: "en",
+    });
+    expect(changedLanguage.kind).toBe("request");
+
+    const changedStyle = governor.decide("hola mundo", relaxedConfig, {
+      ...baseScope,
+      style: "detailed",
+    });
+    expect(changedStyle.kind).toBe("request");
+  });
+
   it("aplica rate limit tras superar ventana", () => {
     const governor = new SuggestionRequestGovernor();
     const one = governor.decide("texto uno", config);

@@ -28,6 +28,14 @@ export interface GovernorUsageSnapshot {
   msUntilWindowReset: number;
 }
 
+export interface GovernorRequestScope {
+  language?: string;
+  style?: string;
+  contextMode?: string;
+  modelPolicy?: string;
+  selectedModelId?: string;
+}
+
 type GovernorDecision =
   | { kind: "request"; key: string }
   | { kind: "serve-cache"; key: string; result: CompletionResult }
@@ -102,11 +110,16 @@ export class SuggestionRequestGovernor {
     };
   }
 
-  public decide(text: string, config: GovernorConfig): GovernorDecision {
+  public decide(
+    text: string,
+    config: GovernorConfig,
+    scope?: GovernorRequestScope,
+  ): GovernorDecision {
     const now = Date.now();
-    const key = normalizeInput(text);
+    const normalizedInput = normalizeInput(text);
+    const key = buildScopedKey(normalizedInput, scope);
 
-    if (key.length < config.minChars) {
+    if (normalizedInput.length < config.minChars) {
       return { kind: "block", reason: "too-short" };
     }
 
@@ -198,6 +211,25 @@ export class SuggestionRequestGovernor {
 
 function normalizeInput(text: string): string {
   return text.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function buildScopedKey(normalizedInput: string, scope?: GovernorRequestScope): string {
+  if (!scope) {
+    return normalizedInput;
+  }
+  const parts = [
+    normalizedInput,
+    normalizeScopeValue(scope.language),
+    normalizeScopeValue(scope.style),
+    normalizeScopeValue(scope.contextMode),
+    normalizeScopeValue(scope.modelPolicy),
+    normalizeScopeValue(scope.selectedModelId),
+  ];
+  return parts.join("||");
+}
+
+function normalizeScopeValue(value: string | undefined): string {
+  return (value ?? "").trim().toLowerCase();
 }
 
 function clampNumber(value: number, min: number, max: number): number {

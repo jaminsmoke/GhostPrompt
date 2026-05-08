@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.2.3] - 2026-05-08
+
+### Added (0.2.2)
+
+- Model selector redesign in webview with explicit per-model tier labels (`Free` / `Premium`).
+- Runtime model status label in webview (`Modelo: ... [Free/Premium]`).
+- Scoped governor key dimensions to avoid cache collisions across language/style/context/model settings.
+
+### Changed (0.2.2)
+
+- Suggestion boundary normalization after punctuation (`:`, `;`, `,`, `.`, `!`, `?`) for cleaner inline continuation spacing.
+- Language auto-resolution stability with confidence-aware detection, hysteresis, and fallback to previous/manual language.
+- Preferred model selection persisted via `ghostPrompt.selectedModelId` and respected by model selection policy.
+
+### Validation (0.2.2)
+
+- `npm run check` passing (`lint` + `compile` + `test`).
+- VSIX packaging verified for `ghost-prompt-0.2.3.vsix`.
+
 ## [0.2.2] - 2026-05-08
 
 ### Added
