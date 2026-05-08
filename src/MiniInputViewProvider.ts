@@ -18,8 +18,11 @@ import { sendToChat } from "./ChatBridge";
 import { append as appendLog } from "./ConversationLog";
 import {
   requestCompletion,
+  resolveSuggestionLanguage,
+  SuggestionLanguageMode,
   SuggestionModelPolicy,
   SuggestionStyle,
+  SupportedSuggestionLanguage,
 } from "./CopilotCompletion";
 import { isSuggestionDebugEnabled, logSuggestionDebug } from "./SuggestionDebug";
 import { SuggestionRequestGovernor } from "./SuggestionRequestGovernor";
@@ -37,6 +40,7 @@ type WebviewMessage =
         | "suggestionModelPolicy"
         | "suggestionStyle"
         | "contextMode"
+        | "suggestionLanguageChoice"
         | "debugSuggestions";
       value: string | boolean;
     };
@@ -52,6 +56,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   private _lastAcceptedSuggestion = "";
   private _lastSentPrompt = "";
   private readonly _recentSentPrompts: string[] = [];
+  private _lastEffectiveSuggestionLanguage: SupportedSuggestionLanguage = "en";
 
   constructor(private readonly _context: vscode.ExtensionContext) {}
 
@@ -90,6 +95,28 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
       return value;
     }
     return "basic";
+  }
+
+  private _getSuggestionLanguageMode(): SuggestionLanguageMode {
+    const value = vscode.workspace
+      .getConfiguration("ghostPrompt")
+      .get<string>("suggestionLanguageMode", "auto");
+    return value === "manual" ? "manual" : "auto";
+  }
+
+  private _getSuggestionLanguage(): SupportedSuggestionLanguage {
+    const value = vscode.workspace
+      .getConfiguration("ghostPrompt")
+      .get<string>("suggestionLanguage", "en");
+    return value === "es" ? "es" : "en";
+  }
+
+  private _getSuggestionLanguageChoice(): "auto" | SupportedSuggestionLanguage {
+    const mode = this._getSuggestionLanguageMode();
+    if (mode === "auto") {
+      return "auto";
+    }
+    return this._getSuggestionLanguage();
   }
 
   private _collectProjectContext(): {
@@ -132,6 +159,8 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         suggestionModelPolicy: this._getSuggestionModelPolicy(),
         suggestionStyle: this._getSuggestionStyle(),
         contextMode: this._getContextMode(),
+        suggestionLanguageChoice: this._getSuggestionLanguageChoice(),
+        effectiveSuggestionLanguage: this._lastEffectiveSuggestionLanguage,
         debugSuggestions: isSuggestionDebugEnabled(),
       },
     });
@@ -169,6 +198,32 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
           ? message.value
           : "basic";
       await config.update("contextMode", value, vscode.ConfigurationTarget.Global);
+      return;
+    }
+    if (message.key === "suggestionLanguageChoice") {
+      const choice =
+        message.value === "auto" || message.value === "es" || message.value === "en"
+          ? message.value
+          : "auto";
+      if (choice === "auto") {
+        await config.update(
+          "suggestionLanguageMode",
+          "auto",
+          vscode.ConfigurationTarget.Global,
+        );
+      } else {
+        await config.update(
+          "suggestionLanguageMode",
+          "manual",
+          vscode.ConfigurationTarget.Global,
+        );
+        await config.update(
+          "suggestionLanguage",
+          choice,
+          vscode.ConfigurationTarget.Global,
+        );
+        this._lastEffectiveSuggestionLanguage = choice;
+      }
       return;
     }
     if (message.key === "debugSuggestions") {
@@ -270,6 +325,17 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
 
         try {
           const contextMode = this._getContextMode();
+          const languageMode = this._getSuggestionLanguageMode();
+          const effectiveLanguage = resolveSuggestionLanguage(
+            languageMode,
+            this._getSuggestionLanguage(),
+            text,
+          );
+          this._lastEffectiveSuggestionLanguage = effectiveLanguage;
+          webviewView.webview.postMessage({
+            type: "languageEffective",
+            language: effectiveLanguage,
+          });
           const projectContext =
             contextMode === "project" ? this._collectProjectContext() : {};
           const result = await requestCompletion(text, {
@@ -286,6 +352,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
                 contextMode === "off"
                   ? undefined
                   : this._recentSentPrompts.slice(0, 3),
+              outputLanguage: effectiveLanguage,
               ...projectContext,
             },
           });

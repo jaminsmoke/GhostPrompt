@@ -375,9 +375,13 @@
       setActiveChip("suggestionModelPolicy", settings.suggestionModelPolicy);
       setActiveChip("suggestionStyle", settings.suggestionStyle);
       setActiveChip("contextMode", settings.contextMode);
+      setActiveChip("suggestionLanguageChoice", settings.suggestionLanguageChoice);
+      setLanguageAutoLabel(settings.effectiveSuggestionLanguage);
       const isDebug = Boolean(settings.debugSuggestions);
       debugBtn.dataset.enabled = String(isDebug);
       debugBtn.textContent = isDebug ? "Debug: on" : "Debug: off";
+    } else if (message.type === "languageEffective") {
+      setLanguageAutoLabel(message.language);
     } else if (message.type === "clear") {
       input.value = "";
       clearGhost();
@@ -401,5 +405,21 @@
       chip.classList.toggle("active", isActive);
       chip.setAttribute("aria-pressed", isActive ? "true" : "false");
     });
+  }
+
+  function setLanguageAutoLabel(effectiveLanguage) {
+    const group = document.querySelector(
+      '.setting-group[data-key="suggestionLanguageChoice"]',
+    );
+    if (!group) {
+      return;
+    }
+    const autoChip = group.querySelector('.chip[data-value="auto"]');
+    if (!(autoChip instanceof HTMLButtonElement)) {
+      return;
+    }
+    const code =
+      effectiveLanguage === "es" ? "ES" : effectiveLanguage === "en" ? "EN" : "...";
+    autoChip.textContent = `Auto (${code})`;
   }
 })();

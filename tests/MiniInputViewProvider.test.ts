@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   requestCompletionMock,
+  resolveSuggestionLanguageMock,
   appendSuggestionMock,
   appendLogMock,
   sendToChatMock,
@@ -10,6 +11,7 @@ const {
   MockCancellationTokenSource,
 } = vi.hoisted(() => ({
   requestCompletionMock: vi.fn(),
+  resolveSuggestionLanguageMock: vi.fn(() => "en"),
   appendSuggestionMock: vi.fn(),
   appendLogMock: vi.fn(),
   sendToChatMock: vi.fn(),
@@ -35,6 +37,7 @@ vi.mock("fs", () => ({
 
 vi.mock("../src/CopilotCompletion", () => ({
   requestCompletion: requestCompletionMock,
+  resolveSuggestionLanguage: resolveSuggestionLanguageMock,
 }));
 
 vi.mock("../src/SuggestionLog", () => ({
@@ -124,6 +127,10 @@ describe("MiniInputViewProvider", () => {
       captureId: 1,
     });
     expect(postMessageMock).toHaveBeenNthCalledWith(2, {
+      type: "languageEffective",
+      language: "en",
+    });
+    expect(postMessageMock).toHaveBeenNthCalledWith(3, {
       type: "suggestion",
       suggestion: "continuacion",
       captureId: 1,
@@ -146,7 +153,7 @@ describe("MiniInputViewProvider", () => {
     provider.resolveWebviewView(view as never, {} as never, {} as never);
     await suggestHandler?.({ type: "suggest", text: "texto distinto", captureId: 2 });
 
-    expect(postMessageMock).toHaveBeenNthCalledWith(2, {
+    expect(postMessageMock).toHaveBeenNthCalledWith(3, {
       type: "empty",
       reason: "no-model",
       captureId: 2,
@@ -182,6 +189,10 @@ describe("MiniInputViewProvider", () => {
       captureId: 4,
     });
     expect(postMessageMock).toHaveBeenNthCalledWith(3, {
+      type: "languageEffective",
+      language: "en",
+    });
+    expect(postMessageMock).toHaveBeenNthCalledWith(4, {
       type: "suggestion",
       suggestion: "continuacion valida",
       captureId: 4,

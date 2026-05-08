@@ -18,6 +18,8 @@ import {
   normalizeSuggestion,
   requestCompletion,
   buildCompletionInstruction,
+  detectSuggestionLanguageFromInput,
+  resolveSuggestionLanguage,
   selectModelByPolicy,
 } from "../src/CopilotCompletion";
 
@@ -124,6 +126,7 @@ describe("CopilotCompletion", () => {
       activeFilePath: "src/MiniInputViewProvider.ts",
       activeLanguageId: "typescript",
       activeSelection: "const value = message.value === 'off' ? 'off' : 'basic';",
+      outputLanguage: "es",
     });
 
     expect(instruction).toContain("richer continuation");
@@ -132,5 +135,30 @@ describe("CopilotCompletion", () => {
     expect(instruction).toContain("Relevant project context");
     expect(instruction).toContain("Active file: src/MiniInputViewProvider.ts");
     expect(instruction).toContain("Recent prompts (latest first)");
+    expect(instruction).toContain("Write the continuation in Spanish.");
+    expect(instruction).toContain("Do not translate code identifiers");
+  });
+
+  it("detecta idioma espanol e ingles de forma basica", () => {
+    expect(detectSuggestionLanguageFromInput("Quiero una funcion para validar email")).toBe(
+      "es",
+    );
+    expect(detectSuggestionLanguageFromInput("I need a function to validate email")).toBe(
+      "en",
+    );
+  });
+
+  it("usa ingles por defecto cuando no recibe contexto de idioma", () => {
+    const instruction = buildCompletionInstruction("Create a test plan");
+    expect(instruction).toContain("Write the continuation in English.");
+  });
+
+  it("manual tiene precedencia sobre auto en resolucion de idioma", () => {
+    expect(resolveSuggestionLanguage("manual", "en", "Quiero una propuesta")).toBe(
+      "en",
+    );
+    expect(resolveSuggestionLanguage("auto", "en", "Quiero una propuesta")).toBe(
+      "es",
+    );
   });
 });

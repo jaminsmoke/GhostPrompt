@@ -105,11 +105,38 @@ Hacer que GhostPrompt sugiera texto mas alineado al proyecto real, elimine casi 
 - [x] Sin regresiones en protocolo `loading/suggestion/empty/error/clear`.
 - Release documentada con cambios de comportamiento y nuevos defaults.
 
+### Sprint 5 - P1.5 (Idioma de suggestions)
+
+- [x] Anadir modo de idioma para suggestions:
+  - `ghostPrompt.suggestionLanguageMode`: `auto` | `manual` (default `auto`)
+  - `ghostPrompt.suggestionLanguage`: idioma fijo cuando `mode=manual`
+- [x] Anadir selector de idioma en webview:
+  - opcion `Auto`
+  - idiomas iniciales soportados (ej: `es`, `en`)
+- [x] Implementar deteccion de idioma del input cuando `mode=auto`.
+- [x] Reflejar en UI el idioma efectivo cuando `mode=auto` (chip/boton contextual).
+- [x] Extender `buildCompletionInstruction` para forzar idioma de salida:
+  - suggestion en idioma detectado/seleccionado
+  - sin traducir identificadores de codigo, rutas, API names ni texto entre comillas
+- [x] Anadir tests unitarios:
+  - deteccion de idioma basica (`es`/`en`)
+  - construccion de instruccion con idioma forzado
+  - precedencia de `manual` sobre `auto`
+
+#### Criterios de aceptacion P1.5
+
+- [x] Input en espanol -> suggestion en espanol (modo `auto`) *(validado por tests de deteccion + instruccion forzada)*.
+- [x] Input en ingles -> suggestion en ingles (modo `auto`) *(validado por tests de deteccion + instruccion forzada)*.
+- [x] En modo `manual`, siempre se respeta el idioma seleccionado.
+- [x] El usuario puede ver claramente el idioma activo en webview.
+- [x] `npm run check` verde tras cambios de idioma.
+
 ## Metricas de exito (v0.2.2)
 
 - Incrementar tasa de aceptacion de suggestions (medicion manual o debug-assisted).
 - Reducir eventos `rate-limited` y `session-budget-exhausted` por sesion.
 - Reducir incidencias UX de "ghost text pegado/duplicado" reportadas en pruebas.
+- Reducir incidencias de suggestions en idioma incorrecto.
 - Mantener estabilidad y latencia percibida dentro del flujo actual.
 
 ## Riesgos y mitigaciones
@@ -122,6 +149,9 @@ Hacer que GhostPrompt sugiera texto mas alineado al proyecto real, elimine casi 
 
 - **Riesgo:** defaults mas altos aumenten consumo inesperado en algunos usuarios.  
   **Mitigacion:** mantener governor activo, mensajes claros y ajustes faciles en settings.
+
+- **Riesgo:** deteccion de idioma inestable en inputs cortos o mixtos.  
+  **Mitigacion:** umbral minimo de longitud, fallback a idioma previo o configurado, y opcion manual siempre disponible.
 
 ## Definicion de Done (v0.2.2)
 

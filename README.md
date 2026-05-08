@@ -1,7 +1,7 @@
 # GhostPrompt
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.2.0-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
+[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.2.2-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.90%2B-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
 [![GitHub Copilot](https://img.shields.io/badge/Uses-GitHub_Copilot-24292f?logo=github&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
@@ -11,7 +11,7 @@
 > Ghost-text completions for your Copilot prompts — write faster, think clearer.
 
 <!-- markdownlint-disable-next-line MD036 -->
-**Version 0.2.0**
+**Version 0.2.2**
 
 ---
 
@@ -123,6 +123,8 @@ You can keep GhostPrompt near Copilot Chat and move quickly between drafting and
 - `ghostPrompt.maxSuggestionChars` (default `180`)
 - `ghostPrompt.suggestionStyle` (`concise` | `balanced` | `detailed`, default `balanced`)
 - `ghostPrompt.contextMode` (`off` | `basic` | `project`, default `basic`)
+- `ghostPrompt.suggestionLanguageMode` (`auto` | `manual`, default `auto`)
+- `ghostPrompt.suggestionLanguage` (`es` | `en`, used when `suggestionLanguageMode=manual`)
 
 ### Request governor (cost/frequency protection)
 
@@ -143,18 +145,26 @@ Inside the webview mini-input, you can also change policy, style, context, and d
 
 ## Roadmap
 
-v0.2 is **shipped**; the milestone log is archived in [`Docs/Roadmap-v0.2.md`](./Docs/Roadmap-v0.2.md).
+v0.2 is **shipped**; roadmap documents:
+
+- Archived v0.2: [`Docs/Plans/Roadmaps/Roadmap-v0.2.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.md)
+- Current v0.2.2 execution: [`Docs/Plans/Roadmaps/Roadmap-v0.2.2.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.2.md)
+
+Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ---
 
 ## Release notes
 
-### 0.2.2 (in progress)
+### 0.2.2
 
 - **Request governor retune**: more generous defaults (`requestCooldownMs=500`, `rateLimitMaxRequests=90`, `sessionRequestBudget=300`) with clearer blocked-state guidance in UI.
 - **Context quality**: new `contextMode=project`, adding lightweight workspace/file/language/selection signals plus recent prompts.
 - **Ghost text robustness**: improved normalization for overlap and incomplete trailing-word duplication; safer boundary insertion on `Tab` acceptance.
-- **Validation**: `npm run check` green after Sprint 1-3 changes.
+- **Suggestion language control**: `auto` detection from user input plus manual `ES/EN` override in the webview controls.
+- **Validation**: `npm run check` green.
+
+For complete details and historical versions, see [`CHANGELOG.md`](./CHANGELOG.md).
 
 ### 0.2.0
 

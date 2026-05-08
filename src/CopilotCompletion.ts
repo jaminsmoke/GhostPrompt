@@ -10,6 +10,8 @@ import * as vscode from "vscode";
 
 export type SuggestionModelPolicy = "nonPremiumOnly" | "anyModel";
 export type SuggestionStyle = "concise" | "balanced" | "detailed";
+export type SuggestionLanguageMode = "auto" | "manual";
+export type SupportedSuggestionLanguage = "es" | "en";
 
 export type CompletionResult =
   | { kind: "suggestion"; suggestion: string }
@@ -46,6 +48,7 @@ export interface SuggestionContext {
   activeFilePath?: string;
   activeLanguageId?: string;
   activeSelection?: string;
+  outputLanguage?: SupportedSuggestionLanguage;
 }
 
 /**
@@ -123,6 +126,11 @@ export function buildCompletionInstruction(
       : style === "detailed"
         ? "Provide a richer continuation with concrete details (1-3 sentences when useful)."
         : "Provide a balanced continuation with specific intent and moderate detail (1-2 sentences).";
+  const outputLanguage = context?.outputLanguage ?? "en";
+  const languageDirective =
+    outputLanguage === "es"
+      ? "Write the continuation in Spanish. "
+      : "Write the continuation in English. ";
 
   const recentContext: string[] = [];
   if (context?.lastSentPrompt?.trim()) {
@@ -163,8 +171,10 @@ export function buildCompletionInstruction(
     "The user is typing a prompt for GitHub Copilot Chat. " +
     "Predict and return ONLY the natural continuation of the following partial text. " +
     styleDirective +
+    languageDirective +
     "Never repeat what was already written. " +
     "Keep context and intent specific, avoiding generic filler. " +
+    "Do not translate code identifiers, API names, file paths, or quoted text. " +
     "Do not add explanations, greetings, or any metadata.\n\n" +
     (projectContext.length
       ? `Relevant project context:\n- ${projectContext.join("\n- ")}\n\n`
@@ -175,6 +185,72 @@ export function buildCompletionInstruction(
     "Partial text to continue: " +
     userText
   );
+}
+
+export function detectSuggestionLanguageFromInput(
+  input: string,
+): SupportedSuggestionLanguage {
+  const normalized = input
+    .toLowerCase()
+    .replace(/[`*_~>#()[\]{}\\/|]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!normalized) {
+    return "en";
+  }
+
+  if (/[ñáéíóúü¿¡]/u.test(normalized)) {
+    return "es";
+  }
+
+  const spanishHits = countWordHits(normalized, [
+    " de ",
+    " la ",
+    " el ",
+    " en ",
+    " que ",
+    " para ",
+    " con ",
+    " una ",
+    " un ",
+    " por ",
+    " como ",
+    " quiero ",
+    " necesito ",
+    " y ",
+  ]);
+  const englishHits = countWordHits(normalized, [
+    " the ",
+    " and ",
+    " with ",
+    " for ",
+    " in ",
+    " to ",
+    " of ",
+    " i ",
+    " want ",
+    " need ",
+    " create ",
+    " build ",
+  ]);
+
+  return spanishHits >= englishHits ? "es" : "en";
+}
+
+export function resolveSuggestionLanguage(
+  mode: SuggestionLanguageMode,
+  manualLanguage: SupportedSuggestionLanguage,
+  input: string,
+): SupportedSuggestionLanguage {
+  if (mode === "manual") {
+    return manualLanguage;
+  }
+  return detectSuggestionLanguageFromInput(input);
+}
+
+function countWordHits(text: string, needles: string[]): number {
+  const padded = ` ${text} `;
+  return needles.reduce((hits, needle) => hits + (padded.includes(needle) ? 1 : 0), 0);
 }
 
 function truncateInline(value: string, maxChars: number): string {
