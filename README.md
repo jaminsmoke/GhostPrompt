@@ -31,6 +31,10 @@ Writing prompts in Copilot Chat is often repetitive and context-switch heavy.
 
 Screenshots are **collapsed by default** so the README stays scannable; click a title to expand. Images are shown at **native resolution** (no `width` scaling in markup) so text stays sharp; swap the PNG files if you want smaller repo size.
 
+### Video demo
+
+Watch GhostPrompt in action on YouTube: [GhostPrompt demo](https://youtu.be/luGP-APDt7I?si=wwIHOBqHhyYdhT-H).
+
 <!-- markdownlint-disable MD033 -->
 
 <details>
