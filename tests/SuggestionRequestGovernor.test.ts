@@ -21,6 +21,16 @@ const config = {
 };
 
 describe("SuggestionRequestGovernor", () => {
+  it("fromWorkspace usa los nuevos defaults de sprint 1", () => {
+    const cfg = SuggestionRequestGovernor.fromWorkspace();
+    expect(cfg.minChars).toBe(6);
+    expect(cfg.cooldownMs).toBe(500);
+    expect(cfg.cacheTtlMs).toBe(45_000);
+    expect(cfg.rateLimitMaxRequests).toBe(90);
+    expect(cfg.rateLimitWindowMs).toBe(600_000);
+    expect(cfg.sessionBudget).toBe(300);
+  });
+
   it("bloquea texto demasiado corto", () => {
     const governor = new SuggestionRequestGovernor();
     const result = governor.decide("ab", config);
@@ -51,5 +61,18 @@ describe("SuggestionRequestGovernor", () => {
     expect(one.kind).toBe("request");
     expect(two.kind).toBe("request");
     expect(three).toEqual({ kind: "block", reason: "rate-limited" });
+  });
+
+  it("expone snapshot de uso para debug de presupuesto y ventana", () => {
+    const governor = new SuggestionRequestGovernor();
+    governor.decide("texto uno", config);
+    governor.decide("texto dos", config);
+
+    const usage = governor.getUsageSnapshot(config);
+    expect(usage.requestsInWindow).toBe(2);
+    expect(usage.remainingInWindow).toBe(0);
+    expect(usage.sessionUsed).toBe(2);
+    expect(usage.sessionRemaining).toBe(3);
+    expect(usage.msUntilWindowReset).toBeGreaterThanOrEqual(0);
   });
 });

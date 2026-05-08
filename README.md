@@ -6,6 +6,8 @@
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.90%2B-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
 [![GitHub Copilot](https://img.shields.io/badge/Uses-GitHub_Copilot-24292f?logo=github&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
 
+![GhostPrompt banner](./media/img/ghostpromp-Banner.png)
+
 > Ghost-text completions for your Copilot prompts — write faster, think clearer.
 
 <!-- markdownlint-disable-next-line MD036 -->
@@ -34,28 +36,28 @@ Screenshots are **collapsed by default** so the README stays scannable; click a 
 <details>
 <summary><strong>1 · Icon and inline composer</strong></summary>
 
-<img src="./ImagesReadme1.png" alt="GhostPrompt extension icon and inline composer overview">
+<img src="./media/img/ImagesReadme1.png" alt="GhostPrompt extension icon and inline composer overview">
 
 </details>
 
 <details>
 <summary><strong>2 · Inline continuation in action</strong></summary>
 
-<img src="./ImagesReadme2.png" alt="GhostPrompt inline ghost-text continuation">
+<img src="./media/img/ImagesReadme2.png" alt="GhostPrompt inline ghost-text continuation">
 
 </details>
 
 <details>
 <summary><strong>3 · Next to Copilot Chat</strong></summary>
 
-<img src="./ImagesReadme3.png" alt="GhostPrompt panel near Copilot integration">
+<img src="./media/img/ImagesReadme3.png" alt="GhostPrompt panel near Copilot integration">
 
 </details>
 
 <details>
 <summary><strong>4 · Quick controls (model, style, context)</strong></summary>
 
-<img src="./ImagesReadme4.png" alt="GhostPrompt quick control strip">
+<img src="./media/img/ImagesReadme4.png" alt="GhostPrompt quick control strip">
 
 </details>
 
@@ -120,16 +122,16 @@ You can keep GhostPrompt near Copilot Chat and move quickly between drafting and
 
 - `ghostPrompt.maxSuggestionChars` (default `180`)
 - `ghostPrompt.suggestionStyle` (`concise` | `balanced` | `detailed`, default `balanced`)
-- `ghostPrompt.contextMode` (`off` | `basic`, default `basic`)
+- `ghostPrompt.contextMode` (`off` | `basic` | `project`, default `basic`)
 
 ### Request governor (cost/frequency protection)
 
 - `ghostPrompt.minCharsForSuggestion` (default `6`)
-- `ghostPrompt.requestCooldownMs` (default `700`)
+- `ghostPrompt.requestCooldownMs` (default `500`)
 - `ghostPrompt.cacheTtlMs` (default `45000`)
-- `ghostPrompt.rateLimitMaxRequests` (default `40`)
+- `ghostPrompt.rateLimitMaxRequests` (default `90`)
 - `ghostPrompt.rateLimitWindowMs` (default `600000`)
-- `ghostPrompt.sessionRequestBudget` (default `120`)
+- `ghostPrompt.sessionRequestBudget` (default `300`)
 
 ### Debug mode
 
@@ -146,6 +148,13 @@ v0.2 is **shipped**; the milestone log is archived in [`Docs/Roadmap-v0.2.md`](.
 ---
 
 ## Release notes
+
+### 0.2.2 (in progress)
+
+- **Request governor retune**: more generous defaults (`requestCooldownMs=500`, `rateLimitMaxRequests=90`, `sessionRequestBudget=300`) with clearer blocked-state guidance in UI.
+- **Context quality**: new `contextMode=project`, adding lightweight workspace/file/language/selection signals plus recent prompts.
+- **Ghost text robustness**: improved normalization for overlap and incomplete trailing-word duplication; safer boundary insertion on `Tab` acceptance.
+- **Validation**: `npm run check` green after Sprint 1-3 changes.
 
 ### 0.2.0
 

@@ -105,10 +105,11 @@
           "type": "string",
           "enum": [
             "off",
-            "basic"
+            "basic",
+            "project"
           ],
           "default": "basic",
-          "markdownDescription": "Controls whether local context from the current session is used to shape inline suggestions."
+          "markdownDescription": "Controls whether context is used to shape inline suggestions. `off` disables context, `basic` uses recent session prompt/suggestion signals, `project` also includes lightweight active workspace/file context."
         },
         "ghostPrompt.minCharsForSuggestion": {
           "type": "number",
@@ -119,7 +120,7 @@
         },
         "ghostPrompt.requestCooldownMs": {
           "type": "number",
-          "default": 700,
+          "default": 500,
           "minimum": 100,
           "maximum": 5000,
           "markdownDescription": "Minimum cooldown between repeated identical suggestion inputs."
@@ -133,7 +134,7 @@
         },
         "ghostPrompt.rateLimitMaxRequests": {
           "type": "number",
-          "default": 40,
+          "default": 90,
           "minimum": 1,
           "maximum": 500,
           "markdownDescription": "Maximum suggestion requests allowed within the configured rate limit window."
@@ -147,7 +148,7 @@
         },
         "ghostPrompt.sessionRequestBudget": {
           "type": "number",
-          "default": 120,
+          "default": 300,
           "minimum": 1,
           "maximum": 2000,
           "markdownDescription": "Maximum number of suggestion model requests allowed per extension session."

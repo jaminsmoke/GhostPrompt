@@ -20,6 +20,14 @@ export interface GovernorMetrics {
   sessionBlocked: number;
 }
 
+export interface GovernorUsageSnapshot {
+  requestsInWindow: number;
+  remainingInWindow: number;
+  sessionUsed: number;
+  sessionRemaining: number;
+  msUntilWindowReset: number;
+}
+
 type GovernorDecision =
   | { kind: "request"; key: string }
   | { kind: "serve-cache"; key: string; result: CompletionResult }
@@ -32,11 +40,11 @@ interface CacheEntry {
 
 const DEFAULT_CONFIG: GovernorConfig = {
   minChars: 6,
-  cooldownMs: 700,
+  cooldownMs: 500,
   cacheTtlMs: 45_000,
-  rateLimitMaxRequests: 40,
+  rateLimitMaxRequests: 90,
   rateLimitWindowMs: 10 * 60_000,
-  sessionBudget: 120,
+  sessionBudget: 300,
 };
 
 export class SuggestionRequestGovernor {
@@ -58,21 +66,36 @@ export class SuggestionRequestGovernor {
   public static fromWorkspace(): GovernorConfig {
     const cfg = vscode.workspace.getConfiguration("ghostPrompt");
     return {
-      minChars: clampNumber(cfg.get<number>("minCharsForSuggestion", 6), 1, 100),
-      cooldownMs: clampNumber(cfg.get<number>("requestCooldownMs", 700), 100, 5000),
-      cacheTtlMs: clampNumber(cfg.get<number>("cacheTtlMs", 45_000), 1000, 300_000),
+      minChars: clampNumber(
+        cfg.get<number>("minCharsForSuggestion", DEFAULT_CONFIG.minChars),
+        1,
+        100,
+      ),
+      cooldownMs: clampNumber(
+        cfg.get<number>("requestCooldownMs", DEFAULT_CONFIG.cooldownMs),
+        100,
+        5000,
+      ),
+      cacheTtlMs: clampNumber(
+        cfg.get<number>("cacheTtlMs", DEFAULT_CONFIG.cacheTtlMs),
+        1000,
+        300_000,
+      ),
       rateLimitMaxRequests: clampNumber(
-        cfg.get<number>("rateLimitMaxRequests", 40),
+        cfg.get<number>(
+          "rateLimitMaxRequests",
+          DEFAULT_CONFIG.rateLimitMaxRequests,
+        ),
         1,
         500,
       ),
       rateLimitWindowMs: clampNumber(
-        cfg.get<number>("rateLimitWindowMs", 10 * 60_000),
+        cfg.get<number>("rateLimitWindowMs", DEFAULT_CONFIG.rateLimitWindowMs),
         10_000,
         60 * 60_000,
       ),
       sessionBudget: clampNumber(
-        cfg.get<number>("sessionRequestBudget", 120),
+        cfg.get<number>("sessionRequestBudget", DEFAULT_CONFIG.sessionBudget),
         1,
         2000,
       ),
@@ -104,9 +127,7 @@ export class SuggestionRequestGovernor {
       return { kind: "block", reason: "session-budget-exhausted" };
     }
 
-    this._requestTimestamps = this._requestTimestamps.filter(
-      (t) => now - t <= config.rateLimitWindowMs,
-    );
+    this.pruneRequestTimestamps(now, config.rateLimitWindowMs);
     if (this._requestTimestamps.length >= config.rateLimitMaxRequests) {
       this._metrics.rateLimited += 1;
       return { kind: "block", reason: "rate-limited" };
@@ -138,12 +159,40 @@ export class SuggestionRequestGovernor {
     return { ...this._metrics };
   }
 
+  public getUsageSnapshot(config: GovernorConfig): GovernorUsageSnapshot {
+    const now = Date.now();
+    this.pruneRequestTimestamps(now, config.rateLimitWindowMs);
+    const requestsInWindow = this._requestTimestamps.length;
+    const remainingInWindow = Math.max(
+      0,
+      config.rateLimitMaxRequests - requestsInWindow,
+    );
+    const sessionRemaining = Math.max(0, config.sessionBudget - this._sessionUsed);
+    const oldestInWindow = this._requestTimestamps[0];
+    const msUntilWindowReset = oldestInWindow
+      ? Math.max(0, config.rateLimitWindowMs - (now - oldestInWindow))
+      : 0;
+    return {
+      requestsInWindow,
+      remainingInWindow,
+      sessionUsed: this._sessionUsed,
+      sessionRemaining,
+      msUntilWindowReset,
+    };
+  }
+
   private cleanupCache(now: number): void {
     for (const [key, entry] of this._cache.entries()) {
       if (entry.expiresAt <= now) {
         this._cache.delete(key);
       }
     }
+  }
+
+  private pruneRequestTimestamps(now: number, windowMs: number): void {
+    this._requestTimestamps = this._requestTimestamps.filter(
+      (t) => now - t <= windowMs,
+    );
   }
 }
 

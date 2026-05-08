@@ -51,6 +51,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   private _activeSuggestionRequest?: vscode.CancellationTokenSource;
   private _lastAcceptedSuggestion = "";
   private _lastSentPrompt = "";
+  private readonly _recentSentPrompts: string[] = [];
 
   constructor(private readonly _context: vscode.ExtensionContext) {}
 
@@ -81,11 +82,47 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     return "balanced";
   }
 
-  private _getContextMode(): "off" | "basic" {
+  private _getContextMode(): "off" | "basic" | "project" {
     const value = vscode.workspace
       .getConfiguration("ghostPrompt")
       .get<string>("contextMode", "basic");
-    return value === "off" ? "off" : "basic";
+    if (value === "off" || value === "project") {
+      return value;
+    }
+    return "basic";
+  }
+
+  private _collectProjectContext(): {
+    workspaceName?: string;
+    activeFilePath?: string;
+    activeLanguageId?: string;
+    activeSelection?: string;
+  } {
+    const editor = vscode.window.activeTextEditor;
+    const workspaceName = vscode.workspace.workspaceFolders?.[0]?.name;
+    if (!editor) {
+      return { workspaceName };
+    }
+    const activeLanguageId = editor.document.languageId;
+    const activeFilePath = vscode.workspace.asRelativePath(editor.document.uri, false);
+    const selected = editor.selection?.isEmpty
+      ? ""
+      : editor.document.getText(editor.selection);
+    const activeSelection = selected ? this._trimContextField(selected, 320) : undefined;
+    return {
+      workspaceName,
+      activeFilePath: this._trimContextField(activeFilePath, 180),
+      activeLanguageId: this._trimContextField(activeLanguageId, 40),
+      activeSelection,
+    };
+  }
+
+  private _trimContextField(value: string, maxChars: number): string {
+    const normalized = value.replace(/\s+/g, " ").trim();
+    if (normalized.length <= maxChars) {
+      return normalized;
+    }
+    return `${normalized.slice(0, Math.max(0, maxChars - 3))}...`;
   }
 
   private _postSettings(webview: vscode.Webview): void {
@@ -127,7 +164,10 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
       return;
     }
     if (message.key === "contextMode") {
-      const value = message.value === "off" ? "off" : "basic";
+      const value =
+        message.value === "off" || message.value === "project"
+          ? message.value
+          : "basic";
       await config.update("contextMode", value, vscode.ConfigurationTarget.Global);
       return;
     }
@@ -170,12 +210,13 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         const governor = SuggestionRequestGovernor.shared;
         const governorConfig = SuggestionRequestGovernor.fromWorkspace();
         const decision = governor.decide(text, governorConfig);
+        const usage = governor.getUsageSnapshot(governorConfig);
 
         if (decision.kind === "serve-cache") {
           logSuggestionDebug(
             captureId,
             "request-cache-hit",
-            JSON.stringify(governor.getMetrics()),
+            `metrics=${JSON.stringify(governor.getMetrics())} usage=${JSON.stringify(usage)}`,
           );
           if (decision.result.kind === "suggestion") {
             webviewView.webview.postMessage({
@@ -203,7 +244,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
           logSuggestionDebug(
             captureId,
             "request-blocked",
-            `reason=${decision.reason} metrics=${JSON.stringify(governor.getMetrics())}`,
+            `reason=${decision.reason} metrics=${JSON.stringify(governor.getMetrics())} usage=${JSON.stringify(usage)}`,
           );
           webviewView.webview.postMessage({
             type: "empty",
@@ -217,7 +258,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         logSuggestionDebug(
           captureId,
           "request-start",
-          `chars=${text.length} policy=${this._getSuggestionModelPolicy()} style=${this._getSuggestionStyle()} metrics=${JSON.stringify(governor.getMetrics())}`,
+          `chars=${text.length} policy=${this._getSuggestionModelPolicy()} style=${this._getSuggestionStyle()} metrics=${JSON.stringify(governor.getMetrics())} usage=${JSON.stringify(usage)}`,
         );
         this._activeSuggestionRequest?.cancel();
         this._activeSuggestionRequest?.dispose();
@@ -228,25 +269,26 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         webviewView.webview.postMessage({ type: "loading", captureId });
 
         try {
-          const result = await requestCompletion(
-            text,
-            {
-              token: tokenSource.token,
-              policy: this._getSuggestionModelPolicy(),
-              maxSuggestionChars: this._getMaxSuggestionChars(),
-              style: this._getSuggestionStyle(),
-              context: {
-                lastAcceptedSuggestion:
-                  this._getContextMode() === "basic"
-                    ? this._lastAcceptedSuggestion
-                    : undefined,
-                lastSentPrompt:
-                  this._getContextMode() === "basic"
-                    ? this._lastSentPrompt
-                    : undefined,
-              },
+          const contextMode = this._getContextMode();
+          const projectContext =
+            contextMode === "project" ? this._collectProjectContext() : {};
+          const result = await requestCompletion(text, {
+            token: tokenSource.token,
+            policy: this._getSuggestionModelPolicy(),
+            maxSuggestionChars: this._getMaxSuggestionChars(),
+            style: this._getSuggestionStyle(),
+            context: {
+              lastAcceptedSuggestion:
+                contextMode === "off" ? undefined : this._lastAcceptedSuggestion,
+              lastSentPrompt:
+                contextMode === "off" ? undefined : this._lastSentPrompt,
+              recentSentPrompts:
+                contextMode === "off"
+                  ? undefined
+                  : this._recentSentPrompts.slice(0, 3),
+              ...projectContext,
             },
-          );
+          });
           governor.saveResult(decision.key, result, governorConfig);
           if (
             tokenSource.token.isCancellationRequested ||
@@ -260,7 +302,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
             logSuggestionDebug(
               captureId,
               "request-success",
-              `suggestionChars=${result.suggestion.length}`,
+              `suggestionChars=${result.suggestion.length} usage=${JSON.stringify(governor.getUsageSnapshot(governorConfig))}`,
             );
             webviewView.webview.postMessage({
               type: "suggestion",
@@ -296,6 +338,10 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         await appendSuggestion(dataUri, message.context, message.suggestion);
       } else if (message.type === "send" && message.text) {
         this._lastSentPrompt = message.text;
+        this._recentSentPrompts.unshift(message.text);
+        if (this._recentSentPrompts.length > 5) {
+          this._recentSentPrompts.length = 5;
+        }
         await appendLog(dataUri, message.text);
         await sendToChat(message.text);
         webviewView.webview.postMessage({ type: "clear" });

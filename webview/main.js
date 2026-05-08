@@ -52,14 +52,22 @@
     if (!suggestion) {
       return "";
     }
-    const first = suggestion[0];
-    if (/\s/.test(first)) {
-      return "";
-    }
     if (!context) {
       return "";
     }
+    const first = suggestion[0];
     const last = context[context.length - 1];
+    if (!last) {
+      return "";
+    }
+
+    // Evita duplicados tipo "..", ",," o espacios repetidos en la frontera.
+    if (last === first && /[\s.,;:!?]/.test(first)) {
+      return "";
+    }
+    if (/\s/.test(first)) {
+      return "";
+    }
     if (/\s/.test(last)) {
       return "";
     }
@@ -76,6 +84,11 @@
   function refreshGhostPresentation() {
     renderInlineGhost();
     syncComposerHeight();
+  }
+
+  function buildInsertedSuggestion(context, suggestion) {
+    const gap = joinSeparatorBeforeSuggestion(context, suggestion);
+    return normalizeAcceptedSuggestion(context, gap + suggestion);
   }
 
   // ── Envío de suggestion al host (con debounce) ───────────────────────────
@@ -126,7 +139,12 @@
       return;
     }
     const typed = escapeHtml(input.value);
-    const suggestion = escapeHtml(pendingSuggestion);
+    const renderedSuggestion = buildInsertedSuggestion(input.value, pendingSuggestion);
+    if (!renderedSuggestion) {
+      ghostInline.innerHTML = "";
+      return;
+    }
+    const suggestion = escapeHtml(renderedSuggestion);
     ghostInline.innerHTML =
       `<span class="typed">${typed}</span>` +
       `<span class="suggestion">${suggestion}</span>`;
@@ -136,8 +154,11 @@
 
   function syncComposerHeight() {
     const ghostVisible = Boolean(pendingSuggestion) && isGhostUiAllowed();
+    const renderedSuggestion = ghostVisible
+      ? buildInsertedSuggestion(input.value, pendingSuggestion)
+      : "";
     const combined = ghostVisible
-      ? `${input.value}${pendingSuggestion}`
+      ? `${input.value}${renderedSuggestion}`
       : input.value;
     ghostMeasure.textContent = combined || " ";
     const measured = Math.max(MIN_COMPOSER_HEIGHT, ghostMeasure.scrollHeight + 2);
@@ -178,8 +199,7 @@
       return false;
     }
     const context = input.value;
-    const gap = joinSeparatorBeforeSuggestion(context, pendingSuggestion);
-    const inserted = gap + pendingSuggestion;
+    const inserted = buildInsertedSuggestion(context, pendingSuggestion);
     input.value += inserted;
     vscode.postMessage({
       type: "accept",
@@ -191,6 +211,21 @@
     // Mover cursor al final.
     input.selectionStart = input.selectionEnd = input.value.length;
     return true;
+  }
+
+  function normalizeAcceptedSuggestion(context, inserted) {
+    if (!inserted || !context) {
+      return inserted;
+    }
+    const last = context[context.length - 1];
+    const first = inserted[0];
+    if (!last || !first) {
+      return inserted;
+    }
+    if (last === first && /[\s.,;:!?]/.test(first)) {
+      return inserted.slice(1);
+    }
+    return inserted;
   }
 
   // ── Envío al chat ────────────────────────────────────────────────────────
@@ -326,9 +361,9 @@
       } else if (message.reason === "duplicate-input") {
         showStatus("Esperando cambios en el texto...");
       } else if (message.reason === "rate-limited") {
-        showStatus("Pausado temporalmente para evitar demasiadas llamadas.");
+        showStatus("Pausado temporalmente por limite de llamadas. Puedes ampliar el limite en Settings.");
       } else if (message.reason === "session-budget-exhausted") {
-        showStatus("Límite de sugerencias de esta sesión alcanzado.");
+        showStatus("Se alcanzo el limite de suggestions de esta sesion. Ajustalo en Settings si necesitas mas.");
       } else {
         showStatus("Sin sugerencia para este texto.");
       }

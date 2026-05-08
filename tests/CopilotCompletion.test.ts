@@ -67,6 +67,24 @@ describe("CopilotCompletion", () => {
     expect(normalizeSuggestion("línea\nnueva", "línea", 100)).toBe("\nnueva");
   });
 
+  it("quita solape parcial entre sufijo del usuario y prefijo de suggestion", () => {
+    const normalized = normalizeSuggestion(
+      "de autenticación con refresh token y rotación",
+      "Diseña un flujo de autenticación ",
+      200,
+    );
+    expect(normalized).toBe(" con refresh token y rotación");
+  });
+
+  it("quita palabra final incompleta duplicada al inicio de suggestion", () => {
+    const normalized = normalizeSuggestion(
+      "autenticación robusta para API",
+      "Necesito una autenti",
+      200,
+    );
+    expect(normalized).toBe("cación robusta para API");
+  });
+
   it("devuelve suggestion cuando el modelo responde texto", async () => {
     const sendRequest = vi.fn().mockResolvedValue({
       text: createTextStream([" continuacion ", "util"]),
@@ -98,10 +116,21 @@ describe("CopilotCompletion", () => {
     const instruction = buildCompletionInstruction("Escribe una propuesta", "detailed", {
       lastSentPrompt: "Quiero una arquitectura en capas",
       lastAcceptedSuggestion: "Incluye riesgos y mitigaciones",
+      recentSentPrompts: [
+        "Diseña un backend con Node y PostgreSQL",
+        "Quiero tests para API REST",
+      ],
+      workspaceName: "VsCodeExtension-InlineChatSuggestions",
+      activeFilePath: "src/MiniInputViewProvider.ts",
+      activeLanguageId: "typescript",
+      activeSelection: "const value = message.value === 'off' ? 'off' : 'basic';",
     });
 
     expect(instruction).toContain("richer continuation");
     expect(instruction).toContain("Recent prompt sent by user");
     expect(instruction).toContain("Recent accepted suggestion style");
+    expect(instruction).toContain("Relevant project context");
+    expect(instruction).toContain("Active file: src/MiniInputViewProvider.ts");
+    expect(instruction).toContain("Recent prompts (latest first)");
   });
 });

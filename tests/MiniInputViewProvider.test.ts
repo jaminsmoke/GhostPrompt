@@ -152,4 +152,40 @@ describe("MiniInputViewProvider", () => {
       captureId: 2,
     });
   });
+
+  it("bloquea input demasiado corto y se recupera en siguiente suggest valido", async () => {
+    const view = createView();
+    const provider = new MiniInputViewProvider({
+      extensionUri: { fsPath: "/ext" },
+      storageUri: { fsPath: "/storage" },
+      globalStorageUri: { fsPath: "/global" },
+    } as never);
+
+    requestCompletionMock.mockResolvedValueOnce({
+      kind: "suggestion",
+      suggestion: "continuacion valida",
+    });
+
+    provider.resolveWebviewView(view as never, {} as never, {} as never);
+
+    await suggestHandler?.({ type: "suggest", text: " ", captureId: 3 });
+    expect(postMessageMock).toHaveBeenLastCalledWith({
+      type: "empty",
+      reason: "too-short",
+      captureId: 3,
+    });
+    expect(requestCompletionMock).not.toHaveBeenCalled();
+
+    await suggestHandler?.({ type: "suggest", text: "hola mundo", captureId: 4 });
+    expect(postMessageMock).toHaveBeenNthCalledWith(2, {
+      type: "loading",
+      captureId: 4,
+    });
+    expect(postMessageMock).toHaveBeenNthCalledWith(3, {
+      type: "suggestion",
+      suggestion: "continuacion valida",
+      captureId: 4,
+    });
+    expect(requestCompletionMock).toHaveBeenCalledOnce();
+  });
 });

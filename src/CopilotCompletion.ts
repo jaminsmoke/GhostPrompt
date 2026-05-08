@@ -41,6 +41,11 @@ export interface CompletionRequestOptions {
 export interface SuggestionContext {
   lastAcceptedSuggestion?: string;
   lastSentPrompt?: string;
+  recentSentPrompts?: string[];
+  workspaceName?: string;
+  activeFilePath?: string;
+  activeLanguageId?: string;
+  activeSelection?: string;
 }
 
 /**
@@ -128,6 +133,30 @@ export function buildCompletionInstruction(
       `Recent accepted suggestion style: ${context.lastAcceptedSuggestion}`,
     );
   }
+  if (context?.recentSentPrompts?.length) {
+    const lines = context.recentSentPrompts
+      .map((prompt) => truncateInline(prompt, 220))
+      .filter(Boolean);
+    if (lines.length) {
+      recentContext.push(`Recent prompts (latest first): ${lines.join(" | ")}`);
+    }
+  }
+
+  const projectContext: string[] = [];
+  if (context?.workspaceName?.trim()) {
+    projectContext.push(`Workspace: ${truncateInline(context.workspaceName, 80)}`);
+  }
+  if (context?.activeFilePath?.trim()) {
+    projectContext.push(`Active file: ${truncateInline(context.activeFilePath, 180)}`);
+  }
+  if (context?.activeLanguageId?.trim()) {
+    projectContext.push(`Active language: ${truncateInline(context.activeLanguageId, 40)}`);
+  }
+  if (context?.activeSelection?.trim()) {
+    projectContext.push(
+      `Active selection excerpt: ${truncateInline(context.activeSelection, 320)}`,
+    );
+  }
 
   return (
     "You are a prompt completion assistant. " +
@@ -137,12 +166,23 @@ export function buildCompletionInstruction(
     "Never repeat what was already written. " +
     "Keep context and intent specific, avoiding generic filler. " +
     "Do not add explanations, greetings, or any metadata.\n\n" +
+    (projectContext.length
+      ? `Relevant project context:\n- ${projectContext.join("\n- ")}\n\n`
+      : "") +
     (recentContext.length
       ? `Relevant recent context:\n- ${recentContext.join("\n- ")}\n\n`
       : "") +
     "Partial text to continue: " +
     userText
   );
+}
+
+function truncateInline(value: string, maxChars: number): string {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxChars) {
+    return normalized;
+  }
+  return `${normalized.slice(0, Math.max(0, maxChars - 3))}...`;
 }
 
 export async function collectResponseText(
@@ -170,6 +210,19 @@ export function normalizeSuggestion(
   if (prefix && normalized.toLowerCase().startsWith(prefix.toLowerCase())) {
     normalized = normalized.slice(prefix.length);
     /* No trimStart: la continuación suele empezar con espacio o \n respecto a la última palabra. */
+  } else if (prefix) {
+    const overlap = findSuffixPrefixOverlap(prefix, normalized);
+    if (overlap > 0) {
+      normalized = normalized.slice(overlap);
+    } else {
+      const trailingWord = getTrailingWord(prefix);
+      if (
+        trailingWord.length >= 3 &&
+        normalized.toLowerCase().startsWith(trailingWord.toLowerCase())
+      ) {
+        normalized = normalized.slice(trailingWord.length);
+      }
+    }
   }
 
   if (!normalized.trim()) {
@@ -181,6 +234,23 @@ export function normalizeSuggestion(
   }
 
   return normalized;
+}
+
+function findSuffixPrefixOverlap(left: string, right: string): number {
+  const leftLower = left.toLowerCase();
+  const rightLower = right.toLowerCase();
+  const max = Math.min(leftLower.length, rightLower.length, 80);
+  for (let len = max; len >= 3; len -= 1) {
+    if (leftLower.slice(-len) === rightLower.slice(0, len)) {
+      return len;
+    }
+  }
+  return 0;
+}
+
+function getTrailingWord(text: string): string {
+  const match = text.match(/[\p{L}\p{N}_]+$/u);
+  return match?.[0] ?? "";
 }
 
 export function selectModelByPolicy(
