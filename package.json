@@ -2,7 +2,7 @@
   "name": "ghost-prompt",
   "displayName": "GhostPrompt",
   "description": "Ghost-text completions for your Copilot prompts — write faster, think clearer.",
-  "version": "0.2.3",
+  "version": "0.2.3.1",
   "publisher": "jaminsmoke",
   "author": "JaminSmoke",
   "icon": "media/img/icon.png",
@@ -77,7 +77,7 @@
             "anyModel"
           ],
           "default": "nonPremiumOnly",
-          "markdownDescription": "Policy to choose Copilot model for inline suggestions. `nonPremiumOnly` (safe default) avoids premium-capable models; `anyModel` allows first available model and may consume premium quota."
+          "markdownDescription": "Policy to choose Copilot model for inline suggestions. `nonPremiumOnly` (safe default) uses only included (`0x`) models when metadata is available; `anyModel` allows first available model and may consume premium quota."
         },
         "ghostPrompt.selectedModelId": {
           "type": "string",

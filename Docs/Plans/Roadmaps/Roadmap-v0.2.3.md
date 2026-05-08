@@ -5,19 +5,19 @@
 
 ## Objetivo de v0.2.3
 
-Cerrar puntos finos de calidad percibida en suggestions para que la experiencia sea mas coherente y explicable: separacion correcta de texto en fronteras de puntuacion, selector de modelo redisenado con estado `Free/Premium`, y comportamiento robusto en idioma/caching.
+Cerrar puntos finos de calidad percibida en suggestions para que la experiencia sea mas coherente y explicable: separacion correcta de texto en fronteras de puntuacion, selector de modelo redisenado con estado `Included/Premium`, y comportamiento robusto en idioma/caching.
 
 ## Problemas priorizados
 
 1. En ciertos casos de puntuacion (ej: `:`) la suggestion aparece pegada al texto previo.
-2. El control actual de modelo no muestra de forma clara el modelo exacto usado ni su categoria `Free/Premium`.
+2. El control actual de modelo no muestra de forma clara el modelo exacto usado ni su categoria `Included/Premium`.
 3. El cache de suggestions puede mezclar resultados entre configuraciones distintas (idioma/estilo/contexto).
 4. La deteccion de idioma en entradas cortas o mixtas puede oscilar.
 
 ## Metas de producto (v0.2.3)
 
 - UX de ghost text sin artefactos de union en casos de puntuacion comunes.
-- Selector de modelo redisenado: lista clara de modelos con etiqueta visible `Free` o `Premium`.
+- Selector de modelo redisenado: lista clara de modelos con etiqueta visible `Included` o `Premium`.
 - Mayor transparencia: usuario sabe que modelo se usa para la suggestion actual.
 - Sugerencias mas consistentes con idioma/configuracion activa.
 
@@ -46,12 +46,12 @@ Cerrar puntos finos de calidad percibida en suggestions para que la experiencia 
 - [x] No aparecen regresiones en saltos de linea o suggestions que ya traen espacio inicial.
 - [x] `npm run check` verde.
 
-### Sprint 2 - P1 (Selector de modelo redisenado + tier Free/Premium)
+### Sprint 2 - P1 (Selector de modelo redisenado + tier Included/Premium)
 
 - [x] Sustituir el control actual de modelo por una lista de modelos disponibles.
 - [x] Mostrar por opcion:
   - nombre legible del modelo
-  - etiqueta de tier (`Free` / `Premium`)
+  - etiqueta de tier (`Included` / `Premium`)
 - [x] Mantener policy de seguridad (`nonPremiumOnly`) como modo rapido/filtro.
 - [x] Guardar modelo seleccionado por el usuario (persistencia en settings).
 - [x] Mostrar en estado/debug el modelo efectivamente usado por request.
@@ -59,7 +59,7 @@ Cerrar puntos finos de calidad percibida en suggestions para que la experiencia 
 #### Criterios de aceptacion P1 (Sprint 3)
 
 - [x] El usuario ve una lista de modelos concreta, no solo modo abstracto.
-- [x] Cada modelo visible incluye tier `Free/Premium`.
+- [x] Cada modelo visible incluye tier `Included/Premium`.
 - [x] El modelo elegido en UI se respeta al pedir suggestions (cuando aplica).
 - [x] `npm run check` verde.
 
@@ -146,7 +146,7 @@ Cerrar puntos finos de calidad percibida en suggestions para que la experiencia 
 ## Definicion de Done (v0.2.3)
 
 - Frontera de sugerencia robusta en puntuacion habitual.
-- Selector de modelo redisenado con lista y tier `Free/Premium`.
+- Selector de modelo redisenado con lista y tier `Included/Premium`.
 - Modelo efectivo trazable en pipeline (logs + UI).
 - Cache coherente con idioma/estilo/configuracion activa.
 - Documentacion y VSIX listos para validacion final.

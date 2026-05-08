@@ -1,7 +1,7 @@
 # GhostPrompt
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.2.3-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
+[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.2.3.1-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.90%2B-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
 [![GitHub Copilot](https://img.shields.io/badge/Uses-GitHub_Copilot-24292f?logo=github&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
@@ -11,7 +11,7 @@
 > Ghost-text completions for your Copilot prompts — write faster, think clearer.
 
 <!-- markdownlint-disable-next-line MD036 -->
-**Version 0.2.3**
+**Version 0.2.3.1**
 
 ---
 
@@ -23,7 +23,7 @@ Writing prompts in Copilot Chat is often repetitive and context-switch heavy.
 ### Benefits at a glance
 
 - Faster prompt drafting with inline continuation suggestions
-- Safer usage controls (non-premium policy, request governor)
+- Safer usage controls (included-model policy, request governor)
 - Better writing flow with keyboard-first interactions (`Tab`, `Enter`)
 - Compact controls directly inside the composer (policy/style/context/debug)
 
@@ -75,7 +75,7 @@ Watch GhostPrompt in action on YouTube: [GhostPrompt demo](https://youtu.be/luGP
 - **Always visible** — the input lives in the Activity Bar sidebar *and* the bottom Panel; pick whichever fits your layout.
 - **One-key send** — `Enter` sends your prompt to Copilot Chat. `Shift+Enter` adds a newline.
 - **Request safety controls** — dedupe, cache, cooldown, rate-limit, and session budget to prevent over-calling.
-- **Model policy controls** — force non-premium models by default, with optional override.
+- **Model policy controls** — force included (`0x`) models by default, with optional override.
 - **Non-intrusive** — completions run via `vscode.lm`; no draft editor tabs, no focus stealing.
 - **Private logs** — accepted suggestions and sent prompts are saved in the extension's private storage (not inside your project).
 
@@ -119,7 +119,7 @@ You can keep GhostPrompt near Copilot Chat and move quickly between drafting and
 
 ### Model policy
 
-- `ghostPrompt.suggestionModelPolicy = nonPremiumOnly` (default): only non-premium-like models are allowed.
+- `ghostPrompt.suggestionModelPolicy = nonPremiumOnly` (default): only included (`0x`) models are allowed when pricing metadata is available.
 - `ghostPrompt.suggestionModelPolicy = anyModel`: uses the first available model (may consume premium quota).
 
 ### Suggestion quality
@@ -160,10 +160,18 @@ Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## Release notes
 
+### 0.2.3.1
+
+- **Pricing-aware model tiers**: model classification now uses passive runtime metadata (`pricing`, e.g. `0x`, `0.33x`, `1x`) without extra model generation requests.
+- **No hidden quota usage for tier sync**: GhostPrompt does not probe models for pricing; it only reads model catalog metadata.
+- **UI tier clarity**: model labels now use `Included / Premium / Unknown` and display pricing multiplier when available.
+- **Terminology and reason cleanup**: empty reason updated to `no-included-model` and user-facing messages aligned to included-model policy.
+- **Dev tooling isolation**: pricing audit helper remains under `Scripts/` and is not part of production extension packaging.
+
 ### 0.2.3
 
 - **Punctuation boundary polish**: better spacing when suggestions continue after punctuation (e.g. `:`, `;`, `,`) with no extra duplicated separators.
-- **Model selector redesign**: model dropdown with explicit `Free/Premium` tier labels and persisted preferred model selection.
+- **Model selector redesign**: model dropdown with explicit tier labels and persisted preferred model selection.
 - **Model transparency**: effective model metadata is now traceable in pipeline/debug and visible in webview runtime status.
 - **Scoped cache keys**: cache now separates suggestions by language/style/context/model dimensions to avoid cross-configuration collisions.
 - **Language stability**: auto language detection now uses confidence threshold + hysteresis + fallback for short/mixed inputs.
@@ -184,7 +192,7 @@ For complete details and historical versions, see [`CHANGELOG.md`](./CHANGELOG.m
 - **Inline ghost-text** in the composer, including scroll/height behavior for long suggestions.
 - **Suggestion pipeline**: typed results (`suggestion`, `empty`, `error`, `loading`), no silent failures.
 - **Request governor** (dedupe, cache, cooldown, rate limit, session budget) to limit accidental over-calling.
-- **Model policy**: default **non-premium** selection with optional `anyModel` override; commands and settings for policy/debug.
+- **Model policy**: default **included-model** selection with optional `anyModel` override; commands and settings for policy/debug.
 - **Quality controls**: suggestion style (`concise` / `balanced` / `detailed`), `maxSuggestionChars`, optional **session context** (`contextMode`).
 - **Webview UX**: compact chip controls, keyboard/a11y polish, layout fixes for narrow Activity Bar views.
 - **Tests**: Vitest suite (`npm run test` / `npm run check`).

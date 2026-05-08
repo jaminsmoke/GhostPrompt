@@ -42,5 +42,6 @@ Thumbs.db
 !ImagesReadme*.png
 !img/icon.png
 !media/**
+Scripts/**
 # Exclude extension private storage (if any)
 .globalStorage/

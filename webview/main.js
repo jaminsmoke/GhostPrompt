@@ -4,8 +4,8 @@
  *
  * Inbound  (host → webview):
  *   { type: 'loading', captureId: number }
- *   { type: 'suggestion', suggestion: string, captureId: number, model?: { id: string, label: string, tier: 'free' | 'premium' } }
- *   { type: 'empty', reason: 'no-model' | 'no-non-premium-model' | 'premium-quota-blocked' | 'empty-response' | 'too-short' | 'duplicate-input' | 'rate-limited' | 'session-budget-exhausted', captureId: number }
+ *   { type: 'suggestion', suggestion: string, captureId: number, model?: { id: string, label: string, tier: 'included' | 'premium' | 'unknown', pricing?: string } }
+ *   { type: 'empty', reason: 'no-model' | 'no-included-model' | 'premium-quota-blocked' | 'empty-response' | 'too-short' | 'duplicate-input' | 'rate-limited' | 'session-budget-exhausted', captureId: number }
  *   { type: 'error', message: string, captureId: number }
  *   { type: 'clear' }
  *
@@ -364,8 +364,8 @@
       clearGhost();
       if (message.reason === "no-model") {
         showStatus("Copilot no disponible en esta sesión.");
-      } else if (message.reason === "no-non-premium-model") {
-        showStatus("No hay modelo no premium disponible para suggestions.");
+      } else if (message.reason === "no-included-model") {
+        showStatus("No hay modelo incluido disponible para suggestions.");
       } else if (message.reason === "premium-quota-blocked") {
         showStatus("Suggestions pausadas para evitar consumo de cuota premium.");
       } else if (message.reason === "too-short") {
@@ -446,12 +446,21 @@
 
     const options = [{ value: "auto", label: "Auto (policy)" }].concat(
       models.map((model) => {
-        const tier = model?.tier === "premium" ? "Premium" : "Free";
+        const tier =
+          model?.tier === "premium"
+            ? "Premium"
+            : model?.tier === "included"
+              ? "Included"
+              : "Unknown";
+        const pricing =
+          typeof model?.pricing === "string" && model.pricing.trim()
+            ? ` ${model.pricing.trim()}`
+            : "";
         const id = typeof model?.id === "string" ? model.id : "";
         const labelRaw = typeof model?.label === "string" ? model.label : id || "unknown";
         return {
           value: id,
-          label: `${labelRaw} [${tier}]`,
+          label: `${labelRaw} [${tier}${pricing}]`,
         };
       }),
     );
@@ -482,7 +491,16 @@
         : typeof model.id === "string"
           ? model.id
           : "unknown";
-    const tier = model.tier === "premium" ? "Premium" : "Free";
-    modelRuntimeLabel.textContent = `Modelo: ${labelRaw} [${tier}]`;
+    const tier =
+      model.tier === "premium"
+        ? "Premium"
+        : model.tier === "included"
+          ? "Included"
+          : "Unknown";
+    const pricing =
+      typeof model.pricing === "string" && model.pricing.trim()
+        ? ` ${model.pricing.trim()}`
+        : "";
+    modelRuntimeLabel.textContent = `Modelo: ${labelRaw} [${tier}${pricing}]`;
   }
 })();

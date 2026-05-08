@@ -2,12 +2,32 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.2.3.1] - 2026-05-08
+
+### Added
+
+- Runtime pricing metadata exposure in suggestion model descriptors (`pricing`, e.g. `0x`, `0.33x`, `1x`) for UI transparency.
+- Included/Premium/Unknown tier rendering in webview model selector and runtime model label.
+
+### Changed
+
+- Model tier classification now prioritizes passive pricing metadata (no active model probing required).
+- Safe policy behavior (`nonPremiumOnly`) now targets included models (`pricing=0x`) when metadata exists, with conservative fallback.
+- Empty reason terminology updated from `no-non-premium-model` to `no-included-model`.
+- Product version bumped to `0.2.3.1`.
+
+### Docs
+
+- README updated for `0.2.3.1` with pricing-aware tier behavior and terminology alignment.
+- Debug guide updated to reflect `no-included-model`.
+- Development audit tooling documented as isolated under `Scripts/` (not part of packaged extension).
+
 ## [0.2.3] - 2026-05-08
 
 ### Added (0.2.2)
 
-- Model selector redesign in webview with explicit per-model tier labels (`Free` / `Premium`).
-- Runtime model status label in webview (`Modelo: ... [Free/Premium]`).
+- Model selector redesign in webview with explicit per-model tier labels (`Included` / `Premium`).
+- Runtime model status label in webview (`Modelo: ... [Included/Premium]`).
 - Scoped governor key dimensions to avoid cache collisions across language/style/context/model settings.
 
 ### Changed (0.2.2)

@@ -157,7 +157,7 @@ describe("CopilotCompletion", () => {
     selectChatModelsMock.mockResolvedValueOnce([{ id: "gpt-4o-mini", name: "GPT-4o mini" }]);
     const models = await listSuggestionModels("anyModel");
     expect(models).toEqual([
-      { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "free" },
+      { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "included" },
     ]);
   });
 

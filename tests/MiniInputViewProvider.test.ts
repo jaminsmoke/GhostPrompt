@@ -121,7 +121,7 @@ describe("MiniInputViewProvider", () => {
     requestCompletionMock.mockResolvedValueOnce({
       kind: "suggestion",
       suggestion: "continuacion",
-      model: { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "free" },
+      model: { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "included" },
     });
 
     provider.resolveWebviewView(view as never, {} as never, {} as never);
@@ -138,7 +138,7 @@ describe("MiniInputViewProvider", () => {
     expect(postMessageMock).toHaveBeenNthCalledWith(3, {
       type: "suggestion",
       suggestion: "continuacion",
-      model: { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "free" },
+      model: { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "included" },
       captureId: 1,
     });
   });
@@ -177,7 +177,7 @@ describe("MiniInputViewProvider", () => {
     requestCompletionMock.mockResolvedValueOnce({
       kind: "suggestion",
       suggestion: "continuacion valida",
-      model: { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "free" },
+      model: { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "included" },
     });
 
     provider.resolveWebviewView(view as never, {} as never, {} as never);
@@ -202,7 +202,7 @@ describe("MiniInputViewProvider", () => {
     expect(postMessageMock).toHaveBeenNthCalledWith(4, {
       type: "suggestion",
       suggestion: "continuacion valida",
-      model: { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "free" },
+      model: { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "included" },
       captureId: 4,
     });
     expect(requestCompletionMock).toHaveBeenCalledOnce();
@@ -217,7 +217,7 @@ describe("MiniInputViewProvider", () => {
     } as never);
 
     listSuggestionModelsMock.mockResolvedValueOnce([
-      { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "free" },
+      { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "included" },
     ]);
 
     provider.resolveWebviewView(view as never, {} as never, {} as never);
@@ -226,7 +226,7 @@ describe("MiniInputViewProvider", () => {
     expect(postMessageMock).toHaveBeenCalledWith({
       type: "settings",
       settings: expect.objectContaining({
-        availableModels: [{ id: "gpt-4o-mini", label: "GPT-4o mini", tier: "free" }],
+        availableModels: [{ id: "gpt-4o-mini", label: "GPT-4o mini", tier: "included" }],
       }),
     });
   });

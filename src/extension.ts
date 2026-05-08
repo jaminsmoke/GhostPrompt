@@ -31,7 +31,6 @@ export function activate(context: vscode.ExtensionContext): void {
       void vscode.window.showInformationMessage(message);
     },
   );
-
   context.subscriptions.push(
     openSuggestionPolicySettingsCommand,
     toggleSuggestionDebugCommand,
