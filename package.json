@@ -2,7 +2,7 @@
   "name": "ghost-prompt",
   "displayName": "GhostPrompt",
   "description": "Ghost-text completions for your Copilot prompts — write faster, think clearer.",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "publisher": "jaminsmoke",
   "author": "JaminSmoke",
   "icon": "media/img/icon.png",

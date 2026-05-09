@@ -1,7 +1,7 @@
 # Roadmap v0.3.0 — Reestructuración `src` y base para proveedores de completion
 
 > **Rama de trabajo:** `feature/v0.3-architecture-restructure`  
-> **Versión objetivo de release:** **0.3.0** (publicar al cerrar las fases acordadas de refactor + tests verdes; no antes solo por mover carpetas).  
+> **Versión objetivo de release:** **0.3.0** — Fase C cerró arquitectura y bump de versión en repo; **VSIX** y **tag** `v0.3.0` quedan para cuando el alcance amplio de 0.3.0 esté completo (p. ej. OpenCode u otros ítems).  
 > **Relacionado:** plan complementario de proveedor opcional OpenCode → [`Roadmap-v0.3-opencode-integration.md`](./Roadmap-v0.3-opencode-integration.md).
 
 ## Objetivo
@@ -10,9 +10,9 @@
 2. **Renombrar y dividir** solo donde aporte claridad; mantener comportamiento observable salvo bugs encontrados en el refactor.
 3. **Preparar** una interfaz estable tipo `CompletionProvider` antes de implementar OpenCode u otros backends.
 
-## Estado actual (tras Fase A — árbol físico)
+## Estado actual (tras Fase B — dominio completion)
 
-- `src/completion/CopilotCompletion.ts`: LM selection, `sendRequest`, instrucción, normalización, idioma, listado de modelos (Fase B lo partirá).
+- `src/completion/types.ts`, `instruction.ts`, `normalize.ts`, `language.ts`, `streaming.ts`, `modelCatalog.ts`; LM en `providers/copilotLmCompletion.ts`; `completionProvider.ts` (`CompletionProvider`, `getActiveCompletionProvider`). Barrel público `completion/index.ts`.
 - `src/session/GhostPromptSessionStore.ts`: estado compartido Sidebar + Panel.
 - `src/host/MiniInputViewProvider.ts`: webview + flujo suggest/patch/broadcast.
 - `src/governor/SuggestionRequestGovernor.ts`, `src/bridge/ChatBridge.ts`, `src/log/*`, `src/debug/SuggestionDebug.ts`.
@@ -45,22 +45,18 @@ No es obligatorio crear **todas** las carpetas en el primer commit; sí evitar c
 
 ### Fase B — Separación de concerns en completion
 
-- [ ] Extraer de `CopilotCompletion.ts` bloques bien delimitados, por ejemplo:
-  - selección de modelo / política (`selectChatModels`, `selectModelByPolicy`, `listSuggestionModels`);
-  - construcción de instrucción (`buildCompletionInstruction`, `suggestionStyleDirective`);
-  - normalización (`normalizeSuggestion` y helpers privados);
-  - `requestCompletion` como orquestador fino que llama a las piezas anteriores.
-- [ ] Introducir interfaz interna `CompletionProvider` (o nombre equivalente) con implementación **solo Copilot LM** que delegue en el código existente.
-- [ ] `MiniInputViewProvider` / capa que llame al proveedor sin conocer detalles de `vscode.lm` más allá del adaptador.
-- [ ] `npm run check` verde.
+- [x] Extraer módulos: `modelCatalog.ts`, `instruction.ts`, `normalize.ts`, `language.ts`, `streaming.ts`, `types.ts`; orquestación LM en `providers/copilotLmCompletion.ts`; barrel `completion/index.ts`.
+- [x] Interfaz `CompletionProvider` en `completionProvider.ts`; implementación Copilot LM; host usa `getActiveCompletionProvider().requestCompletion(...)`.
+- [x] `MiniInputViewProvider` ya no importa `vscode.lm` directamente (solo el adaptador en `providers/`).
+- [x] `npm run check` verde.
 - **Criterio:** tests existentes siguen pasando; nuevos tests solo si un extract facilita cobertura.
 
 ### Fase C — Pulido y release 0.3.0
 
-- [ ] Renombrar archivos exportados si quedó nombre engañoso (ej. evitar que “CopilotCompletion” sea el namespace de todo el dominio).
-- [ ] Actualizar `ARCHITECTURE.md` / README “Developer notes” con el diagrama de carpetas.
-- [ ] Bump de versión a **0.3.0** en `package.json`, `CHANGELOG`, README badges — **en la PR que cierre esta fase**, no antes sin consenso.
-- [ ] Tag git `v0.3.0` opcional según flujo del mantenedor.
+- [x] Barrel `src/completion/index.ts` (eliminado `CopilotCompletion.ts`; imports `from "../completion"`).
+- [x] Actualizar `ARCHITECTURE.md`, `PhysicalStructure.md`, README release notes.
+- [x] Versión **0.3.0** en `package.json`, `package-lock.json`, `CHANGELOG`, README badges.
+- [ ] Tag git `v0.3.0` al cerrar **todo** el alcance 0.3.0 previsto (VSIX); omitido mientras entren más cambios en la línea de release.
 
 ## Fuera de alcance de v0.3.0 arquitectura
 
@@ -88,4 +84,6 @@ No es obligatorio crear **todas** las carpetas en el primer commit; sí evitar c
 
 *(Rellenar si la implementación final difiere del layout propuesto; una línea por decisión.)*
 
-- **Fase A:** Carpeta `src/host/` para `MiniInputViewProvider` (el roadmap alternaba `webview/`; “host” evita confundir con assets `webview/` del renderer). Logs en `src/log/` en lugar de mezclarlos con `debug/`. 
+- **Fase A:** Carpeta `src/host/` para `MiniInputViewProvider` (el roadmap alternaba `webview/`; “host” evita confundir con assets `webview/` del renderer). Logs en `src/log/` en lugar de mezclarlos con `debug/`.
+- **Fase B:** Lógica LM en `providers/copilotLmCompletion.ts`. El barrel pasó a **`completion/index.ts`** en Fase C.
+- **Fase C (proceso):** No se ejecuta `npm run vsix` ni tag `v0.3.0` hasta cerrar el alcance restante de la versión (documentado en `CHANGELOG` / README).

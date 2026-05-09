@@ -14,7 +14,7 @@ VsCodeExtension-InlineChatSuggestions/
 │   ├── extension/extension.ts        # Entry point: activate / deactivate
 │   ├── host/MiniInputViewProvider.ts  # WebviewViewProvider — registro y ciclo de vida
 │   ├── session/GhostPromptSessionStore.ts
-│   ├── completion/CopilotCompletion.ts
+│   ├── completion/index.ts             # Barrel del dominio completion
 │   ├── governor/SuggestionRequestGovernor.ts
 │   ├── bridge/ChatBridge.ts
 │   ├── log/ConversationLog.ts
@@ -177,7 +177,7 @@ extension/extension.ts
     ├── host/MiniInputViewProvider.ts
     │       ├── bridge/ChatBridge.ts
     │       ├── log/ConversationLog.ts
-    │       ├── completion/CopilotCompletion.ts
+    │       ├── completion/index.ts
     │       └── …
     └── (comandos adicionales)
 

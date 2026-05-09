@@ -1,7 +1,7 @@
 # GhostPrompt
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.2.5-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
+[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.3.0-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.90%2B-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
 [![GitHub Copilot](https://img.shields.io/badge/Uses-GitHub_Copilot-24292f?logo=github&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
@@ -11,7 +11,7 @@
 > Ghost-text completions for your Copilot prompts — write faster, think clearer.
 
 <!-- markdownlint-disable-next-line MD036 -->
-**Version 0.2.5**
+**Version 0.3.0**
 
 ---
 
@@ -155,7 +155,7 @@ v0.2 is **shipped**; roadmap documents:
 - Archived v0.2: [`Docs/Plans/Roadmaps/Roadmap-v0.2.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.md)
 - Current v0.2.2 execution: [`Docs/Plans/Roadmaps/Roadmap-v0.2.2.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.2.md)
 - Unified session (Sidebar + Panel): [`Docs/Plans/Roadmaps/Roadmap-v0.2.4b.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.4b.md) *(complete)*
-- **v0.3.0 — `src` layout & completion providers** (in progress): [`Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md)
+- **v0.3.0 — `src` layout & completion providers** *(architecture complete; additional 0.3.0 scope & VSIX packaging pending)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md)
 - Optional OpenCode backend (draft): [`Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md)
 
 Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
@@ -163,6 +163,12 @@ Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 ---
 
 ## Release notes
+
+### 0.3.0
+
+- **Architecture:** `src/` split into layered folders (`completion/`, `host/`, `session/`, etc.) and a documented completion pipeline (`CompletionProvider`, Copilot LM adapter).
+- **Maintainability:** completion logic divided into small modules (`instruction`, `normalize`, `modelCatalog`, …) ahead of optional alternate backends (see roadmap OpenCode).
+- **Release process:** the distributable **VSIX** (and optional git tag `v0.3.0`) will be produced after the rest of the planned **0.3.0** work is merged—see [`CHANGELOG.md`](./CHANGELOG.md) *Notes* under 0.3.0 and the OpenCode roadmap.
 
 ### 0.2.5
 

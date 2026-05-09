@@ -20,15 +20,15 @@ import * as vscode from "vscode";
 import { sendToChat } from "../bridge/ChatBridge";
 import { append as appendLog } from "../log/ConversationLog";
 import {
+  getActiveCompletionProvider,
   listSuggestionModels,
-  requestCompletion,
   resolveSuggestionLanguage,
   SuggestionLanguageMode,
   SuggestionModelDescriptor,
   SuggestionModelPolicy,
   SuggestionStyle,
   SupportedSuggestionLanguage,
-} from "../completion/CopilotCompletion";
+} from "../completion";
 import { isSuggestionDebugEnabled, logSuggestionDebug } from "../debug/SuggestionDebug";
 import { SuggestionRequestGovernor } from "../governor/SuggestionRequestGovernor";
 import { appendSuggestion } from "../log/SuggestionLog";
@@ -472,7 +472,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
           });
           const projectContext =
             contextMode === "project" ? this._collectProjectContext() : {};
-          const result = await requestCompletion(text, {
+          const result = await getActiveCompletionProvider().requestCompletion(text, {
             token: tokenSource.token,
             policy,
             preferredModelId: selectedModelId === "auto" ? undefined : selectedModelId,

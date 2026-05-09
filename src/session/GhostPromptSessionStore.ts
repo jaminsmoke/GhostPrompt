@@ -6,7 +6,7 @@ import * as vscode from "vscode";
 import type {
   SuggestionModelDescriptor,
   SupportedSuggestionLanguage,
-} from "../completion/CopilotCompletion";
+} from "../completion";
 
 /** Estado del último intento de suggestion (UI/host). */
 export type GhostPromptSuggestionFlowStatus =

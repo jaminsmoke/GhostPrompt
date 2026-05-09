@@ -25,7 +25,7 @@
 │                                                                 │
 │  extension/extension.ts ──► host/MiniInputViewProvider          │
 │                        │                                        │
-│                        ├──► completion/CopilotCompletion (LM)   │
+│                        ├──► completion (getActiveCompletionProvider → LM) │
 │                        ├──► bridge/ChatBridge (chat.open cmd)   │
 │                        ├──► log/ConversationLog (storageUri)    │
 │                        ├──► log/SuggestionLog   (storageUri)    │
@@ -53,7 +53,9 @@
 | `src/extension/extension.ts`              | Entry point. Registers two `WebviewViewProvider` instances (Activity Bar + Panel).                                   |
 | `src/host/MiniInputViewProvider.ts`       | Core provider. Sets up the webview, wires the message protocol, delegates to service modules.                        |
 | `src/session/GhostPromptSessionStore.ts`  | Shared session state (draft, suggestions, capture id) across Sidebar + Panel.                                       |
-| `src/completion/CopilotCompletion.ts`     | Requests a prompt continuation from Copilot via `vscode.lm.selectChatModels` + `sendRequest`. No editor interaction. |
+| `src/completion/providers/copilotLmCompletion.ts` | Copilot LM adapter: `vscode.lm.selectChatModels` + `sendRequest`. |
+| `src/completion/completionProvider.ts`    | `CompletionProvider` + `getActiveCompletionProvider()` (hoy solo Copilot LM).                                      |
+| `src/completion/index.ts`                 | Barrel público: re-exporta tipos, `instruction`, `normalize`, `modelCatalog`, alias `requestCompletion`.           |
 | `src/governor/SuggestionRequestGovernor.ts` | Dedupe, cache, cooldown, rate limit, session budget before hitting the LM.                                           |
 | `src/bridge/ChatBridge.ts`                | Sends the final prompt to Copilot Chat via `workbench.action.chat.open`.                                             |
 | `src/log/ConversationLog.ts`              | Appends sent prompts to `conversation.md` in `context.storageUri`.                                                   |
@@ -78,8 +80,8 @@ User types in textarea
   postMessage { type:'suggest', text, captureId }
         │
         ▼  [Extension Host]
-  CopilotCompletion.requestCompletion(userText)
-    └── vscode.lm.selectChatModels({ vendor:'copilot' })
+  getActiveCompletionProvider().requestCompletion(userText)
+    └── (copilot LM) vscode.lm.selectChatModels({ vendor:'copilot' })
     └── model.sendRequest([User(instruction + userText)])
     └── stream response.text chunks → completion string
         │

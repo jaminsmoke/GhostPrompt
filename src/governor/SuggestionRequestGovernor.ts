@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { CompletionResult } from "../completion/CopilotCompletion";
+import type { CompletionResult } from "../completion";
 
 type EmptyReason = Extract<CompletionResult, { kind: "empty" }>["reason"];
 

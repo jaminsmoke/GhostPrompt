@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.3.0] - 2026-05-09
+
+### Changed
+
+- **Extension host layout:** `src/` reorganized into `extension/`, `host/`, `session/`, `completion/`, `governor/`, `bridge/`, `log/`, `debug/`; package entry `out/extension/extension.js`.
+- **Completion domain:** split monolith into `types`, `instruction`, `normalize`, `language`, `streaming`, `modelCatalog`, `providers/copilotLmCompletion`, `completionProvider`; public barrel `src/completion/index.ts` (historical imports from `CopilotCompletion` path removed — use `../completion`).
+- **Pluggable completions:** `CompletionProvider` + `getActiveCompletionProvider()`; `MiniInputViewProvider` delegates to the active provider (Copilot LM today).
+
+### Docs
+
+- `ARCHITECTURE.md`, `Roadmap-v0.3.0-architecture.md`: Phases A–C (structure + refactor + release).
+
+### Notes
+
+- **VSIX / git tag deferred:** `npm run vsix` and annotated tag `v0.3.0` will land when the remaining **0.3.0** scope is finished (for example optional OpenCode integration in [`Roadmap-v0.3-opencode-integration.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md)). Until then, `package.json` may already read `0.3.0` while further changes accumulate on this release line.
+
 ## [0.2.5] - 2026-05-09
 
 ### Added

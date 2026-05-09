@@ -37,8 +37,11 @@ vi.mock("fs", () => ({
   readFileSync: readFileSyncMock,
 }));
 
-vi.mock("../src/completion/CopilotCompletion", () => ({
-  requestCompletion: requestCompletionMock,
+vi.mock("../src/completion", () => ({
+  getActiveCompletionProvider: () => ({
+    id: "copilotLm",
+    requestCompletion: requestCompletionMock,
+  }),
   resolveSuggestionLanguage: resolveSuggestionLanguageMock,
   listSuggestionModels: listSuggestionModelsMock,
 }));
