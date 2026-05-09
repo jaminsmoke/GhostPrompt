@@ -9,7 +9,7 @@ vi.mock("vscode", () => ({
   },
 }));
 
-import { SuggestionRequestGovernor } from "../src/SuggestionRequestGovernor";
+import { SuggestionRequestGovernor } from "../src/governor/SuggestionRequestGovernor";
 
 const config = {
   minChars: 3,

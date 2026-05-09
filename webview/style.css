@@ -40,9 +40,12 @@ body {
 
 .settings-strip {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  align-content: flex-start;
   gap: var(--gp-gap-sm);
-  overflow-x: auto;
+  row-gap: var(--gp-gap-xs);
+  width: 100%;
   padding-bottom: 2px;
 }
 
@@ -143,20 +146,19 @@ textarea {
 }
 
 .status-text.loading {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
 }
 
 .status-text.loading::before {
-  content: "";
-  width: 0.8em;
-  height: 0.8em;
-  border: 2px solid var(--vscode-descriptionForeground);
-  border-right-color: transparent;
-  border-radius: 50%;
-  animation: gp-spin 0.8s linear infinite;
+  content: "↻";
+  display: inline-block;
+  font-size: 0.95em;
+  line-height: 1;
   opacity: 0.9;
+  transform-origin: center;
+  animation: gp-spin 0.9s linear infinite;
 }
 
 .status-text.error {
@@ -175,6 +177,7 @@ textarea::placeholder {
 
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--gp-gap-sm);
@@ -185,10 +188,12 @@ textarea::placeholder {
 .hint {
   font-size: 0.82em;
   color: var(--vscode-descriptionForeground);
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  flex: 1 1 160px;
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
 }
 
 .chip {
@@ -223,16 +228,21 @@ textarea::placeholder {
 }
 
 .model-select {
-  max-width: 210px;
-  min-width: 130px;
+  max-width: min(210px, 100%);
+  min-width: min(130px, 100%);
 }
 
 .chip-runtime {
   cursor: default;
   opacity: 0.85;
-  max-width: 230px;
+  max-width: min(230px, 100%);
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Reservado: el host puede marcar `compactToolbar` en __ghostPromptCapabilities */
+body.gp-cap-compact-toolbar .settings-strip {
+  row-gap: 2px;
 }
 
 #send-btn {

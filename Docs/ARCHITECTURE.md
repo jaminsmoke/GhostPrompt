@@ -23,12 +23,13 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │  VS Code Extension Host (Node.js)                               │
 │                                                                 │
-│  extension.ts ──► MiniInputViewProvider                        │
+│  extension/extension.ts ──► host/MiniInputViewProvider          │
 │                        │                                        │
-│                        ├──► CopilotCompletion  (vscode.lm)     │
-│                        ├──► ChatBridge         (chat.open cmd) │
-│                        ├──► ConversationLog    (storageUri)    │
-│                        └──► SuggestionLog      (storageUri)    │
+│                        ├──► completion/CopilotCompletion (LM)   │
+│                        ├──► bridge/ChatBridge (chat.open cmd)   │
+│                        ├──► log/ConversationLog (storageUri)    │
+│                        ├──► log/SuggestionLog   (storageUri)    │
+│                        └──► session/GhostPromptSessionStore      │
 │                                                                 │
 └───────────────────────────┬─────────────────────────────────────┘
                             │ postMessage / onDidReceiveMessage
@@ -47,14 +48,17 @@
 
 ## 2. Module map
 
-| File                           | Responsibility                                                                                                       |
-| ------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `src/extension.ts`             | Entry point. Registers two `WebviewViewProvider` instances (Activity Bar + Panel).                                   |
-| `src/MiniInputViewProvider.ts` | Core provider. Sets up the webview, wires the message protocol, delegates to service modules.                        |
-| `src/CopilotCompletion.ts`     | Requests a prompt continuation from Copilot via `vscode.lm.selectChatModels` + `sendRequest`. No editor interaction. |
-| `src/ChatBridge.ts`            | Sends the final prompt to Copilot Chat via `workbench.action.chat.open`.                                             |
-| `src/ConversationLog.ts`       | Appends sent prompts to `conversation.md` in `context.storageUri`.                                                   |
-| `src/SuggestionLog.ts`         | Appends accepted suggestions to `suggestions.md` in `context.storageUri`.                                            |
+| File                                      | Responsibility                                                                                                       |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `src/extension/extension.ts`              | Entry point. Registers two `WebviewViewProvider` instances (Activity Bar + Panel).                                   |
+| `src/host/MiniInputViewProvider.ts`       | Core provider. Sets up the webview, wires the message protocol, delegates to service modules.                        |
+| `src/session/GhostPromptSessionStore.ts`  | Shared session state (draft, suggestions, capture id) across Sidebar + Panel.                                       |
+| `src/completion/CopilotCompletion.ts`     | Requests a prompt continuation from Copilot via `vscode.lm.selectChatModels` + `sendRequest`. No editor interaction. |
+| `src/governor/SuggestionRequestGovernor.ts` | Dedupe, cache, cooldown, rate limit, session budget before hitting the LM.                                           |
+| `src/bridge/ChatBridge.ts`                | Sends the final prompt to Copilot Chat via `workbench.action.chat.open`.                                             |
+| `src/log/ConversationLog.ts`              | Appends sent prompts to `conversation.md` in `context.storageUri`.                                                   |
+| `src/log/SuggestionLog.ts`                | Appends accepted suggestions to `suggestions.md` in `context.storageUri`.                                            |
+| `src/debug/SuggestionDebug.ts`            | Debug toggle and optional output channel logging.                                                                   |
 | `webview/index.html`           | HTML shell. Uses `{{nonce}}`, `{{cspSource}}`, `{{styleUri}}`, `{{scriptUri}}` template tokens injected at runtime.  |
 | `webview/main.js`              | Client-side logic: debounce, captureId, ghost-text, Tab/Enter handlers.                                              |
 | `webview/style.css`            | VS Code CSS-variable-based styling. `.ghost-text` uses `--vscode-editorGhostText-foreground`.                        |
@@ -153,7 +157,7 @@ The extension declares two `viewsContainers` — one in `activitybar` and one in
 }
 ```
 
-Two separate `MiniInputViewProvider` instances are registered (one per view ID) in `extension.ts`. Both share the same `ExtensionContext`, so they write to the same `storageUri`.
+Two separate `MiniInputViewProvider` instances are registered (one per view ID) in `extension/extension.ts`. Both share the same `ExtensionContext`, so they write to the same `storageUri`.
 
 The icon **must be an SVG file path** — codicon token strings (`$(chat)`) are not accepted in `viewsContainers`.
 

@@ -129,6 +129,8 @@ Cerrar puntos finos de calidad percibida en suggestions para que la experiencia 
 - [x] Añadir test de regresion para repetir `GPT-4o` con IDs distintos y comprobar colapso a una sola opcion.
 - [x] Ordenar/agrupar selector por proveedor inferido para mejorar escaneabilidad.
 - [x] Refinar visualizacion final del tier/coste con tokens textuales compactos (`[INCLUDED 0x]`, `[PREMIUM 1x]`, `[UNKNOWN]`).
+- [x] Centralizar frontera de normalizacion en host y eliminar heuristicas de espaciado en webview para evitar partir palabras.
+- [x] Ajustar instruccion de completion para diferenciar palabra nueva (espacio inicial) vs completado de palabra en curso (sin espacio inicial).
 
 #### Criterios de aceptacion Hotfix
 

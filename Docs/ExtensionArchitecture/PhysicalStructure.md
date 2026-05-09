@@ -11,10 +11,15 @@
 VsCodeExtension-InlineChatSuggestions/
 │
 ├── src/                              # Código fuente TypeScript (lado host)
-│   ├── extension.ts                  # Entry point: activate / deactivate
-│   ├── MiniInputViewProvider.ts      # WebviewViewProvider — registro y ciclo de vida
-│   ├── ChatBridge.ts                 # Puente hacia el chat oficial de Copilot
-│   └── ConversationLog.ts            # Lectura / escritura del log en conversation.md
+│   ├── extension/extension.ts        # Entry point: activate / deactivate
+│   ├── host/MiniInputViewProvider.ts  # WebviewViewProvider — registro y ciclo de vida
+│   ├── session/GhostPromptSessionStore.ts
+│   ├── completion/CopilotCompletion.ts
+│   ├── governor/SuggestionRequestGovernor.ts
+│   ├── bridge/ChatBridge.ts
+│   ├── log/ConversationLog.ts
+│   ├── log/SuggestionLog.ts
+│   └── debug/SuggestionDebug.ts
 │
 ├── webview/                          # Assets del lado webview (sandboxed)
 │   ├── index.html                    # Plantilla HTML de la vista mini-input
@@ -50,7 +55,7 @@ VsCodeExtension-InlineChatSuggestions/
 
 ## Responsabilidades por archivo
 
-### `src/extension.ts` — Entry point
+### `src/extension/extension.ts` — Entry point
 
 - Exporta `activate(context)` y `deactivate()`.
 - Instancia `MiniInputViewProvider` y lo registra:
@@ -62,7 +67,7 @@ VsCodeExtension-InlineChatSuggestions/
 
 ---
 
-### `src/MiniInputViewProvider.ts` — WebviewViewProvider
+### `src/host/MiniInputViewProvider.ts` — WebviewViewProvider
 
 - Implementa `vscode.WebviewViewProvider`.
 - Método `resolveWebviewView`: carga `index.html`, inyecta los URI de `main.js` y `style.css`
@@ -74,7 +79,7 @@ VsCodeExtension-InlineChatSuggestions/
 
 ---
 
-### `src/ChatBridge.ts` — Puente al chat de Copilot
+### `src/bridge/ChatBridge.ts` — Puente al chat de Copilot
 
 - Única responsabilidad: enviar un prompt al chat oficial.
   ```ts
@@ -86,7 +91,7 @@ VsCodeExtension-InlineChatSuggestions/
 
 ---
 
-### `src/ConversationLog.ts` — Log persistente
+### `src/log/ConversationLog.ts` — Log persistente
 
 - Lee y hace append al archivo `Docs/MyConversation/conversation.md`.
 - Cada entrada tiene timestamp y el texto del prompt.
@@ -168,13 +173,15 @@ node_modules/**
 ## Diagrama de dependencias entre módulos
 
 ```
-extension.ts
-    ├── MiniInputViewProvider.ts
-    │       ├── ChatBridge.ts
-    │       └── ConversationLog.ts
-    └── (comandos adicionales futuros)
+extension/extension.ts
+    ├── host/MiniInputViewProvider.ts
+    │       ├── bridge/ChatBridge.ts
+    │       ├── log/ConversationLog.ts
+    │       ├── completion/CopilotCompletion.ts
+    │       └── …
+    └── (comandos adicionales)
 
-webview/main.js  ←→  MiniInputViewProvider.ts   (postMessage / onDidReceiveMessage)
+webview/main.js  ←→  host/MiniInputViewProvider.ts   (postMessage / onDidReceiveMessage)
 ```
 
 ---

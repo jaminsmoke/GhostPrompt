@@ -32,7 +32,8 @@ import {
   detectSuggestionLanguageFromInput,
   resolveSuggestionLanguage,
   selectModelByPolicy,
-} from "../src/CopilotCompletion";
+  suggestionStyleDirective,
+} from "../src/completion/CopilotCompletion";
 
 function createTextStream(chunks: string[]): AsyncIterable<string> {
   return {
@@ -111,6 +112,15 @@ describe("CopilotCompletion", () => {
     expect(normalized).toBe("cación robusta para API");
   });
 
+  it("no introduce espacios artificiales en palabra partida", () => {
+    const normalized = normalizeSuggestion(
+      "cacion robusta para API",
+      "Necesito una apli",
+      200,
+    );
+    expect(normalized).toBe("cacion robusta para API");
+  });
+
   it("inserta espacio tras puntuacion cuando suggestion empieza en palabra", () => {
     expect(normalizeSuggestion("continuacion", "Ejemplo:", 100)).toBe(" continuacion");
     expect(normalizeSuggestion("item", "Lista,", 100)).toBe(" item");
@@ -146,6 +156,41 @@ describe("CopilotCompletion", () => {
     );
     expect(sendRequest).toHaveBeenCalledOnce();
     expect(userMessageMock).toHaveBeenCalledOnce();
+  });
+
+  it("requestCompletion inyecta la directiva STYLE_* segun suggestionStyle", async () => {
+    const sendRequest = vi.fn().mockResolvedValue({
+      text: createTextStream([" ok"]),
+    });
+    selectChatModelsMock.mockResolvedValue([{ sendRequest }]);
+
+    await requestCompletion("Hola", {
+      token: createToken() as never,
+      policy: "anyModel",
+      maxSuggestionChars: 20,
+      style: "concise",
+    });
+    expect(userMessageMock.mock.calls[0][0]).toContain("STYLE_CONCISE");
+
+    userMessageMock.mockClear();
+    await requestCompletion("Hola", {
+      token: createToken() as never,
+      policy: "anyModel",
+      maxSuggestionChars: 20,
+      style: "balanced",
+    });
+    expect(userMessageMock.mock.calls[0][0]).toContain("STYLE_BALANCED");
+
+    userMessageMock.mockClear();
+    await requestCompletion("Hola", {
+      token: createToken() as never,
+      policy: "anyModel",
+      maxSuggestionChars: 20,
+      style: "detailed",
+    });
+    expect(userMessageMock.mock.calls[0][0]).toContain("STYLE_DETAILED");
+
+    expect(sendRequest).toHaveBeenCalledTimes(3);
   });
 
   it("devuelve request-timeout si el modelo no responde en el tiempo limite", async () => {
@@ -231,20 +276,56 @@ describe("CopilotCompletion", () => {
         "Quiero tests para API REST",
       ],
       workspaceName: "VsCodeExtension-InlineChatSuggestions",
-      activeFilePath: "src/MiniInputViewProvider.ts",
+      activeFilePath: "src/host/MiniInputViewProvider.ts",
       activeLanguageId: "typescript",
       activeSelection: "const value = message.value === 'off' ? 'off' : 'basic';",
       outputLanguage: "es",
     });
 
-    expect(instruction).toContain("richer continuation");
+    expect(instruction).toContain("STYLE_DETAILED:");
+    expect(instruction).toContain("2-3 fluent sentences");
     expect(instruction).toContain("Recent prompt sent by user");
     expect(instruction).toContain("Recent accepted suggestion style");
     expect(instruction).toContain("Relevant project context");
-    expect(instruction).toContain("Active file: src/MiniInputViewProvider.ts");
+    expect(instruction).toContain("Active file: src/host/MiniInputViewProvider.ts");
     expect(instruction).toContain("Recent prompts (latest first)");
     expect(instruction).toContain("Write the continuation in Spanish.");
+    expect(instruction).toContain(
+      "If your continuation starts a new word and the partial text does not end with whitespace, include exactly one leading space.",
+    );
+    expect(instruction).toContain(
+      "If you are completing the current unfinished word, do not add a leading space.",
+    );
     expect(instruction).toContain("Do not translate code identifiers");
+  });
+
+  it("buildCompletionInstruction diferencia claramente concise/balanced/detailed", () => {
+    const concise = buildCompletionInstruction("Texto", "concise");
+    const balanced = buildCompletionInstruction("Texto", "balanced");
+    const detailed = buildCompletionInstruction("Texto", "detailed");
+
+    expect(concise).toContain("STYLE_CONCISE:");
+    expect(concise).not.toContain("STYLE_BALANCED:");
+    expect(concise).not.toContain("STYLE_DETAILED:");
+
+    expect(balanced).toContain("STYLE_BALANCED:");
+    expect(balanced).not.toContain("STYLE_CONCISE:");
+    expect(balanced).not.toContain("STYLE_DETAILED:");
+
+    expect(detailed).toContain("STYLE_DETAILED:");
+    expect(detailed).not.toContain("STYLE_CONCISE:");
+    expect(detailed).not.toContain("STYLE_BALANCED:");
+  });
+
+  it("suggestionStyleDirective expone reglas de longitud disjuntas entre estilos", () => {
+    const c = suggestionStyleDirective("concise");
+    const b = suggestionStyleDirective("balanced");
+    const d = suggestionStyleDirective("detailed");
+
+    expect(c).toMatch(/4 words/i);
+    expect(b).toMatch(/one practical sentence|8-18 words/i);
+    expect(d).toMatch(/2-3/i);
+    expect(d).toMatch(/25-60 words/i);
   });
 
   it("detecta idioma espanol e ingles de forma basica", () => {

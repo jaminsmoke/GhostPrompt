@@ -6,12 +6,18 @@
  * they prefer relative to the Copilot chat.
  */
 import * as vscode from "vscode";
-import { MiniInputViewProvider } from "./MiniInputViewProvider";
-import { toggleSuggestionDebug } from "./SuggestionDebug";
+import { MiniInputViewProvider } from "../host/MiniInputViewProvider";
+import { toggleSuggestionDebug } from "../debug/SuggestionDebug";
 
 export function activate(context: vscode.ExtensionContext): void {
-  const sidebarProvider = new MiniInputViewProvider(context);
-  const panelProvider = new MiniInputViewProvider(context);
+  const sidebarProvider = new MiniInputViewProvider(
+    context,
+    MiniInputViewProvider.viewId,
+  );
+  const panelProvider = new MiniInputViewProvider(
+    context,
+    MiniInputViewProvider.panelViewId,
+  );
   const openSuggestionPolicySettingsCommand = vscode.commands.registerCommand(
     "ghostPrompt.openSuggestionPolicySettings",
     async () => {

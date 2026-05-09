@@ -10,6 +10,30 @@ import * as vscode from "vscode";
 
 export type SuggestionModelPolicy = "nonPremiumOnly" | "anyModel";
 export type SuggestionStyle = "concise" | "balanced" | "detailed";
+
+/**
+ * Fragmento de instrucción por estilo de suggestion (GhostPrompt).
+ * Incluye prefijos `STYLE_*` estables para tests de regresión.
+ */
+export function suggestionStyleDirective(style: SuggestionStyle): string {
+  switch (style) {
+    case "concise":
+      return (
+        "STYLE_CONCISE: Continue with at most 4 words total — essentials only, no comma-separated list, " +
+        "no second sentence, no filler."
+      );
+    case "detailed":
+      return (
+        "STYLE_DETAILED: Continue with 2-3 fluent sentences and concrete specifics " +
+        "(aim for roughly 25-60 words total when the idea warrants it)."
+      );
+    default:
+      return (
+        "STYLE_BALANCED: Continue with exactly one practical sentence (roughly 8-18 words) " +
+        "that advances the same intent as the partial prompt."
+      );
+  }
+}
 export type SuggestionLanguageMode = "auto" | "manual";
 export type SupportedSuggestionLanguage = "es" | "en";
 export type SuggestionModelTier = "included" | "premium" | "unknown";
@@ -158,12 +182,7 @@ export function buildCompletionInstruction(
   style: SuggestionStyle = "balanced",
   context?: SuggestionContext,
 ): string {
-  const styleDirective =
-    style === "concise"
-      ? "Keep the completion short and practical (1 sentence)."
-      : style === "detailed"
-        ? "Provide a richer continuation with concrete details (1-3 sentences when useful)."
-        : "Provide a balanced continuation with specific intent and moderate detail (1-2 sentences).";
+  const styleDirective = suggestionStyleDirective(style);
   const outputLanguage = context?.outputLanguage ?? "en";
   const languageDirective =
     outputLanguage === "es"
@@ -209,8 +228,11 @@ export function buildCompletionInstruction(
     "The user is typing a prompt for GitHub Copilot Chat. " +
     "Predict and return ONLY the natural continuation of the following partial text. " +
     styleDirective +
+    " " +
     languageDirective +
     "Never repeat what was already written. " +
+    "If your continuation starts a new word and the partial text does not end with whitespace, include exactly one leading space. " +
+    "If you are completing the current unfinished word, do not add a leading space. " +
     "Keep context and intent specific, avoiding generic filler. " +
     "Do not translate code identifiers, API names, file paths, or quoted text. " +
     "Do not add explanations, greetings, or any metadata.\n\n" +

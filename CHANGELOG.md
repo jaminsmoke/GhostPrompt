@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.2.5] - 2026-05-09
+
+### Added
+
+- `GhostPromptSessionStore` as single host source of truth for draft, pending suggestion, flow status, capture id, and shared cancellation across Sidebar + Panel webviews.
+- Webview sync protocol: `draftChanged` / `draftSync` / `draftHydrate`, `broadcast` suggestion UI (`loading`, suggestion, empty/error, effective language).
+- Optional `window.__ghostPromptCapabilities` (injected HTML) with `compactToolbar` CSS hook for future layout tweaks without breaking default parity.
+
+### Changed
+
+- Both GhostPrompt surfaces now mirror settings and suggestion state immediately (`_broadcastSettingsToAllViews`, `_broadcastUi`).
+- Control strip uses flex wrap and full-width hints for narrow sidebar/panel widths; debug chip `aria-label` / `aria-pressed`.
+- `suggestionStyleDirective()` exposes stable `STYLE_CONCISE` / `STYLE_BALANCED` / `STYLE_DETAILED` instruction fragments; `buildCompletionInstruction` consumes them.
+
+### Docs
+
+- README and roadmap `v0.2.4b` updated for unified session; Sprint 6 smoke checklist in [`Roadmap-v0.2.4b.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.4b.md).
+
 ## [0.2.4] - 2026-05-08
 
 ### Added
@@ -19,6 +37,8 @@ All notable changes to this project are documented in this file.
 - Model selector options are grouped by inferred provider and sorted for faster scanning.
 - Tier visualization refined for readability using compact textual tokens (`[INCLUDED 0x]`, `[PREMIUM 1x]`, `[UNKNOWN]`) instead of dot indicators.
 - Slow or stalled model responses now fail gracefully with timeout feedback instead of indefinite loading.
+- Suggestion preview/accept flow now treats host normalization as the single source of truth, removing extra spacing heuristics in webview that could split words (`apli cacion`-style artifacts).
+- Completion instruction now explicitly guides leading-space behavior: add one space for a new word, keep no leading space when completing an unfinished word.
 - Product version bumped to `0.2.4`.
 
 ### Known issues

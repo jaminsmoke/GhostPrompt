@@ -123,7 +123,13 @@
           </button>
         </div>
 
-        <button id="debug-btn" type="button" class="chip chip-debug">
+        <button
+          id="debug-btn"
+          type="button"
+          class="chip chip-debug"
+          aria-pressed="false"
+          aria-label="Depuracion de sugerencias (logs en consola del host)"
+        >
           Debug: off
         </button>
       </div>
@@ -153,6 +159,10 @@
         </button>
       </div>
     </div>
+    <script nonce="{{nonce}}">
+      window.__ghostPromptViewId = {{viewIdScript}};
+      window.__ghostPromptCapabilities = {{capabilitiesScript}};
+    </script>
     <script nonce="{{nonce}}" src="{{scriptUri}}"></script>
   </body>
 </html>

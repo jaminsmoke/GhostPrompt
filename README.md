@@ -1,7 +1,7 @@
 # GhostPrompt
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.2.4-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
+[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.2.5-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.90%2B-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
 [![GitHub Copilot](https://img.shields.io/badge/Uses-GitHub_Copilot-24292f?logo=github&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
@@ -11,7 +11,7 @@
 > Ghost-text completions for your Copilot prompts — write faster, think clearer.
 
 <!-- markdownlint-disable-next-line MD036 -->
-**Version 0.2.4**
+**Version 0.2.5**
 
 ---
 
@@ -72,7 +72,8 @@ Watch GhostPrompt in action on YouTube: [GhostPrompt demo](https://youtu.be/luGP
 ## Key features
 
 - **Inline ghost-text completions** — suggestions appear as continuation of your current text. Press `Tab` to accept.
-- **Always visible** — the input lives in the Activity Bar sidebar *and* the bottom Panel; pick whichever fits your layout.
+- **One session, two views** — the Activity Bar sidebar and bottom Panel mirror the **same draft, settings, and suggestion state**. Open both at once without drift; edits and chips stay in sync in real time.
+- **Always visible** — choose sidebar, panel tab, or both; layout is preference, not duplicated state.
 - **One-key send** — `Enter` sends your prompt to Copilot Chat. `Shift+Enter` adds a newline.
 - **Request safety controls** — dedupe, cache, cooldown, rate-limit, and session budget to prevent over-calling.
 - **Model policy controls** — force included (`0x`) models by default, with optional override.
@@ -90,8 +91,8 @@ Watch GhostPrompt in action on YouTube: [GhostPrompt demo](https://youtu.be/luGP
 
 ## Quick start (30 seconds)
 
-1. Open the **GhostPrompt** panel from the Activity Bar (chat-bubble icon) or from the bottom Panel tabs.
-2. Start typing your prompt — after a short pause, a ghost-text continuation appears inline.
+1. Open **GhostPrompt** from the Activity Bar (chat-bubble icon) and/or the bottom **Panel** tab — both show the same in-progress prompt.
+2. Start typing your prompt — after a short pause, a ghost-text continuation appears inline (and matches if both views are open).
 3. Press `Tab` to accept the suggestion and append it to your prompt.
 4. Press `Enter` to send the final prompt to **Copilot Chat**.
 
@@ -153,12 +154,22 @@ v0.2 is **shipped**; roadmap documents:
 
 - Archived v0.2: [`Docs/Plans/Roadmaps/Roadmap-v0.2.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.md)
 - Current v0.2.2 execution: [`Docs/Plans/Roadmaps/Roadmap-v0.2.2.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.2.md)
+- Unified session (Sidebar + Panel): [`Docs/Plans/Roadmaps/Roadmap-v0.2.4b.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.4b.md) *(complete)*
+- **v0.3.0 — `src` layout & completion providers** (in progress): [`Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md)
+- Optional OpenCode backend (draft): [`Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md)
 
 Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ---
 
 ## Release notes
+
+### 0.2.5
+
+- **Unified GhostPrompt session** — single host session state for Activity Bar and Panel: shared draft, settings, loading/suggestion UI, and one active completion request across views.
+- **Tighter style calibration** — completion instructions use explicit `STYLE_CONCISE` / `STYLE_BALANCED` / `STYLE_DETAILED` rules for repeatable length behavior.
+- **Narrow layout parity** — control strip wraps instead of horizontal-only scroll; hints wrap on small widths; optional `__ghostPromptCapabilities` hook for future layout flags.
+- **Regression tests** — multi-view store notifications and style injection in completion requests (`npm run test`).
 
 ### 0.2.4
 
@@ -169,6 +180,8 @@ Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 - **Provider grouping**: model selector is grouped and ordered by inferred provider (OpenAI, Anthropic, Google, xAI, GitHub, Other) for quicker navigation.
 - **Final token UX polish**: selector rows now show tier/cost with compact textual chips (`[INCLUDED 0x]`, `[PREMIUM 1x]`, `[UNKNOWN]`) for faster visual scan.
 - **Loading feedback polish**: status line now shows a spinner while suggestions are being generated (`Buscando sugerencia...`).
+- **Normalization hardening**: host-side normalization is now the only source of truth for spacing boundaries, reducing split-word artifacts in inline preview/accept.
+- **Better leading-space intent**: completion instruction now differentiates between "continue current word" (no leading space) and "start new word" (single leading space).
 - **Terminology and reason cleanup**: empty reason updated to `no-included-model` and user-facing messages aligned to included-model policy.
 - **Dev tooling isolation**: pricing audit helper remains under `Scripts/` and is not part of production extension packaging.
 - **Known runtime limitation**: in some environments `gpt-5-mini` and `raptor` can timeout without returning suggestion chunks; GhostPrompt now recovers gracefully and prompts retry/model switch.

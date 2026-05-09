@@ -3,14 +3,17 @@
  * Communicates with the extension host exclusively via VS Code's postMessage API.
  *
  * Inbound  (host → webview):
- *   { type: 'loading', captureId: number }
+ *   { type: 'loading', captureId: number, broadcast?: boolean }
  *   { type: 'suggestion', suggestion: string, captureId: number, model?: { id: string, label: string, tier: 'included' | 'premium' | 'unknown', pricing?: string, provider?: string } }
  *   { type: 'empty', reason: 'no-model' | 'no-included-model' | 'premium-quota-blocked' | 'empty-response' | 'request-timeout' | 'too-short' | 'duplicate-input' | 'rate-limited' | 'session-budget-exhausted', captureId: number }
  *   { type: 'error', message: string, captureId: number }
  *   { type: 'clear' }
+ *   { type: 'draftSync', text: string, originViewId: string }
+ *   { type: 'draftHydrate', text: string }
  *
  * Outbound (webview → host):
  *   { type: 'suggest',  text: string, captureId: number }
+ *   { type: 'draftChanged', text: string, originViewId: string }
  *   { type: 'accept',   context: string, suggestion: string }
  *   { type: 'send',     text: string }
  */
@@ -42,6 +45,33 @@
   /** Temporizador de debounce para las solicitudes de suggestion. */
   let debounceTimer = null;
 
+  /** Evita eco al aplicar borrador remoto (host → webview). */
+  let applyingRemoteDraft = false;
+
+  /** Id de vista desde el host (`ghostPrompt.input` | `ghostPrompt.inputPanel`). */
+  const VIEW_ID =
+    typeof window.__ghostPromptViewId === "string"
+      ? window.__ghostPromptViewId
+      : "";
+
+  const VIEW_CAPS =
+    typeof window.__ghostPromptCapabilities === "object" &&
+    window.__ghostPromptCapabilities !== null
+      ? window.__ghostPromptCapabilities
+      : {};
+
+  if (VIEW_CAPS.compactToolbar === true) {
+    document.body.classList.add("gp-cap-compact-toolbar");
+  }
+
+  function applyDraftFromHost(text) {
+    applyingRemoteDraft = true;
+    input.value = typeof text === "string" ? text : "";
+    applyingRemoteDraft = false;
+    refreshGhostPresentation();
+    syncComposerHeight();
+  }
+
   /** Ghost visible solo con foco en el textarea y cursor al final (sin selección). */
   function isGhostUiAllowed() {
     if (document.activeElement !== input) {
@@ -51,48 +81,16 @@
     return input.selectionStart === len && input.selectionEnd === len;
   }
 
-  /** Si hace falta, inserta un espacio entre el contexto y la sugerencia (evita "parala"). */
-  function joinSeparatorBeforeSuggestion(context, suggestion) {
-    if (!suggestion) {
-      return "";
-    }
-    if (!context) {
-      return "";
-    }
-    const first = suggestion[0];
-    const last = context[context.length - 1];
-    if (!last) {
-      return "";
-    }
-
-    // Evita duplicados tipo "..", ",," o espacios repetidos en la frontera.
-    if (last === first && /[\s.,;:!?]/.test(first)) {
-      return "";
-    }
-    if (/\s/.test(first)) {
-      return "";
-    }
-    if (/\s/.test(last)) {
-      return "";
-    }
-    if (isWordChar(last) && isWordChar(first)) {
-      return " ";
-    }
-    return "";
-  }
-
-  function isWordChar(char) {
-    return /[\p{L}\p{N}_]/u.test(char);
-  }
-
   function refreshGhostPresentation() {
     renderInlineGhost();
     syncComposerHeight();
   }
 
-  function buildInsertedSuggestion(context, suggestion) {
-    const gap = joinSeparatorBeforeSuggestion(context, suggestion);
-    return normalizeAcceptedSuggestion(context, gap + suggestion);
+  function buildInsertedSuggestion(_context, suggestion) {
+    // Fuente de verdad: el host ya devuelve la suggestion normalizada.
+    // Aquí solo renderizamos/aplicamos literalmente para evitar divergencias
+    // entre preview y texto aceptado.
+    return suggestion || "";
   }
 
   // ── Envío de suggestion al host (con debounce) ───────────────────────────
@@ -174,7 +172,7 @@
     statusEl.textContent = text;
     statusEl.classList.toggle("error", isError);
     statusEl.classList.toggle("loading", isLoading && !isError);
-    statusEl.style.display = "block";
+    statusEl.style.display = isLoading && !isError ? "flex" : "block";
   }
 
   function toUserErrorMessage(rawMessage) {
@@ -219,21 +217,6 @@
     return true;
   }
 
-  function normalizeAcceptedSuggestion(context, inserted) {
-    if (!inserted || !context) {
-      return inserted;
-    }
-    const last = context[context.length - 1];
-    const first = inserted[0];
-    if (!last || !first) {
-      return inserted;
-    }
-    if (last === first && /[\s.,;:!?]/.test(first)) {
-      return inserted.slice(1);
-    }
-    return inserted;
-  }
-
   // ── Envío al chat ────────────────────────────────────────────────────────
 
   function send() {
@@ -249,7 +232,18 @@
 
   // ── Event listeners ──────────────────────────────────────────────────────
 
-  input.addEventListener("input", requestSuggestion);
+  input.addEventListener("input", () => {
+    if (!applyingRemoteDraft && VIEW_ID) {
+      vscode.postMessage({
+        type: "draftChanged",
+        text: input.value,
+        originViewId: VIEW_ID,
+      });
+    }
+    if (!applyingRemoteDraft) {
+      requestSuggestion();
+    }
+  });
   input.addEventListener("keyup", refreshGhostPresentation);
   input.addEventListener("click", refreshGhostPresentation);
   input.addEventListener("focus", refreshGhostPresentation);
@@ -333,6 +327,7 @@
   });
   debugBtn.addEventListener("click", () => {
     const next = debugBtn.dataset.enabled !== "true";
+    debugBtn.setAttribute("aria-pressed", String(next));
     vscode.postMessage({
       type: "updateSetting",
       key: "debugSuggestions",
@@ -346,9 +341,27 @@
 
   window.addEventListener("message", (event) => {
     const message = event.data;
+
+    if (message.type === "draftHydrate") {
+      applyDraftFromHost(message.text);
+      return;
+    }
+    if (message.type === "draftSync") {
+      if (!VIEW_ID || message.originViewId === VIEW_ID) {
+        return;
+      }
+      applyDraftFromHost(message.text);
+      return;
+    }
+
+    if (message.broadcast === true && typeof message.captureId === "number") {
+      currentCaptureId = message.captureId;
+    }
+
     if (
       typeof message.captureId === "number" &&
-      message.captureId !== currentCaptureId
+      message.captureId !== currentCaptureId &&
+      message.broadcast !== true
     ) {
       return;
     }
@@ -398,6 +411,7 @@
       const isDebug = Boolean(settings.debugSuggestions);
       debugBtn.dataset.enabled = String(isDebug);
       debugBtn.textContent = isDebug ? "Debug: on" : "Debug: off";
+      debugBtn.setAttribute("aria-pressed", String(isDebug));
     } else if (message.type === "languageEffective") {
       setLanguageAutoLabel(message.language);
     } else if (message.type === "clear") {

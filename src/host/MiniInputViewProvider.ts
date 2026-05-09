@@ -11,11 +11,14 @@
  *   - `accept`     (webview → host): el usuario aceptó la suggestion con Tab.
  *   - `send`       (webview → host): enviar el prompt completo al chat de Copilot.
  *   - `clear`      (host → webview): resetear el input tras un envío exitoso.
+ *   - `draftChanged` (webview → host): texto del borrador para sincronizar vistas.
+ *   - `draftSync` / `draftHydrate` (host → webview): aplicar borrador remoto o estado inicial.
+ *   - Mensajes de suggestion pueden llevar `broadcast: true` para espejar Sidebar + Panel.
  */
 import * as fs from "fs";
 import * as vscode from "vscode";
-import { sendToChat } from "./ChatBridge";
-import { append as appendLog } from "./ConversationLog";
+import { sendToChat } from "../bridge/ChatBridge";
+import { append as appendLog } from "../log/ConversationLog";
 import {
   listSuggestionModels,
   requestCompletion,
@@ -25,14 +28,16 @@ import {
   SuggestionModelPolicy,
   SuggestionStyle,
   SupportedSuggestionLanguage,
-} from "./CopilotCompletion";
-import { isSuggestionDebugEnabled, logSuggestionDebug } from "./SuggestionDebug";
-import { SuggestionRequestGovernor } from "./SuggestionRequestGovernor";
-import { appendSuggestion } from "./SuggestionLog";
+} from "../completion/CopilotCompletion";
+import { isSuggestionDebugEnabled, logSuggestionDebug } from "../debug/SuggestionDebug";
+import { SuggestionRequestGovernor } from "../governor/SuggestionRequestGovernor";
+import { appendSuggestion } from "../log/SuggestionLog";
+import { ghostPromptSessionStore } from "../session/GhostPromptSessionStore";
 
 /** Formas de mensaje recibidas desde el webview. */
 type WebviewMessage =
   | { type: "suggest"; text: string; captureId: number }
+  | { type: "draftChanged"; text: string; originViewId: string }
   | { type: "accept"; context: string; suggestion: string }
   | { type: "send"; text: string }
   | { type: "init" }
@@ -54,15 +59,54 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /** View ID for the bottom panel container. */
   public static readonly panelViewId = "ghostPrompt.inputPanel";
 
-  private _latestCaptureId = 0;
-  private _activeSuggestionRequest?: vscode.CancellationTokenSource;
-  private _lastAcceptedSuggestion = "";
-  private _lastSentPrompt = "";
-  private readonly _recentSentPrompts: string[] = [];
-  private _lastEffectiveSuggestionLanguage: SupportedSuggestionLanguage = "en";
-  private _lastEffectiveModel?: SuggestionModelDescriptor;
+  private static readonly _instances = new Set<MiniInputViewProvider>();
 
-  constructor(private readonly _context: vscode.ExtensionContext) {}
+  private _view?: vscode.WebviewView;
+
+  constructor(
+    private readonly _context: vscode.ExtensionContext,
+    /** Identificador de contribución de la vista (`ghostPrompt.input` vs `ghostPrompt.inputPanel`). */
+    public readonly viewContributionId: string,
+  ) {
+    MiniInputViewProvider._instances.add(this);
+  }
+
+  /**
+   * Limpia el registro de instancias (solo tests; la extensión real mantiene 2 providers vivos).
+   * @internal
+   */
+  public static clearWebviewRegistrationsForTests(): void {
+    MiniInputViewProvider._instances.clear();
+  }
+
+  /** Emite a todas las vistas el mismo UI de suggestion/loading/idioma (`broadcast: true` en webview). */
+  private static _broadcastUi(payload: Record<string, unknown>): void {
+    const message = { ...payload, broadcast: true };
+    for (const instance of MiniInputViewProvider._instances) {
+      instance._view?.webview.postMessage(message);
+    }
+  }
+
+  /** Propaga borrador a la otra vista GhostPrompt (Sidebar ↔ Panel). */
+  private static _broadcastDraftSync(originViewId: string, text: string): void {
+    for (const instance of MiniInputViewProvider._instances) {
+      if (instance.viewContributionId === originViewId) {
+        continue;
+      }
+      instance._view?.webview.postMessage({
+        type: "draftSync",
+        text,
+        originViewId,
+      });
+    }
+  }
+
+  /** Vacía el composer en todas las vistas (p. ej. tras enviar al chat). */
+  private static _broadcastClearAll(): void {
+    for (const instance of MiniInputViewProvider._instances) {
+      instance._view?.webview.postMessage({ type: "clear" });
+    }
+  }
 
   private _getSuggestionModelPolicy(): SuggestionModelPolicy {
     const value = vscode.workspace
@@ -163,6 +207,15 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     return `${normalized.slice(0, Math.max(0, maxChars - 3))}...`;
   }
 
+  /**
+   * Payload opcional para `window.__ghostPromptCapabilities` (webview).
+   * Por defecto vacío: misma UX en Sidebar y Panel; reservado para flags futuros
+   * (`compactToolbar`, etc.) sin romper paridad.
+   */
+  private _webviewCapabilitiesPayload(): Record<string, unknown> {
+    return {};
+  }
+
   private async _postSettings(webview: vscode.Webview): Promise<void> {
     const policy = this._getSuggestionModelPolicy();
     let availableModels: SuggestionModelDescriptor[] = [];
@@ -180,11 +233,27 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         suggestionStyle: this._getSuggestionStyle(),
         contextMode: this._getContextMode(),
         suggestionLanguageChoice: this._getSuggestionLanguageChoice(),
-        effectiveSuggestionLanguage: this._lastEffectiveSuggestionLanguage,
-        effectiveModel: this._lastEffectiveModel,
+        effectiveSuggestionLanguage:
+          ghostPromptSessionStore.getSnapshot().lastEffectiveSuggestionLanguage,
+        effectiveModel: ghostPromptSessionStore.getSnapshot().lastEffectiveModel,
         debugSuggestions: isSuggestionDebugEnabled(),
       },
     });
+  }
+
+  private async _postSettingsIfReady(): Promise<void> {
+    if (!this._view) {
+      return;
+    }
+    await this._postSettings(this._view.webview);
+  }
+
+  private async _broadcastSettingsToAllViews(): Promise<void> {
+    await Promise.all(
+      Array.from(MiniInputViewProvider._instances, (instance) =>
+        instance._postSettingsIfReady(),
+      ),
+    );
   }
 
   private async _updateSetting(
@@ -248,7 +317,9 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
           choice,
           vscode.ConfigurationTarget.Global,
         );
-        this._lastEffectiveSuggestionLanguage = choice;
+        ghostPromptSessionStore.patchState({
+          lastEffectiveSuggestionLanguage: choice,
+        });
       }
       return;
     }
@@ -266,6 +337,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken,
   ): void {
+    this._view = webviewView;
     const { extensionUri, storageUri, globalStorageUri } = this._context;
     // storageUri requiere workspace abierto; globalStorageUri siempre existe.
     const dataUri = storageUri ?? globalStorageUri;
@@ -280,9 +352,23 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
       if (message.type === "init") {
         await this._postSettings(webviewView.webview);
+        webviewView.webview.postMessage({
+          type: "draftHydrate",
+          text: ghostPromptSessionStore.getSnapshot().draftText,
+        });
+      } else if (message.type === "draftChanged") {
+        if (
+          typeof message.originViewId !== "string" ||
+          message.originViewId !== this.viewContributionId
+        ) {
+          return;
+        }
+        const text = typeof message.text === "string" ? message.text : "";
+        ghostPromptSessionStore.patchState({ draftText: text });
+        MiniInputViewProvider._broadcastDraftSync(message.originViewId, text);
       } else if (message.type === "updateSetting") {
         await this._updateSetting(message);
-        await this._postSettings(webviewView.webview);
+        await this._broadcastSettingsToAllViews();
       } else if (message.type === "suggest") {
         const { text, captureId } = message;
         if (!text) {
@@ -297,7 +383,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
           languageMode,
           this._getSuggestionLanguage(),
           text,
-            this._lastEffectiveSuggestionLanguage,
+          ghostPromptSessionStore.getSnapshot().lastEffectiveSuggestionLanguage,
         );
 
         const governor = SuggestionRequestGovernor.shared;
@@ -318,20 +404,32 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
             `metrics=${JSON.stringify(governor.getMetrics())} usage=${JSON.stringify(usage)}`,
           );
           if (decision.result.kind === "suggestion") {
-            webviewView.webview.postMessage({
+            ghostPromptSessionStore.patchState({
+              pendingSuggestion: decision.result.suggestion,
+              suggestionFlowStatus: "success",
+              ...(decision.result.model
+                ? { lastEffectiveModel: decision.result.model }
+                : {}),
+            });
+            MiniInputViewProvider._broadcastUi({
               type: "suggestion",
               suggestion: decision.result.suggestion,
               ...(decision.result.model ? { model: decision.result.model } : {}),
               captureId,
             });
           } else if (decision.result.kind === "empty") {
-            webviewView.webview.postMessage({
+            ghostPromptSessionStore.patchState({ suggestionFlowStatus: "empty" });
+            MiniInputViewProvider._broadcastUi({
               type: "empty",
               reason: decision.result.reason,
               captureId,
             });
           } else {
-            webviewView.webview.postMessage({
+            ghostPromptSessionStore.patchState({
+              suggestionFlowStatus: "error",
+              lastSuggestionError: decision.result.message,
+            });
+            MiniInputViewProvider._broadcastUi({
               type: "error",
               message: decision.result.message,
               captureId,
@@ -346,7 +444,8 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
             "request-blocked",
             `reason=${decision.reason} metrics=${JSON.stringify(governor.getMetrics())} usage=${JSON.stringify(usage)}`,
           );
-          webviewView.webview.postMessage({
+          ghostPromptSessionStore.patchState({ suggestionFlowStatus: "empty" });
+          MiniInputViewProvider._broadcastUi({
             type: "empty",
             reason: decision.reason,
             captureId,
@@ -354,23 +453,20 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
           return;
         }
 
-        this._latestCaptureId = captureId;
         logSuggestionDebug(
           captureId,
           "request-start",
           `chars=${text.length} policy=${policy} selectedModelId=${selectedModelId} style=${style} lang=${effectiveLanguage} metrics=${JSON.stringify(governor.getMetrics())} usage=${JSON.stringify(usage)}`,
         );
-        this._activeSuggestionRequest?.cancel();
-        this._activeSuggestionRequest?.dispose();
+        const tokenSource = ghostPromptSessionStore.prepareSuggestionRequest(captureId);
 
-        const tokenSource = new vscode.CancellationTokenSource();
-        this._activeSuggestionRequest = tokenSource;
-
-        webviewView.webview.postMessage({ type: "loading", captureId });
+        MiniInputViewProvider._broadcastUi({ type: "loading", captureId });
 
         try {
-          this._lastEffectiveSuggestionLanguage = effectiveLanguage;
-          webviewView.webview.postMessage({
+          ghostPromptSessionStore.patchState({
+            lastEffectiveSuggestionLanguage: effectiveLanguage,
+          });
+          MiniInputViewProvider._broadcastUi({
             type: "languageEffective",
             language: effectiveLanguage,
           });
@@ -384,13 +480,17 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
             style,
             context: {
               lastAcceptedSuggestion:
-                contextMode === "off" ? undefined : this._lastAcceptedSuggestion,
+                contextMode === "off"
+                  ? undefined
+                  : ghostPromptSessionStore.getSnapshot().lastAcceptedSuggestion,
               lastSentPrompt:
-                contextMode === "off" ? undefined : this._lastSentPrompt,
+                contextMode === "off"
+                  ? undefined
+                  : ghostPromptSessionStore.getSnapshot().lastSentPrompt,
               recentSentPrompts:
                 contextMode === "off"
                   ? undefined
-                  : this._recentSentPrompts.slice(0, 3),
+                  : ghostPromptSessionStore.getSnapshot().recentSentPrompts.slice(0, 3),
               outputLanguage: effectiveLanguage,
               ...projectContext,
             },
@@ -398,35 +498,44 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
           governor.saveResult(decision.key, result, governorConfig);
           if (
             tokenSource.token.isCancellationRequested ||
-            captureId !== this._latestCaptureId
+            captureId !== ghostPromptSessionStore.getSnapshot().activeCaptureId
           ) {
             logSuggestionDebug(captureId, "request-discarded", "stale-or-cancel");
             return;
           }
 
           if (result.kind === "suggestion") {
-            this._lastEffectiveModel = result.model;
+            ghostPromptSessionStore.patchState({
+              pendingSuggestion: result.suggestion,
+              suggestionFlowStatus: "success",
+              lastEffectiveModel: result.model,
+            });
             logSuggestionDebug(
               captureId,
               "request-success",
               `suggestionChars=${result.suggestion.length} model=${result.model?.id ?? "unknown"} modelTier=${result.model?.tier ?? "unknown"} usage=${JSON.stringify(governor.getUsageSnapshot(governorConfig))}`,
             );
-            webviewView.webview.postMessage({
+            MiniInputViewProvider._broadcastUi({
               type: "suggestion",
               suggestion: result.suggestion,
               ...(result.model ? { model: result.model } : {}),
               captureId,
             });
           } else if (result.kind === "empty") {
+            ghostPromptSessionStore.patchState({ suggestionFlowStatus: "empty" });
             logSuggestionDebug(captureId, "request-empty", `reason=${result.reason}`);
-            webviewView.webview.postMessage({
+            MiniInputViewProvider._broadcastUi({
               type: "empty",
               reason: result.reason,
               captureId,
             });
           } else {
+            ghostPromptSessionStore.patchState({
+              suggestionFlowStatus: "error",
+              lastSuggestionError: result.message,
+            });
             logSuggestionDebug(captureId, "request-error", result.message);
-            webviewView.webview.postMessage({
+            MiniInputViewProvider._broadcastUi({
               type: "error",
               message: result.message,
               captureId,
@@ -436,23 +545,28 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
           // Request cancelada por una pulsación más reciente.
           logSuggestionDebug(captureId, "request-cancelled");
         } finally {
-          if (this._activeSuggestionRequest === tokenSource) {
-            this._activeSuggestionRequest = undefined;
-          }
-          tokenSource.dispose();
+          ghostPromptSessionStore.disposeActiveSuggestionToken(tokenSource);
+          ghostPromptSessionStore.patchState({ suggestionFlowStatus: "idle" });
         }
       } else if (message.type === "accept") {
-        this._lastAcceptedSuggestion = message.suggestion;
+        ghostPromptSessionStore.patchState({
+          lastAcceptedSuggestion: message.suggestion,
+        });
         await appendSuggestion(dataUri, message.context, message.suggestion);
       } else if (message.type === "send" && message.text) {
-        this._lastSentPrompt = message.text;
-        this._recentSentPrompts.unshift(message.text);
-        if (this._recentSentPrompts.length > 5) {
-          this._recentSentPrompts.length = 5;
-        }
+        const recent = [
+          message.text,
+          ...ghostPromptSessionStore.getSnapshot().recentSentPrompts,
+        ].slice(0, 5);
+        ghostPromptSessionStore.patchState({
+          lastSentPrompt: message.text,
+          recentSentPrompts: recent,
+          pendingSuggestion: "",
+          draftText: "",
+        });
         await appendLog(dataUri, message.text);
         await sendToChat(message.text);
-        webviewView.webview.postMessage({ type: "clear" });
+        MiniInputViewProvider._broadcastClearAll();
       }
     });
   }
@@ -483,7 +597,12 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
       .replaceAll("{{nonce}}", nonce)
       .replaceAll("{{cspSource}}", webview.cspSource)
       .replaceAll("{{styleUri}}", styleUri.toString())
-      .replaceAll("{{scriptUri}}", scriptUri.toString());
+      .replaceAll("{{scriptUri}}", scriptUri.toString())
+      .replaceAll("{{viewIdScript}}", JSON.stringify(this.viewContributionId))
+      .replaceAll(
+        "{{capabilitiesScript}}",
+        JSON.stringify(this._webviewCapabilitiesPayload()),
+      );
   }
 }
 
