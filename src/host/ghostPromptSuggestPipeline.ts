@@ -24,6 +24,7 @@ import type { ProjectMemoryReconcileSnapshot } from "../projectMemory/persistPro
 import { logSuggestionDebug } from "../debug/SuggestionDebug";
 import { SuggestionRequestGovernor } from "../governor/SuggestionRequestGovernor";
 import { ghostPromptSessionStore } from "../session/GhostPromptSessionStore";
+import { maybeNotifySuggestionIssue } from "./suggestionHostNotification";
 import type { WebviewInboundMessage } from "./webviewProtocols";
 
 export type GhostPromptSuggestDeps = {
@@ -137,6 +138,7 @@ export async function runGhostPromptSuggestPipeline(
         reason: decision.result.reason,
         captureId,
       });
+      maybeNotifySuggestionIssue(decision.result);
     } else {
       ghostPromptSessionStore.patchState({
         suggestionFlowStatus: "error",
@@ -147,6 +149,7 @@ export async function runGhostPromptSuggestPipeline(
         message: decision.result.message,
         captureId,
       });
+      maybeNotifySuggestionIssue(decision.result);
     }
     return;
   }
@@ -163,6 +166,7 @@ export async function runGhostPromptSuggestPipeline(
       reason: decision.reason,
       captureId,
     });
+    maybeNotifySuggestionIssue({ kind: "empty", reason: decision.reason });
     return;
   }
 
@@ -293,6 +297,7 @@ export async function runGhostPromptSuggestPipeline(
         reason: result.reason,
         captureId,
       });
+      maybeNotifySuggestionIssue(result);
     } else {
       ghostPromptSessionStore.patchState({
         suggestionFlowStatus: "error",
@@ -304,6 +309,7 @@ export async function runGhostPromptSuggestPipeline(
         message: result.message,
         captureId,
       });
+      maybeNotifySuggestionIssue(result);
     }
   } catch {
     logSuggestionDebug(captureId, "request-cancelled");

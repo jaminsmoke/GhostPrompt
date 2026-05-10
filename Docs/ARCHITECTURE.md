@@ -58,7 +58,7 @@
 | -------- | -------------- |
 | `src/extension/extension.ts` | Entry point: commands, configuration listeners, two `WebviewViewProvider` registrations, `deactivate` (invalida caché OpenCode / pool sesión / cola LM). |
 | `src/host/MiniInputViewProvider.ts` | Webview HTML/CSP, broadcast a Sidebar+Panel, delegación a handlers y warm OpenCode. |
-| `src/host/handleGhostPromptSuggest.ts` | Orquesta `suggest`: gobernador, memoria proyecto (si aplica), `getCompletionProviderForSource` + routing de modelo, loading/stream final. |
+| `src/host/handleGhostPromptSuggest.ts` | Wrapper estable → `ghostPromptSuggestPipeline.ts`: gobernador, memoria proyecto (si aplica), `getCompletionProviderForSource` + routing de modelo, loading/stream final. |
 | `src/host/webviewProtocols.ts` | Parseo Zod de mensajes webview→host; validación de sobre `settings` host→webview. |
 | `src/shared/webviewMessageSchemas.ts` | Schemas Zod canónicos host ↔ webview (también consumidos por el bundle webview en build). |
 | `src/session/GhostPromptSessionStore.ts` | Estado compartido (borrador, suggestions, `activeCaptureId`, token de cancelación del intento activo). |
@@ -110,6 +110,36 @@ User types in textarea
 ```
 
 **Multi-fuente:** si `ghostPrompt.enabledCompletionSources` incluye copilot y opencode, el modelo elegido en el selector determina el motor (`providerID/modelID` → OpenCode; id de chat Copilot → LM). Con fuente única no configurada, se usa el legacy `ghostPrompt.completionProvider`.
+
+### Catálogo OpenCode y merge (`completion/catalog`)
+
+Esta capa **no** define cómo “piensa” el modelo lingüístico: adapta **datos y políticas** antes de llamar al LM.
+
+| Pieza | Responsabilidad | ¿Sustituible por prompt al modelo? |
+| ----- | ----------------- | ----------------------------------- |
+| `normalizeOpencodeProviderModels` | El SDK puede devolver `models` como **array** o como **mapa**; se normaliza a lista de `{ id, … }` sin inventar campos. | **No** — sin esto no hay ids estables para `session.prompt`. |
+| `classifyOpencodeModelTier` | A partir de metadatos del catálogo (`pricing` tipo `0x`/`1x`, `free`) y reglas conservadoras por `providerID` (p. ej. proveedor `opencode`, backends locales), clasifica **included / premium / unknown** para `ghostPrompt.suggestionModelPolicy`. | **No** para cumplir **nonPremiumOnly**; no es redacción de sugerencias. |
+| `listOpencodeSuggestionModels` | Construye filas del dropdown (etiqueta, tier), respeta `ghostPrompt.opencodeExcludedModelIds`. | UX |
+| `listMergedSuggestionModels` | Concatena Copilot + OpenCode y deduplica por `id` (prioriza Copilot). | Multi-fuente |
+| Resolución en `opencodeLmCompletion.ts` (`resolveOpencodeModelIdsFromSnapshot`) | Elige `providerID`/`modelID` alineado al snapshot cacheado y la política. | Contrato del SDK |
+
+El **texto** de la suggestion sigue gobernado por `instruction.ts`, post-proceso `normalize.ts`, y el LM/OpenCode en sí — véase roadmap v0.4.2 Fase 1.
+
+### Eficiencia de llamadas inline (OpenCode)
+
+Mitigaciones ya implementadas en GhostPrompt (sin duplicar trabajo del modelo lingüístico):
+
+| Mecanismo | Ubicación típica | Efecto |
+| --------- | ------------------ | ------ |
+| **Cola LM serie** | `opencodeInlineCompletionQueue.ts` | Una ejecución `requestOpencodeCompletion` activa; evita prompts concurrentes sobre la misma sesión (timeouts / SSE lento — ver comentario en código). |
+| **Sesión pooled** | `opencodeInlineSuggestionSession.ts` | Un `session.create` reutilizado por `deploymentId`; invalidación por reset del servidor o churn (`poolNonce`, hooks `emitOpenCodeServerWillReset`). |
+| **Snapshot `config.providers()`** | `opencodeProvidersSnapshot.ts` | Caché en memoria + **single-flight** entre solicitudes concurrentes; `invalidateOpenCodeProvidersSnapshot` en `deactivate`. |
+| **SSE preview** | `opencodeSuggestionStream.ts` | Opcional; filtro por `sessionID`, recorte `maxPreviewChars`; abort compartido con el request. |
+| **Runtime embebido** | `OpenCodeRuntime.ts` | `createOpencode` local (puerto fijo), debounce al parar proceso cuando el usuario vuelve solo a Copilot. |
+
+**Dependencia:** `@opencode-ai/sdk` (versión en `package.json`). Convendrá revisar changelogs upstream en releases mayores; **no** se alteró la versión en esta auditoría.
+
+**No aplicado (rechazado en v0.4.2):** eliminar la cola serie para paralelizar prompts — riesgo documentado frente al comportamiento del servidor embebido.
 
 ### captureId pattern
 
@@ -224,6 +254,14 @@ Optional path **`ghostPrompt.completionProvider`** / **`enabledCompletionSources
 - **Project memory:** per-workspace-folder JSON under `globalStorageUri/ghostPrompt/projectMemory/v1/` — [`Roadmap-v0.4-project-context-store.md`](./Plans/Roadmaps/Roadmap-v0.4-project-context-store.md).
 - **OpenCode:** catalog cache, pooled inline session, debug perf logs, serialized LM queue — [`Roadmap-v0.4-opencode-perf-catalog-telemetry.md`](./Plans/Roadmaps/Roadmap-v0.4-opencode-perf-catalog-telemetry.md).
 - **Maintainability:** layer ownership — [`Owners.md`](./Owners.md).
+
+### v0.4.2 — LM efficiency audit (**cerrado**)
+
+- Informe y decisiones — [`Roadmap-v0.4.2-lm-efficiency-audit.md`](./Plans/Roadmaps/Roadmap-v0.4.2-lm-efficiency-audit.md). **Copilot LM:** dos mensajes `User`. **`@vscode/prompt-tsx`:** no adoptado. **Catálogo OpenCode:** tab §3. **OpenCode inline:** cola, pool, snapshot, SSE — tab §3 (Fase 4).
+
+### v0.4.3 — Quality & resilience (in progress)
+
+- Tests pipeline, OpenCode release/CI, errores UX, tipos SDK, dual webview — [`Roadmap-v0.4.3-quality-resilience.md`](./Plans/Roadmaps/Roadmap-v0.4.3-quality-resilience.md). **Release OpenCode:** [`Releasing-opencode-integration.md`](./Plans/Releasing-opencode-integration.md); **CI:** `.github/workflows/ci.yml`; integración OpenCode **manual** (`opencode-integration.yml`).
 
 ### v0.2 — History UI
 

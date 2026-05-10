@@ -1,9 +1,12 @@
 /**
  * Snapshot en memoria de `config.providers()` del SDK OpenCode.
  * Single-flight entre llamadas concurrentes; invalidación coherent con `invalidateOpenCodeProvidersSnapshot`.
+ *
+ * Ver `Docs/ARCHITECTURE.md` §3 — Eficiencia de llamadas inline (OpenCode).
  */
 
 import { logOpenCodePerfCapture } from "../debug/SuggestionDebug";
+import { unwrapOpencodeEnvelopeData } from "./sdkEnvelope";
 
 export type OpenCodeProvidersSnapshot = {
   providers?: Array<{
@@ -17,13 +20,6 @@ export type OpenCodeProvidersSnapshot = {
 type ProvidersClient = {
   config: { providers(): Promise<unknown> };
 };
-
-function readSdkData(result: unknown): unknown {
-  if (result && typeof result === "object" && "data" in result) {
-    return (result as { data: unknown }).data;
-  }
-  return undefined;
-}
 
 /** Se incrementa al invalidar para no escribir caché con respuestas obsoletas. */
 let cacheGeneration = 0;
@@ -65,7 +61,7 @@ async function fetchProvidersFromNetwork(
       );
     }
 
-    const data = readSdkData(raw) as OpenCodeProvidersSnapshot | undefined;
+    const data = unwrapOpencodeEnvelopeData<OpenCodeProvidersSnapshot>(raw);
     if (generationAtFetchStart === cacheGeneration) {
       cachedValue = data;
       cacheValid = true;

@@ -1,0 +1,195 @@
+# Roadmap v0.4.2 — Eficiencia LM y menos duplicación (extensión vs modelo)
+
+> **Versión objetivo:** **GhostPrompt 0.4.2**  
+> **Estado:** auditorías **Fase 1–4 cerradas** (2026-05-10).  
+> **Metodología:** cada fase sigue el ciclo **auditoría → hallazgos → pasos derivados → implementación → cierre** antes de abrir la siguiente fase.
+
+---
+
+## Contexto (fijo)
+
+- **LM API (VS Code):** no hay mensaje `system` nativo; el rol “sistema” se expresa con contenido en `LanguageModelChatMessage.User`. Opción avanzada documentada: **`@vscode/prompt-tsx`** para componer prompts y adaptar al context window ([Language Model API](https://code.visualstudio.com/api/extension-guides/language-model)).
+- **GitHub Copilot (vía LM API):** `vscode.lm.selectChatModels` + `sendRequest`; cuotas y consentimiento del usuario.
+- **OpenCode (embebido):** runtime, snapshot de providers, sesión en pool, cola LM, `session.prompt`. La **normalización de listas de modelos** es capa de **integración** (datos heterogéneos antes de elegir `providerID/modelID`), no sustituible por el modelo lingüístico en el mismo turno de completado.
+
+---
+
+## Fase 1 — Auditoría `instruction` ↔ `normalize` (duplicación prompt vs código)
+
+### Objetivo
+
+Detectar reglas duplicadas o solapadas entre `buildCompletionInstruction` / directivas de estilo y `normalizeSuggestion` (y lógica afín); decidir qué queda en prompt, qué en código post-LM, y qué híbrido con criterio explícito.
+
+### Auditoría (checklist inicial)
+
+- [x] Listar directivas y bloques en `src/completion/instruction.ts` (estilo, idioma, continuidad, contexto proyecto, etc.).
+- [x] Listar comportamiento en `src/completion/normalize.ts` (prefijo del usuario, solape sufijo/prefijo, espacio tras puntuación, recorte por `maxChars`).
+- [x] Por cada regla o efecto: ¿el modelo puede cumplirlo de forma estable sin post-proceso?
+- [x] Si hace falta: contrastar comportamiento Copilot LM vs OpenCode en casos borde (logs o notas manuales).
+
+### Hallazgos
+
+| Hallazgo | Severidad (baja / media / alta) | Notas |
+| ---------- | ----------------------------------- | -------- |
+| **Anti-repetición:** el prompt dice “Never repeat what was already written”; `normalize` quita prefijo completo, solape sufijo/prefijo (≥3) o palabra final duplicada. | Baja (no es duplicación de responsabilidad redundante) | El LM incumple a menudo; el post-proceso es **defensivo**, no sustituto opcional de la instrucción (mejor cumplimiento upstream + UI estable). |
+| **Espacio inicial / tras puntuación:** instrucción regula “leading space” entre palabra nueva vs palabra cortada; `normalize` añade espacio tras `.:;,!?` si falta. | Baja | Complementarios: la instrucción orienta al modelo; `shouldInsertSpaceAfterPunctuation` corrige casos donde el LM omite espacio tras etiquetas tipo `Ejemplo:`. |
+| **Longitud:** `STYLE_*` pide límites por palabras/oración; `normalize` aplica **tope duro** `maxChars` (config). | Baja | Capas distintas: guía semántica vs corte técnico obligatorio. |
+| **Truncado de contexto en prompt:** `truncateInline` en `instruction.ts` para caber en contexto LM. | — | No solapa con `normalize`; objetivo distinto (entrada vs salida). |
+
+**Conclusión:** no eliminar `normalize` ni recortar agresivamente la instrucción por “duplicidad”: la duplicidad es **intencional** (pedir + corregir). Opcional futuro: acortar texto del prompt solo con tests/regresión, no como acción de esta fase.
+
+### Pasos derivados (implementación Fase 1)
+
+1. Documentar en código el contrato instrucción ↔ post-proceso (`normalize.ts`, referencia en `instruction.ts`).
+2. Añadir tests de contrato ligero (`tests/instructionNormalizeContract.test.ts`).
+3. Posponer: acortar tokens del prompt sin evidencia de cuota — **fuera de alcance** hasta métricas o Fase 2.
+
+### Criterio de hecho
+
+- Hallazgos documentados; pasos ejecutados o pospuestos con motivo breve.
+- `npm run check` verde tras cambios de código.
+
+### Estado
+
+- [x] Auditoría cerrada
+- [x] Implementación cerrada
+
+---
+
+## Fase 2 — LM API: composición de prompt y `@vscode/prompt-tsx` (evaluación)
+
+### Objetivo (Fase 2)
+
+Valorar si adoptar `@vscode/prompt-tsx` y/o **varios** mensajes `User` (instrucción vs contenido) mejora mantenimiento y uso del context window **sin** duplicar reglas ya cubiertas en Fase 1.
+
+### Auditoría
+
+- [x] Revisar guía oficial y paquete `@vscode/prompt-tsx` (cuándo compensa, dependencias, uso en extension host).
+- [x] Comparar con el ensamblaje actual en `instruction.ts` y las llamadas en `src/completion/providers/copilotLmCompletion.ts` y `opencodeLmCompletion.ts`.
+- [x] Estimar impacto: nueva dependencia, superficie de tests, compatibilidad `engines.vscode`.
+
+### Hallazgos (Fase 2)
+
+| Hallazgo | Severidad | Notas |
+| ---------- | ----------- | -------- |
+| **`@vscode/prompt-tsx`** | — **No adoptar en v0.4.2** | Versión **alpha** en npm; añade TSX + árbol de prioridades pensado para prompts **muy grandes** (historial, ficheros `flexGrow`). GhostPrompt ya **acota** contexto con `truncateInline` en `instruction.ts`; el beneficio de *pruning* automático es bajo frente al coste de dependencia y toolchain. |
+| **OpenCode vs LM API** | Media (integración) | El SDK usa **un** `parts: [{ type: "text", text }]`. Convertir salida `prompt-tsx` (`LanguageModelChatMessage[]`) implicaría **concatenar** para OpenCode perdiendo parte del valor de mensajes múltiples o duplicando dos pipelines. |
+| **Dos mensajes `User` sin nueva lib** | Baja / positivo | La [guía LM API](https://code.visualstudio.com/api/extension-guides/language-model) ya muestra **varios** `LanguageModelChatMessage.User`. Separar **directivas + contexto** vs **texto parcial** mejora legibilidad para el modelo **solo en Copilot** (`vscode.lm`), sin romper OpenCode. |
+
+### Pasos derivados
+
+1. **No** añadir `@vscode/prompt-tsx`; reconsiderar solo si en el futuro el prompt supera de forma habitual el presupuesto útil (p. ej. historial largo sin truncar).
+2. Exportar `buildCompletionInstructionParts` + `COMPLETION_PARTIAL_LABEL`; Copilot usa **dos** `User(prefixInstruction, labeledPartial)`; OpenCode sigue con `buildCompletionInstruction()` (una cadena).
+3. Tests: contrato `prefix + labeled === buildCompletionInstruction`; ajustar mocks Copilot a **2** llamadas `LanguageModelChatMessage.User`.
+
+### Criterio de hecho (Fase 2)
+
+Decisión explícita: adoptar / no adoptar / diferir a versión posterior; si adoptar, cambios mínimos verificados con `npm run check`.
+
+### Estado (Fase 2)
+
+- [x] Auditoría cerrada
+- [x] Implementación cerrada
+
+---
+
+## Fase 3 — Decisión documentada: catálogo OpenCode / merge / tiers
+
+### Objetivo (Fase 3)
+
+Dejar por escrito qué parte es **capa de integración y política de producto** (listas heterogéneas, `provider/model`, tiers, “solo no premium”) frente a comportamiento del modelo; ajustar documentación o código **solo** si la auditoría lo exige.
+
+### Auditoría (Fase 3)
+
+- [x] Recorrer `src/completion/catalog/*` y el uso desde selector / `resolveOpencodeModelIdsFromSnapshot` en `opencodeLmCompletion.ts`.
+- [x] Separar: imprescindible para routing vs opcional para UX (etiquetas, orden).
+
+### Hallazgos (Fase 3)
+
+| Pieza | Imprescindible routing/SDK | UX / política producto |
+| ------- | ----------------------------- | ------------------------- |
+| `normalizeOpencodeProviderModels` | **Sí** — forma heterogénea de `models` desde `config.providers()` | — |
+| `classifyOpencodeModelTier` | **Sí** para cumplir `nonPremiumOnly` con datos del catálogo | Tier explícito en descriptor (dropdown) |
+| `listOpencodeSuggestionModels` | Lista usable solo tras normalizar + tier | Orden alfabético, exclusiones usuario |
+| `mergedModelCatalog` | Dedup estable entre fuentes | Prioridad Copilot si mismo `id` |
+| `resolveOpencodeModelIdsFromSnapshot` (provider) | **Sí** — selección `providerID`/`modelID` para `prompt` | Defaults por snapshot |
+
+**Conclusión:** ningún módulo del catálogo es “duplicado” del modelo lingüístico; son **integración + política**. No se simplifica código en esta fase (sin síntoma de bug ni métrica de complejidad).
+
+### Pasos derivados (Fase 3)
+
+1. Documentar la tabla de roles en **`Docs/ARCHITECTURE.md`** §3 (subsection “Catálogo OpenCode y merge”).
+2. Corregir fila del module map (`handleGhostPromptSuggest` → pipeline).
+3. Bitácora **`Docs/Owners.md`**.
+4. **Sin** refactor de `catalog/*` en v0.4.2 salvo regressión futura.
+
+### Criterio de hecho (Fase 3)
+
+Documentación alineada con la decisión; refactors de código solo donde los hallazgos lo justifiquen.
+
+### Estado (Fase 3)
+
+- [x] Auditoría cerrada
+- [x] Implementación cerrada
+
+---
+
+## Fase 4 — OpenCode SDK / sesión / `prompt`: eficiencia de llamadas
+
+### Objetivo (Fase 4)
+
+Revisar opciones del SDK y el ciclo ya implementado (pool de sesión, cola LM, SSE, snapshots); identificar mejoras medibles (menos trabajo en Node, mejor reuse) **sin** confundir con “delegar en el modelo” la integración de APIs.
+
+### Auditoría (Fase 4)
+
+- [x] Revisar versión `@opencode-ai/sdk` en `package.json` y notas de cambios relevantes (upstream).
+- [x] Repasar `src/opencode/opencodeInlineSuggestionSession.ts`, `opencodeInlineCompletionQueue.ts`, payload `session.prompt`, streaming en `opencodeSuggestionStream` / preview UI.
+- [x] Listar oportunidades con criterio (latency, CPU, número de round-trips).
+
+### Hallazgos (Fase 4)
+
+| Área | Estado | Notas |
+| ------ | -------- | -------- |
+| **`@opencode-ai/sdk`** (`^1.14.44`) | Sin bump en esta fase | Seguir changelogs en upgrades mayores; payload `session.prompt` ya mínimo (`model` + `parts` texto). |
+| **Cola LM** (`enqueueOpencodeInlineLm`) | Mantener | Serialización **intencional**: prompts concurrentes sobre misma sesión → timeouts / SSE lento (comentario en código). **No** eliminar cola sin nuevo modelo de concurrencia en servidor/SDK. |
+| **Pool de sesión** | Adecuado | Coalescing `session.create`, invalidación por `deploymentId` / `emitOpenCodeServerWillReset`. |
+| **Snapshot providers** | Adecuado | Caché + single-flight; invalidación en `deactivate`. |
+| **SSE** (`consumeOpencodeSuggestionTextStream`) | Adecuado | Solo vista previa UI; filtro por sesión; abort acoplado al request. |
+| **`OpenCodeRuntime`** | Adecuado | Proceso embebido, debounce al parar, puerto fijo. |
+
+**Conclusión:** no hay mejora de bajo riesgo pendiente en v0.4.2; documentar la tabla en **`ARCHITECTURE.md`** §3.
+
+### Pasos derivados (Fase 4)
+
+1. Subsección **“Eficiencia de llamadas inline (OpenCode)”** en `Docs/ARCHITECTURE.md` §3.
+2. Referencias breves en cabeceras de módulos `opencode/*` relevantes.
+3. Marcar roadmap **v0.4.2** como auditoría cerrada en §8 `ARCHITECTURE.md`.
+
+### Criterio de hecho (Fase 4)
+
+Hallazgos registrados; pasos aplicados o rechazados con motivo; `npm run check` verde.
+
+### Estado (Fase 4)
+
+- [x] Auditoría cerrada
+- [x] Implementación cerrada
+
+---
+
+## Bitácora global (v0.4.2)
+
+| Fecha | Fase | Nota |
+| ------- | ------ | ------ |
+| 2026-05-10 | Fase 1 | Auditoría instruction ↔ normalize cerrada: capas complementarias (prompt + defensa determinista); docs en código + `instructionNormalizeContract.test.ts`. |
+| 2026-05-10 | Fase 2 | Sin `@vscode/prompt-tsx`; Copilot LM con 2× `User`; `buildCompletionInstructionParts` + `COMPLETION_PARTIAL_LABEL`; OpenCode sin cambio. |
+| 2026-05-10 | Fase 3 | Catálogo OpenCode = integración + política (tabla en `ARCHITECTURE.md` §3); sin refactor de código. |
+| 2026-05-10 | Fase 4 | OpenCode: cola/pool/snapshot/SSE revisados; sin cambio de código; tab eficiencia §3; SDK bump diferido. |
+
+---
+
+## Referencias
+
+- [`Docs/Owners.md`](../../Owners.md)
+- [`Docs/ARCHITECTURE.md`](../../ARCHITECTURE.md)
+- [VS Code — Language Model API](https://code.visualstudio.com/api/extension-guides/language-model)
+- [`npm: @vscode/prompt-tsx`](https://www.npmjs.com/package/@vscode/prompt-tsx)

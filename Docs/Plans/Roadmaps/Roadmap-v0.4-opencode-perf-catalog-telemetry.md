@@ -17,7 +17,7 @@
 ## Decisiones cerradas (design record)
 
 | Tema | Decisión |
-|------|----------|
+| ------ | ---------- |
 | Caché de catálogo | **Un módulo / singleton** (“Opencodeproviders snapshot”) poblar por **warm después de `runtime.start()` ok** + **primer acceso concurrente con single-flight** (`Promise` compartido). Consumen `opencodeLmCompletion.ts` y el path del webview que lista modelos (`opencodeModelCatalog.ts` / `mergedModelCatalog.ts` según convenga) **la misma API** para no divergir listas. |
 | Invalidación | **Re-fetch** ante: resultado vacío/indeterminado de resolución de modelo tras prompt fallido; comando/recarga opcional documentado en README spike; **`onDidChangeConfiguration`** si algún día OpenCode expone señal; como mínimo **tras `deactivate`/re‑`activate`** se limpia caché. |
 | TTL catálogo (opc.) | TTL blando (p. ej. 5–15 min) **opcional**: si está activo y expira solo en idle, siguiente suggest dispara refresh en background antes de resolver modelo; documentar si se introduce. |
@@ -39,7 +39,7 @@
 ## Riesgos y mitigaciones
 
 | Riesgo | Mitigación |
-|--------|-------------|
+| -------- | ------------- |
 | Catálogo obsoleto (usuario cambia modelos en OpenCode) | Invalidación manual (comando/reload ventana); re-fetch tras error de modelo; documentar en README. |
 | Reuso de sesión + estado contaminado entre prompts | Spike corto contra SDK/OpenCode docs; fallback a nueva sesión por suggest si hay error de invariante; tests de smoke. |
 | Race al primer suggest antes de warm | Resolver con **single-flight** cache load; bloque corto igual que hoy en primera llamada pero **una sola vez** hasta invalidación. |
@@ -60,7 +60,7 @@
 ### Fase G — Caché de `config.providers` (prioridad alta)
 
 | ID | Entregable | Criterio |
-|----|------------|----------|
+| ---- | ------------ | ---------- |
 | G1 | Módulo `opencodeProvidersCache` (o nombre unificado en `src/opencode/`) | `getProvidersSnapshot(client): Promise<ProvidersPayload>` con cache/memoria proceso + mutex/single-flight. |
 | G2 | `resolveOpencodeModelIds` refactor | Usa snapshot cacheado; no llama SDK directo cada vez si cache válido. |
 | G3 | Paridad webview | Listado merged / OpenCode sólo usa la misma capa (`listOpencodeSuggestionModels` o equivalente refactor). |
@@ -73,7 +73,7 @@
 ### Fase H — Latencia de ciclo de sesión (`delete` asíncrono; reuse opcional)
 
 | ID | Entregable | Criterio |
-|----|------------|----------|
+| ---- | ------------ | ---------- |
 | H1 | `session.delete` no bloquea `return` | `requestOpencodeCompletion` resuelve al usuario sin esperar delete; SSE stop sigue seguro (`abort`/finally). |
 | H2 | (Opc.) Pool de sesión | Si viable: **una sesión reusada** para sugerencias inline; tests manuales + fall back documentado si no. |
 | H3 | Sin regresión cancel/token | Abort y timeout siguen cerrando SSE y opcionalmente `session.abort` como hoy. |
@@ -85,9 +85,9 @@
 ### Fase I — Telemetría por fases (solo debug)
 
 | ID | Entregable | Criterio |
-|----|------------|----------|
-| I1 | Helper `logOpenCodePerfCapture(captureId, phase, elapsedMs \| deltaMs)` | Sólo emite si debug on. |
-| I2 | Puntos instrumentados como mínimo | `providers` (cache-hit \| resolved-after-await + `providers-network-fetch-ms` cuando hay red), **`session-create`** + **`inline-session`** ( pooled-reused \| create ), primer delta SSE (`stream-first-delta` con opcional ms desde envío del `prompt`), **`prompt`** (`roundTripMs`), **`sse-consumer-settled`** (si hay streaming), **`opencode-lm-total`**. ~~`session.delete`~~ retirado del happy path en fase H. |
+| ---- | ------------ | ---------- |
+| I1 | Helper `logOpenCodePerfCapture(captureId, phase, elapsedMs \ | deltaMs)` | Sólo emite si debug on. |
+| I2 | Puntos instrumentados como mínimo | `providers` (cache-hit \ | resolved-after-await + `providers-network-fetch-ms` cuando hay red), **`session-create`** + **`inline-session`** ( pooled-reused \ | create ), primer delta SSE (`stream-first-delta` con opcional ms desde envío del `prompt`), **`prompt`** (`roundTripMs`), **`sse-consumer-settled`** (si hay streaming), **`opencode-lm-total`**. ~~`session.delete`~~ retirado del happy path en fase H. |
 | I3 | No spam fuera de debug | asserts en tests o lint que llamadas sólo dentro de gated branch. |
 
 **Estado:** **Implementado (I1–I3)** — `logOpenCodePerfCapture`; `perfCaptureId` en `CompletionRequestOptions` desde el webview (`handleGhostPromptSuggest`); LM + snapshot de providers sólo registran **`[opencode-perf]`** con capture cuando **`perfCaptureId`** está definido; catálogo/warm no pasan perf ⇒ sin líneas nuevas.
@@ -99,7 +99,7 @@
 ### Fase J — Release notes
 
 | ID | Entregable | Criterio |
-|----|------------|----------|
+| ---- | ------------ | ---------- |
 | J1 | `CHANGELOG.md` | Entrada **[0.4.x]** citando perf OpenCode + debug perf logs. |
 
 **Estado inicial:** Pendiente.
@@ -127,7 +127,7 @@
 ## Bitácora
 
 | Fecha | Nota |
-|-------|------|
+| ------- | ------ |
 | 2026-05-10 | Roadmap creado por acuerdo: reducir hot-path OpenCode (`providers`, create/delete por request), observabilidad en debug únicamente. |
 | 2026-05-10 | Fase G (núcleo): `opencodeProvidersSnapshot`, warm prefetch, `invalidate` en `deactivate`, tests `opencodeProvidersSnapshot.test.ts` + regresión LM. |
 | 2026-05-10 | Fase H: `openCodeServerLifecycleHooks` + `deploymentId`; pool `opencodeInlineSuggestionSession`; retirado delete por suggestion; invalidación ante abort/errors/close embedded. |

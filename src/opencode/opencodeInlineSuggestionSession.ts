@@ -3,17 +3,17 @@
  * de `deploymentId` en lugar de por cada keystroke cuando el servidor embedded sigue estable.
  *
  * Reset: `emitOpenCodeServerWillReset` (pre-close), bump de deployment, nonce en invalidaciones.
+ * Ver `Docs/ARCHITECTURE.md` §3 — Eficiencia de llamadas inline (OpenCode).
  */
 
 import { logOpenCodePerfCapture } from "../debug/SuggestionDebug";
 import { getOpenCodeRuntime } from "./OpenCodeRuntime";
 import { onOpenCodeServerWillReset } from "./openCodeServerLifecycleHooks";
-
-type SessionCreateEnvelope = unknown;
+import { unpackOpencodeSessionCreateId } from "./sdkEnvelope";
 
 export type SdkClientWithSession = {
   session: {
-    create(body?: unknown): Promise<SessionCreateEnvelope>;
+    create(body?: unknown): Promise<unknown>;
     delete(options?: { path?: { id?: string } }): Promise<unknown>;
     abort(options?: unknown): Promise<unknown>;
     prompt(options?: unknown): Promise<unknown>;
@@ -30,20 +30,6 @@ class PoolStaleError extends Error {
 
 function isPoolStaleError(e: unknown): boolean {
   return e instanceof PoolStaleError;
-}
-
-/** Resuelto desde el envelope `{ data?: { id } }`. */
-export function unpackSessionCreateId(envelope: SessionCreateEnvelope): string | undefined {
-  if (!envelope || typeof envelope !== "object") {
-    return undefined;
-  }
-  const er = envelope as Record<string, unknown>;
-  const data = er.data;
-  if (!data || typeof data !== "object") {
-    return undefined;
-  }
-  const id = (data as { id?: unknown }).id;
-  return typeof id === "string" && id.trim().length > 0 ? id : undefined;
 }
 
 let pooledSessionId: string | undefined;
@@ -78,7 +64,7 @@ function ensureServerResetHook(): void {
 /** Id de sesión pooled o recién creada; retries si el servidor churn mid-flight. */
 export async function getOrCreateOpencodeInlineSession(
   client: SdkClientWithSession,
-  readCreateError: (envelope: SessionCreateEnvelope) => string | undefined,
+  readCreateError: (envelope: unknown) => string | undefined,
   perfCaptureId?: number,
 ): Promise<string> {
   ensureServerResetHook();
@@ -121,7 +107,7 @@ export async function getOrCreateOpencodeInlineSession(
           throw new Error(envErr);
         }
 
-        const id = unpackSessionCreateId(created);
+        const id = unpackOpencodeSessionCreateId(created);
         if (!id) {
           throw new Error("Empty session create response");
         }

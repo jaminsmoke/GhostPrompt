@@ -22,7 +22,7 @@ Documento vivo: actualizarlo cuando **mueva carpetas**, **añada zonas ESLint** 
 Filas = carpetas principales de `src/`. Columnas = reglas de dependencia y rol.
 
 | Carpeta `src/` | Rol | Depende típicamente de | No debe importar desde |
-|----------------|-----|--------------------------|-------------------------|
+| ---------------- | ----- | -------------------------- | ------------------------- |
 | **`extension/`** | Punto de entrada; registra comandos y vistas; lifecycle `activate` / `deactivate`. | `host`, `projectMemory` (activate), `opencode` (sync runtime), `debug`. | Evitar lógica de negocio pesada aquí (mantener delgado). |
 | **`host/`** | Webview provider, mensajes inbound/outbound, HTML/CSP, wire de suggest → completion. | `completion`, `session`, `projectMemory`, `opencode` (warm), `shared`, `debug`. | No meter aquí runtime OpenCode embebido largo (delegar a `opencode/`). |
 | **`completion/`** | Motores LM en `providers/`, núcleo en raíz (`types`, instrucción, fuentes), **`catalog/`** (modelos Copilot/OpenCode, merge, tiers), **`context/`** (bootstrap README/package para prompts). | `opencode/` (providers + catálogo), `vscode`. | No UI webview ni HTML. |
@@ -41,7 +41,7 @@ Filas = carpetas principales de `src/`. Columnas = reglas de dependencia y rol.
 Reglas en `.eslintrc.json` (nivel `warn`):
 
 | Objetivo (`target`) | No importar desde (`from`) |
-|---------------------|----------------------------|
+| --------------------- | ---------------------------- |
 | **`src/opencode/**/*`** | **`src/host/**/*`** |
 | **`src/projectMemory/**/*`** | **`src/host/**/*`** |
 | **`src/debug/**/*`** | **`src/host/**/*`** |
@@ -55,11 +55,11 @@ Sin excepciones documentadas en la fecha de la [bitácora](#bitácora) (Fase D).
 No es cobertura de líneas al 100 %; es **contrato de tests que deben seguir pasando** cuando se toca cada zona.
 
 | Área `src/` | Ficheros de test relevantes (Vitest) |
-|-------------|--------------------------------------|
+| ------------- | -------------------------------------- |
 | `extension/extension.ts` | Parcialmente indirecto: `MiniInputViewProvider.test.ts` (registro webview); integración opcional. |
-| `host/*` (MiniInput, handlers, protocols, settings, suggest wiring) | `MiniInputViewProvider.test.ts`, `webviewProtocols.test.ts`, `host/ghostPromptWebviewInboundHandlers.test.ts`, `host/ghostPromptSuggestPipeline.test.ts`, `webviewToolbarParity.test.ts`, `webviewThemeTokens.test.ts`, `shared/webviewMessageSchemas.test.ts`, `webview/composeLabels.test.ts` |
+| `host/*` (MiniInput, handlers, protocols, settings, suggest wiring) | `MiniInputViewProvider.test.ts`, `webviewProtocols.test.ts`, `host/ghostPromptWebviewInboundHandlers.test.ts`, `host/ghostPromptSuggestPipeline.test.ts`, `webviewToolbarParity.test.ts` (incl. paridad dual vista v0.4.3), `webviewThemeTokens.test.ts`, `shared/webviewMessageSchemas.test.ts`, `webview/composeLabels.test.ts`, `webview/userErrorMessage.test.ts` |
 | `host/ghostPromptSuggestPipeline.ts` + `handleGhostPromptSuggest.ts` (wrapper) | `host/ghostPromptSuggestPipeline.test.ts` (deps mínimas + spy `getCompletionProviderForSource`); flujo integrado en `MiniInputViewProvider.test.ts`. |
-| `completion/` (raíz: providers, sources, types; **`catalog/`**, **`context/`**) | `completionProvider.test.ts`, `completionSources.test.ts`, `CopilotCompletion.test.ts`, `opencodeLmCompletion.test.ts`, `completionInstruction.test.ts`, `normalizeOpencodeProviderModels.test.ts`, `opencodeModelTier.test.ts`, `opencodeModelCatalog.test.ts`, `suggestionLoadingUi.test.ts`, `projectBootstrapContext.test.ts`, `opencodeProvidersSnapshot.test.ts`, `opencodeProvidersSnapshot.perf.test.ts`, `logOpenCodePerfCapture.test.ts` |
+| `completion/` (raíz: providers, sources, types; **`catalog/`**, **`context/`**) | `completionProvider.test.ts`, `completionSources.test.ts`, `CopilotCompletion.test.ts`, `opencodeLmCompletion.test.ts`, `completionInstruction.test.ts`, `instructionNormalizeContract.test.ts`, `normalizeOpencodeProviderModels.test.ts`, `opencodeModelTier.test.ts`, `opencodeModelCatalog.test.ts`, `suggestionLoadingUi.test.ts`, `projectBootstrapContext.test.ts`, `opencodeProvidersSnapshot.test.ts`, `opencodeProvidersSnapshot.perf.test.ts`, `logOpenCodePerfCapture.test.ts` |
 | `opencode/` (runtime, stream, cli, queue, session pool) | `opencodeLmCompletion.test.ts`, `opencodeProvidersSnapshot.test.ts`, `opencodeProvidersSnapshot.perf.test.ts`, `opencodeSuggestionStream.test.ts`, `openCodeCli.test.ts`, `nodeFetchDuplex.test.ts`, `opencodeSseDebug.test.ts`, `opencodeSuggestions.integration.test.ts` (opcional, env) |
 | `session/` | `GhostPromptSessionStore.test.ts` |
 | `governor/` | `SuggestionRequestGovernor.test.ts` |
@@ -76,7 +76,7 @@ Orden recomendado; cada fase es **independiente** si la anterior está estable.
 ### Fase 0 — Baseline (sin mover código)
 
 | Acción | Criterio |
-|--------|----------|
+| -------- | ---------- |
 | Confirmar `npm run check` verde en `main` | CI local OK |
 | Congelar este doc | Commit que añade `Docs/Owners.md` |
 
@@ -103,7 +103,7 @@ Orden recomendado; cada fase es **independiente** si la anterior está estable.
 **Gate tests (antes de mover imports):**
 
 | Comportamiento | Tests que deben cubrir |
-|----------------|-------------------------|
+| ---------------- | ------------------------- |
 | Registro y routing de proveedores | `completionProvider.test.ts`, `completionSources.test.ts` |
 | Copilot LM | `CopilotCompletion.test.ts` |
 | OpenCode LM + cola + snapshot | `opencodeLmCompletion.test.ts`, `opencodeProvidersSnapshot*.test.ts` |
@@ -125,7 +125,7 @@ Si falta un caso (p. ej. export público solo usado desde host), **añadir test*
 **Gate tests (antes de extraer):**
 
 | Comportamiento | Tests |
-|----------------|-------|
+| ---------------- | ------- |
 | Loading + suggestion + broadcast | `MiniInputViewProvider.test.ts` (flujo suggest mock) |
 | Gobernador bloquea / cache | `SuggestionRequestGovernor.test.ts`; escenarios suggest que pasen por governor si aplica |
 | Mensajes y deps del handler | `ghostPromptWebviewInboundHandlers.test.ts` |
@@ -158,9 +158,16 @@ Si falta un caso (p. ej. export público solo usado desde host), **añadir test*
 ## Bitácora
 
 | Fecha | Nota |
-|-------|------|
+| ------- | ------ |
 | 2026-05-10 | Creación del doc: matriz de ownership, mapa tests↔src, fases A–D y proceso previo a cada fase. |
 | 2026-05-10 | **Fase A:** `ARCHITECTURE.md` alineado con multi-fuente, OpenCode, protocolo Zod, IDs `ghostPrompt.*`; `completion/index.ts` comentario de barrel. |
 | 2026-05-10 | **Fase B:** partición `completion/catalog/` + `completion/context/`; sin cambio de comportamiento; gate tests verde. |
 | 2026-05-10 | **Fase C:** pipeline `ghostPromptSuggestPipeline.ts` + wrapper `handleGhostPromptSuggest.ts`; `ghostPromptSuggestPipeline.test.ts`; `npm run check` verde. |
 | 2026-05-10 | **Fase D:** ESLint `import/no-restricted-paths` para `projectMemory` y `debug` → no importar `host`; `npm run lint` verde. |
+| 2026-05-10 | Roadmap **v0.4.2 Fase 1:** auditoría `instruction` ↔ `normalize`; contrato documentado + `instructionNormalizeContract.test.ts`. |
+| 2026-05-10 | Roadmap **v0.4.2 Fase 2:** sin `prompt-tsx`; Copilot `sendRequest` con 2 mensajes `User`; `buildCompletionInstructionParts`. |
+| 2026-05-10 | Roadmap **v0.4.2 Fase 3:** roles `completion/catalog/*` documentados en `ARCHITECTURE.md` §3; sin cambio de código. |
+| 2026-05-10 | Roadmap **v0.4.2 Fase 4:** audit OpenCode inline (cola, sesión, snapshot, SSE); docs §3; sin bump `@opencode-ai/sdk`. |
+| 2026-05-10 | Roadmap **`Roadmap-v0.4.3-quality-resilience.md`:** fases 1–5 (tests suggest, CI OpenCode opcional, errores UX, tipos SDK, dual webview). |
+| 2026-05-10 | Roadmap **v0.4.3 Fase 1:** matriz tests `ghostPromptSuggestPipeline` (`contextMode`, OpenCode, empty/error). |
+| 2026-05-10 | Roadmap **v0.4.3 Fase 2:** releasing OpenCode + GitHub Actions (`ci.yml`, integración manual). |

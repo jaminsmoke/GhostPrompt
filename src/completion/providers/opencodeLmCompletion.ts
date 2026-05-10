@@ -24,6 +24,11 @@ import {
   invalidateOpencodeInlineSuggestionSessionPool,
 } from "../../opencode/opencodeInlineSuggestionSession";
 import { enqueueOpencodeInlineLm } from "../../opencode/opencodeInlineCompletionQueue";
+import {
+  concatOpencodeAssistantTextParts,
+  parseOpencodePromptResultPayload,
+  readOpencodeEnvelopeFailure,
+} from "../../opencode/sdkEnvelope";
 import { consumeOpencodeSuggestionTextStream } from "../../opencode/opencodeSuggestionStream";
 
 function perfMsNow(): number {
@@ -52,47 +57,6 @@ type SdkClient = {
     delete(options?: unknown): Promise<unknown>;
   };
 };
-
-type PromptPayload = {
-  info?: {
-    error?: { name?: string; data?: { message?: string } };
-    modelID?: string;
-    providerID?: string;
-  };
-};
-
-type TextPart = { type?: string; text?: string };
-
-function getResultData(result: unknown): unknown {
-  if (result && typeof result === "object" && "data" in result) {
-    return (result as { data: unknown }).data;
-  }
-  return undefined;
-}
-
-function readEnvelopeError(result: unknown): string | undefined {
-  if (!result || typeof result !== "object") {
-    return undefined;
-  }
-  const err = (result as { error?: unknown }).error;
-  if (err === undefined || err === null) {
-    return undefined;
-  }
-  if (typeof err === "string") {
-    return err;
-  }
-  if (typeof err === "object" && err !== null && "message" in err) {
-    const m = (err as { message?: unknown }).message;
-    if (typeof m === "string") {
-      return m;
-    }
-  }
-  try {
-    return JSON.stringify(err);
-  } catch {
-    return String(err);
-  }
-}
 
 function parsePreferredOpencodeModel(
   preferredModelId?: string,
@@ -195,20 +159,6 @@ function resolveOpencodeModelIdsFromSnapshot(
     }
   }
   return undefined;
-}
-
-function concatAssistantParts(parts: unknown): string {
-  if (!Array.isArray(parts)) {
-    return "";
-  }
-  let out = "";
-  for (const p of parts) {
-    const part = p as TextPart;
-    if (part?.type === "text" && typeof part.text === "string") {
-      out += part.text;
-    }
-  }
-  return out;
 }
 
 function describeOpencodeModel(
@@ -335,7 +285,7 @@ async function executeOpencodeInlineLmCompletion(
     try {
       sessionId = await getOrCreateOpencodeInlineSession(
         client,
-        readEnvelopeError,
+        readOpencodeEnvelopeFailure,
         perfCaptureId,
       );
     } catch (e) {
@@ -401,15 +351,13 @@ async function executeOpencodeInlineLmCompletion(
       `roundTripMs=${Math.round(perfMsNow() - tPromptSend)}`,
     );
 
-    const promptEnvErr = readEnvelopeError(promptResult);
+    const promptEnvErr = readOpencodeEnvelopeFailure(promptResult);
     if (promptEnvErr) {
       invalidateOpencodeInlineSuggestionSessionPool();
       return { kind: "error", message: promptEnvErr };
     }
 
-    const payload = getResultData(promptResult) as
-      | { info?: PromptPayload["info"]; parts?: unknown }
-      | undefined;
+    const payload = parseOpencodePromptResultPayload(promptResult);
 
     const err = payload?.info?.error;
     if (err) {
@@ -422,7 +370,7 @@ async function executeOpencodeInlineLmCompletion(
       return { kind: "error", message: msg };
     }
 
-    const completionText = concatAssistantParts(payload?.parts);
+    const completionText = concatOpencodeAssistantTextParts(payload?.parts);
     const suggestion = normalizeSuggestion(
       completionText,
       userText,

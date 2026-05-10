@@ -11,6 +11,7 @@
  *   { type: 'clear' }
  *   { type: 'draftSync', text: string, originViewId: string }
  *   { type: 'draftHydrate', text: string }
+ *   { type: 'settings', settings: { ..., suggestionDebounceMs: number, ... } }  // ms idle antes de enviar suggest (ghostPrompt.suggestionDebounceMs)
  *
  * Outbound (webview → host):
  *   { type: 'suggest',  text: string, captureId: number }
@@ -26,7 +27,10 @@ import {
   composeContextShort,
   composeLangShort,
 } from "./lib/composeLabels";
-import { toUserErrorMessage } from "./lib/userErrorMessage";
+import {
+  messageForEmptySuggestion,
+  toUserErrorMessage,
+} from "./lib/userErrorMessage";
 import { postToHost } from "./protocol/postToHost";
 
 (function (): void {
@@ -65,6 +69,8 @@ import { postToHost } from "./protocol/postToHost";
 
   /** Temporizador de debounce para las solicitudes de suggestion. */
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Ms tras dejar de teclear antes de enviar `suggest` (viene del host / `ghostPrompt.suggestionDebounceMs`). */
+  let suggestionDebounceMs = 400;
 
   /** Evita eco al aplicar borrador remoto (host → webview). */
   let applyingRemoteDraft = false;
@@ -157,7 +163,7 @@ import { postToHost } from "./protocol/postToHost";
         text,
         captureId: currentCaptureId,
       });
-    }, 300);
+    }, suggestionDebounceMs);
   }
 
   // ── Ghost-text helpers ───────────────────────────────────────────────────
@@ -457,40 +463,21 @@ import { postToHost } from "./protocol/postToHost";
       }
     } else if (message.type === "empty") {
       clearGhost();
-      if (message.reason === "no-model") {
-        if (lastCompletionUiKind === "multi") {
-          showStatus(
-            "No hay modelos disponibles (Copilot u OpenCode). Revisa fuentes habilitadas y OpenCode.",
-          );
-        } else {
-          showStatus(
-            lastCompletionProvider === "opencode"
-              ? "OpenCode no disponible o sin modelos."
-              : "Copilot no disponible en esta sesión.",
-          );
-        }
-      } else if (message.reason === "no-included-model") {
-        showStatus("No hay modelo incluido disponible para suggestions.");
-      } else if (message.reason === "premium-quota-blocked") {
-        showStatus("Suggestions pausadas para evitar consumo de cuota premium.");
-      } else if (message.reason === "too-short") {
-        showStatus("Escribe un poco más para sugerir mejor.");
-      } else if (message.reason === "duplicate-input") {
-        showStatus("Esperando cambios en el texto...");
-      } else if (message.reason === "rate-limited") {
-        showStatus("Pausado temporalmente por limite de llamadas. Puedes ampliar el limite en Settings.");
-      } else if (message.reason === "session-budget-exhausted") {
-        showStatus("Se alcanzo el limite de suggestions de esta sesion. Ajustalo en Settings si necesitas mas.");
-      } else if (message.reason === "request-timeout") {
-        showStatus("El modelo tardo demasiado en responder. Prueba otro modelo o vuelve a intentarlo.");
-      } else {
-        showStatus("Sin sugerencia para este texto.");
-      }
+      showStatus(
+        messageForEmptySuggestion(message.reason, {
+          completionUiKind: lastCompletionUiKind,
+          completionProvider: lastCompletionProvider,
+        }),
+      );
     } else if (message.type === "error") {
       clearGhost();
       showStatus(toUserErrorMessage(message.message), true);
     } else if (message.type === "settings") {
       const settings = message.settings ?? {};
+      const debRaw = settings.suggestionDebounceMs;
+      if (typeof debRaw === "number" && Number.isFinite(debRaw)) {
+        suggestionDebounceMs = Math.min(2000, Math.max(150, Math.round(debRaw)));
+      }
       lastCompletionUiKind =
         typeof settings.completionUiKind === "string"
           ? settings.completionUiKind

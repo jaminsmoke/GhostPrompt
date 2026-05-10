@@ -20,6 +20,7 @@ const minimalSettingsPayload = {
   effectiveSuggestionLanguage: "en" as const,
   effectiveModel: undefined,
   debugSuggestions: false,
+  suggestionDebounceMs: 400,
 };
 
 describe("webviewProtocols (v0.3.1 Fase B)", () => {

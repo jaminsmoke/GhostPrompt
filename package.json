@@ -121,6 +121,11 @@
           "default": false,
           "markdownDescription": "Enable structured debug logs for suggestion lifecycle in the `GhostPrompt Suggestions` output channel."
         },
+        "ghostPrompt.showSuggestionIssueNotifications": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Show occasional VS Code notifications for actionable suggestion failures (missing Copilot/OpenCode, premium quota pause, OpenCode start/network/auth errors). Throttled to avoid spam; the webview status line remains primary."
+        },
         "ghostPrompt.maxSuggestionChars": {
           "type": "number",
           "default": 180,
@@ -172,6 +177,13 @@
           "minimum": 1,
           "maximum": 100,
           "markdownDescription": "Minimum normalized character count required before requesting a suggestion."
+        },
+        "ghostPrompt.suggestionDebounceMs": {
+          "type": "number",
+          "default": 400,
+          "minimum": 150,
+          "maximum": 2000,
+          "markdownDescription": "Delay after you stop typing before GhostPrompt requests a suggestion (webview debounce). Higher = fewer Copilot/OpenCode calls while typing; lower = faster ghost-text."
         },
         "ghostPrompt.requestCooldownMs": {
           "type": "number",

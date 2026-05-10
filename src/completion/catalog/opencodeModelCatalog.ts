@@ -1,5 +1,6 @@
 /**
  * Catálogo de modelos OpenCode para el selector webview (`config.providers()` vía caché snapshot).
+ * Ver `Docs/ARCHITECTURE.md` §3 — Catálogo OpenCode y merge.
  */
 import * as vscode from "vscode";
 

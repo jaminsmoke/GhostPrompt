@@ -1,3 +1,14 @@
+/**
+ * Post-proceso del texto devuelto por el LM antes de mostrarlo como ghost-text.
+ *
+ * **Relación con `instruction.ts`:** el prompt ya pide no repetir el prefijo y cuándo
+ * usar espacio inicial; los modelos incumplen a menudo. Esta capa es **defensiva** y
+ * determinista (prefijo repetido, solape sufijo/prefijo, espacio tras `.:;,!?`, tope
+ * `maxChars`). No sustituye a la instrucción: reduce tokens rotos en la UI y evita
+ * depender solo del cumplimiento del modelo.
+ *
+ * @see buildCompletionInstruction — directivas de estilo e idioma en el prompt.
+ */
 export function normalizeSuggestion(
   rawSuggestion: string,
   userText: string,

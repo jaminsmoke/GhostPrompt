@@ -2,6 +2,8 @@
  * Una sola ejecución de `requestOpencodeCompletion` activa contra el SDK / sesión pooled.
  * Dos prompts concurrentes sobre la misma sesión OpenCode pueden encolar en el servidor,
  * disparar timeouts (~12 s) y retrasos multi‑segundo hasta el primer token SSE — ver spikes.
+ *
+ * Ver `Docs/ARCHITECTURE.md` §3 — Eficiencia de llamadas inline (OpenCode).
  */
 
 let lmTail = Promise.resolve();

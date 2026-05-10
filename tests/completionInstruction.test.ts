@@ -1,8 +1,24 @@
 import { describe, expect, it } from "vitest";
 
-import { buildCompletionInstruction } from "../src/completion/instruction";
+import {
+  COMPLETION_PARTIAL_LABEL,
+  buildCompletionInstruction,
+  buildCompletionInstructionParts,
+} from "../src/completion/instruction";
 
 describe("buildCompletionInstruction", () => {
+  it("prefix + labeledPartial coincide con la instrucción completa (contrato Copilot 2× User)", () => {
+    const ctx = {
+      outputLanguage: "en" as const,
+      workspaceName: "demo",
+      projectBootstrapLines: ["README: x"],
+    };
+    const full = buildCompletionInstruction("hola", "balanced", ctx);
+    const parts = buildCompletionInstructionParts("hola", "balanced", ctx);
+    expect(parts.prefixInstruction + parts.labeledPartial).toBe(full);
+    expect(parts.labeledPartial).toBe(`${COMPLETION_PARTIAL_LABEL}hola`);
+  });
+
   it("incluye projectBootstrapLines en Relevant project context", () => {
     const text = buildCompletionInstruction("hola", "balanced", {
       outputLanguage: "en",

@@ -3,7 +3,7 @@
  */
 import * as vscode from "vscode";
 
-import { buildCompletionInstruction } from "../instruction";
+import { buildCompletionInstructionParts } from "../instruction";
 import { describeModel, selectModelByPolicy } from "../catalog/modelCatalog";
 import { normalizeSuggestion } from "../normalize";
 import { collectResponseText } from "../streaming";
@@ -53,11 +53,18 @@ export async function requestCopilotLmCompletion(
       requestTokenSource.cancel();
     }, requestTimeoutMs);
 
-    const instruction = buildCompletionInstruction(userText, style, context);
+    const { prefixInstruction, labeledPartial } = buildCompletionInstructionParts(
+      userText,
+      style,
+      context,
+    );
     try {
       onLoadingPhase?.("copilot");
       const response = await model.sendRequest(
-        [vscode.LanguageModelChatMessage.User(instruction)],
+        [
+          vscode.LanguageModelChatMessage.User(prefixInstruction),
+          vscode.LanguageModelChatMessage.User(labeledPartial),
+        ],
         {},
         requestTokenSource.token,
       );

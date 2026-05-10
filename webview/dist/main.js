@@ -39,17 +39,69 @@
   }
 
   // webview/src/lib/userErrorMessage.ts
+  function messageForEmptySuggestion(reason, ctx) {
+    switch (reason) {
+      case "no-model":
+        if (ctx.completionUiKind === "multi") {
+          return "No hay modelos disponibles (Copilot u OpenCode). Revisa fuentes habilitadas y OpenCode.";
+        }
+        return ctx.completionProvider === "opencode" ? "OpenCode no disponible o sin modelos." : "Copilot no disponible en esta sesi\xF3n.";
+      case "no-included-model":
+        return "No hay modelo incluido disponible para suggestions.";
+      case "premium-quota-blocked":
+        return "Suggestions pausadas para evitar consumo de cuota premium.";
+      case "empty-response":
+        return "El modelo respondi\xF3 vac\xEDo. Prueba otro modelo o reformula el texto.";
+      case "too-short":
+        return "Escribe un poco m\xE1s para sugerir mejor.";
+      case "duplicate-input":
+        return "Esperando cambios en el texto...";
+      case "rate-limited":
+        return "Pausado temporalmente por limite de llamadas. Puedes ampliar el limite en Settings.";
+      case "session-budget-exhausted":
+        return "Se alcanzo el limite de suggestions de esta sesion. Ajustalo en Settings si necesitas mas.";
+      case "request-timeout":
+        return "El modelo tardo demasiado en responder. Prueba otro modelo o vuelve a intentarlo.";
+      default:
+        return "Sin sugerencia para este texto.";
+    }
+  }
+  var ERROR_BODY_MAX_LEN = 140;
+  function formatErrorBody(body) {
+    const compact = body.replace(/\s+/g, " ");
+    if (compact.length <= ERROR_BODY_MAX_LEN) {
+      return compact;
+    }
+    return `${compact.slice(0, ERROR_BODY_MAX_LEN - 3)}...`;
+  }
+  function mapKnownErrorToUserHint(normalized) {
+    const lower = normalized.toLowerCase();
+    if (lower.includes("premium model quota") || lower.includes("additional paid premium") || lower.includes("allowance to renew")) {
+      return "Cuota de modelo premium agotada o limitada. Elige un modelo incluido o revisa tu plan de Copilot.";
+    }
+    if (lower.includes("failed to start opencode") || lower.includes("opencode server")) {
+      return "No se pudo iniciar OpenCode. Comprueba que la CLI est\xE9 instalada (PATH) y la configuraci\xF3n de proveedores.";
+    }
+    if (lower.includes("econnrefused") || lower.includes("enotfound") || lower.includes("fetch failed") || lower.includes("network error") || lower.includes("socket hang up")) {
+      return "No se pudo conectar. Revisa la red o que el servicio OpenCode est\xE9 disponible.";
+    }
+    if (/\b401\b/.test(lower) || /\b403\b/.test(lower) || lower.includes("unauthorized") || lower.includes("forbidden")) {
+      return "Acceso denegado o credenciales inv\xE1lidas. Revisa la configuraci\xF3n del proveedor.";
+    }
+    if (lower.includes("rate limit") || lower.includes("too many requests") || /\b429\b/.test(lower)) {
+      return "Demasiadas solicitudes en poco tiempo. Espera un momento o revisa l\xEDmites en Settings.";
+    }
+    return null;
+  }
   function toUserErrorMessage(rawMessage) {
     if (!rawMessage) {
       return "Error al generar sugerencia.";
     }
     const normalized = String(rawMessage).trim();
     const compact = normalized.replace(/\s+/g, " ");
-    const maxLen = 140;
-    if (compact.length <= maxLen) {
-      return `Error: ${compact}`;
-    }
-    return `Error: ${compact.slice(0, maxLen - 3)}...`;
+    const hint = mapKnownErrorToUserHint(compact);
+    const body = hint ?? compact;
+    return `Error: ${formatErrorBody(body)}`;
   }
 
   // node_modules/zod/v3/external.js
@@ -4114,7 +4166,9 @@
     suggestionLanguageChoice: external_exports.enum(["auto", "es", "en"]),
     effectiveSuggestionLanguage: external_exports.enum(["es", "en"]),
     effectiveModel: suggestionModelDescriptorSchema.optional(),
-    debugSuggestions: external_exports.boolean()
+    debugSuggestions: external_exports.boolean(),
+    /** Tiempo de inactividad tras teclear antes de pedir suggestion (webview debounce). */
+    suggestionDebounceMs: external_exports.number().min(150).max(2e3)
   });
   var webviewOutboundSettingsEnvelopeSchema = external_exports.object({
     type: external_exports.literal("settings"),
@@ -4221,6 +4275,7 @@
     let pendingSuggestion = "";
     const MIN_COMPOSER_HEIGHT = 56;
     let debounceTimer = null;
+    let suggestionDebounceMs = 400;
     let applyingRemoteDraft = false;
     const VIEW_ID = typeof window.__ghostPromptViewId === "string" ? window.__ghostPromptViewId : "";
     const VIEW_CAPS = typeof window.__ghostPromptCapabilities === "object" && window.__ghostPromptCapabilities !== null ? window.__ghostPromptCapabilities : {};
@@ -4279,7 +4334,7 @@
           text,
           captureId: currentCaptureId
         });
-      }, 300);
+      }, suggestionDebounceMs);
     }
     function showGhost(text) {
       pendingSuggestion = text;
@@ -4531,38 +4586,21 @@
         }
       } else if (message.type === "empty") {
         clearGhost();
-        if (message.reason === "no-model") {
-          if (lastCompletionUiKind === "multi") {
-            showStatus(
-              "No hay modelos disponibles (Copilot u OpenCode). Revisa fuentes habilitadas y OpenCode."
-            );
-          } else {
-            showStatus(
-              lastCompletionProvider === "opencode" ? "OpenCode no disponible o sin modelos." : "Copilot no disponible en esta sesi\xF3n."
-            );
-          }
-        } else if (message.reason === "no-included-model") {
-          showStatus("No hay modelo incluido disponible para suggestions.");
-        } else if (message.reason === "premium-quota-blocked") {
-          showStatus("Suggestions pausadas para evitar consumo de cuota premium.");
-        } else if (message.reason === "too-short") {
-          showStatus("Escribe un poco m\xE1s para sugerir mejor.");
-        } else if (message.reason === "duplicate-input") {
-          showStatus("Esperando cambios en el texto...");
-        } else if (message.reason === "rate-limited") {
-          showStatus("Pausado temporalmente por limite de llamadas. Puedes ampliar el limite en Settings.");
-        } else if (message.reason === "session-budget-exhausted") {
-          showStatus("Se alcanzo el limite de suggestions de esta sesion. Ajustalo en Settings si necesitas mas.");
-        } else if (message.reason === "request-timeout") {
-          showStatus("El modelo tardo demasiado en responder. Prueba otro modelo o vuelve a intentarlo.");
-        } else {
-          showStatus("Sin sugerencia para este texto.");
-        }
+        showStatus(
+          messageForEmptySuggestion(message.reason, {
+            completionUiKind: lastCompletionUiKind,
+            completionProvider: lastCompletionProvider
+          })
+        );
       } else if (message.type === "error") {
         clearGhost();
         showStatus(toUserErrorMessage(message.message), true);
       } else if (message.type === "settings") {
         const settings = message.settings ?? {};
+        const debRaw = settings.suggestionDebounceMs;
+        if (typeof debRaw === "number" && Number.isFinite(debRaw)) {
+          suggestionDebounceMs = Math.min(2e3, Math.max(150, Math.round(debRaw)));
+        }
         lastCompletionUiKind = typeof settings.completionUiKind === "string" ? settings.completionUiKind : settings.completionProvider === "opencode" ? "opencode" : "copilot";
         const sourcesRaw = settings.enabledCompletionSources;
         const sources = Array.isArray(sourcesRaw) ? sourcesRaw : [];

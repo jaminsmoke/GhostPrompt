@@ -1,6 +1,7 @@
 /**
  * Regresión: paridad funcional del toolbar entre sidebar y panel (mismo bundle webview).
  * @see Docs/Plans/Roadmaps/Roadmap-v0.3.1-webview-parity-contracts-ux.md Fase A
+ * @see Docs/Plans/Roadmaps/Roadmap-v0.4.3-quality-resilience.md Fase 5 (gobernanza dual webview)
  */
 import { readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
@@ -58,5 +59,31 @@ describe("webview toolbar parity (v0.3.1 Fase A)", () => {
     const blockEnd = css.indexOf("#send-btn", blockStart);
     const block = css.slice(blockStart, blockEnd > blockStart ? blockEnd : undefined);
     expect(block.toLowerCase()).not.toMatch(/\.setting-group[\s\S]*display\s*:\s*none/);
+  });
+});
+
+describe("webview dual-view governance (v0.4.3 Fase 5)", () => {
+  it("ghostPromptWebviewHtml carga un único index + bundle + CSS", () => {
+    const src = read("src/host/ghostPromptWebviewHtml.ts");
+    expect(src).toContain('"webview"');
+    expect(src).toContain('"index.html"');
+    expect(src).toContain('"dist"');
+    expect(src).toContain('"main.js"');
+    expect(src).toContain('"style.css"');
+  });
+
+  it("MiniInputViewProvider usa ambas contribuciones y el HTML compartido", () => {
+    const src = read("src/host/MiniInputViewProvider.ts");
+    expect(src).toContain("ghostPrompt.input");
+    expect(src).toContain("ghostPrompt.inputPanel");
+    expect(src).toContain("buildGhostPromptWebviewHtml");
+    expect(src).toContain("_broadcastUi");
+  });
+
+  it("el cliente webview centraliza mensajes de estado en userErrorMessage.ts", () => {
+    const main = read("webview/src/main.ts");
+    expect(main).toContain("./lib/userErrorMessage");
+    expect(main).toContain("messageForEmptySuggestion");
+    expect(main).toContain("toUserErrorMessage");
   });
 });

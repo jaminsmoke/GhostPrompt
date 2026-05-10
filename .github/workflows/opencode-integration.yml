@@ -1,0 +1,36 @@
+# Real OpenCode CLI + embedded server + LLM (optional; not part of default CI).
+# GitHub-hosted runners do not include the `opencode` binary — run locally or on a
+# self-hosted runner with OpenCode installed and providers configured.
+#
+# Manual: Actions → this workflow → Run workflow.
+name: OpenCode integration
+
+on:
+  workflow_dispatch:
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Require OpenCode CLI on PATH
+        run: |
+          if ! command -v opencode 2>/dev/null; then
+            echo "::error title=OpenCode CLI missing::Install the OpenCode CLI on this runner (or use a self-hosted runner). Local run: GHOST_PROMPT_OPENCODE_INTEGRATION=1 npm run test:integration — see README."
+            exit 1
+          fi
+          opencode --version
+
+      - name: Integration tests
+        env:
+          GHOST_PROMPT_OPENCODE_INTEGRATION: "1"
+        run: npm run test:integration

@@ -1,5 +1,6 @@
 /**
  * SSE `/event`: acumula solo deltas de partes `text` (salida), ignora `reasoning`, etc.
+ * Vista previa opcional; ver `Docs/ARCHITECTURE.md` §3 — Eficiencia de llamadas inline (OpenCode).
  */
 import {
   isSuggestionDebugEnabled,

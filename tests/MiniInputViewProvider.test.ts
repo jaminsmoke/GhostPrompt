@@ -338,6 +338,7 @@ describe("MiniInputViewProvider", () => {
         settings: expect.objectContaining({
           completionUiKind: "copilot",
           enabledCompletionSources: ["copilot"],
+          suggestionDebounceMs: 400,
           availableModels: [
             {
               id: "gpt-4o-mini",

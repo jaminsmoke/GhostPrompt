@@ -95,6 +95,7 @@ describe("webviewMessageSchemas (shared)", () => {
         tier: "included",
       },
       debugSuggestions: true,
+      suggestionDebounceMs: 400,
     });
     expect(r.success).toBe(true);
   });
@@ -114,6 +115,7 @@ describe("webviewMessageSchemas (shared)", () => {
         suggestionLanguageChoice: "auto" as const,
         effectiveSuggestionLanguage: "en" as const,
         debugSuggestions: false,
+        suggestionDebounceMs: 400,
       },
     };
     expect(webviewOutboundSettingsEnvelopeSchema.safeParse(envelope).success).toBe(

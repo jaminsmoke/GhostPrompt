@@ -27,6 +27,8 @@ export const webviewSettingsPayloadSchema = z.object({
   effectiveSuggestionLanguage: z.enum(["es", "en"]),
   effectiveModel: suggestionModelDescriptorSchema.optional(),
   debugSuggestions: z.boolean(),
+  /** Tiempo de inactividad tras teclear antes de pedir suggestion (webview debounce). */
+  suggestionDebounceMs: z.number().min(150).max(2000),
 });
 
 export const webviewOutboundSettingsEnvelopeSchema = z.object({

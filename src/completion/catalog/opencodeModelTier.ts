@@ -1,6 +1,8 @@
 /**
  * Tier / pricing solo desde metadatos del catálogo OpenCode (`config.providers`).
  * Sin adivinar por nombre de modelo (phi, GPT-*, etc.): si la API no dice precio/free → **unknown**.
+ *
+ * Política de producto / routing (`nonPremiumOnly`), no “prompt” al LM. Ver `Docs/ARCHITECTURE.md` §3.
  */
 import type { SuggestionModelTier } from "../types";
 

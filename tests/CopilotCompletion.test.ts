@@ -155,7 +155,7 @@ describe("CopilotCompletion", () => {
       }),
     );
     expect(sendRequest).toHaveBeenCalledOnce();
-    expect(userMessageMock).toHaveBeenCalledOnce();
+    expect(userMessageMock).toHaveBeenCalledTimes(2);
   });
 
   it("requestCompletion inyecta la directiva STYLE_* segun suggestionStyle", async () => {

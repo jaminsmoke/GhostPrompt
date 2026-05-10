@@ -186,7 +186,8 @@ You can keep GhostPrompt near Copilot Chat and move quickly between drafting and
 ### Request governor (cost/frequency protection)
 
 - `ghostPrompt.minCharsForSuggestion` (default `6`)
-- `ghostPrompt.requestCooldownMs` (default `500`)
+- `ghostPrompt.suggestionDebounceMs` (default `400`) — wait after you stop typing before requesting a suggestion (reduces LM calls while drafting)
+- `ghostPrompt.requestCooldownMs` (default `500`) — host-side cooldown when the **same** normalized text is requested again
 - `ghostPrompt.cacheTtlMs` (default `45000`)
 - `ghostPrompt.rateLimitMaxRequests` (default `90`)
 - `ghostPrompt.rateLimitWindowMs` (default `600000`)
@@ -243,6 +244,17 @@ Edit webview behavior in **TypeScript** under `webview/src/` (not hand-edit `web
 
 **Checklist when you change message shapes:** edit `src/shared/webviewMessageSchemas.ts` first; update protocol comments in `webview/src/main.ts` if needed; run **`npm run check`** (runs extension `tsc`, webview typecheck + esbuild bundle, and tests including `tests/shared/webviewMessageSchemas.test.ts` and `tests/webviewProtocols.test.ts`).
 
+### Dual webview (sidebar + panel) — contributor checklist (v0.4.3)
+
+GhostPrompt registers **two** `WebviewViewProvider` instances (`ghostPrompt.input` and `ghostPrompt.inputPanel`) backed by the **same** HTML/JS/CSS bundle. Changes to the toolbar, chips, or protocol must stay **symmetric** unless a roadmap explicitly documents a divergence.
+
+| Rule | Detail |
+| ---- | ------ |
+| **Single bundle** | HTML is built only in `src/host/ghostPromptWebviewHtml.ts` → `webview/index.html`, **`webview/dist/main.js`**, `webview/style.css`. Do not maintain separate templates per view. |
+| **Capabilities** | `MiniInputViewProvider` passes `viewContributionId` into `window.__ghostPromptCapabilities`; use it for layout flags only—keep suggestion/settings behavior identical across views. |
+| **Shared copy** | User-visible empty/error strings for the status line live in **`webview/src/lib/userErrorMessage.ts`**. Optional host toasts (`src/host/suggestionHostNotification.ts`) should stay aligned for the same actionable cases. |
+| **Regression tests** | Before merging webview or toolbar edits, run **`npm run check`** (includes `tests/webviewToolbarParity.test.ts`, `tests/webviewProtocols.test.ts`, `tests/webview/userErrorMessage.test.ts`). |
+
 ### Architecture and dependencies (v0.3.2)
 
 High-level roadmap: [`Docs/Plans/Roadmaps/Roadmap-v0.3.2-host-refactor-webview-tooling.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.2-host-refactor-webview-tooling.md).
@@ -285,6 +297,8 @@ npm run test:integration
 ```
 
 The suite lives in [`tests/opencodeSuggestions.integration.test.ts`](./tests/opencodeSuggestions.integration.test.ts).
+
+**Release (OpenCode):** checklist mantenedor y notas de CI — [`Docs/Plans/Releasing-opencode-integration.md`](./Docs/Plans/Releasing-opencode-integration.md). Resumen: **`npm run check` siempre**; si tocaste el motor OpenCode, además **`GHOST_PROMPT_OPENCODE_INTEGRATION=1 npm run test:integration`** en una máquina con CLI. En GitHub: el workflow **OpenCode integration** es solo **manual** y requiere `opencode` en el PATH del runner (p. ej. self-hosted); el **CI** estándar (`.github/workflows/ci.yml`) ejecuta `npm run check` en PR/push a `main` **sin** OpenCode.
 
 ## Roadmap
 

@@ -32,11 +32,19 @@ function truncateInline(value: string, maxChars: number): string {
   return `${normalized.slice(0, Math.max(0, maxChars - 3))}...`;
 }
 
-export function buildCompletionInstruction(
+/** Etiqueta fija antes del texto parcial (tests / contrato LM). */
+export const COMPLETION_PARTIAL_LABEL = "Partial text to continue: ";
+
+/**
+ * Separa la instrucción en bloque de directivas + contexto vs texto parcial del usuario.
+ * Útil para `vscode.lm` con **dos** `LanguageModelChatMessage.User` (patrón recomendado en la guía LM API).
+ * OpenCode sigue usando {@link buildCompletionInstruction} (una sola cadena en el SDK).
+ */
+export function buildCompletionInstructionParts(
   userText: string,
   style: SuggestionStyle = "balanced",
   context?: SuggestionContext,
-): string {
+): { prefixInstruction: string; labeledPartial: string } {
   const styleDirective = suggestionStyleDirective(style);
   const outputLanguage = context?.outputLanguage ?? "en";
   const languageDirective =
@@ -86,7 +94,7 @@ export function buildCompletionInstruction(
     }
   }
 
-  return (
+  const prefixInstruction =
     "You are a prompt completion assistant. " +
     "The user is typing a prompt for GitHub Copilot Chat. " +
     "Predict and return ONLY the natural continuation of the following partial text. " +
@@ -94,6 +102,7 @@ export function buildCompletionInstruction(
     " " +
     languageDirective +
     "Never repeat what was already written. " +
+    /* Espaciado: ver también normalizeSuggestion (post-proceso si el LM falla). */
     "If your continuation starts a new word and the partial text does not end with whitespace, include exactly one leading space. " +
     "If you are completing the current unfinished word, do not add a leading space. " +
     "Keep context and intent specific, avoiding generic filler. " +
@@ -104,8 +113,23 @@ export function buildCompletionInstruction(
       : "") +
     (recentContext.length
       ? `Relevant recent context:\n- ${recentContext.join("\n- ")}\n\n`
-      : "") +
-    "Partial text to continue: " +
-    userText
+      : "");
+
+  return {
+    prefixInstruction,
+    labeledPartial: COMPLETION_PARTIAL_LABEL + userText,
+  };
+}
+
+export function buildCompletionInstruction(
+  userText: string,
+  style: SuggestionStyle = "balanced",
+  context?: SuggestionContext,
+): string {
+  const { prefixInstruction, labeledPartial } = buildCompletionInstructionParts(
+    userText,
+    style,
+    context,
   );
+  return prefixInstruction + labeledPartial;
 }

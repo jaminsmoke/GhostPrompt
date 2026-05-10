@@ -1,6 +1,8 @@
 /**
  * `config.providers()` puede devolver `models` como objeto mapa o como array.
  * Normalizamos sin inventar campos: solo filtramos entradas sin `id` string válido.
+ *
+ * Capa de integración (no comportamiento del LM). Ver `Docs/ARCHITECTURE.md` §3 — Catálogo OpenCode.
  */
 
 export type RawOpencodeProviderModel = {

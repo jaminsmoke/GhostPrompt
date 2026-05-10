@@ -27,10 +27,18 @@ export type GhostPromptSettingsGetters = {
   getSuggestionLanguageChoice: () => "auto" | SupportedSuggestionLanguage;
 };
 
+function clampSuggestionDebounceMs(value: number): number {
+  return Math.min(2000, Math.max(150, Math.round(value)));
+}
+
 export async function buildAndPostGhostPromptSettings(
   webview: vscode.Webview,
   getters: GhostPromptSettingsGetters,
 ): Promise<void> {
+  const gpCfg = vscode.workspace.getConfiguration("ghostPrompt");
+  const suggestionDebounceMs = clampSuggestionDebounceMs(
+    gpCfg.get<number>("suggestionDebounceMs", 400),
+  );
   const policy = getters.getSuggestionModelPolicy();
   const enabledSources = getEnabledCompletionSources();
   const completionUiKind = getCompletionUiKind();
@@ -64,6 +72,7 @@ export async function buildAndPostGhostPromptSettings(
         ghostPromptSessionStore.getSnapshot().lastEffectiveSuggestionLanguage,
       effectiveModel: ghostPromptSessionStore.getSnapshot().lastEffectiveModel,
       debugSuggestions: isSuggestionDebugEnabled(),
+      suggestionDebounceMs,
     },
   };
   const validated = parseOutboundSettingsEnvelope(envelope);

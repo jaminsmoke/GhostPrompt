@@ -1,5 +1,6 @@
 /**
  * Catálogo unificado cuando hay varias fuentes habilitadas.
+ * Ver `Docs/ARCHITECTURE.md` §3 — Catálogo OpenCode y merge.
  */
 import type { SuggestionModelDescriptor, SuggestionModelPolicy } from "../types";
 import { listSuggestionModels } from "./modelCatalog";
