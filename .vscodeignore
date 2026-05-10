@@ -1,5 +1,7 @@
 Docs/**
 Scripts/**
+# Scripts de tooling compilados (smoke webview); no runtime del usuario
+out/build/**
 src/**
 tests/**
 .gitignore

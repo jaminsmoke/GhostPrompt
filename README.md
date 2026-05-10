@@ -183,7 +183,7 @@ From the repo root:
 
 | Command | What it does |
 | ------- | ------------ |
-| `npm run validate` | ESLint on `src` + **no circular deps** (`deps:circular`) + extension `tsc` + **webview** typecheck (`webview/tsconfig.json`) + esbuild bundle (`webview/dist/main.js`) + bundle smoke script |
+| `npm run validate` | ESLint on `src` + **no circular deps** (`deps:circular`) + extension `tsc` + **webview** typecheck (`webview/tsconfig.json`) + esbuild bundle (`webview/dist/main.js`) + **`verify:webview-bundle`** (`src/build` → `out/build`) |
 | `npm run build:webview` | Build webview only: `webview/src/main.ts` (+ modules under `webview/src/`) → **`webview/dist/main.js`** (IIFE, esbuild). The extension host loads this file via CSP-safe URI substitution in `ghostPromptWebviewHtml.ts`. |
 | `npm run typecheck:webview` | `tsc --noEmit` for the webview tree only |
 | `npm run test` | Vitest unit tests (OpenCode is **mocked**; safe for CI, no network) |
@@ -207,6 +207,7 @@ High-level roadmap: [`Docs/Plans/Roadmaps/Roadmap-v0.3.2-host-refactor-webview-t
 | ------- | ------------ |
 | `npm run deps:graph` | Lists the dependency tree from `src/extension/extension.ts` (uses [madge](https://github.com/pahen/madge); optional ad‑hoc inspection — **`deps:circular`** is what runs in `validate`). |
 | `npm run deps:circular` | Fails with exit code `1` if circular imports are found (same entrypoint). Also runs automatically as part of **`npm run validate`** / **`npm run check`**. |
+| `npm run verify:webview-bundle` | Runs the compiled smoke script `out/build/verifyWebviewBundle.js` (source: [`src/build/verifyWebviewBundle.ts`](./src/build/verifyWebviewBundle.ts)). Checks that `webview/dist/main.js` exists after esbuild. **Not shipped in the VSIX** — `.vscodeignore` excludes `out/build/**`; this is dev/CI tooling only, not extension runtime. |
 
 **Layering (ESLint):** files under `src/opencode/` must not import from `src/host/` (`import/no-restricted-paths`). The host may depend on OpenCode (e.g. warm-up), but not the reverse.
 
