@@ -252,6 +252,7 @@ v0.2 is **shipped**; roadmap documents:
 - **v0.3.0 — `src` layout & completion providers** *(architecture complete; OpenCode & VSIX bundling landed in-repo)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md)
 - **OpenCode integration** *(Phases 1–4 complete)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md)
 - **v0.3.0c — OpenCode UX, rendimiento y multi‑proveedor** *(plan activo, misma línea 0.3.0)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3.0c-opencode-ux-perf.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.0c-opencode-ux-perf.md)
+- **v0.4.0 — Memoria de proyecto por workspace (JSON), contexto bootstrap + editor** *(planificado)*: [`Docs/Plans/Roadmaps/Roadmap-v0.4-project-context-store.md`](./Docs/Plans/Roadmaps/Roadmap-v0.4-project-context-store.md)
 
 Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 

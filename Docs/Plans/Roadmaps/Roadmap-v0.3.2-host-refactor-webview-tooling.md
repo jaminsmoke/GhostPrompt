@@ -155,3 +155,4 @@ Documentar en `Docs/` o `ARCHITECTURE.md` las capas: **runtime** (`OpenCodeRunti
 - Auditoría métricas y debilidades: [`Spike-v0.3.2-src-audit-roadmap-input.md`](../Spikes/Spike-v0.3.2-src-audit-roadmap-input.md).
 - Contratos actuales: `src/host/webviewProtocols.ts`.
 - Roadmap previo UI: [`Roadmap-v0.3.1-webview-parity-contracts-ux.md`](./Roadmap-v0.3.1-webview-parity-contracts-ux.md).
+- Siguiente línea (contexto de repo): [`Roadmap-v0.4-project-context-store.md`](./Roadmap-v0.4-project-context-store.md).
