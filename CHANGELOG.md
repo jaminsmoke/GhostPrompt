@@ -2,21 +2,46 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.3.1] - 2026-05-09
+
+### Added
+
+- **Webview protocols:** Zod validation at host boundaries (`src/host/webviewProtocols.ts`), dependency **`zod`**; inbound/outbound message parsing in `MiniInputViewProvider`.
+- **Tests:** `webviewProtocols.test.ts`, `webviewToolbarParity.test.ts`, `webviewThemeTokens.test.ts`; dual-view `refreshSettingsAllViews` regression.
+
+### Changed
+
+- **Toolbar UX:** Style, context, and language controls grouped in a **`<details>`** menu (`compose-options-details`) with live summary text; `Escape` closes the menu; chip click closes after selection.
+- **Theming:** Webview CSS avoids hardcoded error color fallbacks; widget borders fall back to `transparent` when tokens are absent.
+
+### Docs
+
+- [`Roadmap-v0.3.1-webview-parity-contracts-ux.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.1-webview-parity-contracts-ux.md): Phases A–D (parity, contracts, compose menu, QA manual RC).
+- README: version badge **0.3.1**.
+
 ## [0.3.0] - 2026-05-09
+
+### Added
+
+- **OpenCode (optional backend):** `ghostPrompt.completionProvider` (`copilot` | `opencode`), dedicated embedded OpenCode server (default loopback port **17433**), CLI probe (`opencode --version`), `providers/opencodeLmCompletion`, webview model list from `config.providers()`, `ghostPrompt.opencodeExcludedModelIds`, and a **Motor:** badge (Copilot LM vs OpenCode). Depends on [`@opencode-ai/sdk`](https://www.npmjs.com/package/@opencode-ai/sdk); see [OpenCode docs](https://opencode.ai/docs/sdk).
+- **Tests (no network):** `tests/opencodeModelCatalog.test.ts`, `tests/opencodeLmCompletion.test.ts` mock `OpenCodeRuntime` / SDK envelope responses.
 
 ### Changed
 
 - **Extension host layout:** `src/` reorganized into `extension/`, `host/`, `session/`, `completion/`, `governor/`, `bridge/`, `log/`, `debug/`; package entry `out/extension/extension.js`.
 - **Completion domain:** split monolith into `types`, `instruction`, `normalize`, `language`, `streaming`, `modelCatalog`, `providers/copilotLmCompletion`, `completionProvider`; public barrel `src/completion/index.ts` (historical imports from `CopilotCompletion` path removed — use `../completion`).
-- **Pluggable completions:** `CompletionProvider` + `getActiveCompletionProvider()`; `MiniInputViewProvider` delegates to the active provider (Copilot LM today).
+- **Pluggable completions:** `CompletionProvider` + `getActiveCompletionProvider()` + `getCompletionProviderKind()`; `MiniInputViewProvider` delegates to Copilot LM or OpenCode and refreshes model chips when `ghostPrompt.*` changes.
+- **VSIX packaging:** `npm run vsix` runs `vsce package` **with** dependencies so `@opencode-ai/sdk` ships inside the VSIX.
 
 ### Docs
 
 - `ARCHITECTURE.md`, `Roadmap-v0.3.0-architecture.md`: Phases A–C (structure + refactor + release).
+- README: completion provider section, OpenCode prerequisites, settings reference.
+- [`Roadmap-v0.3-opencode-integration.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md): Phases 1–4 completed.
 
 ### Notes
 
-- **VSIX / git tag deferred:** `npm run vsix` and annotated tag `v0.3.0` will land when the remaining **0.3.0** scope is finished (for example optional OpenCode integration in [`Roadmap-v0.3-opencode-integration.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md)). Until then, `package.json` may already read `0.3.0` while further changes accumulate on this release line.
+- **Git tag:** annotated tag `v0.3.0` remains optional until you cut the release; the VSIX can be built anytime with `npm run vsix`.
 
 ## [0.2.5] - 2026-05-09
 

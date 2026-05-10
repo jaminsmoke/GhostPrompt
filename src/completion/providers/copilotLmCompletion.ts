@@ -28,6 +28,7 @@ export async function requestCopilotLmCompletion(
     style = "balanced",
     context,
     requestTimeoutMs = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
+    onLoadingPhase,
   } = options;
   if (policy === "nonPremiumOnly" && premiumQuotaBlocked) {
     return { kind: "empty", reason: "premium-quota-blocked" };
@@ -54,6 +55,7 @@ export async function requestCopilotLmCompletion(
 
     const instruction = buildCompletionInstruction(userText, style, context);
     try {
+      onLoadingPhase?.("copilot");
       const response = await model.sendRequest(
         [vscode.LanguageModelChatMessage.User(instruction)],
         {},

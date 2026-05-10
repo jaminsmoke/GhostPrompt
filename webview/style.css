@@ -62,6 +62,19 @@ body {
   margin-right: 2px;
 }
 
+.chip-backend {
+  font-size: 0.78em;
+  border: 1px solid var(--vscode-widget-border, transparent);
+  border-radius: 4px;
+  padding: var(--gp-chip-pad-y) var(--gp-chip-pad-x);
+  color: var(--vscode-descriptionForeground);
+}
+
+.chip-backend.backend-opencode {
+  border-color: var(--vscode-focusBorder, var(--vscode-button-background));
+  color: var(--vscode-foreground);
+}
+
 textarea {
   grid-area: composer;
   width: 100%;
@@ -162,7 +175,7 @@ textarea {
 }
 
 .status-text.error {
-  color: var(--vscode-errorForeground, #f48771);
+  color: var(--vscode-errorForeground);
 }
 
 @keyframes gp-spin {
@@ -227,6 +240,55 @@ textarea::placeholder {
   margin-left: auto;
 }
 
+/* Menú composición (v0.3.1 Fase C): estilo / contexto / idioma en un desplegable */
+.gp-compose-details {
+  position: relative;
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.gp-compose-summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  max-width: min(320px, 100%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gp-compose-summary::-webkit-details-marker {
+  display: none;
+}
+
+.gp-compose-details[open] > .gp-compose-summary {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  border-color: var(--vscode-button-background);
+}
+
+.gp-compose-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gp-gap-sm);
+  margin-top: var(--gp-gap-xs);
+  padding: var(--gp-gap-sm);
+  max-height: min(70vh, 320px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--vscode-editorWidget-background, var(--vscode-sideBar-background));
+  border: 1px solid var(--vscode-widget-border, transparent);
+  border-radius: 4px;
+  z-index: 5;
+}
+
+.gp-compose-panel .setting-group {
+  flex-wrap: wrap;
+  white-space: normal;
+}
+
 .model-select {
   max-width: min(210px, 100%);
   min-width: min(130px, 100%);
@@ -240,7 +302,11 @@ textarea::placeholder {
   text-overflow: ellipsis;
 }
 
-/* Reservado: el host puede marcar `compactToolbar` en __ghostPromptCapabilities */
+/*
+ * Capabilities (`compactToolbar` → clase en body): solo densidad / espaciado.
+ * No usar selectores bajo `.gp-cap-compact-toolbar` para ocultar `.setting-group`
+ * u otros controles del toolbar (paridad sidebar vs panel — roadmap v0.3.1 Fase A).
+ */
 body.gp-cap-compact-toolbar .settings-strip {
   row-gap: 2px;
 }

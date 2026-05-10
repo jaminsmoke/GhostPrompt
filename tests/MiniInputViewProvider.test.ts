@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+type TestSuggestionModel = import("../src/completion/types").SuggestionModelDescriptor;
+
 const {
   requestCompletionMock,
   resolveSuggestionLanguageMock,
@@ -9,26 +11,31 @@ const {
   sendToChatMock,
   logSuggestionDebugMock,
   readFileSyncMock,
-  MockCancellationTokenSource,
-} = vi.hoisted(() => ({
-  requestCompletionMock: vi.fn(),
-  resolveSuggestionLanguageMock: vi.fn(() => "en"),
-  listSuggestionModelsMock: vi.fn(async () => []),
-  appendSuggestionMock: vi.fn(),
-  appendLogMock: vi.fn(),
-  sendToChatMock: vi.fn(),
-  logSuggestionDebugMock: vi.fn(),
-  readFileSyncMock: vi.fn(
-    () => "<html>{{nonce}} {{cspSource}} {{styleUri}} {{scriptUri}}</html>",
-  ),
-  MockCancellationTokenSource: class {
+  cancellationTokenSourceMock,
+} = vi.hoisted(() => {
+  class CancellationTokenSourceMock {
     public token = { isCancellationRequested: false };
     public cancel(): void {
       this.token.isCancellationRequested = true;
     }
     public dispose(): void {}
-  },
-}));
+  }
+  return {
+    requestCompletionMock: vi.fn(),
+    resolveSuggestionLanguageMock: vi.fn(() => "en"),
+    listSuggestionModelsMock: vi.fn(
+      async (): Promise<TestSuggestionModel[]> => [],
+    ),
+    appendSuggestionMock: vi.fn(),
+    appendLogMock: vi.fn(),
+    sendToChatMock: vi.fn(),
+    logSuggestionDebugMock: vi.fn(),
+    readFileSyncMock: vi.fn(
+      () => "<html>{{nonce}} {{cspSource}} {{styleUri}} {{scriptUri}}</html>",
+    ),
+    cancellationTokenSourceMock: CancellationTokenSourceMock,
+  };
+});
 
 let suggestHandler: ((message: unknown) => void | Promise<void>) | undefined;
 const postMessageMock = vi.fn();
@@ -37,14 +44,23 @@ vi.mock("fs", () => ({
   readFileSync: readFileSyncMock,
 }));
 
-vi.mock("../src/completion", () => ({
-  getActiveCompletionProvider: () => ({
-    id: "copilotLm",
-    requestCompletion: requestCompletionMock,
-  }),
-  resolveSuggestionLanguage: resolveSuggestionLanguageMock,
-  listSuggestionModels: listSuggestionModelsMock,
-}));
+vi.mock("../src/completion", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/completion")>();
+  return {
+    ...actual,
+    getCompletionProviderForSource: () => ({
+      id: "copilotLm",
+      requestCompletion: requestCompletionMock,
+    }),
+    getEnabledCompletionSources: () => ["copilot"],
+    getCompletionUiKind: () => "copilot",
+    getCompletionProviderKind: () => "copilot" as const,
+    resolveSuggestionLanguage: resolveSuggestionLanguageMock,
+    listSuggestionModels: listSuggestionModelsMock,
+    listMergedSuggestionModels: listSuggestionModelsMock,
+    listOpencodeSuggestionModels: vi.fn(async () => []),
+  };
+});
 
 vi.mock("../src/log/SuggestionLog", () => ({
   appendSuggestion: appendSuggestionMock,
@@ -63,6 +79,7 @@ vi.mock("../src/debug/SuggestionDebug", () => ({
   isSuggestionDebugEnabled: () => false,
 }));
 
+/* eslint-disable @typescript-eslint/naming-convention -- mock del módulo `vscode` (API PascalCase) */
 vi.mock("vscode", () => ({
   workspace: {
     getConfiguration: () => ({
@@ -78,6 +95,11 @@ vi.mock("vscode", () => ({
         }
         return fallback;
       },
+      inspect: () => ({
+        globalValue: undefined,
+        workspaceValue: undefined,
+        workspaceFolderValue: undefined,
+      }),
     }),
   },
   Uri: {
@@ -85,9 +107,11 @@ vi.mock("vscode", () => ({
       fsPath: parts.map((p) => (typeof p === "string" ? p : p.fsPath ?? "")).join("/"),
     }),
   },
-  CancellationTokenSource: MockCancellationTokenSource,
+  CancellationTokenSource: cancellationTokenSourceMock,
 }));
+/* eslint-enable @typescript-eslint/naming-convention */
 
+import { suggestionLoadingStatusText } from "../src/completion/suggestionLoadingUi";
 import { ghostPromptSessionStore } from "../src/session/GhostPromptSessionStore";
 import { MiniInputViewProvider } from "../src/host/MiniInputViewProvider";
 
@@ -139,6 +163,8 @@ describe("MiniInputViewProvider", () => {
     expect(postMessageMock).toHaveBeenNthCalledWith(1, {
       type: "loading",
       captureId: 1,
+      phase: "copilot",
+      statusText: suggestionLoadingStatusText("copilot"),
       broadcast: true,
     });
     expect(postMessageMock).toHaveBeenNthCalledWith(2, {
@@ -214,6 +240,8 @@ describe("MiniInputViewProvider", () => {
     expect(postMessageMock).toHaveBeenNthCalledWith(2, {
       type: "loading",
       captureId: 4,
+      phase: "copilot",
+      statusText: suggestionLoadingStatusText("copilot"),
       broadcast: true,
     });
     expect(postMessageMock).toHaveBeenNthCalledWith(3, {
@@ -231,6 +259,55 @@ describe("MiniInputViewProvider", () => {
     expect(requestCompletionMock).toHaveBeenCalledOnce();
   });
 
+  it("ignora mensajes entrantes que no pasan el contrato Zod", async () => {
+    const view = createView();
+    const provider = new MiniInputViewProvider(
+      {
+        extensionUri: { fsPath: "/ext" },
+        storageUri: { fsPath: "/storage" },
+        globalStorageUri: { fsPath: "/global" },
+      } as never,
+      MiniInputViewProvider.viewId,
+    );
+    provider.resolveWebviewView(view as never, {} as never, {} as never);
+    await suggestHandler?.({
+      type: "suggest",
+      text: "hola",
+      captureId: "1",
+    } as never);
+    expect(requestCompletionMock).not.toHaveBeenCalled();
+    expect(postMessageMock).not.toHaveBeenCalled();
+  });
+
+  it("refreshSettingsAllViews envía settings a todas las vistas registradas (D1)", async () => {
+    const postA = vi.fn();
+    const postB = vi.fn();
+    const ctx = {
+      extensionUri: { fsPath: "/ext" },
+      storageUri: { fsPath: "/storage" },
+      globalStorageUri: { fsPath: "/global" },
+    } as never;
+    const webviewShell = {
+      cspSource: "csp-source",
+      options: {},
+      html: "",
+      asWebviewUri: (uri: { fsPath: string }) => ({ toString: () => `webview://${uri.fsPath}` }),
+      onDidReceiveMessage: () => {},
+    };
+    const viewA = { webview: { ...webviewShell, postMessage: postA } };
+    const viewB = { webview: { ...webviewShell, postMessage: postB } };
+
+    const providerA = new MiniInputViewProvider(ctx, MiniInputViewProvider.viewId);
+    const providerB = new MiniInputViewProvider(ctx, MiniInputViewProvider.panelViewId);
+    providerA.resolveWebviewView(viewA as never, {} as never, {} as never);
+    providerB.resolveWebviewView(viewB as never, {} as never, {} as never);
+
+    await MiniInputViewProvider.refreshSettingsAllViews();
+
+    expect(postA).toHaveBeenCalledWith(expect.objectContaining({ type: "settings" }));
+    expect(postB).toHaveBeenCalledWith(expect.objectContaining({ type: "settings" }));
+  });
+
   it("publica metadata de modelo en settings iniciales", async () => {
     const view = createView();
     const provider = new MiniInputViewProvider(
@@ -243,7 +320,12 @@ describe("MiniInputViewProvider", () => {
     );
 
     listSuggestionModelsMock.mockResolvedValueOnce([
-      { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "included" },
+      {
+        id: "gpt-4o-mini",
+        label: "GPT-4o mini",
+        tier: "included",
+        completionSource: "copilot",
+      },
     ]);
 
     provider.resolveWebviewView(view as never, {} as never, {} as never);
@@ -254,7 +336,16 @@ describe("MiniInputViewProvider", () => {
       expect.objectContaining({
         type: "settings",
         settings: expect.objectContaining({
-          availableModels: [{ id: "gpt-4o-mini", label: "GPT-4o mini", tier: "included" }],
+          completionUiKind: "copilot",
+          enabledCompletionSources: ["copilot"],
+          availableModels: [
+            {
+              id: "gpt-4o-mini",
+              label: "GPT-4o mini",
+              tier: "included",
+              completionSource: "copilot",
+            },
+          ],
         }),
       }),
     );

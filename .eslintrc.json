@@ -5,13 +5,32 @@
     "ecmaVersion": 2022,
     "sourceType": "module"
   },
-  "plugins": ["@typescript-eslint"],
+  "plugins": ["@typescript-eslint", "import"],
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".ts", ".tsx", ".js", ".jsx"]
+      }
+    }
+  },
   "rules": {
     "@typescript-eslint/naming-convention": "warn",
     "curly": "warn",
     "eqeqeq": "warn",
     "no-throw-literal": "warn",
-    "semi": "warn"
+    "semi": "warn",
+    "import/no-restricted-paths": [
+      "warn",
+      {
+        "zones": [
+          {
+            "target": "./src/opencode/**/*",
+            "from": "./src/host/**/*",
+            "message": "La capa OpenCode no debe importar desde src/host (UI/webview). Ver roadmap v0.3.2 fase D."
+          }
+        ]
+      }
+    ]
   },
   "ignorePatterns": ["out/**"]
 }

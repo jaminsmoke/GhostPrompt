@@ -13,6 +13,12 @@
   <body>
     <div class="container">
       <div class="settings-strip" aria-label="Opciones rápidas">
+        <span
+          id="completion-backend-badge"
+          class="chip chip-backend"
+          title="Motor de suggestions"
+          >Motor: Copilot LM</span
+        >
         <div class="setting-group" data-key="suggestionModelPolicy">
           <span class="setting-label">Modelo</span>
           <button
@@ -39,89 +45,104 @@
           </span>
         </div>
 
-        <div class="setting-group" data-key="suggestionStyle">
-          <span class="setting-label">Estilo</span>
-          <button
-            type="button"
-            class="chip"
-            data-value="concise"
-            aria-pressed="false"
+        <details class="gp-compose-details" id="compose-options-details">
+          <summary
+            class="gp-compose-summary chip"
+            id="compose-options-summary"
+            aria-label="Opciones de composición: estilo, contexto e idioma"
           >
-            Breve
-          </button>
-          <button
-            type="button"
-            class="chip"
-            data-value="balanced"
-            aria-pressed="false"
+            Normal · Básico · Auto (EN)
+          </summary>
+          <div
+            class="gp-compose-panel"
+            role="group"
+            aria-label="Estilo, contexto e idioma"
           >
-            Normal
-          </button>
-          <button
-            type="button"
-            class="chip"
-            data-value="detailed"
-            aria-pressed="false"
-          >
-            Extenso
-          </button>
-        </div>
+            <div class="setting-group" data-key="suggestionStyle">
+              <span class="setting-label">Estilo</span>
+              <button
+                type="button"
+                class="chip"
+                data-value="concise"
+                aria-pressed="false"
+              >
+                Breve
+              </button>
+              <button
+                type="button"
+                class="chip"
+                data-value="balanced"
+                aria-pressed="false"
+              >
+                Normal
+              </button>
+              <button
+                type="button"
+                class="chip"
+                data-value="detailed"
+                aria-pressed="false"
+              >
+                Extenso
+              </button>
+            </div>
 
-        <div class="setting-group" data-key="contextMode">
-          <span class="setting-label">Contexto</span>
-          <button
-            type="button"
-            class="chip"
-            data-value="basic"
-            aria-pressed="false"
-          >
-            Basico
-          </button>
-          <button
-            type="button"
-            class="chip"
-            data-value="project"
-            aria-pressed="false"
-          >
-            Proyecto
-          </button>
-          <button
-            type="button"
-            class="chip"
-            data-value="off"
-            aria-pressed="false"
-          >
-            Off
-          </button>
-        </div>
+            <div class="setting-group" data-key="contextMode">
+              <span class="setting-label">Contexto</span>
+              <button
+                type="button"
+                class="chip"
+                data-value="basic"
+                aria-pressed="false"
+              >
+                Básico
+              </button>
+              <button
+                type="button"
+                class="chip"
+                data-value="project"
+                aria-pressed="false"
+              >
+                Proyecto
+              </button>
+              <button
+                type="button"
+                class="chip"
+                data-value="off"
+                aria-pressed="false"
+              >
+                Off
+              </button>
+            </div>
 
-        <div class="setting-group" data-key="suggestionLanguageChoice">
-          <span class="setting-label">Idioma</span>
-          <button
-            type="button"
-            class="chip"
-            data-value="auto"
-            aria-pressed="false"
-          >
-            Auto
-          </button>
-          <button
-            type="button"
-            class="chip"
-            data-value="es"
-            aria-pressed="false"
-          >
-            ES
-          </button>
-          <button
-            type="button"
-            class="chip"
-            data-value="en"
-            aria-pressed="false"
-          >
-            EN
-          </button>
-        </div>
+            <div class="setting-group" data-key="suggestionLanguageChoice">
+              <span class="setting-label">Idioma</span>
+              <button
+                type="button"
+                class="chip"
+                data-value="auto"
+                aria-pressed="false"
+              >
+                Auto
+              </button>
+              <button
+                type="button"
+                class="chip"
+                data-value="es"
+                aria-pressed="false"
+              >
+                ES
+              </button>
+              <button
+                type="button"
+                class="chip"
+                data-value="en"
+                aria-pressed="false"
+              >
+                EN
+              </button>
+            </div>
+          </div>
+        </details>
 
         <button
           id="debug-btn"
@@ -148,7 +169,13 @@
           spellcheck="false"
         ></textarea>
       </div>
-      <div id="status-text" class="status-text" style="display: none"></div>
+      <div
+        id="status-text"
+        class="status-text"
+        style="display: none"
+        aria-live="polite"
+        aria-relevant="text"
+      ></div>
       <div class="toolbar">
         <span class="hint"
           >Tab: aceptar sugerencia · Enter: enviar · Shift+Enter: nueva

@@ -5,6 +5,13 @@ const OUTPUT_CHANNEL_NAME = "GhostPrompt Suggestions";
 
 let outputChannel: vscode.OutputChannel | undefined;
 
+function appendDebugLine(line: string): void {
+  if (!outputChannel) {
+    outputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
+  }
+  outputChannel.appendLine(line);
+}
+
 export function isSuggestionDebugEnabled(): boolean {
   return vscode.workspace
     .getConfiguration("ghostPrompt")
@@ -28,13 +35,20 @@ export function logSuggestionDebug(
     return;
   }
 
-  if (!outputChannel) {
-    outputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
+  const timestamp = new Date().toISOString();
+  const suffix = details ? ` | ${details}` : "";
+  appendDebugLine(
+    `[${timestamp}] [capture:${captureId}] [${stage}]${suffix}`,
+  );
+}
+
+/** Timings OpenCode / ciclo de vida (misma canalización que suggestions cuando debug está activo). */
+export function logOpenCodeDebug(stage: string, details?: string): void {
+  if (!isSuggestionDebugEnabled()) {
+    return;
   }
 
   const timestamp = new Date().toISOString();
   const suffix = details ? ` | ${details}` : "";
-  outputChannel.appendLine(
-    `[${timestamp}] [capture:${captureId}] [${stage}]${suffix}`,
-  );
+  appendDebugLine(`[${timestamp}] [opencode] [${stage}]${suffix}`);
 }

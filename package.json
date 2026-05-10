@@ -2,7 +2,7 @@
   "name": "ghost-prompt",
   "displayName": "GhostPrompt",
   "description": "Ghost-text completions for your Copilot prompts — write faster, think clearer.",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "publisher": "jaminsmoke",
   "author": "JaminSmoke",
   "icon": "media/img/icon.png",
@@ -70,6 +70,34 @@
     "configuration": {
       "title": "GhostPrompt",
       "properties": {
+        "ghostPrompt.completionProvider": {
+          "type": "string",
+          "enum": [
+            "copilot",
+            "opencode"
+          ],
+          "default": "copilot",
+          "markdownDescription": "Legacy single-backend switch used **only** when `ghostPrompt.enabledCompletionSources` has never been set in User or Workspace settings. Prefer **enabledCompletionSources** for Copilot + OpenCode together."
+        },
+        "ghostPrompt.enabledCompletionSources": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "copilot",
+              "opencode"
+            ]
+          },
+          "markdownDescription": "Which completion backends appear in the GhostPrompt model dropdown and receive routed requests. Include **`copilot`** for GitHub Copilot LM (`vscode.lm`) and **`opencode`** for the embedded OpenCode server. Example: `[\"copilot\", \"opencode\"]` lists **both**; GhostPrompt routes by selected model id (`provider/model` → OpenCode). If this array is **unset** in settings (never saved), GhostPrompt keeps using **completionProvider** for backward compatibility."
+        },
+        "ghostPrompt.opencodeExcludedModelIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "OpenCode models to hide from the GhostPrompt dropdown. Use ids `providerID/modelID` (same as OpenCode). Ignored when completion provider is Copilot."
+        },
         "ghostPrompt.suggestionModelPolicy": {
           "type": "string",
           "enum": [
@@ -82,7 +110,7 @@
         "ghostPrompt.selectedModelId": {
           "type": "string",
           "default": "auto",
-          "markdownDescription": "Preferred model id for inline suggestions. Use `auto` to let GhostPrompt choose based on policy."
+          "markdownDescription": "Preferred model id for inline suggestions. Use `auto` for automatic selection. With OpenCode, ids are `providerID/modelID`; the dropdown lists available models when the OpenCode runtime is running."
         },
         "ghostPrompt.debugSuggestions": {
           "type": "boolean",
@@ -183,20 +211,33 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "lint": "eslint src --ext ts",
-    "validate": "npm run lint && npm run compile",
+    "typecheck:webview": "tsc -p webview/tsconfig.json",
+    "build:webview": "esbuild webview/src/main.ts --bundle --outfile=webview/dist/main.js --platform=browser --target=es2022 --format=iife --legal-comments=none",
+    "verify:webview-bundle": "node scripts/verify-webview-bundle.mjs",
+    "validate": "npm run lint && npm run deps:circular && npm run compile && npm run typecheck:webview && npm run build:webview && npm run verify:webview-bundle",
     "test": "vitest run",
+    "test:integration": "vitest run tests/opencodeSuggestions.integration.test.ts",
+    "deps:graph": "madge --ts-config tsconfig.json --extensions ts src/extension/extension.ts",
+    "deps:circular": "madge --ts-config tsconfig.json --extensions ts --circular src/extension/extension.ts",
     "check": "npm run validate && npm run test",
-    "vscode:prepublish": "npm run compile",
-    "vsix": "vsce package --no-dependencies"
+    "vscode:prepublish": "npm run build:webview && npm run compile",
+    "vsix": "vsce package"
   },
   "devDependencies": {
-    "@vscode/vsce": "^3.7.1",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
+    "@vscode/vsce": "^3.7.1",
+    "esbuild": "^0.25.5",
     "eslint": "^8.0.0",
+    "eslint-plugin-import": "^2.29.1",
+    "madge": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^4.1.5"
+  },
+  "dependencies": {
+    "@opencode-ai/sdk": "^1.14.44",
+    "zod": "^3.25.76"
   }
 }

@@ -3,6 +3,8 @@
  */
 import type { CancellationToken } from "vscode";
 
+import type { SuggestionLoadingPhase } from "./suggestionLoadingUi";
+
 export type SuggestionModelPolicy = "nonPremiumOnly" | "anyModel";
 export type SuggestionStyle = "concise" | "balanced" | "detailed";
 export type SuggestionLanguageMode = "auto" | "manual";
@@ -18,6 +20,8 @@ export interface SuggestionModelDescriptor {
   tier: SuggestionModelTier;
   pricing?: string;
   provider?: string;
+  /** Motor que debe ejecutar esta fila del selector (multi‑fuente). */
+  completionSource?: "copilot" | "opencode";
 }
 
 export type CompletionResult =
@@ -49,6 +53,13 @@ export interface CompletionRequestOptions {
   style?: SuggestionStyle;
   context?: SuggestionContext;
   requestTimeoutMs?: number;
+  /** Actualiza mensaje de carga en el webview (OpenCode: varias fases). */
+  onLoadingPhase?: (phase: SuggestionLoadingPhase) => void;
+  /**
+   * OpenCode: texto acumulado desde SSE (`message.part.delta` en partes `text`).
+   * El host debe validar `captureId` activo antes de postear al webview.
+   */
+  onStreamPreview?: (accumulatedText: string) => void;
 }
 
 export interface SuggestionContext {

@@ -240,7 +240,13 @@ describe("CopilotCompletion", () => {
     selectChatModelsMock.mockResolvedValueOnce([{ id: "gpt-4o-mini", name: "GPT-4o mini" }]);
     const models = await listSuggestionModels("anyModel");
     expect(models).toEqual([
-      { id: "gpt-4o-mini", label: "GPT-4o mini", tier: "included", provider: "OpenAI" },
+      {
+        id: "gpt-4o-mini",
+        label: "GPT-4o mini",
+        tier: "included",
+        provider: "OpenAI",
+        completionSource: "copilot",
+      },
     ]);
   });
 
@@ -252,7 +258,14 @@ describe("CopilotCompletion", () => {
     ]);
     const models = await listSuggestionModels("anyModel");
     expect(models).toEqual([
-      { id: "gpt-4o", label: "GPT-4o", tier: "included", pricing: "0x", provider: "OpenAI" },
+      {
+        id: "gpt-4o",
+        label: "GPT-4o",
+        tier: "included",
+        pricing: "0x",
+        provider: "OpenAI",
+        completionSource: "copilot",
+      },
     ]);
   });
 
@@ -263,7 +276,14 @@ describe("CopilotCompletion", () => {
     ]);
     const models = await listSuggestionModels("anyModel");
     expect(models).toEqual([
-      { id: "gpt-4o", label: "GPT-4o", tier: "included", pricing: "0x", provider: "OpenAI" },
+      {
+        id: "gpt-4o",
+        label: "GPT-4o",
+        tier: "included",
+        pricing: "0x",
+        provider: "OpenAI",
+        completionSource: "copilot",
+      },
     ]);
   });
 

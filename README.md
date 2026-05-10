@@ -1,7 +1,7 @@
 # GhostPrompt
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.3.0-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
+[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.3.1-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.90%2B-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
 [![GitHub Copilot](https://img.shields.io/badge/Uses-GitHub_Copilot-24292f?logo=github&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
@@ -11,7 +11,7 @@
 > Ghost-text completions for your Copilot prompts — write faster, think clearer.
 
 <!-- markdownlint-disable-next-line MD036 -->
-**Version 0.3.0**
+**Version 0.3.1**
 
 ---
 
@@ -85,7 +85,29 @@ Watch GhostPrompt in action on YouTube: [GhostPrompt demo](https://youtu.be/luGP
 ## Requirements
 
 - VS Code **1.90** or later
-- [GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) extension installed and signed in
+- [GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) extension installed and signed in *(default completion backend)*
+
+### Optional: OpenCode backend
+
+If you set **`ghostPrompt.completionProvider`** to **`opencode`**, GhostPrompt starts its **own** local OpenCode server (see [`Roadmap-v0.3-opencode-integration.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md)). You need the **OpenCode CLI** on your PATH (`opencode --version` should succeed). Configure models and provider credentials in OpenCode as described in the upstream docs ([OpenCode SDK](https://opencode.ai/docs/sdk)). Authentication for third-party APIs is handled by OpenCode, not by GhostPrompt.
+
+**Cold start & lifecycle (v0.3.0c):** The first suggestion after the embedded server has been stopped can take noticeably longer (spawn + listen + health). Opening a GhostPrompt view while OpenCode is selected runs a **warm-up** (`start` + light health ping) in the background, throttled so Sidebar + Panel do not double work. Switching back to **Copilot** **schedules** shutdown of the OpenCode process after **45 seconds** so quick toggles avoid paying cold start again. Use **GhostPrompt: Toggle Debug** and the **GhostPrompt Suggestions** output channel to see `[opencode]` timing lines (`cold-start-complete`, `first-config-get`, `first-session-prompt`).
+
+---
+
+## Completion provider (Copilot LM vs OpenCode)
+
+| Setting | Behavior |
+| ------- | -------- |
+| `ghostPrompt.completionProvider = copilot` *(default)* | Inline suggestions use **`vscode.lm`** (GitHub Copilot chat models). |
+| `ghostPrompt.completionProvider = opencode` | Suggestions use your **OpenCode** installation via GhostPrompt’s embedded server (port **17433** by default). The webview lists models from OpenCode’s catalog; model ids use `providerID/modelID`. |
+| **`ghostPrompt.enabledCompletionSources`** *(optional)* | Array such as `[ "copilot", "opencode" ]` to show **both** catalogs in one dropdown and **route** by selected model (`providerID/modelID` → OpenCode; Copilot chat model id → Copilot LM). If you **never** save this key, GhostPrompt keeps using **`completionProvider`** only (backward compatible). |
+
+Switch providers in **Settings** (search `ghostPrompt.completionProvider` or `enabledCompletionSources`). With **both** sources enabled, the composer shows **Motor: Copilot + OpenCode** and **Auto (Copilot primero)** uses Copilot when available.
+
+Related settings: **`ghostPrompt.opencodeExcludedModelIds`** (hide specific `providerID/modelID` rows), **`ghostPrompt.selectedModelId`** (`auto` or an explicit id).
+
+**OpenCode model tiers (dropdown):** Tiers come **only** from catalog metadata (`pricing` multipliers such as `0x` / `1x`, **`free`**, or the provider id for the built-in **`opencode`** / typical **local** backends like Ollama). GhostPrompt does **not** infer premium vs free from model names. Rows without usable signals stay **Sin clasificar** / **UNKNOWN**. With **`nonPremiumOnly`**, models classified as **premium** are hidden from the list and excluded from **Auto** selection.
 
 ---
 
@@ -118,7 +140,14 @@ You can keep GhostPrompt near Copilot Chat and move quickly between drafting and
 
 ## Settings
 
-### Model policy
+### Completion provider & models
+
+- **`ghostPrompt.completionProvider`**: `copilot` *(default)* or `opencode` — legacy single-backend switch when **`enabledCompletionSources`** has not been saved; see [Completion provider](#completion-provider-copilot-lm-vs-opencode).
+- **`ghostPrompt.enabledCompletionSources`**: e.g. `[ "copilot", "opencode" ]` for a unified model list (optional).
+- **`ghostPrompt.selectedModelId`**: `auto` or a concrete model id; with OpenCode, ids are `providerID/modelID`.
+- **`ghostPrompt.opencodeExcludedModelIds`**: array of OpenCode model ids to hide from the dropdown (only applies when the provider is OpenCode).
+
+### Model policy *(Copilot LM)*
 
 - `ghostPrompt.suggestionModelPolicy = nonPremiumOnly` (default): only included (`0x`) models are allowed when pricing metadata is available.
 - `ghostPrompt.suggestionModelPolicy = anyModel`: uses the first available model (may consume premium quota).
@@ -148,6 +177,70 @@ You can keep GhostPrompt near Copilot Chat and move quickly between drafting and
 
 Inside the webview mini-input, you can also change policy, style, context, and debug from the **control strip** (chips at the top). See **4 · Quick controls** in [Preview](#preview).
 
+## Developing and tests
+
+From the repo root:
+
+| Command | What it does |
+| ------- | ------------ |
+| `npm run validate` | ESLint on `src` + **no circular deps** (`deps:circular`) + extension `tsc` + **webview** typecheck (`webview/tsconfig.json`) + esbuild bundle (`webview/dist/main.js`) + bundle smoke script |
+| `npm run build:webview` | Build webview only: `webview/src/main.ts` (+ modules under `webview/src/`) → **`webview/dist/main.js`** (IIFE, esbuild). The extension host loads this file via CSP-safe URI substitution in `ghostPromptWebviewHtml.ts`. |
+| `npm run typecheck:webview` | `tsc --noEmit` for the webview tree only |
+| `npm run test` | Vitest unit tests (OpenCode is **mocked**; safe for CI, no network) |
+| `npm run check` | `validate` + `test` — run before shipping or opening a PR |
+
+Edit webview behavior in **TypeScript** under `webview/src/` (not hand-edit `webview/dist/main.js`; it is regenerated). After changing webview sources, `npm run validate` or `npm run build:webview` refreshes the bundle.
+
+### Webview ↔ host message contracts (v0.3.2)
+
+- **Canonical Zod schemas:** [`src/shared/webviewMessageSchemas.ts`](./src/shared/webviewMessageSchemas.ts) — single source of truth for `postMessage` payloads (inbound to the extension host and the mirrored outbound shape from the webview).
+- **Host boundary:** [`src/host/webviewProtocols.ts`](./src/host/webviewProtocols.ts) re-exports those schemas and runs `parseWebviewInboundMessage` / `parseOutboundSettingsEnvelope` at the channel edge.
+- **Webview boundary:** [`webview/src/protocol/postToHost.ts`](./webview/src/protocol/postToHost.ts) validates outbound messages with the same inbound schema before calling `postMessage` (bundled with the webview).
+
+**Checklist when you change message shapes:** edit `src/shared/webviewMessageSchemas.ts` first; update protocol comments in `webview/src/main.ts` if needed; run **`npm run check`** (runs extension `tsc`, webview typecheck + esbuild bundle, and tests including `tests/shared/webviewMessageSchemas.test.ts` and `tests/webviewProtocols.test.ts`).
+
+### Architecture and dependencies (v0.3.2)
+
+High-level roadmap: [`Docs/Plans/Roadmaps/Roadmap-v0.3.2-host-refactor-webview-tooling.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.2-host-refactor-webview-tooling.md).
+
+| Command | What it does |
+| ------- | ------------ |
+| `npm run deps:graph` | Lists the dependency tree from `src/extension/extension.ts` (uses [madge](https://github.com/pahen/madge); optional ad‑hoc inspection — **`deps:circular`** is what runs in `validate`). |
+| `npm run deps:circular` | Fails with exit code `1` if circular imports are found (same entrypoint). Also runs automatically as part of **`npm run validate`** / **`npm run check`**. |
+
+**Layering (ESLint):** files under `src/opencode/` must not import from `src/host/` (`import/no-restricted-paths`). The host may depend on OpenCode (e.g. warm-up), but not the reverse.
+
+**Soft size guideline:** prefer keeping new host modules under ~400 lines per file unless the content is mostly data; split extractors before crossing ~800 lines without a strong reason (same spirit as roadmap Phase A).
+
+### OpenCode integration tests (optional)
+
+These exercises use your real **OpenCode CLI**, GhostPrompt’s embedded server on **127.0.0.1:17433**, and a configured model. They are **off by default** (`describe.skipIf`) so `npm run test` stays fast without CLI or API keys.
+
+**Prerequisites:** `opencode --version` succeeds; providers and models are configured in OpenCode (same as using the extension with **`ghostPrompt.completionProvider`: `opencode`**).
+
+**PowerShell**
+
+```powershell
+$env:GHOST_PROMPT_OPENCODE_INTEGRATION = "1"
+npm run test:integration
+```
+
+**bash**
+
+```bash
+export GHOST_PROMPT_OPENCODE_INTEGRATION=1
+npm run test:integration
+```
+
+Optional — force a specific catalog id if `auto` picks the wrong model (`providerID/modelID`):
+
+```powershell
+$env:GHOST_PROMPT_OPENCODE_MODEL = "your-provider/your-model-id"
+npm run test:integration
+```
+
+The suite lives in [`tests/opencodeSuggestions.integration.test.ts`](./tests/opencodeSuggestions.integration.test.ts).
+
 ## Roadmap
 
 v0.2 is **shipped**; roadmap documents:
@@ -155,8 +248,9 @@ v0.2 is **shipped**; roadmap documents:
 - Archived v0.2: [`Docs/Plans/Roadmaps/Roadmap-v0.2.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.md)
 - Current v0.2.2 execution: [`Docs/Plans/Roadmaps/Roadmap-v0.2.2.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.2.md)
 - Unified session (Sidebar + Panel): [`Docs/Plans/Roadmaps/Roadmap-v0.2.4b.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.4b.md) *(complete)*
-- **v0.3.0 — `src` layout & completion providers** *(architecture complete; additional 0.3.0 scope & VSIX packaging pending)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md)
-- Optional OpenCode backend (draft): [`Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md)
+- **v0.3.0 — `src` layout & completion providers** *(architecture complete; OpenCode & VSIX bundling landed in-repo)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md)
+- **OpenCode integration** *(Phases 1–4 complete)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md)
+- **v0.3.0c — OpenCode UX, rendimiento y multi‑proveedor** *(plan activo, misma línea 0.3.0)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3.0c-opencode-ux-perf.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.0c-opencode-ux-perf.md)
 
 Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 
@@ -166,9 +260,11 @@ Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ### 0.3.0
 
-- **Architecture:** `src/` split into layered folders (`completion/`, `host/`, `session/`, etc.) and a documented completion pipeline (`CompletionProvider`, Copilot LM adapter).
-- **Maintainability:** completion logic divided into small modules (`instruction`, `normalize`, `modelCatalog`, …) ahead of optional alternate backends (see roadmap OpenCode).
-- **Release process:** the distributable **VSIX** (and optional git tag `v0.3.0`) will be produced after the rest of the planned **0.3.0** work is merged—see [`CHANGELOG.md`](./CHANGELOG.md) *Notes* under 0.3.0 and the OpenCode roadmap.
+- **Architecture:** `src/` split into layered folders (`completion/`, `host/`, `session/`, etc.) and a documented completion pipeline (`CompletionProvider`, provider registry).
+- **Copilot LM:** existing `vscode.lm` path unchanged as default (`ghostPrompt.completionProvider`: `copilot`).
+- **OpenCode (optional):** `ghostPrompt.completionProvider`: `opencode`, embedded server on **127.0.0.1:17433**, CLI detection, webview catalog + exclusions, `@opencode-ai/sdk` bundled in the VSIX.
+- **Docs & tests:** README provider section and [Developing and tests](#developing-and-tests); CHANGELOG; unit tests mock the OpenCode runtime (no network in CI); optional live OpenCode integration test behind `GHOST_PROMPT_OPENCODE_INTEGRATION=1` (`npm run test:integration`).
+- **Release:** build a VSIX anytime with `npm run vsix`; git tag `v0.3.0` optional—see [`CHANGELOG.md`](./CHANGELOG.md).
 
 ### 0.2.5
 

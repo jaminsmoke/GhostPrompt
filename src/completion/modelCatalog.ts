@@ -45,7 +45,10 @@ export async function listSuggestionModels(
       continue;
     }
     seen.add(dedupeKey);
-    descriptors.push(descriptor);
+    descriptors.push({
+      ...descriptor,
+      completionSource: "copilot",
+    });
   }
   return descriptors;
 }

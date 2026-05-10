@@ -8,6 +8,10 @@
 import * as vscode from "vscode";
 import { MiniInputViewProvider } from "../host/MiniInputViewProvider";
 import { toggleSuggestionDebug } from "../debug/SuggestionDebug";
+import {
+  getOpenCodeRuntime,
+  syncOpenCodeRuntimeFromConfig,
+} from "../opencode";
 
 export function activate(context: vscode.ExtensionContext): void {
   const sidebarProvider = new MiniInputViewProvider(
@@ -37,6 +41,22 @@ export function activate(context: vscode.ExtensionContext): void {
       void vscode.window.showInformationMessage(message);
     },
   );
+  const openCodeRuntime = getOpenCodeRuntime();
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (
+        e.affectsConfiguration("ghostPrompt.completionProvider") ||
+        e.affectsConfiguration("ghostPrompt.enabledCompletionSources")
+      ) {
+        void syncOpenCodeRuntimeFromConfig(openCodeRuntime);
+      }
+      if (e.affectsConfiguration("ghostPrompt")) {
+        void MiniInputViewProvider.refreshSettingsAllViews();
+      }
+    }),
+  );
+  void syncOpenCodeRuntimeFromConfig(openCodeRuntime);
+
   context.subscriptions.push(
     openSuggestionPolicySettingsCommand,
     toggleSuggestionDebugCommand,
@@ -52,5 +72,5 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {
-  /* no-op */
+  getOpenCodeRuntime().stop();
 }
