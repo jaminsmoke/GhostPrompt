@@ -89,6 +89,31 @@ describe("SuggestionRequestGovernor", () => {
     expect(changedStyle.kind).toBe("request");
   });
 
+  it("no reutiliza caché si cambia la huella del bootstrap del proyecto", () => {
+    const governor = new SuggestionRequestGovernor();
+    const relaxedConfig = { ...config, rateLimitMaxRequests: 10 };
+    const scopeA = {
+      language: "es",
+      style: "balanced",
+      contextMode: "project",
+      modelPolicy: "nonPremiumOnly" as const,
+      selectedModelId: "auto",
+      projectBootstrapFingerprint: "aaaaaaaaaaaaaaaa",
+    };
+    const scopeB = { ...scopeA, projectBootstrapFingerprint: "bbbbbbbbbbbbbbbb" };
+    const first = governor.decide("mismo texto", relaxedConfig, scopeA);
+    expect(first.kind).toBe("request");
+    if (first.kind === "request") {
+      governor.saveResult(
+        first.key,
+        { kind: "suggestion", suggestion: "v1" },
+        relaxedConfig,
+      );
+    }
+    const miss = governor.decide("mismo texto", relaxedConfig, scopeB);
+    expect(miss.kind).toBe("request");
+  });
+
   it("aplica rate limit tras superar ventana", () => {
     const governor = new SuggestionRequestGovernor();
     const one = governor.decide("texto uno", config);

@@ -9,6 +9,20 @@ export async function applyWebviewUpdateSetting(
   message: Extract<WebviewInboundMessage, { type: "updateSetting" }>,
 ): Promise<void> {
   const config = vscode.workspace.getConfiguration("ghostPrompt");
+  if (message.key === "completionProvider") {
+    const value = message.value === "opencode" ? "opencode" : "copilot";
+    await config.update(
+      "enabledCompletionSources",
+      [value],
+      vscode.ConfigurationTarget.Global,
+    );
+    await config.update(
+      "completionProvider",
+      value,
+      vscode.ConfigurationTarget.Global,
+    );
+    return;
+  }
   if (message.key === "suggestionModelPolicy") {
     const value =
       message.value === "anyModel" ? "anyModel" : "nonPremiumOnly";

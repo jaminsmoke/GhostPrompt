@@ -10,10 +10,15 @@ import { MiniInputViewProvider } from "../host/MiniInputViewProvider";
 import { toggleSuggestionDebug } from "../debug/SuggestionDebug";
 import {
   getOpenCodeRuntime,
+  invalidateOpenCodeProvidersSnapshot,
+  invalidateOpencodeInlineSuggestionSessionPool,
+  resetOpencodeInlineLmQueue,
   syncOpenCodeRuntimeFromConfig,
 } from "../opencode";
+import { registerProjectMemory } from "../projectMemory/activateProjectMemory";
 
 export function activate(context: vscode.ExtensionContext): void {
+  registerProjectMemory(context);
   const sidebarProvider = new MiniInputViewProvider(
     context,
     MiniInputViewProvider.viewId,
@@ -72,5 +77,8 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {
+  invalidateOpenCodeProvidersSnapshot();
+  invalidateOpencodeInlineSuggestionSessionPool();
+  resetOpencodeInlineLmQueue();
   getOpenCodeRuntime().stop();
 }

@@ -16,5 +16,8 @@ export {
   getOpenCodeRuntime,
   type OpenCodeStartResult,
 } from "./OpenCodeRuntime";
+export { invalidateOpenCodeProvidersSnapshot } from "./opencodeProvidersSnapshot";
+export { invalidateOpencodeInlineSuggestionSessionPool } from "./opencodeInlineSuggestionSession";
+export { resetOpencodeInlineLmQueue } from "./opencodeInlineCompletionQueue";
 export { syncOpenCodeRuntimeFromConfig } from "./syncOpenCodeRuntime";
 export { warmOpenCodeRuntimeIfConfigured } from "./warmOpenCodeRuntime";

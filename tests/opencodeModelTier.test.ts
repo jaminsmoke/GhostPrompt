@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classifyOpencodeModelTier } from "../src/completion/opencodeModelTier";
+import { classifyOpencodeModelTier } from "../src/completion/catalog/opencodeModelTier";
 
 describe("classifyOpencodeModelTier", () => {
   it("0x pricing → included", () => {

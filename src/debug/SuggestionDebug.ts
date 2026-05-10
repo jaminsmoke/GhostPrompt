@@ -52,3 +52,20 @@ export function logOpenCodeDebug(stage: string, details?: string): void {
   const suffix = details ? ` | ${details}` : "";
   appendDebugLine(`[${timestamp}] [opencode] [${stage}]${suffix}`);
 }
+
+/** Fase I — duraciones por `suggest`; sólo cuando `ghostPrompt.debugSuggestions` está activo. */
+export function logOpenCodePerfCapture(
+  captureId: number | undefined,
+  phase: string,
+  details?: string,
+): void {
+  if (!isSuggestionDebugEnabled()) {
+    return;
+  }
+  const timestamp = new Date().toISOString();
+  const capLabel = captureId === undefined ? "—" : String(captureId);
+  const suffix = details ? ` | ${details}` : "";
+  appendDebugLine(
+    `[${timestamp}] [capture:${capLabel}] [opencode-perf] [${phase}]${suffix}`,
+  );
+}

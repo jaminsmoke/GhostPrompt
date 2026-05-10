@@ -45,8 +45,8 @@ import { postToHost } from "./protocol/postToHost";
   const modelSelect = document.getElementById(
     "model-select",
   ) as HTMLSelectElement | null;
-  const completionBackendBadge = document.getElementById(
-    "completion-backend-badge",
+  const completionBackendSelect = document.getElementById(
+    "completion-backend-select",
   );
 
   /** Para etiquetas tier en español vs inglés (`Gratis` / `INCLUDED`). */
@@ -312,6 +312,20 @@ import { postToHost } from "./protocol/postToHost";
       value: modelSelect.value || "auto",
     });
   });
+  completionBackendSelect?.addEventListener("change", () => {
+    if (!(completionBackendSelect instanceof HTMLSelectElement)) {
+      return;
+    }
+    const v = completionBackendSelect.value;
+    if (v !== "copilot" && v !== "opencode") {
+      return;
+    }
+    postToHost(vscode, {
+      type: "updateSetting",
+      key: "completionProvider",
+      value: v,
+    });
+  });
   settingGroups.forEach((group) => {
     group.addEventListener("click", (event) => {
       const target = event.target;
@@ -477,25 +491,27 @@ import { postToHost } from "./protocol/postToHost";
       showStatus(toUserErrorMessage(message.message), true);
     } else if (message.type === "settings") {
       const settings = message.settings ?? {};
-      lastCompletionProvider =
-        settings.completionProvider === "opencode" ? "opencode" : "copilot";
       lastCompletionUiKind =
         typeof settings.completionUiKind === "string"
           ? settings.completionUiKind
-          : lastCompletionProvider === "opencode"
+          : settings.completionProvider === "opencode"
             ? "opencode"
             : "copilot";
-      if (completionBackendBadge instanceof HTMLElement) {
-        let badgeText = "Motor: Copilot LM";
-        if (lastCompletionUiKind === "multi") {
-          badgeText = "Motor: Copilot + OpenCode";
-        } else if (lastCompletionUiKind === "opencode") {
-          badgeText = "Motor: OpenCode";
-        }
-        completionBackendBadge.textContent = badgeText;
+      const sourcesRaw = settings.enabledCompletionSources;
+      const sources = Array.isArray(sourcesRaw) ? sourcesRaw : [];
+      let motorSelectValue: "copilot" | "opencode" =
+        settings.completionProvider === "opencode" ? "opencode" : "copilot";
+      if (sources.length === 1 && (sources[0] === "copilot" || sources[0] === "opencode")) {
+        motorSelectValue = sources[0];
+      } else if (sources.length > 1) {
+        motorSelectValue = "copilot";
+      }
+      lastCompletionProvider = motorSelectValue;
+      if (completionBackendSelect instanceof HTMLSelectElement) {
+        completionBackendSelect.value = motorSelectValue;
         const ocAccent =
           lastCompletionUiKind === "opencode" || lastCompletionUiKind === "multi";
-        completionBackendBadge.classList.toggle("backend-opencode", ocAccent);
+        completionBackendSelect.classList.toggle("backend-opencode", ocAccent);
       }
       lastSuggestionUiLang =
         settings.effectiveSuggestionLanguage === "es" ? "es" : "en";

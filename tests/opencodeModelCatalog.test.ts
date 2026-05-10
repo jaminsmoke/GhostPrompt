@@ -24,10 +24,12 @@ vi.mock("vscode", () => ({
   },
 }));
 
-import { listOpencodeSuggestionModels } from "../src/completion/opencodeModelCatalog";
+import { listOpencodeSuggestionModels } from "../src/completion/catalog/opencodeModelCatalog";
+import { invalidateOpenCodeProvidersSnapshot } from "../src/opencode/opencodeProvidersSnapshot";
 
 describe("listOpencodeSuggestionModels", () => {
   beforeEach(() => {
+    invalidateOpenCodeProvidersSnapshot();
     mockStart.mockReset();
     mockGetClient.mockReset();
     mockGetOpenCodeRuntime.mockClear();

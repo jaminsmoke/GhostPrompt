@@ -26,7 +26,7 @@
 | Ingesta al abrir | Al **enfocar** un documento del workspace, si cumple criterios de relevancia/tamaño/extensiones y falta en el store o está **stale**, **añadir o refrescar** entrada. |
 | Huérfanos / drift | En **cada uso** de una entrada del índice: si el fichero no existe → **eliminar** entrada; si hash o mtime ≠ almacenados → **releer y actualizar** o marcar pendiente de refresh. |
 | Crecimiento JSON | **Cuotas** (`maxTotalBytes` / `maxEntries` por repo, techo por fichero) + **evicción LRU** dentro del mismo workspace si se supera el techo. Objetivo **asintótico** “mucho del repo”, **no** índice sin límite. |
-| GC repos completos | **`registry.json`** global con `workspaceKey`, ruta del store, **`lastSeenAt`**. Al **activate** de la extensión: si `now - lastSeenAt > unusedStoreTtlDays` (propuesta **30** días, configurable), **borrar** carpeta de ese store y entrada en registry. |
+| GC repos completos | **`registry.json`** global con `workspaceKey`, ruta del store, **`lastSeenAt`**. Al **activate**: si `now - lastSeenAt > ghostPrompt.projectMemoryUnusedStoreTtlDays` (**30** días por defecto), **borrar** carpeta de ese store y entrada en registry. |
 | Comandos | **“Clear GhostPrompt memory for this workspace”** (solo el store de la raíz actual o la elegida); opcional **clear all** destructivo con confirmación. |
 
 ---
@@ -36,6 +36,10 @@
 - `src/host/ghostPromptHostWorkspaceGetters.ts` — `collectGhostPromptProjectContext()` y `getGhostPromptContextMode()`.
 - `src/completion/instruction.ts` — ensambla bloque “Relevant project context” a partir del objeto `project` cuando aplica.
 - `src/host/handleGhostPromptSuggest.ts` — sólo pasa `collectProjectContext()` si `contextMode === "project"`.
+- **`src/projectMemory/`** (v0.4 B+) — `globalStorageUri/ghostPrompt/projectMemory/v1/registry.json` + `stores/<sha256>/` (`manifest.json`, `entries.json`), GC y comando clear.
+- **Fase C** — `persistProjectBootstrapSnapshot.ts`: `reconcileProjectMemoryForSuggest` (valida mtime/hash + merge con vivas antes del gobernador) + `writeReconciledProjectBootstrapSnapshot` (tras decisión LM); `ghostPrompt.projectMemoryEnabled`.
+- **Fase D** — `editor-ingest` en `entries.json`, listener debounced en `activateProjectMemory.ts`, cuotas/LRU (`editorIngestLru.ts`), settings `projectMemoryEditor*` / `projectMemoryMax*`.
+- **Fase E** — `indexedPathsFileWatcher.ts`: un `FileSystemWatcher` por ruta indexada, invalidación throttled, `projectMemoryFileWatcherEnabled` / `projectMemoryFileWatcherThrottleMs`.
 
 El pipeline de v0.4 debe **inyectar** contenido adicional del store **en el mismo punto lógico** (o capa adyacente) sin romper el flujo Copilot/OpenCode ni el gobernador.
 
@@ -43,12 +47,12 @@ El pipeline de v0.4 debe **inyectar** contenido adicional del store **en el mism
 
 ## Modelo de almacenamiento (orientativo)
 
-Todo bajo un directorio único de GhostPrompt en `ExtensionContext.globalStorageUri` o `storageUri` (decidir en implementación; preferible **globalStorage** + subcarpeta versionada para no perder índice al cambiar de workspace “sin carpeta” única).
+Implementación fase B: **`ExtensionContext.globalStorageUri/ghostPrompt/projectMemory/v1/`** (subcarpeta versionada).
 
-Propuesta de layout:
+Propuesta de layout (v1):
 
 ```text
-ghostPrompt/
+ghostPrompt/projectMemory/v1/
   registry.json                 # [{ workspaceKey, storeRelativePath, lastSeenAt }]
   stores/
     <workspaceKeySha>/
@@ -111,7 +115,7 @@ Cada **entrada** (ejemplo conceptual, no schema definitivo):
 | A2 | Integración pipeline | Pasar el bloque desde host/completion hasta `instruction` sin duplicar lógica de Copilot/OpenCode paths. |
 | A3 | Tests | Unit sobre construcción de card con fixtures de archivo (filesystem mock o texto inyectado). |
 
-**Estado inicial:** Pendiente.
+**Estado:** **Implementado** (README/package en memoria vía `projectBootstrapContext.ts`, pipeline `handleGhostPromptSuggest` → `SuggestionContext` → `instruction`; huella `projectBootstrapFingerprint` en gobernador para coherencia de caché).
 
 ---
 
@@ -122,11 +126,11 @@ Cada **entrada** (ejemplo conceptual, no schema definitivo):
 | ID | Entregable | Criterio |
 |----|------------|----------|
 | B1 | API interna tipo `ProjectMemoryStore` | Crear/leer/write manifest + entries placeholder. |
-| B2 | Registry + GC | Eliminar árboles sin uso más de `ghostPrompt.projectMemoryUnusedTtlDays` (default **30**). |
+| B2 | Registry + GC | Eliminar árboles sin uso más de `ghostPrompt.projectMemoryUnusedStoreTtlDays` (default **30**). |
 | B3 | Comandos contrib | Al menos comando “Clear GhostPrompt memory for this workspace”. |
 | B4 | Tests | Persistencia manifest/registry con fs virtual o mocks. |
 
-**Estado inicial:** Pendiente.
+**Estado:** **Implementado** (`ProjectMemoryStore`, `registerProjectMemory` en activate, comando `ghostPrompt.clearProjectMemoryThisWorkspace`, GC tras tocar raíces abiertas, tests `projectMemoryStore.test.ts`).
 
 ---
 
@@ -140,7 +144,7 @@ Cada **entrada** (ejemplo conceptual, no schema definitivo):
 | C2 | Read path merge | Concatenación ordenada estable al prompt cuando `project`. |
 | C3 | Validación borrado/edición disco | Tests que simulan mtime cambiado → refresh; archivo borrado → entrada eliminada. |
 
-**Estado inicial:** Pendiente.
+**Estado:** **Implementado** (`ProjectBootstrapPiece` + reconcile/write en suggest; orden README* → otros → `package.json`; tests `bootstrapStoredHelpers.test.ts`).
 
 ---
 
@@ -154,7 +158,7 @@ Cada **entrada** (ejemplo conceptual, no schema definitivo):
 | D2 | Cuotas | `projectMemoryMaxBytes`/`maxSources` valores por defecto razonables. |
 | D3 | Tests | LRU y dedupe por `relativePath`. |
 
-**Estado inicial:** Pendiente.
+**Estado:** **Implementado** (`editorIngestActiveDocument.ts`, `reconcileProjectMemoryForSuggest` añade líneas tras bootstrap; `tests/editorIngestLru.test.ts`; settings en `package.json`).
 
 ---
 
@@ -167,7 +171,7 @@ Cada **entrada** (ejemplo conceptual, no schema definitivo):
 | E1 | Watcher limitado a paths indexados o glob acotado; sin escanear repo entero. |
 | E2 | Documentar coste batería y opt-out en settings. |
 
-**Estado inicial:** Pendiente / negociable.
+**Estado:** **Implementado** (watchers sólo sobre rutas en `entries.json`; opt-out `ghostPrompt.projectMemoryFileWatcherEnabled`; throttle configurable).
 
 ---
 
@@ -180,7 +184,7 @@ Cada **entrada** (ejemplo conceptual, no schema definitivo):
 | F1 | Sección política privacidad + ubicación ficheros disk. |
 | F2 | QA manual: multi-root dos carpetas índices aislados; clear command; sug. con project on/off. |
 
-**Estado inicial:** Pendiente.
+**Estado:** **Implementado** (README: privacidad + almacenamiento + tabla settings `projectMemory*` + QA manual F2; `Docs/ARCHITECTURE.md` §5 project memory; `CHANGELOG.md` **[0.4.0]**; `package.json` **0.4.0**).
 
 ---
 
@@ -190,10 +194,12 @@ Todos bajo prefijo `ghostPrompt.` (nombres finales al implementar):
 
 | Clave | Tipo | Default (propuesto) | Descripción corta |
 |-------|------|---------------------|---------------------|
-| `projectMemoryEnabled` | boolean | `true` sólo después de pasar Phase C; iniciar como `false` si se prefiere opt-in fuerte | Activa uso del store persistente más allá del card volátil. |
-| `projectMemoryMaxTotalBytes` | number | Ej. **256_000–512_000** (ajustar) | Cap por workspace antes de LRU. |
-| `projectMemoryMaxEntryBytes` | number | Ej. **32_000** | Máx. por entrada indexada (truncado). |
+| `projectMemoryEnabled` | boolean | **true** (`package.json`; desactivable) | Persistencia + fusión reconcile → prompt cuando `project`. |
+| `projectMemoryMaxTotalBytes` | number | **393216** (`package.json`) | Cap serializado pool editor-ingest antes de LRU. |
+| `projectMemoryMaxEntryBytes` | number | **32768** | Bytes leídos del fichero al indexar excerpt. |
+| `projectMemoryEditorIngestEnabled` / `projectMemoryMaxEditorSources` / `projectMemoryEditorMaxFileBytes` / `projectMemoryEditorAllowedExtensions` / `projectMemoryEditorPathExcludeGlobs` | ver `package.json` | Fase D |
 | `projectMemoryUnusedStoreTtlDays` | number | **30** | GC de carpetas de repos no tocados. |
+| `projectMemoryFileWatcherEnabled` / `projectMemoryFileWatcherThrottleMs` | ver `package.json` | Fase E |
 | `projectMemoryRespectGitignore` | boolean | `true` (si implementación lo permite sin coste excesivo) | Evitar rutas ignoradas como candidatas. |
 
 Ajustar defaults tras medición en proyectos reales.
@@ -212,14 +218,14 @@ Ajustar defaults tras medición en proyectos reales.
 
 ## Checklist global de versión 0.4.0
 
-- [ ] Política de tests respetada (`npm run check` donde aplique por fase).
-- [ ] Fase A — Project card ampliado (sin disco).
-- [ ] Fase B — Store por workspace + registry + GC + comandos clear.
-- [ ] Fase C — Bootstrap persistente + validación huérfanos/stale en lectura + integración suggest.
-- [ ] Fase D — Ingest por editor activo + cuotas + LRU.
-- [ ] Fase E — Watcher (opcional, bitácora si se aplaza).
-- [ ] Fase F — README / ARCHITECTURE / settings / QA manual / CHANGELOG.
-- [ ] `package.json` y `CHANGELOG.md` → **0.4.0** al publicar.
+- [x] Política de tests respetada (`npm run check` donde aplique por fase).
+- [x] Fase A — Project card ampliado (sin disco).
+- [x] Fase B — Store por workspace + registry + GC + comandos clear.
+- [x] Fase C — Bootstrap persistente + validación huérfanos/stale en lectura + integración suggest.
+- [x] Fase D — Ingest por editor activo + cuotas + LRU.
+- [x] Fase E — Watcher (opcional, bitácora si se aplaza).
+- [x] Fase F — README / ARCHITECTURE / settings / QA manual / CHANGELOG.
+- [x] `package.json` y `CHANGELOG.md` → **0.4.0** al publicar.
 
 ---
 
@@ -228,11 +234,18 @@ Ajustar defaults tras medición en proyectos reales.
 | Fecha | Nota |
 |-------|------|
 | 2026-05-10 | Roadmap creado tras acuerdo de decisión JSON, store por repo, ingest editor, LRU/cuotas, validación lectura + GC repos 30 d. |
+| 2026-05-10 | Fase A cerrada: bootstrap README/package.json en memoria (`src/completion/context/projectBootstrapContext.ts`; antes raíz `completion`), `projectBootstrapLines` + huella en caché del gobernador, tests Vitest. |
+| 2026-05-10 | Fase B cerrada: `src/projectMemory/` (store/registry/GC/comando clear), layout bajo globalStorage `ghostPrompt/projectMemory/v1`. |
+| 2026-05-10 | Fase C cerrada: entradas `bootstrap` en `entries.json` (mtime+sha256), reconcile antes del gobernador y flush en ruta LM; setting `ghostPrompt.projectMemoryEnabled`. |
+| 2026-05-10 | Fase D cerrada: `editor-ingest`, listener activo con debounce, LRU/recuento; líneas editor tras bootstrap en prompt si `projectMemoryEditorIngestEnabled`. |
+| 2026-05-10 | Fase E cerrada: watchers por ruta indexada + invalidación en disco (`indexedPathsFileWatcher.ts`), `workspaceRelativePath.ts` para tests sin vscode. |
+| 2026-05-10 | Fase F cerrada: README (privacidad, settings project memory, QA manual), `ARCHITECTURE.md` almacenamiento v0.4, `CHANGELOG` **[0.4.0]**, versión **0.4.0**. |
 
 ---
 
 ## Referencias cruzadas
 
+- **OpenCode — rendimiento catálogo, sesiones y telemetría debug (v0.4 aditivo):** [`Roadmap-v0.4-opencode-perf-catalog-telemetry.md`](./Roadmap-v0.4-opencode-perf-catalog-telemetry.md).
 - Arquitectura general: [`Docs/ARCHITECTURE.md`](../../ARCHITECTURE.md).
 - Pipeline de instrucciones y contexto actual: [`src/completion/instruction.ts`](../../../src/completion/instruction.ts), [`src/host/ghostPromptHostWorkspaceGetters.ts`](../../../src/host/ghostPromptHostWorkspaceGetters.ts).
 - Host refactor y contratos precedentes: [`Roadmap-v0.3.2-host-refactor-webview-tooling.md`](./Roadmap-v0.3.2-host-refactor-webview-tooling.md).

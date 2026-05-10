@@ -14,10 +14,11 @@ function read(rel: string): string {
 }
 
 describe("webview toolbar parity (v0.3.1 Fase A)", () => {
-  it("index.html defines exactly four setting groups with stable data-keys", () => {
+  it("index.html defines exactly five setting groups with stable data-keys", () => {
     const html = read("webview/index.html");
-    expect(html.match(/class="setting-group"/g)?.length).toBe(4);
+    expect(html.match(/class="setting-group"/g)?.length).toBe(5);
     for (const key of [
+      "completionProvider",
       "suggestionModelPolicy",
       "suggestionStyle",
       "contextMode",
@@ -30,7 +31,7 @@ describe("webview toolbar parity (v0.3.1 Fase A)", () => {
   it("index.html exposes stable toolbar control ids shared by both webviews", () => {
     const html = read("webview/index.html");
     for (const id of [
-      "completion-backend-badge",
+      "completion-backend-select",
       "compose-options-details",
       "compose-options-summary",
       "model-select",

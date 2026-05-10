@@ -2,7 +2,7 @@
  * Tier / pricing solo desde metadatos del catálogo OpenCode (`config.providers`).
  * Sin adivinar por nombre de modelo (phi, GPT-*, etc.): si la API no dice precio/free → **unknown**.
  */
-import type { SuggestionModelTier } from "./types";
+import type { SuggestionModelTier } from "../types";
 
 function parsePricingMultiplier(pricing: string): number | undefined {
   const match = /^([0-9]+(?:\.[0-9]+)?)x$/i.exec(pricing.trim());

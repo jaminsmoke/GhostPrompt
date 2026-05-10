@@ -11,10 +11,35 @@ import {
   type SuggestionModelDescriptor,
   type SuggestionModelPolicy,
 } from "../types";
-import { normalizeOpencodeProviderModels } from "../normalizeOpencodeProviderModels";
-import { classifyOpencodeModelTier } from "../opencodeModelTier";
+import { normalizeOpencodeProviderModels } from "../catalog/normalizeOpencodeProviderModels";
+import { classifyOpencodeModelTier } from "../catalog/opencodeModelTier";
 import { getOpenCodeRuntime } from "../../opencode/OpenCodeRuntime";
+import {
+  getOpenCodeProvidersSnapshot,
+  type OpenCodeProvidersSnapshot,
+} from "../../opencode/opencodeProvidersSnapshot";
+import { logOpenCodePerfCapture } from "../../debug/SuggestionDebug";
+import {
+  getOrCreateOpencodeInlineSession,
+  invalidateOpencodeInlineSuggestionSessionPool,
+} from "../../opencode/opencodeInlineSuggestionSession";
+import { enqueueOpencodeInlineLm } from "../../opencode/opencodeInlineCompletionQueue";
 import { consumeOpencodeSuggestionTextStream } from "../../opencode/opencodeSuggestionStream";
+
+function perfMsNow(): number {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
+}
+
+function lmPerf(
+  perfCaptureId: number | undefined,
+  phase: string,
+  details?: string,
+): void {
+  if (perfCaptureId === undefined) {
+    return;
+  }
+  logOpenCodePerfCapture(perfCaptureId, phase, details);
+}
 
 type SdkClient = {
   config: {
@@ -27,16 +52,6 @@ type SdkClient = {
     delete(options?: unknown): Promise<unknown>;
   };
 };
-
-type ProvidersPayload = {
-  providers?: Array<{
-    id: string;
-    models?: unknown;
-  }>;
-  default?: Record<string, string>;
-};
-
-type SessionPayload = { id: string };
 
 type PromptPayload = {
   info?: {
@@ -109,13 +124,11 @@ function findModelRecord(
   return undefined;
 }
 
-async function resolveOpencodeModelIds(
-  client: SdkClient,
+function resolveOpencodeModelIdsFromSnapshot(
+  bundle: OpenCodeProvidersSnapshot | undefined,
   preferredModelId: string | undefined,
   policy: SuggestionModelPolicy,
-): Promise<{ providerID: string; modelID: string } | undefined> {
-  const raw = await client.config.providers();
-  const bundle = getResultData(raw) as ProvidersPayload | undefined;
+): { providerID: string; modelID: string } | undefined {
   const providers = bundle?.providers ?? [];
   const defaults = bundle?.default ?? {};
 
@@ -221,6 +234,15 @@ export async function requestOpencodeCompletion(
   userText: string,
   options: CompletionRequestOptions,
 ): Promise<CompletionResult> {
+  return enqueueOpencodeInlineLm(() =>
+    executeOpencodeInlineLmCompletion(userText, options),
+  );
+}
+
+async function executeOpencodeInlineLmCompletion(
+  userText: string,
+  options: CompletionRequestOptions,
+): Promise<CompletionResult> {
   const {
     token,
     policy,
@@ -231,7 +253,10 @@ export async function requestOpencodeCompletion(
     requestTimeoutMs = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
     onLoadingPhase,
     onStreamPreview,
+    perfCaptureId,
   } = options;
+
+  const tRequest0 = perfMsNow();
 
   const runtime = getOpenCodeRuntime();
   if (runtime.isRunning) {
@@ -240,6 +265,7 @@ export async function requestOpencodeCompletion(
     onLoadingPhase?.("opencode-start");
   }
 
+  const tBeforeStart = perfMsNow();
   const started = await runtime.start();
   if (!started.ok) {
     return {
@@ -247,6 +273,11 @@ export async function requestOpencodeCompletion(
       message: started.error,
     };
   }
+  lmPerf(
+    perfCaptureId,
+    "runtime-ready",
+    `elapsedMs=${Math.round(perfMsNow() - tBeforeStart)}`,
+  );
 
   const rawClient = runtime.getClient();
   if (!rawClient) {
@@ -258,7 +289,11 @@ export async function requestOpencodeCompletion(
 
   const sseAbort = new AbortController();
   let sessionId: string | undefined;
+  let sessionLifecycleAborted = false;
+  let abortedByDeadline = false;
+
   const disposeCancel = token.onCancellationRequested(() => {
+    sessionLifecycleAborted = true;
     sseAbort.abort();
     if (!sessionId) {
       return;
@@ -267,6 +302,8 @@ export async function requestOpencodeCompletion(
   });
 
   const timeoutHandle = setTimeout(() => {
+    abortedByDeadline = true;
+    sessionLifecycleAborted = true;
     if (!sessionId) {
       return;
     }
@@ -274,10 +311,14 @@ export async function requestOpencodeCompletion(
   }, requestTimeoutMs);
 
   let streamPromise: Promise<void> = Promise.resolve();
+  const hadStreamingPreview = typeof onStreamPreview === "function";
 
   try {
-    const modelIds = await resolveOpencodeModelIds(
-      client,
+    const providersSnapshot = await getOpenCodeProvidersSnapshot(client, {
+      perfCaptureId,
+    });
+    const modelIds = resolveOpencodeModelIdsFromSnapshot(
+      providersSnapshot,
       preferredModelId,
       policy,
     );
@@ -291,17 +332,16 @@ export async function requestOpencodeCompletion(
       };
     }
 
-    const created = await client.session.create({
-      body: { title: "GhostPrompt inline suggestion" },
-    });
-    const envErr = readEnvelopeError(created);
-    if (envErr) {
-      return { kind: "error", message: envErr };
-    }
-    const session = getResultData(created) as SessionPayload | undefined;
-    sessionId = session?.id;
-    if (!sessionId) {
-      return { kind: "empty", reason: "empty-response" };
+    try {
+      sessionId = await getOrCreateOpencodeInlineSession(
+        client,
+        readEnvelopeError,
+        perfCaptureId,
+      );
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      invalidateOpencodeInlineSuggestionSessionPool();
+      return { kind: "error", message };
     }
 
     const instruction = buildCompletionInstruction(userText, style, context);
@@ -310,11 +350,33 @@ export async function requestOpencodeCompletion(
 
     runtime.logDebugFirstPrompt();
 
-    if (onStreamPreview) {
+    let tPromptSend = 0;
+    let loggedFirstPreview = false;
+    const streamPreviewWrapped = onStreamPreview
+      ? (accumulatedText: string) => {
+          if (
+            !loggedFirstPreview &&
+            accumulatedText.length > 0 &&
+            perfCaptureId !== undefined
+          ) {
+            loggedFirstPreview = true;
+            const sinceSend =
+              tPromptSend > 0 ? Math.round(perfMsNow() - tPromptSend) : 0;
+            lmPerf(
+              perfCaptureId,
+              "stream-first-delta",
+              `msSincePromptSend=${sinceSend} accumulatedChars=${accumulatedText.length}`,
+            );
+          }
+          onStreamPreview(accumulatedText);
+        }
+      : undefined;
+
+    if (streamPreviewWrapped) {
       streamPromise = consumeOpencodeSuggestionTextStream(
         rawClient,
         sseAbort.signal,
-        onStreamPreview,
+        streamPreviewWrapped,
         {
           maxPreviewChars: maxSuggestionChars,
           sessionId,
@@ -322,6 +384,7 @@ export async function requestOpencodeCompletion(
       );
     }
 
+    tPromptSend = perfMsNow();
     const promptResult = await client.session.prompt({
       path: { id: sessionId },
       body: {
@@ -332,9 +395,15 @@ export async function requestOpencodeCompletion(
         parts: [{ type: "text", text: instruction }],
       },
     });
+    lmPerf(
+      perfCaptureId,
+      "prompt",
+      `roundTripMs=${Math.round(perfMsNow() - tPromptSend)}`,
+    );
 
     const promptEnvErr = readEnvelopeError(promptResult);
     if (promptEnvErr) {
+      invalidateOpencodeInlineSuggestionSessionPool();
       return { kind: "error", message: promptEnvErr };
     }
 
@@ -349,6 +418,7 @@ export async function requestOpencodeCompletion(
       if (token.isCancellationRequested || /abort/i.test(name)) {
         return { kind: "empty", reason: "request-timeout" };
       }
+      invalidateOpencodeInlineSuggestionSessionPool();
       return { kind: "error", message: msg };
     }
 
@@ -368,6 +438,9 @@ export async function requestOpencodeCompletion(
       model: describeOpencodeModel(modelIds.providerID, modelIds.modelID),
     };
   } catch (e) {
+    if (!token.isCancellationRequested) {
+      invalidateOpencodeInlineSuggestionSessionPool();
+    }
     if (token.isCancellationRequested) {
       throw e;
     }
@@ -377,18 +450,31 @@ export async function requestOpencodeCompletion(
     }
     return { kind: "error", message };
   } finally {
+    if (abortedByDeadline) {
+      invalidateOpencodeInlineSuggestionSessionPool();
+    }
     sseAbort.abort();
+    const tDrain0 =
+      perfCaptureId !== undefined && hadStreamingPreview
+        ? perfMsNow()
+        : 0;
     await streamPromise.catch(() => {
       /* cierre SSE ante abort */
     });
+    if (tDrain0 > 0) {
+      lmPerf(
+        perfCaptureId,
+        "sse-consumer-settled",
+        `elapsedMs=${Math.round(perfMsNow() - tDrain0)}`,
+      );
+    }
+    lmPerf(
+      perfCaptureId,
+      "opencode-lm-total",
+      `elapsedMs=${Math.round(perfMsNow() - tRequest0)}`,
+    );
     clearTimeout(timeoutHandle);
     disposeCancel.dispose();
-    if (sessionId) {
-      try {
-        await client.session.delete({ path: { id: sessionId } });
-      } catch {
-        /* best-effort cleanup */
-      }
-    }
+    /* Fase H: no `session.delete` en critical path ni por request feliz — pool reused; reset en servidor/abort/errores. */
   }
 }

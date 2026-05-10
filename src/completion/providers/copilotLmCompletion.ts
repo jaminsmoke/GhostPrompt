@@ -4,7 +4,7 @@
 import * as vscode from "vscode";
 
 import { buildCompletionInstruction } from "../instruction";
-import { describeModel, selectModelByPolicy } from "../modelCatalog";
+import { describeModel, selectModelByPolicy } from "../catalog/modelCatalog";
 import { normalizeSuggestion } from "../normalize";
 import { collectResponseText } from "../streaming";
 import {

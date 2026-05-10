@@ -62,6 +62,12 @@ export function getGhostPromptContextMode(): "off" | "basic" | "project" {
   return "basic";
 }
 
+export function getGhostPromptProjectMemoryEnabled(): boolean {
+  return vscode.workspace
+    .getConfiguration("ghostPrompt")
+    .get<boolean>("projectMemoryEnabled", true);
+}
+
 export function getGhostPromptSuggestionLanguageMode(): SuggestionLanguageMode {
   const value = vscode.workspace
     .getConfiguration("ghostPrompt")

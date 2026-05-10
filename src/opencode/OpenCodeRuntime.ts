@@ -5,6 +5,7 @@ import {
   OPENCODE_STOP_DEBOUNCE_MS,
 } from "./constants";
 import { ensureNodeFetchDuplex } from "./nodeFetchDuplex";
+import { emitOpenCodeServerWillReset } from "./openCodeServerLifecycleHooks";
 
 export type OpenCodeStartOk = { ok: true };
 export type OpenCodeStartFailed = { ok: false; error: string };
@@ -34,6 +35,11 @@ export class OpenCodeRuntime {
   private serverReadyAtMs = 0;
   private firstHealthPingLogged = false;
   private firstPromptLogged = false;
+  /**
+   * Monotono: sube al volver a levantar el embedded server o al cerrarlo.
+   * Invalida la sesión inline pooled en `opencodeInlineSuggestionSession`.
+   */
+  private deploymentId = 0;
 
   get isRunning(): boolean {
     return this.handle !== undefined;
@@ -54,6 +60,10 @@ export class OpenCodeRuntime {
 
   getBaseUrl(): string | undefined {
     return this.handle?.server.url;
+  }
+
+  getDeploymentId(): number {
+    return this.deploymentId;
   }
 
   async start(): Promise<OpenCodeStartResult> {
@@ -93,6 +103,7 @@ export class OpenCodeRuntime {
         client,
         server,
       };
+      this.deploymentId += 1;
       const readyMs = Date.now();
       this.serverReadyAtMs = readyMs;
       this.firstHealthPingLogged = false;
@@ -190,6 +201,8 @@ export class OpenCodeRuntime {
     if (!this.handle) {
       return;
     }
+    this.deploymentId += 1;
+    emitOpenCodeServerWillReset();
     try {
       this.handle.server.close();
     } finally {

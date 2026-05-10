@@ -27,6 +27,16 @@
             "target": "./src/opencode/**/*",
             "from": "./src/host/**/*",
             "message": "La capa OpenCode no debe importar desde src/host (UI/webview). Ver roadmap v0.3.2 fase D."
+          },
+          {
+            "target": "./src/projectMemory/**/*",
+            "from": "./src/host/**/*",
+            "message": "projectMemory no debe importar desde src/host; pasar datos desde host como deps. Ver Docs/Owners.md."
+          },
+          {
+            "target": "./src/debug/**/*",
+            "from": "./src/host/**/*",
+            "message": "debug no debe importar desde src/host. Ver Docs/Owners.md fase D."
           }
         ]
       }

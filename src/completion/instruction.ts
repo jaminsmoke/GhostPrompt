@@ -77,6 +77,14 @@ export function buildCompletionInstruction(
       `Active selection excerpt: ${truncateInline(context.activeSelection, 320)}`,
     );
   }
+  if (context?.projectBootstrapLines?.length) {
+    for (const raw of context.projectBootstrapLines) {
+      const row = raw.trim();
+      if (row) {
+        projectContext.push(truncateInline(row, 1550));
+      }
+    }
+  }
 
   return (
     "You are a prompt completion assistant. " +

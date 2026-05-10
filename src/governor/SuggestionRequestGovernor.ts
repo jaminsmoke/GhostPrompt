@@ -34,6 +34,8 @@ export interface GovernorRequestScope {
   contextMode?: string;
   modelPolicy?: string;
   selectedModelId?: string;
+  /** Dedupe cache: contenido bootstrap “project card” (hash corto cuando hay líneas). */
+  projectBootstrapFingerprint?: string;
 }
 
 type GovernorDecision =
@@ -224,6 +226,7 @@ function buildScopedKey(normalizedInput: string, scope?: GovernorRequestScope): 
     normalizeScopeValue(scope.contextMode),
     normalizeScopeValue(scope.modelPolicy),
     normalizeScopeValue(scope.selectedModelId),
+    normalizeScopeValue(scope.projectBootstrapFingerprint),
   ];
   return parts.join("||");
 }

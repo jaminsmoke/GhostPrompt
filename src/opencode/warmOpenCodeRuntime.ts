@@ -1,5 +1,6 @@
 import { getEnabledCompletionSources } from "../completion/completionSources";
 import { OPENCODE_WARM_THROTTLE_MS } from "./constants";
+import { getOpenCodeProvidersSnapshot } from "./opencodeProvidersSnapshot";
 import { getOpenCodeRuntime } from "./OpenCodeRuntime";
 
 let lastWarmAtMs = 0;
@@ -28,5 +29,11 @@ export function warmOpenCodeRuntimeIfConfigured(): void {
       return;
     }
     await runtime.isHealthy();
+
+    const raw = runtime.getClient();
+    if (raw) {
+      const client = raw as { config: { providers(): Promise<unknown> } };
+      await getOpenCodeProvidersSnapshot(client);
+    }
   })();
 }

@@ -1,10 +1,10 @@
 /**
  * Catálogo unificado cuando hay varias fuentes habilitadas.
  */
-import type { SuggestionModelDescriptor, SuggestionModelPolicy } from "./types";
+import type { SuggestionModelDescriptor, SuggestionModelPolicy } from "../types";
 import { listSuggestionModels } from "./modelCatalog";
 import { listOpencodeSuggestionModels } from "./opencodeModelCatalog";
-import type { CompletionSourceId } from "./completionSources";
+import type { CompletionSourceId } from "../completionSources";
 
 /**
  * Concatena modelos Copilot y OpenCode; deduplica por `id` (prioriza el primero: Copilot).

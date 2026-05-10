@@ -5,7 +5,7 @@
  * - Contratos Zod y parseo: `webviewProtocols.ts` (schemas en `../shared/webviewMessageSchemas.ts`)
  * - HTML/CSP y plantilla: `ghostPromptWebviewHtml.ts`
  * - Mensaje `settings` → webview: `ghostPromptSettingsPostMessage.ts`
- * - Mensaje `suggest`: `handleGhostPromptSuggest.ts`
+ * - Mensaje `suggest`: `handleGhostPromptSuggest.ts` → `ghostPromptSuggestPipeline.ts`
  * - Router/handlers webview → host (`init`, `draftChanged`, `updateSetting`, `send`, `accept`): `ghostPromptWebviewInboundHandlers.ts`
  * - Lectura de workspace / contexto editor: `ghostPromptHostWorkspaceGetters.ts`
  * - Actualización desde chips (`updateSetting`): `applyWebviewUpdateSetting.ts`
@@ -31,10 +31,18 @@ import { warmOpenCodeRuntimeIfConfigured } from "../opencode/warmOpenCodeRuntime
 import { ghostPromptSessionStore } from "../session/GhostPromptSessionStore";
 import { buildAndPostGhostPromptSettings } from "./ghostPromptSettingsPostMessage";
 import { buildGhostPromptWebviewHtml } from "./ghostPromptWebviewHtml";
+import { getProjectMemoryBaseDir } from "../projectMemory/activateProjectMemory";
+import {
+  reconcileProjectMemoryForSuggest,
+  writeReconciledProjectBootstrapSnapshot,
+} from "../projectMemory/persistProjectBootstrapSnapshot";
+import { NodeProjectMemoryFs } from "../projectMemory/projectMemoryNodeFs";
+import { ProjectMemoryStore } from "../projectMemory/ProjectMemoryStore";
 import {
   collectGhostPromptProjectContext,
   getGhostPromptContextMode,
   getGhostPromptMaxSuggestionChars,
+  getGhostPromptProjectMemoryEnabled,
   getGhostPromptSelectedModelId,
   getGhostPromptSuggestionLanguage,
   getGhostPromptSuggestionLanguageChoice,
@@ -57,12 +65,22 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
 
   private _view?: vscode.WebviewView;
 
+  private _ghostProjectMemoryStore?: ProjectMemoryStore;
+
   constructor(
     private readonly _context: vscode.ExtensionContext,
     /** Identificador de contribución de la vista (`ghostPrompt.input` vs `ghostPrompt.inputPanel`). */
     public readonly viewContributionId: string,
   ) {
     MiniInputViewProvider._instances.add(this);
+  }
+
+  private _getGhostProjectMemoryStore(): ProjectMemoryStore {
+    this._ghostProjectMemoryStore ??= new ProjectMemoryStore(
+      getProjectMemoryBaseDir(this._context.globalStorageUri.fsPath),
+      new NodeProjectMemoryFs(),
+    );
+    return this._ghostProjectMemoryStore;
   }
 
   /**
@@ -188,6 +206,21 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
           getSuggestionLanguage: () => getGhostPromptSuggestionLanguage(),
           getMaxSuggestionChars: () => getGhostPromptMaxSuggestionChars(),
           collectProjectContext: () => collectGhostPromptProjectContext(),
+          ...(getGhostPromptProjectMemoryEnabled()
+            ? {
+                reconcileGhostPromptBootstrap: (args) =>
+                  reconcileProjectMemoryForSuggest({
+                    store: this._getGhostProjectMemoryStore(),
+                    ...args,
+                  }),
+                writeGhostPromptBootstrapSnapshot: (snapshot) =>
+                  writeReconciledProjectBootstrapSnapshot({
+                    store: this._getGhostProjectMemoryStore(),
+                    workspaceKey: snapshot.workspaceKey,
+                    mergedItems: snapshot.mergedItems,
+                  }),
+              }
+            : {}),
         },
       });
     });

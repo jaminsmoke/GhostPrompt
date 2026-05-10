@@ -66,6 +66,11 @@ describe("webviewMessageSchemas (shared)", () => {
         key: "debugSuggestions" as const,
         value: false,
       },
+      {
+        type: "updateSetting" as const,
+        key: "completionProvider" as const,
+        value: "opencode" as const,
+      },
     ];
     for (const msg of samples) {
       expect(webviewInboundMessageSchema.safeParse(msg).success).toBe(true);

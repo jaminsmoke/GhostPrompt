@@ -1,7 +1,7 @@
 # GhostPrompt
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.3.1-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
+[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.4.1-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.90%2B-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
 [![GitHub Copilot](https://img.shields.io/badge/Uses-GitHub_Copilot-24292f?logo=github&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
@@ -11,7 +11,7 @@
 > Ghost-text completions for your Copilot prompts — write faster, think clearer.
 
 <!-- markdownlint-disable-next-line MD036 -->
-**Version 0.3.1**
+**Version 0.4.1** *(pendiente de publicación en marketplace; última publicada: **0.4.0**.)*
 
 ---
 
@@ -79,6 +79,25 @@ Watch GhostPrompt in action on YouTube: [GhostPrompt demo](https://youtu.be/luGP
 - **Model policy controls** — force included (`0x`) models by default, with optional override.
 - **Non-intrusive** — completions run via `vscode.lm`; no draft editor tabs, no focus stealing.
 - **Private logs** — accepted suggestions and sent prompts are saved in the extension's private storage (not inside your project).
+- **Project context (v0.4)** — with **`contextMode: project`** and project memory enabled, GhostPrompt can attach short excerpts from your workspace (bootstrap files + optional editor-ingest) to the LM instruction. Data stays under the extension’s **global storage** (see [Privacy and on-disk data](#privacy-and-on-disk-data-v04)).
+
+---
+
+## Privacy and on-disk data (v0.4)
+
+GhostPrompt never writes project-memory JSON **inside your repository** by default. Indexed snippets and registry metadata live only under the extension host’s storage:
+
+| Location | Contents |
+| -------- | -------- |
+| **`ExtensionContext.globalStorageUri/ghostPrompt/projectMemory/v1/`** | `registry.json` (workspace keys + `lastSeenAt`), `stores/<workspaceKeySha>/entries.json` (bootstrap + editor-ingest items), `manifest.json`. |
+
+- **What may be stored:** truncated text derived from files you open or from standard bootstrap paths (`README*`, `package.json`), plus metadata (`relativePath`, mtime, content hash, LRU timestamps). Nothing is uploaded by GhostPrompt itself beyond what you already send to your chosen completion backend (Copilot LM / OpenCode) when you request a suggestion.
+- **Opt-out / disable:** set **`ghostPrompt.projectMemoryEnabled`** to **`false`** to stop persisting and merging this store into suggestions (volatile bootstrap read may still occur depending on version; global toggle is the supported off switch for disk-backed memory).
+- **Editor ingest & watchers:** **`ghostPrompt.projectMemoryEditorIngestEnabled`** controls indexing focused files; **`ghostPrompt.projectMemoryFileWatcherEnabled`** controls proactive invalidation watchers (disable to reduce background file subscriptions).
+- **Delete locally:** command **`GhostPrompt: Clear Project Memory (This Workspace)`** removes the store for the workspace folder tied to the active editor (or the first folder in a multi-root setup when resolving that command).
+- **Stale stores:** GhostPrompt may delete entire per-repo folders under global storage if unused longer than **`ghostPrompt.projectMemoryUnusedStoreTtlDays`** (default **30**).
+
+For the full settings matrix, search **`ghostPrompt.projectMemory`** in VS Code Settings.
 
 ---
 
@@ -92,6 +111,10 @@ Watch GhostPrompt in action on YouTube: [GhostPrompt demo](https://youtu.be/luGP
 If you set **`ghostPrompt.completionProvider`** to **`opencode`**, GhostPrompt starts its **own** local OpenCode server (see [`Roadmap-v0.3-opencode-integration.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md)). You need the **OpenCode CLI** on your PATH (`opencode --version` should succeed). Configure models and provider credentials in OpenCode as described in the upstream docs ([OpenCode SDK](https://opencode.ai/docs/sdk)). Authentication for third-party APIs is handled by OpenCode, not by GhostPrompt.
 
 **Cold start & lifecycle (v0.3.0c):** The first suggestion after the embedded server has been stopped can take noticeably longer (spawn + listen + health). Opening a GhostPrompt view while OpenCode is selected runs a **warm-up** (`start` + light health ping) in the background, throttled so Sidebar + Panel do not double work. Switching back to **Copilot** **schedules** shutdown of the OpenCode process after **45 seconds** so quick toggles avoid paying cold start again. Use **GhostPrompt: Toggle Debug** and the **GhostPrompt Suggestions** output channel to see `[opencode]` timing lines (`cold-start-complete`, `first-config-get`, `first-session-prompt`).
+
+**Model catalog cache (v0.4+):** GhostPrompt keeps a single in-memory snapshot of OpenCode’s **`config.providers()`** (shared by the webview dropdown and inline suggestions) once the server is running; the warm-up **prefetches** that snapshot. The cache is **cleared when the extension deactivates** (reload window or quit). If you change providers or models in OpenCode externally, **reload the window** so the list and model routing match the new configuration. See [`Roadmap-v0.4-opencode-perf-catalog-telemetry.md`](./Docs/Plans/Roadmaps/Roadmap-v0.4-opencode-perf-catalog-telemetry.md).
+
+**Inline session reuse (v0.4+, phase H):** While the embedded server stays up, GhostPrompt **reuses one OpenCode session** for repeated inline suggestions (`session.create` is not fired on every keystroke). The pool resets when the server restarts, on timeout/cancellation, or on envelope errors (see roadmap phase H). If OpenCode retains prior turns inside that session and you notice odd context bleed, reload the window to force a new session cycle.
 
 ---
 
@@ -174,8 +197,29 @@ You can keep GhostPrompt near Copilot Chat and move quickly between drafting and
 - Run command: `GhostPrompt: Toggle Debug`
 - Output channel: `GhostPrompt Suggestions`
 - Setting: `ghostPrompt.debugSuggestions`
+- With **`ghostPrompt.completionProvider`** set to **`opencode`** (or OpenCode-routed models when using multi-source mode), suggestion requests also emit timing lines prefixed **`[opencode-perf]`** in **GhostPrompt Suggestions**, tied to each webview `captureId`: providers snapshot (`providers`, `providers-network-fetch-ms`), pooled session reuse vs `session-create`, **`prompt`** round-trip, optional **`stream-first-delta`** / **`sse-consumer-settled`**, and **`opencode-lm-total`**. Only when **`ghostPrompt.debugSuggestions`** is on (`Toggle Debug` / chips). Same channel still shows **`[capture:…]`** stages for Copilot/OpenCode orchestration (`request-start`, `request-success`, etc.).
 
 Inside the webview mini-input, you can also change policy, style, context, and debug from the **control strip** (chips at the top). See **4 · Quick controls** in [Preview](#preview).
+
+### Project memory (v0.4)
+
+Requires an open workspace folder for paths relative to that folder. Summary — tune in Settings (`ghostPrompt.projectMemory*`):
+
+| Setting | Role |
+| ------- | ---- |
+| `projectMemoryEnabled` | Master switch for persisted reconcile + disk store. |
+| `projectMemoryEditorIngestEnabled` | Focused-file excerpts (extension/size filters). |
+| `projectMemoryMaxTotalBytes` / `projectMemoryMaxEditorSources` | LRU caps for editor-ingest pool. |
+| `projectMemoryUnusedStoreTtlDays` | GC for whole store folders left unused. |
+| `projectMemoryFileWatcherEnabled` / `projectMemoryFileWatcherThrottleMs` | Invalidate indexed paths on external change/delete (optional). |
+
+Command: **`GhostPrompt: Clear Project Memory (This Workspace)`**. Details: [`Roadmap-v0.4-project-context-store.md`](./Docs/Plans/Roadmaps/Roadmap-v0.4-project-context-store.md).
+
+### Manual QA checklist (before publishing v0.4.x)
+
+1. **Multi-root:** open a workspace with **two folders**; confirm each folder gets an isolated store (different hashes under `globalStorageUri/.../stores/`); suggestions in **project** mode do not mix excerpts across roots.
+2. **Clear command:** run **`GhostPrompt: Clear Project Memory (This Workspace)`**; confirm the active folder’s store is removed and suggestions no longer include old excerpts until files are re-indexed.
+3. **Context modes:** with **`ghostPrompt.contextMode`**: **`off`** — no project/bootstrap lines; **`basic`** — session-only context; **`project`** — bootstrap ± editor lines per settings above.
 
 ## Developing and tests
 
@@ -252,13 +296,24 @@ v0.2 is **shipped**; roadmap documents:
 - **v0.3.0 — `src` layout & completion providers** *(architecture complete; OpenCode & VSIX bundling landed in-repo)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md)
 - **OpenCode integration** *(Phases 1–4 complete)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md)
 - **v0.3.0c — OpenCode UX, rendimiento y multi‑proveedor** *(plan activo, misma línea 0.3.0)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3.0c-opencode-ux-perf.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.0c-opencode-ux-perf.md)
-- **v0.4.0 — Memoria de proyecto por workspace (JSON), contexto bootstrap + editor** *(planificado)*: [`Docs/Plans/Roadmaps/Roadmap-v0.4-project-context-store.md`](./Docs/Plans/Roadmaps/Roadmap-v0.4-project-context-store.md)
+- **v0.4.0 — Memoria de proyecto por workspace (JSON), contexto bootstrap + editor** *(phases A–F shipped)*: [`Docs/Plans/Roadmaps/Roadmap-v0.4-project-context-store.md`](./Docs/Plans/Roadmaps/Roadmap-v0.4-project-context-store.md)
 
 Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ---
 
 ## Release notes
+
+### 0.4.1 *(pendiente de publicación)*
+
+- **OpenCode observability:** with debug on (**`GhostPrompt: Toggle Debug`** / **`ghostPrompt.debugSuggestions`**), **`[opencode-perf]`** lines in **GhostPrompt Suggestions** (per-request `captureId`): catalog snapshot, pooled session vs `session-create`, **`prompt`** timing, SSE first delta / drain, LM total — see § [Debug mode](#debug-mode).
+- **Docs:** roadmap OpenCode perf **I–J** complete; **`CHANGELOG.md`** section **`[0.4.1]`** mirrors this; install the VSIX from `npm run vsix` to validate locally against marketplace **0.4.0**.
+
+### 0.4.0
+
+- **Project memory:** per-workspace-folder JSON under extension global storage (`ghostPrompt/projectMemory/v1/`): bootstrap excerpts, optional editor-ingest with LRU/quotas, reconcile before LM requests when **`contextMode: project`** and **`projectMemoryEnabled`**.
+- **Hygiene:** TTL GC for unused stores, optional file watchers on indexed paths only, command to clear memory for this workspace.
+- **Docs:** README privacy section, `ARCHITECTURE.md` storage update, roadmap v0.4 phases A–F complete.
 
 ### 0.3.0
 

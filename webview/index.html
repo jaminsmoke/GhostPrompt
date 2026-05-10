@@ -13,12 +13,17 @@
   <body>
     <div class="container">
       <div class="settings-strip" aria-label="Opciones rápidas">
-        <span
-          id="completion-backend-badge"
-          class="chip chip-backend"
-          title="Motor de suggestions"
-          >Motor: Copilot LM</span
-        >
+        <div class="setting-group" data-key="completionProvider">
+          <span class="setting-label">Motor</span>
+          <select
+            id="completion-backend-select"
+            class="completion-backend-select chip-backend"
+            aria-label="Motor de suggestions (Copilot LM u OpenCode)"
+          >
+            <option value="copilot">Copilot LM</option>
+            <option value="opencode">OpenCode</option>
+          </select>
+        </div>
         <div class="setting-group" data-key="suggestionModelPolicy">
           <span class="setting-label">Modelo</span>
           <button

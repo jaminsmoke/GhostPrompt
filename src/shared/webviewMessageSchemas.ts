@@ -67,6 +67,11 @@ export const webviewUpdateSettingSchema = z.discriminatedUnion("key", [
     key: z.literal("debugSuggestions"),
     value: z.boolean(),
   }),
+  z.object({
+    type: z.literal("updateSetting"),
+    key: z.literal("completionProvider"),
+    value: z.enum(["copilot", "opencode"]),
+  }),
 ]);
 
 /** Mensajes recibidos desde el webview (webview → host); mismo contrato que salida del cliente. */

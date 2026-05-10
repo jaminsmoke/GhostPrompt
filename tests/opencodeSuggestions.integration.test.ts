@@ -21,9 +21,10 @@ vi.mock("vscode", () => ({
 }));
 
 import { checkOpenCodeCli } from "../src/opencode/openCodeCli";
+import { invalidateOpenCodeProvidersSnapshot } from "../src/opencode/opencodeProvidersSnapshot";
 import { getOpenCodeRuntime } from "../src/opencode/OpenCodeRuntime";
 import { requestOpencodeCompletion } from "../src/completion/providers/opencodeLmCompletion";
-import { listOpencodeSuggestionModels } from "../src/completion/opencodeModelCatalog";
+import { listOpencodeSuggestionModels } from "../src/completion/catalog/opencodeModelCatalog";
 
 const integrationEnabled =
   process.env.GHOST_PROMPT_OPENCODE_INTEGRATION === "1";
@@ -39,6 +40,7 @@ describe.skipIf(!integrationEnabled)(
   "OpenCode integration (CLI + servidor embebido)",
   () => {
     beforeAll(async () => {
+      invalidateOpenCodeProvidersSnapshot();
       const cli = await checkOpenCodeCli(true);
       if (!cli.ok) {
         throw new Error(

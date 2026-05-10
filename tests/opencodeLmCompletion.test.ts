@@ -23,6 +23,7 @@ const { mockStart, mockGetClient, mockLogDebugFirstPrompt, mockGetOpenCodeRuntim
       getClient: mockGetClient,
       isRunning: false,
       logDebugFirstPrompt: mockLogDebugFirstPrompt,
+      getDeploymentId: () => 1,
     }));
     return {
       mockStart,
@@ -37,6 +38,9 @@ vi.mock("../src/opencode/OpenCodeRuntime", () => ({
 }));
 
 import { requestOpencodeCompletion } from "../src/completion/providers/opencodeLmCompletion";
+import { invalidateOpenCodeProvidersSnapshot } from "../src/opencode/opencodeProvidersSnapshot";
+import { invalidateOpencodeInlineSuggestionSessionPool } from "../src/opencode/opencodeInlineSuggestionSession";
+import { resetOpencodeInlineLmQueue } from "../src/opencode/opencodeInlineCompletionQueue";
 
 function makeToken() {
   const listeners: Array<() => void> = [];
@@ -61,6 +65,9 @@ describe("requestOpencodeCompletion", () => {
   };
 
   beforeEach(() => {
+    invalidateOpenCodeProvidersSnapshot();
+    invalidateOpencodeInlineSuggestionSessionPool();
+    resetOpencodeInlineLmQueue();
     mockStart.mockReset();
     mockGetClient.mockReset();
     mockLogDebugFirstPrompt.mockReset();
@@ -122,7 +129,81 @@ describe("requestOpencodeCompletion", () => {
     }
     expect(session.create).toHaveBeenCalled();
     expect(session.prompt).toHaveBeenCalled();
-    expect(session.delete).toHaveBeenCalled();
+    expect(session.delete).not.toHaveBeenCalled();
+  });
+
+  it("calls config.providers once for two sequential suggestions (snapshot cache)", async () => {
+    const providersFn = vi.fn(async () => ({
+      data: {
+        providers: [
+          {
+            id: "anthropic",
+            name: "Anthropic",
+            models: {
+              m1: { id: "claude-3", name: "Claude 3" },
+            },
+          },
+        ],
+        default: { anthropic: "claude-3" },
+      },
+    }));
+    mockGetClient.mockReturnValue({
+      config: { providers: providersFn },
+      session,
+    });
+
+    const token = makeToken();
+    const opts = {
+      token: token as unknown as import("vscode").CancellationToken,
+      policy: "anyModel" as const,
+      preferredModelId: "anthropic/claude-3",
+      maxSuggestionChars: 180,
+      style: "balanced" as const,
+    };
+
+    await requestOpencodeCompletion("First line for suggest.", opts);
+    await requestOpencodeCompletion("Second distinct input text.", opts);
+
+    expect(providersFn).toHaveBeenCalledTimes(1);
+    expect(session.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("serializes concurrent completions (never two session.prompt overlaps)", async () => {
+    let concurrent = 0;
+    session.prompt.mockImplementation(async () => {
+      concurrent += 1;
+      expect(concurrent).toBe(1);
+      await new Promise((r) => setTimeout(r, 2));
+      concurrent -= 1;
+      return {
+        data: {
+          info: {},
+          parts: [{ type: "text", text: " overlap-safe " }],
+        },
+      };
+    });
+
+    const baseOpts = {
+      policy: "anyModel" as const,
+      preferredModelId: "anthropic/claude-3",
+      maxSuggestionChars: 180,
+      style: "balanced" as const,
+    };
+
+    const results = await Promise.all([
+      requestOpencodeCompletion("First concurrent overlapping phrase.", {
+        ...baseOpts,
+        token: makeToken() as unknown as import("vscode").CancellationToken,
+      }),
+      requestOpencodeCompletion("Second concurrent overlapping phrase.", {
+        ...baseOpts,
+        token: makeToken() as unknown as import("vscode").CancellationToken,
+      }),
+    ]);
+
+    expect(results.every((r) => r.kind === "suggestion")).toBe(true);
+    expect(session.prompt).toHaveBeenCalledTimes(2);
+    expect(concurrent).toBe(0);
   });
 
   it("returns error when runtime fails to start", async () => {

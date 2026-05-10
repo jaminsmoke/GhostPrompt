@@ -2,6 +2,50 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.4.1] — pendiente de publicación
+
+Última versión en marketplace: **[0.4.0]**. Esta entrada documenta cambios ya en el árbol (p. ej. VSIX local) antes de **publicar 0.4.1**.
+
+### Added
+
+- **OpenCode debug perf (roadmap phase I):** cuando **`ghostPrompt.debugSuggestions`** está activo y el motor es OpenCode, el canal **GhostPrompt Suggestions** escribe hitos **`[opencode-perf]`** correlacionados por `captureId` (snapshot de proveedores en caché o red, sesión inline pool/create, `prompt`, primer delta SSE en streaming, cierre del consumidor SSE, total del LM). Con debug desactivado no hay emisión adicional por esta fase.
+
+### Docs
+
+- README: modo debug — líneas **`[opencode-perf]`** con OpenCode activo (§ Debug mode).
+- Roadmap [`Roadmap-v0.4-opencode-perf-catalog-telemetry.md`](./Docs/Plans/Roadmaps/Roadmap-v0.4-opencode-perf-catalog-telemetry.md): fases **G–J** cerradas en documentación (catálogo, sesión, telemetría debug, notas de release).
+
+### Changed
+
+- **Mantenibilidad (`Owners` fase B):** subcarpetas `src/completion/catalog/` (listados y tiers de modelo) y `src/completion/context/` (bootstrap proyecto); exports públicos siguen en `completion/index.ts`.
+
+### Fixed
+
+- **OpenCode latencia concurrente:** cola serie para **`requestOpencodeCompletion`** (`opencodeInlineCompletionQueue`): evita dos **`session.prompt`** a la vez en la misma sesión pooled cuando llegan suggerencias rápidas (telas de ~7–12 s, timeouts al límite y primer SSE muy tardío). La reserva pooled ya **no se invalida** solo por cancelación por tecla nueva; sí tras **timeout** del LM (~12 s por petición), errores de sobre o otros caminos de error ya existentes.
+
+## [0.4.0] - 2026-05-10
+
+### Added
+
+- **Project memory (per workspace folder):** JSON store under extension **`globalStorageUri`** at `ghostPrompt/projectMemory/v1/` — `registry.json`, per-repo `stores/<sha256>/entries.json` + `manifest.json`. Bootstrap excerpts (`README*` / `package.json`) and optional **editor-ingest** excerpts; LRU and byte caps; hash/mtime validation on reconcile.
+- **Commands:** `GhostPrompt: Clear Project Memory (This Workspace)` removes the on-disk store for the current workspace root.
+- **GC:** unused workspace stores removed after `ghostPrompt.projectMemoryUnusedStoreTtlDays` (default 30 days).
+- **File watchers (phase E):** one `FileSystemWatcher` per indexed path; opt-out `ghostPrompt.projectMemoryFileWatcherEnabled`; throttle `projectMemoryFileWatcherThrottleMs`.
+
+### Changed
+
+- **`contextMode: project`:** when project memory is enabled, suggestion prompts can include reconciled bootstrap + editor lines; governor cache scope includes a bootstrap fingerprint.
+- **Settings:** many `ghostPrompt.projectMemory*` keys — see README and `package.json` `markdownDescription` fields.
+- **OpenCode performance (roadmap phase G):** in-memory **`config.providers()`** snapshot (`opencodeProvidersSnapshot`) with single-flight concurrency; warm-up prefetches catalog; invalidated on **`deactivate`**. Drop-down and **`requestOpencodeCompletion`** reuse the same cache (fewer RPCs per keystroke).
+- **OpenCode performance (roadmap phase H):** pooled **inline suggestion session** per embedded-server lifecycle (`deploymentId` + **`openCodeServerLifecycleHooks`**); **`session.delete` removed from the successful request path**; pool cleared on server reset, timeouts/cancellation, prompt/create errors.
+
+### Docs
+
+- README: privacy / on-disk locations, project memory settings summary, manual QA checklist for v0.4.
+- `Docs/ARCHITECTURE.md`: project memory storage layout and module pointers.
+- Roadmap [`Roadmap-v0.4-project-context-store.md`](./Docs/Plans/Roadmaps/Roadmap-v0.4-project-context-store.md): phases A–F closed.
+- Roadmap [`Roadmap-v0.4-opencode-perf-catalog-telemetry.md`](./Docs/Plans/Roadmaps/Roadmap-v0.4-opencode-perf-catalog-telemetry.md): phases **G–H** (catalog cache + pooled inline session); README note on reload after external OpenCode config changes.
+
 ## [0.3.1] - 2026-05-09
 
 ### Added

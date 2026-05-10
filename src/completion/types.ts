@@ -60,6 +60,8 @@ export interface CompletionRequestOptions {
    * El host debe validar `captureId` activo antes de postear al webview.
    */
   onStreamPreview?: (accumulatedText: string) => void;
+  /** Fase I: correlación en logs `[opencode-perf]` cuando debug está activo (OpenCode ignora si undefined). */
+  perfCaptureId?: number;
 }
 
 export interface SuggestionContext {
@@ -70,5 +72,7 @@ export interface SuggestionContext {
   activeFilePath?: string;
   activeLanguageId?: string;
   activeSelection?: string;
+  /** Extracto README + resumen package.json (memoria volátil; v0.4 fase A). */
+  projectBootstrapLines?: readonly string[];
   outputLanguage?: SupportedSuggestionLanguage;
 }
