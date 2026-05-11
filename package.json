@@ -185,6 +185,18 @@
           "maximum": 2000,
           "markdownDescription": "Delay after you stop typing before GhostPrompt requests a suggestion (webview debounce). Higher = fewer Copilot/OpenCode calls while typing; lower = faster ghost-text."
         },
+        "ghostPrompt.preferVsOpenCodeXOpenCode": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "When GhostPrompt needs OpenCode, try to reuse the server started by the **VSOpenCodeX** extension (if installed) instead of spawning a second `opencode serve`. Requires VSOpenCodeX to expose `vsopencodex.getOpenCodeConnection`. If unavailable, GhostPrompt falls back to its embedded OpenCode server. See `Docs/Integrations/GhostPrompt-OpenCode-coexistence.md`."
+        },
+        "ghostPrompt.vsOpenCodeXProbeDelayMs": {
+          "type": "number",
+          "default": 800,
+          "minimum": 0,
+          "maximum": 3000,
+          "markdownDescription": "Milliseconds to wait before calling VSOpenCodeX for an OpenCode connection (anti-race while both extensions activate). Set to **0** to skip delay. Ignored when VSOpenCodeX is not installed or **preferVsOpenCodeXOpenCode** is false."
+        },
         "ghostPrompt.requestCooldownMs": {
           "type": "number",
           "default": 500,

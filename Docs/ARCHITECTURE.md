@@ -136,6 +136,7 @@ Mitigaciones ya implementadas en GhostPrompt (sin duplicar trabajo del modelo li
 | **Snapshot `config.providers()`** | `opencodeProvidersSnapshot.ts` | Caché en memoria + **single-flight** entre solicitudes concurrentes; `invalidateOpenCodeProvidersSnapshot` en `deactivate`. |
 | **SSE preview** | `opencodeSuggestionStream.ts` | Opcional; filtro por `sessionID`, recorte `maxPreviewChars`; abort compartido con el request. |
 | **Runtime embebido** | `OpenCodeRuntime.ts` | `createOpencode` local (puerto fijo), debounce al parar proceso cuando el usuario vuelve solo a Copilot. |
+| **Delegación opcional VSOpenCodeX** | `vsOpenCodeXBridge.ts` + mismo `OpenCodeRuntime.ts` | Si la extensión **VSOpenCodeX** está instalada y devuelve `ok` en `vsopencodex.getOpenCodeConnection`, GhostPrompt construye el cliente SDK con ese `baseUrl` y **`Authorization`** (sin `server.close()` al soltar referencia). Si no, mismo flujo embebido. Ver [`GhostPrompt-OpenCode-coexistence.md`](./Integrations/GhostPrompt-OpenCode-coexistence.md). |
 
 **Dependencia:** `@opencode-ai/sdk` (versión en `package.json`). Convendrá revisar changelogs upstream en releases mayores; **no** se alteró la versión en esta auditoría.
 

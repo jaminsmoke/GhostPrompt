@@ -8,6 +8,8 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- **VSOpenCodeX coexistence (roadmap v0.6 — Fases A+B):** when **VSOpenCodeX** (`jaminsmoke.vsopencodex`) is installed and exposes `vsopencodex.getOpenCodeConnection`, GhostPrompt can attach the `@opencode-ai/sdk` client to that OpenCode server instead of spawning its own **`opencode serve`**. Settings: **`ghostPrompt.preferVsOpenCodeXOpenCode`** (default enabled) and **`ghostPrompt.vsOpenCodeXProbeDelayMs`** (default `800`; `0` = no delay). If the handshake fails or the extension is absent, GhostPrompt falls back to the existing embedded **`OpenCodeRuntime`**. Documentation: **`Docs/Integrations/GhostPrompt-OpenCode-coexistence.md`**.
+
 - **OpenCode debug perf (roadmap phase I):** cuando **`ghostPrompt.debugSuggestions`** está activo y el motor es OpenCode, el canal **GhostPrompt Suggestions** escribe hitos **`[opencode-perf]`** correlacionados por `captureId` (snapshot de proveedores en caché o red, sesión inline pool/create, `prompt`, primer delta SSE en streaming, cierre del consumidor SSE, total del LM). Con debug desactivado no hay emisión adicional por esta fase.
 
 ### Docs

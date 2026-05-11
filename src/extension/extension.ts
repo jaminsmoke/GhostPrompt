@@ -51,8 +51,11 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (
         e.affectsConfiguration("ghostPrompt.completionProvider") ||
-        e.affectsConfiguration("ghostPrompt.enabledCompletionSources")
+        e.affectsConfiguration("ghostPrompt.enabledCompletionSources") ||
+        e.affectsConfiguration("ghostPrompt.preferVsOpenCodeXOpenCode") ||
+        e.affectsConfiguration("ghostPrompt.vsOpenCodeXProbeDelayMs")
       ) {
+        openCodeRuntime.stop();
         void syncOpenCodeRuntimeFromConfig(openCodeRuntime);
       }
       if (e.affectsConfiguration("ghostPrompt")) {

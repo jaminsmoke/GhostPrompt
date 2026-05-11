@@ -1,3 +1,5 @@
+import * as vscode from "vscode";
+
 import { logOpenCodeDebug } from "../debug/SuggestionDebug";
 import { checkOpenCodeCli } from "./openCodeCli";
 import {
@@ -6,6 +8,7 @@ import {
 } from "./constants";
 import { ensureNodeFetchDuplex } from "./nodeFetchDuplex";
 import { emitOpenCodeServerWillReset } from "./openCodeServerLifecycleHooks";
+import { tryCreateSdkClientViaVsOpenCodeX } from "./vsOpenCodeXBridge";
 
 export type OpenCodeStartOk = { ok: true };
 export type OpenCodeStartFailed = { ok: false; error: string };
@@ -27,6 +30,8 @@ type EmbeddedServer = {
  */
 export class OpenCodeRuntime {
   private handle: EmbeddedServer | undefined;
+  /** Cliente SDK contra servidor VSOpenCodeX: no llamar `server.close()` al soltar. */
+  private attachedViaVsOpenCodeX = false;
   private starting: Promise<OpenCodeStartResult> | undefined;
   /** Retraso antes de cerrar el proceso al volver a Copilot (`scheduleStop`). */
   private stopTimer: ReturnType<typeof setTimeout> | undefined;
@@ -85,6 +90,45 @@ export class OpenCodeRuntime {
   private async doStart(): Promise<OpenCodeStartResult> {
     this.coldStartBeginMs = Date.now();
     logOpenCodeDebug("cold-start-begin");
+    ensureNodeFetchDuplex();
+
+    const gp = vscode.workspace.getConfiguration("ghostPrompt");
+    const preferVsOpenCodeX =
+      gp.get<boolean>("preferVsOpenCodeXOpenCode", true) !== false;
+    const probeDelayMs = Math.min(
+      3000,
+      Math.max(0, gp.get<number>("vsOpenCodeXProbeDelayMs", 800)),
+    );
+
+    if (preferVsOpenCodeX) {
+      const bridged = await tryCreateSdkClientViaVsOpenCodeX({
+        probeDelayMs,
+      });
+      if (bridged) {
+        this.attachedViaVsOpenCodeX = true;
+        this.handle = {
+          client: bridged.client,
+          server: {
+            url: bridged.baseUrl,
+            close: () => {
+              logOpenCodeDebug("external-opencode-skip-close");
+            },
+          },
+        };
+        this.deploymentId += 1;
+        const readyMs = Date.now();
+        this.serverReadyAtMs = readyMs;
+        this.firstHealthPingLogged = false;
+        this.firstPromptLogged = false;
+        logOpenCodeDebug(
+          "cold-start-complete-vsopencodex",
+          `elapsedMs=${readyMs - this.coldStartBeginMs}`,
+        );
+        return { ok: true };
+      }
+    }
+
+    this.attachedViaVsOpenCodeX = false;
     const cli = await checkOpenCodeCli();
     if (!cli.ok) {
       logOpenCodeDebug("cold-start-aborted-cli", cli.reason);
@@ -92,13 +136,13 @@ export class OpenCodeRuntime {
     }
 
     try {
-      ensureNodeFetchDuplex();
       const { createOpencode } = await import("@opencode-ai/sdk");
       const { client, server } = await createOpencode({
         hostname: "127.0.0.1",
         port: GHOST_PROMPT_OPENCODE_PORT,
         timeout: 60_000,
       });
+      this.attachedViaVsOpenCodeX = false;
       this.handle = {
         client,
         server,
@@ -201,12 +245,18 @@ export class OpenCodeRuntime {
     if (!this.handle) {
       return;
     }
+    const skipClose = this.attachedViaVsOpenCodeX;
     this.deploymentId += 1;
     emitOpenCodeServerWillReset();
     try {
-      this.handle.server.close();
+      if (skipClose) {
+        logOpenCodeDebug("detach-vsopencodex-client");
+      } else {
+        this.handle.server.close();
+      }
     } finally {
       this.handle = undefined;
+      this.attachedViaVsOpenCodeX = false;
       this.serverReadyAtMs = 0;
       this.coldStartBeginMs = 0;
       this.firstHealthPingLogged = false;
