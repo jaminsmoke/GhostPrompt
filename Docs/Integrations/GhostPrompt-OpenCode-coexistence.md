@@ -2,7 +2,7 @@
 
 Objetivo: evitar **dos procesos** `opencode serve` en el mismo puerto cuando el usuario tiene **GhostPrompt** y **VSOpenCodeX**. Los cambios de comportamiento viven **en el repositorio GhostPrompt**; este documento es la especificación para implementarlos allí. En VSOpenCodeX ya existe un contrato por **comandos** (este repo).
 
-**Roadmap planificado (versión 0.6.0):** [`Docs/Plans/Roadmaps/Roadmap-v0.6-vsopencodex-coexistence.md`](../Plans/Roadmaps/Roadmap-v0.6-vsopencodex-coexistence.md) — incluye fase opcional Send hacia VSOpenCodeX cuando exista comando estable allí.
+**Roadmap planificado (versión 0.6.0):** [`Roadmap-v0.6-vsopencodex-coexistence.md`](../Plans/Roadmaps/Roadmap-v0.6-vsopencodex-coexistence.md). **Motor vs destino vs superficie:** [`GhostPrompt-motor-destino-matrix.md`](./GhostPrompt-motor-destino-matrix.md) — con destino VSOpenCodeX el Send vive en VSX; GhostPrompt desactiva solo inline/send Copilot en su webview y mantiene configuración.
 
 ---
 
