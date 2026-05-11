@@ -29,6 +29,10 @@ export const webviewSettingsPayloadSchema = z.object({
   debugSuggestions: z.boolean(),
   /** Tiempo de inactividad tras teclear antes de pedir suggestion (webview debounce). */
   suggestionDebounceMs: z.number().min(150).max(2000),
+  /** Destino del agente: Copilot Chat vs superficie VSOpenCodeX (v0.5 Fase C). */
+  agentDestination: z.enum(["copilotChat", "vsOpenCodeX"]),
+  /** Si la extensión VSOpenCodeX está instalada (control destino en webview). */
+  vsOpenCodeXExtensionInstalled: z.boolean(),
 });
 
 export const webviewOutboundSettingsEnvelopeSchema = z.object({
@@ -73,6 +77,11 @@ export const webviewUpdateSettingSchema = z.discriminatedUnion("key", [
     type: z.literal("updateSetting"),
     key: z.literal("completionProvider"),
     value: z.enum(["copilot", "opencode"]),
+  }),
+  z.object({
+    type: z.literal("updateSetting"),
+    key: z.literal("agentDestination"),
+    value: z.enum(["copilotChat", "vsOpenCodeX"]),
   }),
 ]);
 

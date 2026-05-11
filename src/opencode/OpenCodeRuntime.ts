@@ -8,7 +8,10 @@ import {
 } from "./constants";
 import { ensureNodeFetchDuplex } from "./nodeFetchDuplex";
 import { emitOpenCodeServerWillReset } from "./openCodeServerLifecycleHooks";
-import { tryCreateSdkClientViaVsOpenCodeX } from "./vsOpenCodeXBridge";
+import {
+  tryCreateSdkClientViaVsOpenCodeX,
+  VS_OPEN_CODE_X_EXTENSION_ID,
+} from "./vsOpenCodeXBridge";
 
 export type OpenCodeStartOk = { ok: true };
 export type OpenCodeStartFailed = { ok: false; error: string };
@@ -89,8 +92,7 @@ export class OpenCodeRuntime {
 
   private async doStart(): Promise<OpenCodeStartResult> {
     this.coldStartBeginMs = Date.now();
-    logOpenCodeDebug("cold-start-begin");
-    ensureNodeFetchDuplex();
+    logOpenCodeDebug("opencodex-attach-begin");
 
     const gp = vscode.workspace.getConfiguration("ghostPrompt");
     const preferVsOpenCodeX =
@@ -99,36 +101,68 @@ export class OpenCodeRuntime {
       3000,
       Math.max(0, gp.get<number>("vsOpenCodeXProbeDelayMs", 800)),
     );
+    const vsxMaxAttempts = Math.min(
+      25,
+      Math.max(1, Math.round(gp.get<number>("vsOpenCodeXConnectionMaxAttempts", 8))),
+    );
+    const vsxRetryGapMs = Math.min(
+      8000,
+      Math.max(100, gp.get<number>("vsOpenCodeXConnectionRetryGapMs", 650)),
+    );
 
     if (preferVsOpenCodeX) {
-      const bridged = await tryCreateSdkClientViaVsOpenCodeX({
-        probeDelayMs,
-      });
-      if (bridged) {
-        this.attachedViaVsOpenCodeX = true;
-        this.handle = {
-          client: bridged.client,
-          server: {
-            url: bridged.baseUrl,
-            close: () => {
-              logOpenCodeDebug("external-opencode-skip-close");
+      const vsxExt = vscode.extensions.getExtension(VS_OPEN_CODE_X_EXTENSION_ID);
+      const maxVsxAttempts = vsxExt ? vsxMaxAttempts : 1;
+      logOpenCodeDebug(
+        "vsopencodex-probe-start",
+        `maxAttempts=${maxVsxAttempts} probeDelayMs=${probeDelayMs} retryGapMs=${vsxRetryGapMs}`,
+      );
+      for (let attempt = 0; attempt < maxVsxAttempts; attempt++) {
+        const bridged = await tryCreateSdkClientViaVsOpenCodeX({
+          probeDelayMs,
+          attemptIndex: attempt,
+          retryGapMs: vsxRetryGapMs,
+        });
+        if (bridged) {
+          this.attachedViaVsOpenCodeX = true;
+          this.handle = {
+            client: bridged.client,
+            server: {
+              url: bridged.baseUrl,
+              close: () => {
+                logOpenCodeDebug("external-opencode-skip-close");
+              },
             },
-          },
-        };
-        this.deploymentId += 1;
-        const readyMs = Date.now();
-        this.serverReadyAtMs = readyMs;
-        this.firstHealthPingLogged = false;
-        this.firstPromptLogged = false;
-        logOpenCodeDebug(
-          "cold-start-complete-vsopencodex",
-          `elapsedMs=${readyMs - this.coldStartBeginMs}`,
-        );
-        return { ok: true };
+          };
+          this.deploymentId += 1;
+          const readyMs = Date.now();
+          this.serverReadyAtMs = readyMs;
+          this.firstHealthPingLogged = false;
+          this.firstPromptLogged = false;
+          logOpenCodeDebug(
+            "cold-start-complete-vsopencodex",
+            `attempt=${attempt} elapsedMs=${readyMs - this.coldStartBeginMs}`,
+          );
+          return { ok: true };
+        }
       }
+      if (vsxExt) {
+        logOpenCodeDebug(
+          "vsopencodex-probe-exhausted-no-embedded",
+          "VSOpenCodeX installed; skip embedded opencode serve",
+        );
+        return {
+          ok: false,
+          error:
+            "OpenCode: VSOpenCodeX está instalado pero no devolvió conexión tras varios intentos. Abre el chat o el servidor en VSOpenCodeX. GhostPrompt no inicia un segundo opencode en el puerto compartido. Para usar solo el servidor embebido, desactiva ghostPrompt.preferVsOpenCodeXOpenCode.",
+        };
+      }
+      logOpenCodeDebug("vsopencodex-not-installed-fallback-embedded");
     }
 
     this.attachedViaVsOpenCodeX = false;
+    logOpenCodeDebug("cold-start-begin");
+    ensureNodeFetchDuplex();
     const cli = await checkOpenCodeCli();
     if (!cli.ok) {
       logOpenCodeDebug("cold-start-aborted-cli", cli.reason);

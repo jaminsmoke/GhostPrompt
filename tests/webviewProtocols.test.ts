@@ -20,7 +20,9 @@ const minimalSettingsPayload = {
   effectiveSuggestionLanguage: "en" as const,
   effectiveModel: undefined,
   debugSuggestions: false,
-  suggestionDebounceMs: 400,
+  suggestionDebounceMs: 800,
+  agentDestination: "copilotChat" as const,
+  vsOpenCodeXExtensionInstalled: false,
 };
 
 describe("webviewProtocols (v0.3.1 Fase B)", () => {
@@ -54,6 +56,13 @@ describe("webviewProtocols (v0.3.1 Fase B)", () => {
         value: "openai/gpt-4",
       }),
     ).toMatchObject({ key: "selectedModelId" });
+    expect(
+      parseWebviewInboundMessage({
+        type: "updateSetting",
+        key: "agentDestination",
+        value: "vsOpenCodeX",
+      }),
+    ).toMatchObject({ key: "agentDestination", value: "vsOpenCodeX" });
   });
 
   it("rechaza mensajes entrantes inválidos", () => {
@@ -78,6 +87,13 @@ describe("webviewProtocols (v0.3.1 Fase B)", () => {
         type: "updateSetting",
         key: "suggestionStyle",
         value: "fancy",
+      }),
+    ).toBeUndefined();
+    expect(
+      parseWebviewInboundMessage({
+        type: "updateSetting",
+        key: "agentDestination",
+        value: "other",
       }),
     ).toBeUndefined();
   });

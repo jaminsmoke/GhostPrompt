@@ -1,6 +1,6 @@
-# Roadmap v0.6.0 — Coexistencia VSOpenCodeX: motor, destino y superficie
+# Roadmap v0.5.0 — Coexistencia VSOpenCodeX: motor, destino y superficie
 
-> **Versión objetivo:** **0.6.0** cuando se cierren las fases no bloqueadas **más** la fase bloqueante en cuanto VSOpenCodeX publique los **contratos de superficie** (suggestions en el chat VSX + señales de estado).  
+> **Versión objetivo:** **0.5.0** (release GhostPrompt para coexistencia VSX, agent destination y fases de este documento). El **cierre E2E** de Fase C sigue ligado a que VSOpenCodeX consuma el contrato de superficie; puede completarse en un **minor** posterior sin impedir el bump **0.5.0** en GhostPrompt.  
 > **Origen:** evitar dos `opencode serve` en paralelo; modelo **motor vs destino vs superficie** — ver [`GhostPrompt-motor-destino-matrix.md`](../../Integrations/GhostPrompt-motor-destino-matrix.md).
 
 **Especificación técnica de conexión (ya disponible):** [`Docs/Integrations/GhostPrompt-OpenCode-coexistence.md`](../../Integrations/GhostPrompt-OpenCode-coexistence.md)
@@ -24,7 +24,7 @@
 
 GhostPrompt **no** implementa un segundo “Send a VSX” desde su webview cuando el destino es VSOpenCodeX: el foco y el envío viven en el chat VSX; GhostPrompt aplica **gating de UI** (desactivar inline + send a Copilot) y participa como **motor + configuración** visibles en la tira de opciones.
 
-Tras esos contratos, en GhostPrompt se completa **Fase C** below.
+GhostPrompt puede implementar su parte de **Fase C** (settings, gating, reenvío y comando de suggest) antes de que VSX publique UI definitiva; el **cierre E2E** de Fase C sigue ligado a que VSX consuma ese contrato (ver Fase C — estado).
 
 ---
 
@@ -65,7 +65,7 @@ Usuarios entienden que VSOpenCodeX es opcional pero recomendable para flujo inte
 ### Pasos derivados
 
 1. README: párrafo + enlace al doc `Integrations/GhostPrompt-OpenCode-coexistence.md`; aclaración motor actual vs coexistencia puerto/conexión.
-2. Opcional en `CHANGELOG` al acercarse a **0.6.0**.
+2. Opcional en `CHANGELOG` al acercarse a **0.5.0**.
 3. `ARCHITECTURE.md` §OpenCode —nota corta sobre “delegación opcional a VSOpenCodeX”.
 
 ### Criterio de hecho
@@ -78,49 +78,63 @@ Usuarios entienden que VSOpenCodeX es opcional pero recomendable para flujo inte
 
 ---
 
-## Fase C — Destino agente + superficie: Copilot vs VSOpenCodeX (**blocked hasta contratos VSX**)
+## Fase C — Destino agente + superficie: Copilot vs VSOpenCodeX
 
 ### Objetivo
 
 Modelar **destino** (agente que ejecuta el prompt final) **independiente** del **motor** de suggestions — matriz [`GhostPrompt-motor-destino-matrix.md`](../../Integrations/GhostPrompt-motor-destino-matrix.md).
 
-- Setting **host-centric** (nombre provisional): **`ghostPrompt.agentDestination`**: `"copilotChat"` | `"vsOpenCodeX"` (o equivalente acordado en `package.json`).
+- Setting **host-centric**: **`ghostPrompt.agentDestination`**: `"copilotChat"` | `"vsOpenCodeX"` (`package.json`).
 - **Destino Copilot Chat:** comportamiento actual — webview con **inline + composer + Send a Copilot**; motor Copilot u OpenCode según ajustes existentes.
 - **Destino VSOpenCodeX:**
   - **Deshabilitar** en la webview GhostPrompt: **chat inline** (área composer / ghost que duplica el hilo) y **Send** (y cualquier camino a Copilot Chat desde esa vista).
   - **Mantener activos** los controles de **configuración** (chips, motor, política, estilo, etc.) — la tira de opciones sigue siendo el panel de control del motor elegido.
-  - **Superficie del hilo:** solo VSOpenCodeX; el **Send** y el foco del chat los gestiona VSX. GhostPrompt se limita a **honrar las configuraciones elegidas** y a **alimentar / sincronizar** las suggestions en el chat VSX según el contrato que publique VSOpenCodeX (no un segundo Send paralelo desde GhostPrompt).
+  - **Superficie del hilo:** solo VSOpenCodeX; el **Send** y el foco del chat los gestiona VSX. GhostPrompt **honra** la configuración y **reenvía** UI de suggestion al comando VSX acordado **`vsopencodex.ghostPromptInlineUi`** (payload sin `broadcast`). VSX invoca **`ghostPrompt.runSuggestPipeline`** con `{ text }` para ejecutar el mismo pipeline de suggestions que la webview (sin `suggest`/`send` desde GP cuando destino VSX).
 
-### Bloqueantes
+### Contrato GhostPrompt ↔ VSOpenCodeX (lado GP listo)
 
-- Contrato VSOpenCodeX: cómo VSX **recibe y muestra** suggestions (y deltas) desde GhostPrompt; manejo de errores / vista no lista.
-- Si destino VSX pero extensión ausente o contrato falla: UX (fallback a Copilot destino, aviso, o bloqueo guiado) — definir en el mismo hito.
+| Dirección | Mecanismo |
+|-----------|-----------|
+| GP → VSX | `vscode.commands.executeCommand("vsopencodex.ghostPromptInlineUi", payload)` para tipos: `loading`, `suggestion-stream`, `suggestion`, `empty`, `error`, `clear`, `languageEffective`. |
+| VSX → GP | `vscode.commands.executeCommand("ghostPrompt.runSuggestPipeline", { text })`. |
 
-### Pasos derivados (después del desbloqueo)
+Errores de `executeCommand` hacia VSX: log opcional en canal debug (`vsopencodex-inline-forward-failed`).
 
-1. `contributes.configuration` para **destino** + lectura en host; propagar a webview lo mínimo para **ocultar o deshabilitar** solo composer/inline/send (CSS + estado o mensaje breve en el área del chat desactivado).
-2. Integración con API VSX acordada (sin duplicar lógica de envío del prompt).
-3. Tests: destino Copilot sin regresión; destino VSX con mocks de comandos/canal VSX donde aplique.
+### Pendiente fuera de este repo / cierre E2E
+
+- **VSOpenCodeX** debe implementar el handler de `vsopencodex.ghostPromptInlineUi` y llamar a `ghostPrompt.runSuggestPipeline` cuando corresponda.
+- **UX si destino VSX pero VSX no está o falla el comando:** aviso informativo (una vez por sesión de ventana) si la extensión VSX no está cargada + acción «Abrir ajustes». **No** hay fallback automático a `copilotChat` ni toast por fallo de `executeCommand` hacia VSX (solo log debug `vsopencodex-inline-forward-failed`).
+- **QA manual** matriz motor/destino con ambas extensiones reales.
+
+### Pasos derivados
+
+1. ~~`contributes.configuration` para **destino** + lectura en host; propagar a webview~~ **Hecho.**
+2. ~~Integración con API VSX (comando + reenvío UI; suggest vía comando externo)~~ **Hecho en GP.**
+3. ~~Tests: destino Copilot sin regresión; mocks `executeCommand` / handlers~~ **Hecho** (`ghostPromptWebviewInboundHandlers`, `vsOpenCodeXGhostPromptUiBridge`, schemas).
 
 ### Criterio de hecho
 
 - Matriz 1–4 del doc motor/destino cubierta en QA manual; con destino VSX no hay Send a Copilot desde la webview GhostPrompt; configuración sigue usable.
+- **Parcial:** criterio cumplido en código GhostPrompt; validación E2E y UX de fallo quedan para cerrar el hito con VSX + Fase D.
 
 ### Estado
 
-- [ ] **Blocked** — contratos superficie / suggestions en VSOpenCodeX
-- [ ] Implementación cerrada *(tras desbloqueo)*
+- [x] **Implementación GhostPrompt** (settings, Zod, webview gating, bridge, `ghostPrompt.runSuggestPipeline`, tests).
+- [ ] **Criterio de hecho E2E** — QA con VSOpenCodeX que consuma el contrato; opcionalmente UX fallback si VSX ausente.
 
 ---
 
-## Fase D — Liberación **0.6.0**
+## Fase D — Liberación **0.5.0**
+
+Objetivo: bump de versión y comunicación cuando el producto considere cerrado el hito de release **0.5.0** (incluye verificación cruzada con VSOpenCodeX según checklist).
 
 ### Checklist
 
-- [ ] Fases **A**, **B** y **C** cerradas según definición arriba.
-- [ ] `package.json`, `CHANGELOG`, README mencionan coexistencia VSOpenCodeX y setting **destino agente** si existe.
+- [x] Fases **A** y **B** cerradas según definición arriba.
+- [ ] Fase **C** cerrada al 100 %: E2E con VSX; opcional: fallback automático u otro tratamiento si **`executeCommand`** hacia VSX falla con extensión instalada.
+- [x] `CHANGELOG` y **README**: setting **`ghostPrompt.agentDestination`** + contrato comandos GP↔VSX + coexistencia OpenCode (motor).
 - [ ] Re-ejecutar QA manual coexistencia doc + matriz motor/destino (incl. destino VSX: sin Send Copilot desde webview GP).
-- Integración opcional OpenCode CI / releasing doc según aplique antes del bump.
+- [ ] Integración opcional OpenCode CI / releasing doc según aplique antes del bump.
 
 ### Estado
 
@@ -132,9 +146,13 @@ Modelar **destino** (agente que ejecuta el prompt final) **independiente** del *
 
 | Fecha | Fase | Nota |
 |-------|------|------|
-| 2026-05-10 | — | Roadmap creado: coexistencia con VSOpenCodeX; Send bloqueante hasta contrato en VSOpenCodeX; target versión **0.6.0**. |
+| 2026-05-10 | — | Roadmap creado: coexistencia con VSOpenCodeX; Send bloqueante hasta contrato en VSOpenCodeX; target versión extensión **0.5.0** (nombre de documento **v0.5**). |
 | 2026-05-10 | Fases A+B | Puente `vsOpenCodeXBridge`, settings `preferVsOpenCodeXOpenCode` / `vsOpenCodeXProbeDelayMs`, README + ARCHITECTURE; tests `vsOpenCodeXBridge.test.ts`. |
 | 2026-05-11 | Fase C | Reinterpretación: destino VSX = superficie VSX + Send en VSX; GP desactiva solo inline/composer/send Copilot; config activa; bloqueo = contratos suggestions en VSX (no “Send desde GP”). |
+| 2026-05-10 | Fase C (GP) | Implementación en GhostPrompt: `agentDestination`, gating webview, `vsopencodex.ghostPromptInlineUi`, `ghostPrompt.runSuggestPipeline`, tests; cierre E2E pendiente VSX + README/CHANGELOG en Fase D. |
+| 2026-05-10 | Fase D (parcial) | README + CHANGELOG; aviso si destino VSX sin extensión cargada; checklist Fase D actualizado. |
+| 2026-05-11 | Release | Bump **0.5.0** (`package.json` / VSIX); CHANGELOG consolidado bajo **`[0.5.0]`**. |
+| 2026-05-11 | Fase A+ | Reintentos `getOpenCodeConnection` antes del embebido (`vsOpenCodeXConnectionMaxAttempts` / `RetryGapMs`); `cold-start-begin` sólo si spawn embebido; logs `opencodex-attach-begin` / `vsopencodex-probe-start`. Si VSX instalado + prefer on: **no** embebido tras agotar reintentos (`vsopencodex-probe-exhausted-no-embedded`). |
 
 ---
 

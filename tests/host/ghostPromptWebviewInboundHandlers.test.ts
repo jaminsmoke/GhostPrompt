@@ -5,12 +5,16 @@ const {
   appendLogMock,
   sendToChatMock,
   applyWebviewUpdateSettingMock,
+  workspaceConfigGetMock,
+  handleGhostPromptSuggestMock,
   MockCancellationTokenSource,
 } = vi.hoisted(() => ({
   appendSuggestionMock: vi.fn(),
   appendLogMock: vi.fn(),
   sendToChatMock: vi.fn(),
   applyWebviewUpdateSettingMock: vi.fn(),
+  workspaceConfigGetMock: vi.fn((key: string, fallback: unknown) => fallback),
+  handleGhostPromptSuggestMock: vi.fn().mockResolvedValue(undefined),
   MockCancellationTokenSource: class {
     public token = { isCancellationRequested: false };
     public cancel(): void {
@@ -21,6 +25,19 @@ const {
 }));
 
 vi.mock("vscode", () => ({
+  workspace: {
+    getConfiguration: () => ({
+      get: workspaceConfigGetMock,
+      inspect: () => ({
+        globalValue: undefined,
+        workspaceValue: undefined,
+        workspaceFolderValue: undefined,
+      }),
+    }),
+  },
+  extensions: {
+    getExtension: vi.fn(() => undefined),
+  },
   CancellationTokenSource: MockCancellationTokenSource,
   Disposable: class {
     constructor(private readonly _fn: () => void) {}
@@ -51,6 +68,11 @@ vi.mock("../../src/host/applyWebviewUpdateSetting", () => ({
   applyWebviewUpdateSetting: applyWebviewUpdateSettingMock,
 }));
 
+vi.mock("../../src/host/handleGhostPromptSuggest", () => ({
+  handleGhostPromptSuggest: (...args: unknown[]) =>
+    handleGhostPromptSuggestMock(...args),
+}));
+
 import type { Uri, Webview } from "vscode";
 import { ghostPromptSessionStore } from "../../src/session/GhostPromptSessionStore";
 import {
@@ -79,6 +101,9 @@ function minimalSuggestDeps(): GhostPromptSuggestDeps {
 describe("ghostPromptWebviewInboundHandlers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) =>
+      key === "agentDestination" ? "copilotChat" : fallback,
+    );
     ghostPromptSessionStore.resetSessionState();
   });
 
@@ -163,6 +188,23 @@ describe("ghostPromptWebviewInboundHandlers", () => {
       expect(appendLogMock).not.toHaveBeenCalled();
       expect(sendToChatMock).not.toHaveBeenCalled();
     });
+
+    it("no envía si agentDestination es vsOpenCodeX", async () => {
+      workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) =>
+        key === "agentDestination" ? "vsOpenCodeX" : fallback,
+      );
+      const clearAll = vi.fn();
+
+      await handleGhostPromptInboundSend(
+        { type: "send", text: "prompt final" },
+        { fsPath: "/global-store" } as Uri,
+        clearAll,
+      );
+
+      expect(appendLogMock).not.toHaveBeenCalled();
+      expect(sendToChatMock).not.toHaveBeenCalled();
+      expect(clearAll).not.toHaveBeenCalled();
+    });
   });
 
   describe("dispatchGhostPromptInboundMessage", () => {
@@ -199,6 +241,34 @@ describe("ghostPromptWebviewInboundHandlers", () => {
         }),
       );
       expect(broadcastSettings).toHaveBeenCalled();
+    });
+
+    it("ignora suggest si agentDestination es vsOpenCodeX", async () => {
+      workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) =>
+        key === "agentDestination" ? "vsOpenCodeX" : fallback,
+      );
+      const broadcastUi = vi.fn();
+      const services: GhostPromptInboundDispatchServices = {
+        viewContributionId: "ghostPrompt.input",
+        webview: {} as Webview,
+        dataUri: { fsPath: "/g" } as Uri,
+        postSettings: vi.fn(),
+        broadcastDraftSync: vi.fn(),
+        broadcastSettingsToAllViews: vi.fn(),
+        broadcastClearAll: vi.fn(),
+        suggestDeps: {
+          ...minimalSuggestDeps(),
+          broadcastUi,
+        },
+      };
+
+      await dispatchGhostPromptInboundMessage(
+        { type: "suggest", text: "abc", captureId: 99 },
+        services,
+      );
+
+      expect(handleGhostPromptSuggestMock).not.toHaveBeenCalled();
+      expect(broadcastUi).not.toHaveBeenCalled();
     });
   });
 });

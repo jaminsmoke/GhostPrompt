@@ -2,7 +2,7 @@
 
 Objetivo: evitar **dos procesos** `opencode serve` en el mismo puerto cuando el usuario tiene **GhostPrompt** y **VSOpenCodeX**. Los cambios de comportamiento viven **en el repositorio GhostPrompt**; este documento es la especificación para implementarlos allí. En VSOpenCodeX ya existe un contrato por **comandos** (este repo).
 
-**Roadmap planificado (versión 0.6.0):** [`Roadmap-v0.6-vsopencodex-coexistence.md`](../Plans/Roadmaps/Roadmap-v0.6-vsopencodex-coexistence.md). **Motor vs destino vs superficie:** [`GhostPrompt-motor-destino-matrix.md`](./GhostPrompt-motor-destino-matrix.md) — con destino VSOpenCodeX el Send vive en VSX; GhostPrompt desactiva solo inline/send Copilot en su webview y mantiene configuración.
+**Roadmap planificado (versión 0.5.0):** [`Roadmap-v0.5-vsopencodex-coexistence.md`](../Plans/Roadmaps/Roadmap-v0.5-vsopencodex-coexistence.md). **Motor vs destino vs superficie:** [`GhostPrompt-motor-destino-matrix.md`](./GhostPrompt-motor-destino-matrix.md) — con destino VSOpenCodeX el Send vive en VSX; GhostPrompt desactiva solo inline/send Copilot en su webview y mantiene configuración.
 
 ---
 
@@ -81,18 +81,18 @@ Orden sugerido:
 1. Comprobar si la extensión VSOpenCodeX está instalada y activa:  
    `vscode.extensions.getExtension("jaminsmoke.vsopencodex")` (ajustar `publisher.name` si el id real difiere; ver Marketplace / `package.json` de VSOpenCodeX).
 
-2. Llamar `await vscode.commands.executeCommand("vsopencodex.getOpenCodeConnection")`.
+2. Llamar `await vscode.commands.executeCommand("vsopencodex.getOpenCodeConnection")`. Si falla (excepción, comando aún no registrado, `ok: false` mientras VSX levanta el servidor), **reintentar** varias veces con pausa entre intentos **antes** de arrancar `opencode serve` embebido, para no ocupar el puerto por defecto y bloquear a VSOpenCodeX. GhostPrompt expone `ghostPrompt.vsOpenCodeXConnectionMaxAttempts` y `ghostPrompt.vsOpenCodeXConnectionRetryGapMs` (además del delay inicial `vsOpenCodeXProbeDelayMs`).
 
 3. Si `result.ok === true`:  
    - **No** lanzar `opencode serve` propio.  
    - Crear el cliente SDK con `baseUrl` + `Authorization` devueltos.  
    - Opcional: mostrar en ajustes un aviso de “usando instancia VSOpenCodeX”.
 
-4. Si `ok === false` **y** la política del producto es no mezclar instancias desconocidas:  
-   - **No** asumir que un proceso en el puerto por defecto es “vuestro” sin credenciales correctas.  
-   - Arrancar **solo entonces** vuestro `opencode serve` en un **puerto distinto** al configurado en VSOpenCodeX si el usuario lo tiene en conflicto, o el que defináis en GhostPrompt (documentar en README).
+4. Si `ok === false` **y** la extensión VSOpenCodeX **sí** está instalada y la política es reutilizar VSX:  
+   - Reintentar `getOpenCodeConnection` con pausas; **no** arrancar `opencode serve` embebido en el puerto compartido (evitar bloquear el arranque de VSX).  
+   - Tras agotar reintentos: error claro al usuario; opción de desactivar **preferVsOpenCodeXOpenCode** para volver al servidor embebido solo en ese caso.
 
-5. Si VSOpenCodeX no está instalada: comportamiento actual de GhostPrompt (arranque propio), sin cambio obligatorio.
+5. Si VSOpenCodeX **no** está instalada: GhostPrompt puede seguir con el arranque embebido habitual (`opencode serve` propio).
 
 ### 4. Ajustes y UX
 
@@ -124,4 +124,4 @@ Si cambiáis el formato de retorno en VSOpenCodeX, subid **semver minor** y docu
 
 ## Resumen una línea para el PR en GhostPrompt
 
-> Retrasar el arranque de OpenCode, comprobar `vsopencodex.getOpenCodeConnection` tras un delay; si `ok`, reutilizar ese cliente y no ejecutar un segundo `opencode serve`; si no, mantener el flujo propio sin reutilizar puertos ajenos sin credenciales.
+> Retrasar el arranque de OpenCode, reintentar `vsopencodex.getOpenCodeConnection`; si `ok`, reutilizar ese cliente; si VSX está instalado y sigue fallando, **no** arrancar `opencode serve` embebido en el puerto compartido; si VSX no está instalada, flujo embebido habitual.

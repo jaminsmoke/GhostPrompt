@@ -1,7 +1,7 @@
 # GhostPrompt
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.4.1-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
+[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.5.0-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.90%2B-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
 [![GitHub Copilot](https://img.shields.io/badge/Uses-GitHub_Copilot-24292f?logo=github&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
@@ -11,7 +11,7 @@
 > Ghost-text completions for your Copilot prompts — write faster, think clearer.
 
 <!-- markdownlint-disable-next-line MD036 -->
-**Version 0.4.1** *(pendiente de publicación en marketplace; última publicada: **0.4.0**.)*
+**Version 0.5.0** *(pendiente de publicación en marketplace; última publicada de referencia: **0.4.0** — actualiza si ya publicaste **0.4.1**.)*
 
 ---
 
@@ -128,9 +128,11 @@ If you set **`ghostPrompt.completionProvider`** to **`opencode`**, GhostPrompt s
 
 Switch providers in **Settings** (search `ghostPrompt.completionProvider` or `enabledCompletionSources`). With **both** sources enabled, the composer shows **Motor: Copilot + OpenCode** and **Auto (Copilot primero)** uses Copilot when available.
 
-Related settings: **`ghostPrompt.opencodeExcludedModelIds`** (hide specific `providerID/modelID` rows), **`ghostPrompt.selectedModelId`** (`auto` or an explicit id).
+Related settings: **`ghostPrompt.opencodeExcludedModelIds`** (hide specific `providerID/modelID` rows), **`ghostPrompt.selectedModelId`** (`auto` or an explicit id), **`ghostPrompt.agentDestination`** (`copilotChat` | `vsOpenCodeX` — see [Agent destination](#completion-provider-copilot-lm-vs-opencode) above).
 
-**VSOpenCodeX coexistence:** If you use the sibling extension **VSOpenCodeX** (`jaminsmoke.vsopencodex`), GhostPrompt can reuse its OpenCode server (via `vsopencodex.getOpenCodeConnection`) instead of starting a **second** `opencode serve` on the same port. Settings **`ghostPrompt.preferVsOpenCodeXOpenCode`** (default on) and **`ghostPrompt.vsOpenCodeXProbeDelayMs`** control that handshake. Without VSOpenCodeX, GhostPrompt keeps using its **embedded** OpenCode runtime as today. Specification: [`Docs/Integrations/GhostPrompt-OpenCode-coexistence.md`](./Docs/Integrations/GhostPrompt-OpenCode-coexistence.md); roadmap [**v0.6.0**](./Docs/Plans/Roadmaps/Roadmap-v0.6-vsopencodex-coexistence.md) tracks **destino agente / superficie** (VSX posee Send y chat; matriz [`GhostPrompt-motor-destino-matrix.md`](./Docs/Integrations/GhostPrompt-motor-destino-matrix.md)).
+**VSOpenCodeX coexistence (OpenCode motor):** If you use the sibling extension **VSOpenCodeX** (`jaminsmoke.vsopencodex`), GhostPrompt can reuse its OpenCode server (via `vsopencodex.getOpenCodeConnection`) instead of starting a **second** `opencode serve` on the same port. Settings **`ghostPrompt.preferVsOpenCodeXOpenCode`** (default on), **`ghostPrompt.vsOpenCodeXProbeDelayMs`**, **`ghostPrompt.vsOpenCodeXConnectionMaxAttempts`**, and **`ghostPrompt.vsOpenCodeXConnectionRetryGapMs`** control the handshake and retries while VSX comes up. **If VSOpenCodeX is installed** and **prefer** is on, GhostPrompt **does not** fall back to the embedded server after those retries (avoids stealing the shared port); open VSX’s chat/server or turn **prefer** off to use embedded only. **If VSOpenCodeX is not installed**, GhostPrompt uses the **embedded** OpenCode runtime as before. Specification: [`Docs/Integrations/GhostPrompt-OpenCode-coexistence.md`](./Docs/Integrations/GhostPrompt-OpenCode-coexistence.md).
+
+**Agent destination (who owns Send + chat thread):** Setting **`ghostPrompt.agentDestination`** separates the **suggestion motor** (Copilot LM / OpenCode, chips in GhostPrompt) from **where the final prompt is sent**. **Effective default:** if **VSOpenCodeX** is installed and you have **never** saved `agentDestination` in User/Workspace settings, GhostPrompt behaves as **`vsOpenCodeX`** until you set it explicitly. The GhostPrompt view shows a **Destino** dropdown next to **Motor** when VSOpenCodeX is installed (`Copilot Chat` | `VSOpenCodeX`). With **`vsOpenCodeX`**, GhostPrompt hides the inline composer and **Send to Copilot** in the webview but keeps the **configuration strip**. VSOpenCodeX drives suggestions via **`ghostPrompt.runSuggestPipeline`** and receives UI via **`vsopencodex.ghostPromptInlineUi`** (see roadmap). If you choose **`vsOpenCodeX`** but the extension is not installed, GhostPrompt shows a one-time-per-session hint. Matriz motor/destino: [`GhostPrompt-motor-destino-matrix.md`](./Docs/Integrations/GhostPrompt-motor-destino-matrix.md); roadmap [**v0.5.0**](./Docs/Plans/Roadmaps/Roadmap-v0.5-vsopencodex-coexistence.md).
 
 **OpenCode model tiers (dropdown):** Tiers come **only** from catalog metadata (`pricing` multipliers such as `0x` / `1x`, **`free`**, or the provider id for the built-in **`opencode`** / typical **local** backends like Ollama). GhostPrompt does **not** infer premium vs free from model names. Rows without usable signals stay **Sin clasificar** / **UNKNOWN**. With **`nonPremiumOnly`**, models classified as **premium** are hidden from the list and excluded from **Auto** selection.
 
@@ -188,7 +190,7 @@ You can keep GhostPrompt near Copilot Chat and move quickly between drafting and
 ### Request governor (cost/frequency protection)
 
 - `ghostPrompt.minCharsForSuggestion` (default `6`)
-- `ghostPrompt.suggestionDebounceMs` (default `400`) — wait after you stop typing before requesting a suggestion (reduces LM calls while drafting)
+- `ghostPrompt.suggestionDebounceMs` (default `800`) — wait after you stop typing before requesting a suggestion (reduces LM calls while drafting; higher default helps avoid races with VSOpenCodeX)
 - `ghostPrompt.requestCooldownMs` (default `500`) — host-side cooldown when the **same** normalized text is requested again
 - `ghostPrompt.cacheTtlMs` (default `45000`)
 - `ghostPrompt.rateLimitMaxRequests` (default `90`)
@@ -313,7 +315,7 @@ v0.2 is **shipped**; roadmap documents:
 - **OpenCode integration** *(Phases 1–4 complete)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md)
 - **v0.3.0c — OpenCode UX, rendimiento y multi‑proveedor** *(plan activo, misma línea 0.3.0)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3.0c-opencode-ux-perf.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.0c-opencode-ux-perf.md)
 - **v0.4.0 — Memoria de proyecto por workspace (JSON), contexto bootstrap + editor** *(phases A–F shipped)*: [`Docs/Plans/Roadmaps/Roadmap-v0.4-project-context-store.md`](./Docs/Plans/Roadmaps/Roadmap-v0.4-project-context-store.md)
-- **v0.6.0 — VSOpenCodeX coexistence + agent destination / surface** *(planned)*: [`Docs/Plans/Roadmaps/Roadmap-v0.6-vsopencodex-coexistence.md`](./Docs/Plans/Roadmaps/Roadmap-v0.6-vsopencodex-coexistence.md) — coexistencia: [`GhostPrompt-OpenCode-coexistence.md`](./Docs/Integrations/GhostPrompt-OpenCode-coexistence.md); matriz motor/destino: [`GhostPrompt-motor-destino-matrix.md`](./Docs/Integrations/GhostPrompt-motor-destino-matrix.md)
+- **v0.5.0 — VSOpenCodeX coexistence + agent destination / surface** *(release + roadmap de ejecución)*: [`Docs/Plans/Roadmaps/Roadmap-v0.5-vsopencodex-coexistence.md`](./Docs/Plans/Roadmaps/Roadmap-v0.5-vsopencodex-coexistence.md) — coexistencia: [`GhostPrompt-OpenCode-coexistence.md`](./Docs/Integrations/GhostPrompt-OpenCode-coexistence.md); matriz motor/destino: [`GhostPrompt-motor-destino-matrix.md`](./Docs/Integrations/GhostPrompt-motor-destino-matrix.md)
 
 Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 
@@ -321,10 +323,11 @@ Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## Release notes
 
-### 0.4.1 *(pendiente de publicación)*
+### 0.5.0 *(pendiente de publicación)*
 
-- **OpenCode observability:** with debug on (**`GhostPrompt: Toggle Debug`** / **`ghostPrompt.debugSuggestions`**), **`[opencode-perf]`** lines in **GhostPrompt Suggestions** (per-request `captureId`): catalog snapshot, pooled session vs `session-create`, **`prompt`** timing, SSE first delta / drain, LM total — see § [Debug mode](#debug-mode).
-- **Docs:** roadmap OpenCode perf **I–J** complete; **`CHANGELOG.md`** section **`[0.4.1]`** mirrors this; install the VSIX from `npm run vsix` to validate locally against marketplace **0.4.0**.
+- **VSOpenCodeX:** coexistencia OpenCode (reintentos, sin servidor embebido en el puerto compartido si VSX está instalada y **prefer** activo), destino agente (`ghostPrompt.agentDestination`), comandos **`ghostPrompt.runSuggestPipeline`** / **`vsopencodex.ghostPromptInlineUi`**, selector **Destino** en webview, debounce suggestions por defecto **800 ms**.
+- **OpenCode observability:** con debug activo, líneas **`[opencode-perf]`** en **GhostPrompt Suggestions** — ver § [Debug mode](#debug-mode).
+- **VSIX:** `npm run vsix` para validar localmente; ver **`CHANGELOG.md`** sección **`[0.5.0]`**.
 
 ### 0.4.0
 

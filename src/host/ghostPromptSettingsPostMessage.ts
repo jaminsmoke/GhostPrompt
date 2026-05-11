@@ -17,6 +17,10 @@ import type {
 } from "../completion";
 import { isSuggestionDebugEnabled } from "../debug/SuggestionDebug";
 import { ghostPromptSessionStore } from "../session/GhostPromptSessionStore";
+import {
+  getGhostPromptAgentDestination,
+  isVsOpenCodeXExtensionInstalled,
+} from "./ghostPromptHostWorkspaceGetters";
 import { parseOutboundSettingsEnvelope } from "./webviewProtocols";
 
 export type GhostPromptSettingsGetters = {
@@ -37,7 +41,7 @@ export async function buildAndPostGhostPromptSettings(
 ): Promise<void> {
   const gpCfg = vscode.workspace.getConfiguration("ghostPrompt");
   const suggestionDebounceMs = clampSuggestionDebounceMs(
-    gpCfg.get<number>("suggestionDebounceMs", 400),
+    gpCfg.get<number>("suggestionDebounceMs", 800),
   );
   const policy = getters.getSuggestionModelPolicy();
   const enabledSources = getEnabledCompletionSources();
@@ -73,6 +77,8 @@ export async function buildAndPostGhostPromptSettings(
       effectiveModel: ghostPromptSessionStore.getSnapshot().lastEffectiveModel,
       debugSuggestions: isSuggestionDebugEnabled(),
       suggestionDebounceMs,
+      agentDestination: getGhostPromptAgentDestination(),
+      vsOpenCodeXExtensionInstalled: isVsOpenCodeXExtensionInstalled(),
     },
   };
   const validated = parseOutboundSettingsEnvelope(envelope);

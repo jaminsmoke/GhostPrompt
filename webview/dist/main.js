@@ -4168,7 +4168,11 @@
     effectiveModel: suggestionModelDescriptorSchema.optional(),
     debugSuggestions: external_exports.boolean(),
     /** Tiempo de inactividad tras teclear antes de pedir suggestion (webview debounce). */
-    suggestionDebounceMs: external_exports.number().min(150).max(2e3)
+    suggestionDebounceMs: external_exports.number().min(150).max(2e3),
+    /** Destino del agente: Copilot Chat vs superficie VSOpenCodeX (v0.5 Fase C). */
+    agentDestination: external_exports.enum(["copilotChat", "vsOpenCodeX"]),
+    /** Si la extensión VSOpenCodeX está instalada (control destino en webview). */
+    vsOpenCodeXExtensionInstalled: external_exports.boolean()
   });
   var webviewOutboundSettingsEnvelopeSchema = external_exports.object({
     type: external_exports.literal("settings"),
@@ -4209,6 +4213,11 @@
       type: external_exports.literal("updateSetting"),
       key: external_exports.literal("completionProvider"),
       value: external_exports.enum(["copilot", "opencode"])
+    }),
+    external_exports.object({
+      type: external_exports.literal("updateSetting"),
+      key: external_exports.literal("agentDestination"),
+      value: external_exports.enum(["copilotChat", "vsOpenCodeX"])
     })
   ]);
   var webviewInboundMessageSchema = external_exports.union([
@@ -4258,6 +4267,11 @@
     const ghostInline = document.getElementById("ghost-inline");
     const ghostMeasure = document.getElementById("ghost-measure");
     const sendBtn = document.getElementById("send-btn");
+    const toolbarEl = document.querySelector(".toolbar");
+    const vsxSurfaceNote = document.getElementById(
+      "gp-vsx-surface-note"
+    );
+    const hintEl = document.querySelector(".toolbar .hint");
     const statusEl = document.getElementById("status-text");
     const settingGroups = Array.from(document.querySelectorAll(".setting-group"));
     const debugBtn = document.getElementById("debug-btn");
@@ -4268,6 +4282,12 @@
     const completionBackendSelect = document.getElementById(
       "completion-backend-select"
     );
+    const agentDestinationRow = document.getElementById(
+      "agent-destination-row"
+    );
+    const agentDestinationSelect = document.getElementById(
+      "agent-destination-select"
+    );
     let lastSuggestionUiLang = "en";
     let lastCompletionProvider = "copilot";
     let lastCompletionUiKind = "copilot";
@@ -4275,7 +4295,7 @@
     let pendingSuggestion = "";
     const MIN_COMPOSER_HEIGHT = 56;
     let debounceTimer = null;
-    let suggestionDebounceMs = 400;
+    let suggestionDebounceMs = 800;
     let applyingRemoteDraft = false;
     const VIEW_ID = typeof window.__ghostPromptViewId === "string" ? window.__ghostPromptViewId : "";
     const VIEW_CAPS = typeof window.__ghostPromptCapabilities === "object" && window.__ghostPromptCapabilities !== null ? window.__ghostPromptCapabilities : {};
@@ -4283,6 +4303,30 @@
       document.body.classList.add("gp-cap-compact-toolbar");
     }
     let lastComposeSettings = null;
+    function applyAgentDestinationFromSettings(settings) {
+      const dest = settings.agentDestination === "vsOpenCodeX" ? "vsOpenCodeX" : "copilotChat";
+      const vsx = dest === "vsOpenCodeX";
+      document.body.classList.toggle("gp-dest-vsx", vsx);
+      if (vsxSurfaceNote) {
+        vsxSurfaceNote.hidden = !vsx;
+      }
+      input.disabled = vsx;
+      sendBtn.toggleAttribute("disabled", vsx);
+      if (toolbarEl) {
+        toolbarEl.classList.toggle("gp-vsx-toolbar-hidden", vsx);
+      }
+      if (hintEl) {
+        hintEl.textContent = vsx ? "Destino VSOpenCodeX: redacta y env\xEDa en VSOpenCodeX; los chips de arriba siguen activos." : "Tab: aceptar sugerencia \xB7 Enter: enviar \xB7 Shift+Enter: nueva l\xEDnea";
+      }
+      if (vsx) {
+        clearGhost();
+        clearStatus();
+        if (debounceTimer !== null) {
+          clearTimeout(debounceTimer);
+          debounceTimer = null;
+        }
+      }
+    }
     function refreshComposeSummary() {
       const sumEl = document.getElementById("compose-options-summary");
       if (!(sumEl instanceof HTMLElement)) {
@@ -4317,6 +4361,9 @@
       return suggestion || "";
     }
     function requestSuggestion() {
+      if (document.body.classList.contains("gp-dest-vsx")) {
+        return;
+      }
       if (debounceTimer !== null) {
         clearTimeout(debounceTimer);
       }
@@ -4401,6 +4448,9 @@
       return true;
     }
     function send() {
+      if (document.body.classList.contains("gp-dest-vsx")) {
+        return;
+      }
       const text = input.value.trim();
       if (!text) {
         return;
@@ -4470,6 +4520,20 @@
       postToHost(vscode, {
         type: "updateSetting",
         key: "completionProvider",
+        value: v
+      });
+    });
+    agentDestinationSelect?.addEventListener("change", () => {
+      if (!(agentDestinationSelect instanceof HTMLSelectElement)) {
+        return;
+      }
+      const v = agentDestinationSelect.value;
+      if (v !== "copilotChat" && v !== "vsOpenCodeX") {
+        return;
+      }
+      postToHost(vscode, {
+        type: "updateSetting",
+        key: "agentDestination",
         value: v
       });
     });
@@ -4616,6 +4680,14 @@
           const ocAccent = lastCompletionUiKind === "opencode" || lastCompletionUiKind === "multi";
           completionBackendSelect.classList.toggle("backend-opencode", ocAccent);
         }
+        const vsxInstalled = Boolean(settings.vsOpenCodeXExtensionInstalled);
+        if (agentDestinationRow) {
+          agentDestinationRow.hidden = !vsxInstalled;
+        }
+        if (agentDestinationSelect instanceof HTMLSelectElement) {
+          const dest = settings.agentDestination === "vsOpenCodeX" ? "vsOpenCodeX" : "copilotChat";
+          agentDestinationSelect.value = dest;
+        }
         lastSuggestionUiLang = settings.effectiveSuggestionLanguage === "es" ? "es" : "en";
         setActiveChip("suggestionModelPolicy", settings.suggestionModelPolicy);
         setModelOptions(
@@ -4635,6 +4707,7 @@
         debugBtn.dataset.enabled = String(isDebug);
         debugBtn.textContent = isDebug ? "Debug: on" : "Debug: off";
         debugBtn.setAttribute("aria-pressed", String(isDebug));
+        applyAgentDestinationFromSettings(settings);
       } else if (message.type === "languageEffective") {
         lastSuggestionUiLang = message.language === "es" ? "es" : "en";
         setLanguageAutoLabel(message.language);

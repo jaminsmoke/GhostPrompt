@@ -38,6 +38,24 @@ body {
   min-height: 0;
 }
 
+/* Destino agente VSOpenCodeX: ocultar compositor/envío inline; mantener chips. */
+body.gp-dest-vsx .input-stack {
+  display: none;
+}
+
+body.gp-dest-vsx .gp-vsx-toolbar-hidden {
+  display: none;
+}
+
+.gp-vsx-surface-note {
+  font-size: 0.85em;
+  color: var(--vscode-descriptionForeground);
+  padding: var(--gp-gap-xs) var(--gp-gap-sm);
+  border-radius: 4px;
+  border: 1px solid var(--vscode-widget-border);
+  line-height: 1.35;
+}
+
 .settings-strip {
   display: flex;
   flex-wrap: wrap;

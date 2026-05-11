@@ -16,6 +16,7 @@ import {
   syncOpenCodeRuntimeFromConfig,
 } from "../opencode";
 import { registerProjectMemory } from "../projectMemory/activateProjectMemory";
+import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from "../host/notifyVsxAgentDestinationIfExtensionMissing";
 
 export function activate(context: vscode.ExtensionContext): void {
   registerProjectMemory(context);
@@ -46,6 +47,13 @@ export function activate(context: vscode.ExtensionContext): void {
       void vscode.window.showInformationMessage(message);
     },
   );
+  const runSuggestPipelineCommand = vscode.commands.registerCommand(
+    "ghostPrompt.runSuggestPipeline",
+    async (args: { text?: string } | undefined) => {
+      const text = typeof args?.text === "string" ? args.text : "";
+      await MiniInputViewProvider.runSuggestFromExternalHost(text);
+    },
+  );
   const openCodeRuntime = getOpenCodeRuntime();
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
@@ -53,7 +61,9 @@ export function activate(context: vscode.ExtensionContext): void {
         e.affectsConfiguration("ghostPrompt.completionProvider") ||
         e.affectsConfiguration("ghostPrompt.enabledCompletionSources") ||
         e.affectsConfiguration("ghostPrompt.preferVsOpenCodeXOpenCode") ||
-        e.affectsConfiguration("ghostPrompt.vsOpenCodeXProbeDelayMs")
+        e.affectsConfiguration("ghostPrompt.vsOpenCodeXProbeDelayMs") ||
+        e.affectsConfiguration("ghostPrompt.vsOpenCodeXConnectionMaxAttempts") ||
+        e.affectsConfiguration("ghostPrompt.vsOpenCodeXConnectionRetryGapMs")
       ) {
         openCodeRuntime.stop();
         void syncOpenCodeRuntimeFromConfig(openCodeRuntime);
@@ -61,13 +71,18 @@ export function activate(context: vscode.ExtensionContext): void {
       if (e.affectsConfiguration("ghostPrompt")) {
         void MiniInputViewProvider.refreshSettingsAllViews();
       }
+      if (e.affectsConfiguration("ghostPrompt.agentDestination")) {
+        notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
+      }
     }),
   );
   void syncOpenCodeRuntimeFromConfig(openCodeRuntime);
+  notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
 
   context.subscriptions.push(
     openSuggestionPolicySettingsCommand,
     toggleSuggestionDebugCommand,
+    runSuggestPipelineCommand,
     vscode.window.registerWebviewViewProvider(
       MiniInputViewProvider.viewId,
       sidebarProvider,

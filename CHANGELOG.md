@@ -2,23 +2,28 @@
 
 All notable changes to this project are documented in this file.
 
-## [0.4.1] — pendiente de publicación
+## [0.5.0] - 2026-05-11
 
-Última versión en marketplace: **[0.4.0]**. Esta entrada documenta cambios ya en el árbol (p. ej. VSIX local) antes de **publicar 0.4.1**.
+Versión **0.5.0**: integración VSOpenCodeX (host), destino agente, coexistencia OpenCode sin `opencode serve` embebido cuando VSX está instalada y **prefer** activo, debounce webview por defecto **800 ms**, selector **Destino** en la webview. Incluye el trabajo de OpenCode perf / colas que estaba preparado para **0.4.1**. Última versión en marketplace de referencia en documentación: **[0.4.0]** (ajusta la nota si ya publicaste **0.4.1**).
 
 ### Added
 
-- **VSOpenCodeX coexistence (roadmap v0.6 — Fases A+B):** when **VSOpenCodeX** (`jaminsmoke.vsopencodex`) is installed and exposes `vsopencodex.getOpenCodeConnection`, GhostPrompt can attach the `@opencode-ai/sdk` client to that OpenCode server instead of spawning its own **`opencode serve`**. Settings: **`ghostPrompt.preferVsOpenCodeXOpenCode`** (default enabled) and **`ghostPrompt.vsOpenCodeXProbeDelayMs`** (default `800`; `0` = no delay). If the handshake fails or the extension is absent, GhostPrompt falls back to the existing embedded **`OpenCodeRuntime`**. Documentation: **`Docs/Integrations/GhostPrompt-OpenCode-coexistence.md`**.
+- **Agent destination + VSX surface (roadmap v0.5 — Fase C, lado GhostPrompt):** **`ghostPrompt.agentDestination`** (`copilotChat` | `vsOpenCodeX`). Con **`vsOpenCodeX`**, la webview oculta composer inline y envío a Copilot; se mantienen chips de configuración. Reenvío de UI de suggestion al comando **`vsopencodex.ghostPromptInlineUi`**; VSX puede disparar el pipeline con **`ghostPrompt.runSuggestPipeline`** (`{ text }`). Contrato y estado E2E: **`Docs/Plans/Roadmaps/Roadmap-v0.5-vsopencodex-coexistence.md`**. Aviso informativo (una vez por sesión de ventana) si el destino es VSX y la extensión **`jaminsmoke.vsopencodex`** no está cargada.
+
+- **VSOpenCodeX coexistence (roadmap v0.5 — Fases A+B):** when **VSOpenCodeX** (`jaminsmoke.vsopencodex`) is installed and exposes `vsopencodex.getOpenCodeConnection`, GhostPrompt can attach the `@opencode-ai/sdk` client to that OpenCode server instead of spawning its own **`opencode serve`**. Settings: **`ghostPrompt.preferVsOpenCodeXOpenCode`** (default enabled), **`ghostPrompt.vsOpenCodeXProbeDelayMs`** (default `800`; `0` = no delay), **`ghostPrompt.vsOpenCodeXConnectionMaxAttempts`** (default `8`), **`ghostPrompt.vsOpenCodeXConnectionRetryGapMs`** (default `650`). GhostPrompt **retries** `getOpenCodeConnection` that many times while VSX starts. **If VSX is installed** and **prefer** is on, GhostPrompt **does not** start the embedded server after retries (no port grab); user message explains opening VSX or disabling **prefer**. **If VSX is not installed**, embedded **`OpenCodeRuntime`** is used as before. Debug: **`cold-start-begin`** = embedded spawn only; **`opencodex-attach-begin`** / **`vsopencodex-probe-start`**. Documentation: **`Docs/Integrations/GhostPrompt-OpenCode-coexistence.md`**.
 
 - **OpenCode debug perf (roadmap phase I):** cuando **`ghostPrompt.debugSuggestions`** está activo y el motor es OpenCode, el canal **GhostPrompt Suggestions** escribe hitos **`[opencode-perf]`** correlacionados por `captureId` (snapshot de proveedores en caché o red, sesión inline pool/create, `prompt`, primer delta SSE en streaming, cierre del consumidor SSE, total del LM). Con debug desactivado no hay emisión adicional por esta fase.
 
 ### Docs
 
+- README: **`ghostPrompt.agentDestination`**, contrato GP↔VSX (`ghostPrompt.runSuggestPipeline` / `vsopencodex.ghostPromptInlineUi`), enlace al roadmap v0.5.
 - README: modo debug — líneas **`[opencode-perf]`** con OpenCode activo (§ Debug mode).
 - Roadmap [`Roadmap-v0.4-opencode-perf-catalog-telemetry.md`](./Docs/Plans/Roadmaps/Roadmap-v0.4-opencode-perf-catalog-telemetry.md): fases **G–J** cerradas en documentación (catálogo, sesión, telemetría debug, notas de release).
 
 ### Changed
 
+- **Suggestion debounce:** `ghostPrompt.suggestionDebounceMs` default **400 → 800** ms (menos carreras con VSOpenCodeX / OpenCode al teclear).
+- **Destino agente en webview:** si VSOpenCodeX está instalada, fila **Destino** junto a **Motor** (`<select>` Copilot Chat / VSOpenCodeX); settings incluyen `vsOpenCodeXExtensionInstalled`. Si el usuario nunca guardó `agentDestination`, el efectivo es **vsOpenCodeX** cuando VSX está instalada (`inspect` + `getExtension`).
 - **Mantenibilidad (`Owners` fase B):** subcarpetas `src/completion/catalog/` (listados y tiers de modelo) y `src/completion/context/` (bootstrap proyecto); exports públicos siguen en `completion/index.ts`.
 
 ### Fixed

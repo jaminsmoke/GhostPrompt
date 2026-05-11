@@ -20,29 +20,54 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+export type TryCreateSdkClientViaVsOpenCodeXParams = {
+  probeDelayMs: number;
+  /**
+   * `0` = primera pasada: `activate` + `probeDelayMs` antes del comando.
+   * `>0` = sólo `retryGapMs` y nuevo `executeCommand` (evita segundo delay inicial).
+   */
+  attemptIndex: number;
+  retryGapMs: number;
+};
+
 /**
  * Intenta obtener un cliente SDK apuntando al servidor VSOpenCodeX.
  * Sin extensión, comando ausente o `ok: false`, devuelve `undefined` (fallback embebido).
  */
-export async function tryCreateSdkClientViaVsOpenCodeX(params: {
-  probeDelayMs: number;
-}): Promise<{ client: unknown; baseUrl: string } | undefined> {
+export async function tryCreateSdkClientViaVsOpenCodeX(
+  params: TryCreateSdkClientViaVsOpenCodeXParams,
+): Promise<{ client: unknown; baseUrl: string } | undefined> {
   const extension = vscode.extensions.getExtension(VS_OPEN_CODE_X_EXTENSION_ID);
   if (!extension) {
     return undefined;
   }
-  try {
-    if (!extension.isActive) {
-      await extension.activate();
-    }
-  } catch {
-    logOpenCodeDebug("vsopencodex-activate-failed");
-    return undefined;
-  }
 
-  const probe = Math.max(0, params.probeDelayMs);
-  if (probe > 0) {
-    await sleep(probe);
+  if (params.attemptIndex === 0) {
+    try {
+      if (!extension.isActive) {
+        await extension.activate();
+      }
+    } catch {
+      logOpenCodeDebug("vsopencodex-activate-failed");
+      return undefined;
+    }
+    const probe = Math.max(0, params.probeDelayMs);
+    if (probe > 0) {
+      await sleep(probe);
+    }
+  } else {
+    const gap = Math.max(0, params.retryGapMs);
+    if (gap > 0) {
+      await sleep(gap);
+    }
+    try {
+      if (!extension.isActive) {
+        await extension.activate();
+      }
+    } catch {
+      logOpenCodeDebug("vsopencodex-activate-failed-retry", `attempt=${params.attemptIndex}`);
+      return undefined;
+    }
   }
 
   let envelope: VsOpenCodeXConnectionEnvelope | undefined;
@@ -52,7 +77,10 @@ export async function tryCreateSdkClientViaVsOpenCodeX(params: {
         COMMAND_GET_OPENCODE_CONNECTION,
       );
   } catch {
-    logOpenCodeDebug("vsopencodex-get-connection-command-failed");
+    logOpenCodeDebug(
+      "vsopencodex-get-connection-command-failed",
+      `attempt=${params.attemptIndex}`,
+    );
     return undefined;
   }
 

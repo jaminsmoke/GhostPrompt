@@ -41,8 +41,10 @@ describe("vsOpenCodeXBridge", () => {
     getExtensionMock.mockReturnValue(undefined);
   });
 
+  const baseParams = { probeDelayMs: 0, attemptIndex: 0, retryGapMs: 0 };
+
   it("sin VSOpenCodeX instalada devuelve undefined", async () => {
-    const r = await tryCreateSdkClientViaVsOpenCodeX({ probeDelayMs: 0 });
+    const r = await tryCreateSdkClientViaVsOpenCodeX(baseParams);
     expect(r).toBeUndefined();
     expect(executeCommandMock).not.toHaveBeenCalled();
   });
@@ -59,7 +61,7 @@ describe("vsOpenCodeXBridge", () => {
       port: 17433,
     });
 
-    const r = await tryCreateSdkClientViaVsOpenCodeX({ probeDelayMs: 0 });
+    const r = await tryCreateSdkClientViaVsOpenCodeX(baseParams);
 
     expect(activateMock).not.toHaveBeenCalled();
     expect(executeCommandMock).toHaveBeenCalledWith(
@@ -85,7 +87,7 @@ describe("vsOpenCodeXBridge", () => {
       ok: false,
       reason: "server not ready",
     });
-    await tryCreateSdkClientViaVsOpenCodeX({ probeDelayMs: 0 });
+    await tryCreateSdkClientViaVsOpenCodeX(baseParams);
     expect(activateMock).toHaveBeenCalled();
   });
 
@@ -95,7 +97,27 @@ describe("vsOpenCodeXBridge", () => {
       ok: false,
       reason: "offline",
     });
-    expect(await tryCreateSdkClientViaVsOpenCodeX({ probeDelayMs: 0 })).toBeUndefined();
+    expect(await tryCreateSdkClientViaVsOpenCodeX(baseParams)).toBeUndefined();
     expect(createOpencodeClientMock).not.toHaveBeenCalled();
+  });
+
+  it("intento >0 no llama activate si la extensión ya está activa", async () => {
+    getExtensionMock.mockReturnValue({
+      isActive: true,
+      activate: activateMock,
+    });
+    executeCommandMock.mockResolvedValue({
+      ok: true,
+      baseUrl: "http://127.0.0.1:17433",
+      authorizationHeader: "Basic y",
+      port: 17433,
+    });
+    await tryCreateSdkClientViaVsOpenCodeX({
+      probeDelayMs: 0,
+      attemptIndex: 2,
+      retryGapMs: 0,
+    });
+    expect(activateMock).not.toHaveBeenCalled();
+    expect(executeCommandMock).toHaveBeenCalledTimes(1);
   });
 });

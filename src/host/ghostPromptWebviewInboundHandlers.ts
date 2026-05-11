@@ -4,6 +4,7 @@
  */
 import * as vscode from "vscode";
 import { sendToChat } from "../bridge/ChatBridge";
+import { getGhostPromptAgentDestination } from "./ghostPromptHostWorkspaceGetters";
 import { append as appendLog } from "../log/ConversationLog";
 import { appendSuggestion } from "../log/SuggestionLog";
 import { ghostPromptSessionStore } from "../session/GhostPromptSessionStore";
@@ -78,6 +79,9 @@ export async function handleGhostPromptInboundSend(
   dataUri: vscode.Uri,
   broadcastClearAll: () => void,
 ): Promise<void> {
+  if (getGhostPromptAgentDestination() === "vsOpenCodeX") {
+    return;
+  }
   if (!message.text) {
     return;
   }
@@ -114,6 +118,9 @@ export async function dispatchGhostPromptInboundMessage(
       );
       return;
     case "suggest":
+      if (getGhostPromptAgentDestination() === "vsOpenCodeX") {
+        return;
+      }
       await handleGhostPromptSuggest(message, services.suggestDeps);
       return;
     case "accept":

@@ -9,6 +9,55 @@ import type {
   SuggestionStyle,
   SupportedSuggestionLanguage,
 } from "../completion";
+import { VS_OPEN_CODE_X_EXTENSION_ID } from "../opencode/vsOpenCodeXBridge";
+
+/** Destino del agente que ejecuta el prompt final (v0.5 Fase C). */
+export type GhostPromptAgentDestination = "copilotChat" | "vsOpenCodeX";
+
+function isAgentDestinationExplicitlyConfigured(): boolean {
+  try {
+    const cfg = vscode.workspace.getConfiguration("ghostPrompt");
+    if (typeof cfg.inspect !== "function") {
+      return true;
+    }
+    const inspected = cfg.inspect<unknown>("agentDestination");
+    if (!inspected) {
+      return true;
+    }
+    return (
+      inspected.globalValue !== undefined ||
+      inspected.workspaceValue !== undefined ||
+      inspected.workspaceFolderValue !== undefined
+    );
+  } catch {
+    return true;
+  }
+}
+
+/** VSOpenCodeX instalada (no implica que el servidor OpenCode esté listo). */
+export function isVsOpenCodeXExtensionInstalled(): boolean {
+  try {
+    return Boolean(vscode.extensions?.getExtension?.(VS_OPEN_CODE_X_EXTENSION_ID));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Destino efectivo: si VSX está instalada y el usuario nunca guardó `agentDestination`,
+ * se asume **vsOpenCodeX** (alineado con integración por defecto).
+ */
+export function getGhostPromptAgentDestination(): GhostPromptAgentDestination {
+  const cfg = vscode.workspace.getConfiguration("ghostPrompt");
+  const v = cfg.get<string>("agentDestination", "copilotChat");
+  if (
+    !isAgentDestinationExplicitlyConfigured() &&
+    isVsOpenCodeXExtensionInstalled()
+  ) {
+    return "vsOpenCodeX";
+  }
+  return v === "vsOpenCodeX" ? "vsOpenCodeX" : "copilotChat";
+}
 
 function trimContextField(value: string, maxChars: number): string {
   const normalized = value.replace(/\s+/g, " ").trim();

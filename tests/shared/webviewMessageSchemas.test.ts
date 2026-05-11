@@ -71,6 +71,11 @@ describe("webviewMessageSchemas (shared)", () => {
         key: "completionProvider" as const,
         value: "opencode" as const,
       },
+      {
+        type: "updateSetting" as const,
+        key: "agentDestination" as const,
+        value: "vsOpenCodeX" as const,
+      },
     ];
     for (const msg of samples) {
       expect(webviewInboundMessageSchema.safeParse(msg).success).toBe(true);
@@ -95,7 +100,9 @@ describe("webviewMessageSchemas (shared)", () => {
         tier: "included",
       },
       debugSuggestions: true,
-      suggestionDebounceMs: 400,
+      suggestionDebounceMs: 800,
+      agentDestination: "copilotChat" as const,
+      vsOpenCodeXExtensionInstalled: false,
     });
     expect(r.success).toBe(true);
   });
@@ -115,7 +122,9 @@ describe("webviewMessageSchemas (shared)", () => {
         suggestionLanguageChoice: "auto" as const,
         effectiveSuggestionLanguage: "en" as const,
         debugSuggestions: false,
-        suggestionDebounceMs: 400,
+        suggestionDebounceMs: 800,
+        agentDestination: "copilotChat" as const,
+        vsOpenCodeXExtensionInstalled: false,
       },
     };
     expect(webviewOutboundSettingsEnvelopeSchema.safeParse(envelope).success).toBe(

@@ -2,7 +2,7 @@
   "name": "ghost-prompt",
   "displayName": "GhostPrompt",
   "description": "Ghost-text completions for your Copilot prompts — write faster, think clearer.",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "publisher": "jaminsmoke",
   "author": "JaminSmoke",
   "icon": "media/img/icon.png",
@@ -69,6 +69,10 @@
       {
         "command": "ghostPrompt.clearProjectMemoryThisWorkspace",
         "title": "GhostPrompt: Clear Project Memory (This Workspace)"
+      },
+      {
+        "command": "ghostPrompt.runSuggestPipeline",
+        "title": "GhostPrompt: Run Suggest Pipeline (External / VSOpenCodeX API)"
       }
     ],
     "configuration": {
@@ -180,15 +184,15 @@
         },
         "ghostPrompt.suggestionDebounceMs": {
           "type": "number",
-          "default": 400,
+          "default": 800,
           "minimum": 150,
           "maximum": 2000,
-          "markdownDescription": "Delay after you stop typing before GhostPrompt requests a suggestion (webview debounce). Higher = fewer Copilot/OpenCode calls while typing; lower = faster ghost-text."
+          "markdownDescription": "Delay after you stop typing before GhostPrompt requests a suggestion (webview debounce). Higher = fewer Copilot/OpenCode calls while typing and fewer races with VSOpenCodeX; lower = faster ghost-text."
         },
         "ghostPrompt.preferVsOpenCodeXOpenCode": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "When GhostPrompt needs OpenCode, try to reuse the server started by the **VSOpenCodeX** extension (if installed) instead of spawning a second `opencode serve`. Requires VSOpenCodeX to expose `vsopencodex.getOpenCodeConnection`. If unavailable, GhostPrompt falls back to its embedded OpenCode server. See `Docs/Integrations/GhostPrompt-OpenCode-coexistence.md`."
+          "markdownDescription": "When GhostPrompt needs OpenCode, try to reuse the server started by the **VSOpenCodeX** extension (if installed) instead of spawning a second `opencode serve`. Requires VSOpenCodeX to expose `vsopencodex.getOpenCodeConnection`. If VSOpenCodeX is **not** installed, GhostPrompt falls back to its embedded OpenCode server. If VSOpenCodeX **is** installed and this is **on**, GhostPrompt **never** starts the embedded server after retries — fix the VSX connection or turn this **off** to use embedded only. See `Docs/Integrations/GhostPrompt-OpenCode-coexistence.md`."
         },
         "ghostPrompt.vsOpenCodeXProbeDelayMs": {
           "type": "number",
@@ -196,6 +200,29 @@
           "minimum": 0,
           "maximum": 3000,
           "markdownDescription": "Milliseconds to wait before calling VSOpenCodeX for an OpenCode connection (anti-race while both extensions activate). Set to **0** to skip delay. Ignored when VSOpenCodeX is not installed or **preferVsOpenCodeXOpenCode** is false."
+        },
+        "ghostPrompt.vsOpenCodeXConnectionMaxAttempts": {
+          "type": "number",
+          "default": 8,
+          "minimum": 1,
+          "maximum": 25,
+          "markdownDescription": "When **VSOpenCodeX** is installed and **preferVsOpenCodeXOpenCode** is on, GhostPrompt retries **`vsopencodex.getOpenCodeConnection`** this many times (with **vsOpenCodeXConnectionRetryGapMs** between attempts) **before** starting the embedded `opencode serve`. Prevents grabbing the default port while VSX is still registering commands or starting its server."
+        },
+        "ghostPrompt.vsOpenCodeXConnectionRetryGapMs": {
+          "type": "number",
+          "default": 650,
+          "minimum": 100,
+          "maximum": 8000,
+          "markdownDescription": "Pause in milliseconds between VSOpenCodeX connection retries (see **vsOpenCodeXConnectionMaxAttempts**). First attempt still uses **vsOpenCodeXProbeDelayMs** after activation."
+        },
+        "ghostPrompt.agentDestination": {
+          "type": "string",
+          "enum": [
+            "copilotChat",
+            "vsOpenCodeX"
+          ],
+          "default": "copilotChat",
+          "markdownDescription": "Where the **full prompt** is sent from. `copilotChat` keeps GhostPrompt’s inline composer and **Send to Copilot**. `vsOpenCodeX` disables that inline surface in the webview (chips stay); VSOpenCodeX drives focus and calls `ghostPrompt.runSuggestPipeline` with `{ text }` for suggestions. Inline UI updates are forwarded to VSOpenCodeX via `vsopencodex.ghostPromptInlineUi` when this is `vsOpenCodeX`. **Effective default:** if **VSOpenCodeX** is installed and you have **never** saved this key (User/Workspace), GhostPrompt behaves as **`vsOpenCodeX`** until you set it explicitly (Settings or **Destino** dropdown in the GhostPrompt view)."
         },
         "ghostPrompt.requestCooldownMs": {
           "type": "number",

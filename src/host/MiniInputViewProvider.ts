@@ -50,10 +50,13 @@ import {
   getGhostPromptSuggestionModelPolicy,
   getGhostPromptSuggestionStyle,
 } from "./ghostPromptHostWorkspaceGetters";
+import { handleGhostPromptSuggest } from "./handleGhostPromptSuggest";
 import {
   dispatchGhostPromptInboundMessage,
 } from "./ghostPromptWebviewInboundHandlers";
+import type { GhostPromptSuggestDeps } from "./ghostPromptSuggestPipeline";
 import { parseWebviewInboundMessage } from "./webviewProtocols";
+import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from "./vsOpenCodeXGhostPromptUiBridge";
 
 export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /** View ID for the activity bar container. */
@@ -97,6 +100,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     for (const instance of MiniInputViewProvider._instances) {
       instance._view?.webview.postMessage(message);
     }
+    forwardGhostPromptInlineUiToVsOpenCodeIfApplicable(message);
   }
 
   /** Propaga borrador a la otra vista GhostPrompt (Sidebar ↔ Panel). */
@@ -115,9 +119,65 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
 
   /** Vacía el composer en todas las vistas (p. ej. tras enviar al chat). */
   private static _broadcastClearAll(): void {
+    forwardGhostPromptInlineUiToVsOpenCodeIfApplicable({
+      type: "clear",
+      broadcast: true,
+    });
     for (const instance of MiniInputViewProvider._instances) {
       instance._view?.webview.postMessage({ type: "clear" });
     }
+  }
+
+  private static ghostPromptSuggestDeps(
+    provider: MiniInputViewProvider | undefined,
+  ): GhostPromptSuggestDeps {
+    const base: GhostPromptSuggestDeps = {
+      broadcastUi: MiniInputViewProvider._broadcastUi,
+      getSuggestionModelPolicy: () => getGhostPromptSuggestionModelPolicy(),
+      getSelectedModelId: () => getGhostPromptSelectedModelId(),
+      getSuggestionStyle: () => getGhostPromptSuggestionStyle(),
+      getContextMode: () => getGhostPromptContextMode(),
+      getSuggestionLanguageMode: () => getGhostPromptSuggestionLanguageMode(),
+      getSuggestionLanguage: () => getGhostPromptSuggestionLanguage(),
+      getMaxSuggestionChars: () => getGhostPromptMaxSuggestionChars(),
+      collectProjectContext: () => collectGhostPromptProjectContext(),
+    };
+    if (!provider || !getGhostPromptProjectMemoryEnabled()) {
+      return base;
+    }
+    return {
+      ...base,
+      reconcileGhostPromptBootstrap: (args) =>
+        reconcileProjectMemoryForSuggest({
+          store: provider._getGhostProjectMemoryStore(),
+          ...args,
+        }),
+      writeGhostPromptBootstrapSnapshot: (snapshot) =>
+        writeReconciledProjectBootstrapSnapshot({
+          store: provider._getGhostProjectMemoryStore(),
+          workspaceKey: snapshot.workspaceKey,
+          mergedItems: snapshot.mergedItems,
+        }),
+    };
+  }
+
+  /**
+   * API para VSOpenCodeX (executeCommand): ejecuta el pipeline de suggestion con el texto actual del chat VSX.
+   * Ignorar cuando el usuario usa destino Copilot (sigue usando la webview).
+   */
+  public static async runSuggestFromExternalHost(text: string): Promise<void> {
+    const trimmed = text.trim();
+    if (!trimmed) {
+      return;
+    }
+    const first =
+      [...MiniInputViewProvider._instances][0] ??
+      undefined;
+    const captureId = Date.now();
+    await handleGhostPromptSuggest(
+      { type: "suggest", text: trimmed, captureId },
+      MiniInputViewProvider.ghostPromptSuggestDeps(first),
+    );
   }
 
   private async _postSettings(webview: vscode.Webview): Promise<void> {
@@ -196,32 +256,8 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         broadcastSettingsToAllViews:
           MiniInputViewProvider._broadcastSettingsToAllViews,
         broadcastClearAll: MiniInputViewProvider._broadcastClearAll,
-        suggestDeps: {
-          broadcastUi: MiniInputViewProvider._broadcastUi,
-          getSuggestionModelPolicy: () => getGhostPromptSuggestionModelPolicy(),
-          getSelectedModelId: () => getGhostPromptSelectedModelId(),
-          getSuggestionStyle: () => getGhostPromptSuggestionStyle(),
-          getContextMode: () => getGhostPromptContextMode(),
-          getSuggestionLanguageMode: () => getGhostPromptSuggestionLanguageMode(),
-          getSuggestionLanguage: () => getGhostPromptSuggestionLanguage(),
-          getMaxSuggestionChars: () => getGhostPromptMaxSuggestionChars(),
-          collectProjectContext: () => collectGhostPromptProjectContext(),
-          ...(getGhostPromptProjectMemoryEnabled()
-            ? {
-                reconcileGhostPromptBootstrap: (args) =>
-                  reconcileProjectMemoryForSuggest({
-                    store: this._getGhostProjectMemoryStore(),
-                    ...args,
-                  }),
-                writeGhostPromptBootstrapSnapshot: (snapshot) =>
-                  writeReconciledProjectBootstrapSnapshot({
-                    store: this._getGhostProjectMemoryStore(),
-                    workspaceKey: snapshot.workspaceKey,
-                    mergedItems: snapshot.mergedItems,
-                  }),
-              }
-            : {}),
-        },
+        suggestDeps:
+          MiniInputViewProvider.ghostPromptSuggestDeps(this),
       });
     });
   }

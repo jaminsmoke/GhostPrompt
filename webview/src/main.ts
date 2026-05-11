@@ -11,7 +11,7 @@
  *   { type: 'clear' }
  *   { type: 'draftSync', text: string, originViewId: string }
  *   { type: 'draftHydrate', text: string }
- *   { type: 'settings', settings: { ..., suggestionDebounceMs: number, ... } }  // ms idle antes de enviar suggest (ghostPrompt.suggestionDebounceMs)
+ *   { type: 'settings', settings: { ..., suggestionDebounceMs: number, agentDestination, vsOpenCodeXExtensionInstalled, ... } }
  *
  * Outbound (webview → host):
  *   { type: 'suggest',  text: string, captureId: number }
@@ -42,6 +42,11 @@ import { postToHost } from "./protocol/postToHost";
   const ghostInline = document.getElementById("ghost-inline") as HTMLElement;
   const ghostMeasure = document.getElementById("ghost-measure") as HTMLElement;
   const sendBtn = document.getElementById("send-btn") as HTMLElement;
+  const toolbarEl = document.querySelector(".toolbar") as HTMLElement | null;
+  const vsxSurfaceNote = document.getElementById(
+    "gp-vsx-surface-note",
+  ) as HTMLElement | null;
+  const hintEl = document.querySelector(".toolbar .hint") as HTMLElement | null;
   const statusEl = document.getElementById("status-text") as HTMLElement;
   const settingGroups = Array.from(document.querySelectorAll(".setting-group"));
   const debugBtn = document.getElementById("debug-btn") as HTMLElement;
@@ -52,6 +57,12 @@ import { postToHost } from "./protocol/postToHost";
   const completionBackendSelect = document.getElementById(
     "completion-backend-select",
   );
+  const agentDestinationRow = document.getElementById(
+    "agent-destination-row",
+  ) as HTMLElement | null;
+  const agentDestinationSelect = document.getElementById(
+    "agent-destination-select",
+  ) as HTMLSelectElement | null;
 
   /** Para etiquetas tier en español vs inglés (`Gratis` / `INCLUDED`). */
   let lastSuggestionUiLang = "en";
@@ -70,7 +81,7 @@ import { postToHost } from "./protocol/postToHost";
   /** Temporizador de debounce para las solicitudes de suggestion. */
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   /** Ms tras dejar de teclear antes de enviar `suggest` (viene del host / `ghostPrompt.suggestionDebounceMs`). */
-  let suggestionDebounceMs = 400;
+  let suggestionDebounceMs = 800;
 
   /** Evita eco al aplicar borrador remoto (host → webview). */
   let applyingRemoteDraft = false;
@@ -100,6 +111,34 @@ import { postToHost } from "./protocol/postToHost";
 
   /** Último bloque `settings` del host — texto del menú composición (Fase C). */
   let lastComposeSettings: Record<string, unknown> | null = null;
+
+  function applyAgentDestinationFromSettings(settings: Record<string, unknown>) {
+    const dest =
+      settings.agentDestination === "vsOpenCodeX" ? "vsOpenCodeX" : "copilotChat";
+    const vsx = dest === "vsOpenCodeX";
+    document.body.classList.toggle("gp-dest-vsx", vsx);
+    if (vsxSurfaceNote) {
+      vsxSurfaceNote.hidden = !vsx;
+    }
+    input.disabled = vsx;
+    sendBtn.toggleAttribute("disabled", vsx);
+    if (toolbarEl) {
+      toolbarEl.classList.toggle("gp-vsx-toolbar-hidden", vsx);
+    }
+    if (hintEl) {
+      hintEl.textContent = vsx
+        ? "Destino VSOpenCodeX: redacta y envía en VSOpenCodeX; los chips de arriba siguen activos."
+        : "Tab: aceptar sugerencia · Enter: enviar · Shift+Enter: nueva línea";
+    }
+    if (vsx) {
+      clearGhost();
+      clearStatus();
+      if (debounceTimer !== null) {
+        clearTimeout(debounceTimer);
+        debounceTimer = null;
+      }
+    }
+  }
 
   function refreshComposeSummary() {
     const sumEl = document.getElementById("compose-options-summary");
@@ -146,6 +185,9 @@ import { postToHost } from "./protocol/postToHost";
   // ── Envío de suggestion al host (con debounce) ───────────────────────────
 
   function requestSuggestion() {
+    if (document.body.classList.contains("gp-dest-vsx")) {
+      return;
+    }
     if (debounceTimer !== null) {
       clearTimeout(debounceTimer);
     }
@@ -255,6 +297,9 @@ import { postToHost } from "./protocol/postToHost";
   // ── Envío al chat ────────────────────────────────────────────────────────
 
   function send() {
+    if (document.body.classList.contains("gp-dest-vsx")) {
+      return;
+    }
     const text = input.value.trim();
     if (!text) {
       return;
@@ -329,6 +374,20 @@ import { postToHost } from "./protocol/postToHost";
     postToHost(vscode, {
       type: "updateSetting",
       key: "completionProvider",
+      value: v,
+    });
+  });
+  agentDestinationSelect?.addEventListener("change", () => {
+    if (!(agentDestinationSelect instanceof HTMLSelectElement)) {
+      return;
+    }
+    const v = agentDestinationSelect.value;
+    if (v !== "copilotChat" && v !== "vsOpenCodeX") {
+      return;
+    }
+    postToHost(vscode, {
+      type: "updateSetting",
+      key: "agentDestination",
       value: v,
     });
   });
@@ -500,6 +559,15 @@ import { postToHost } from "./protocol/postToHost";
           lastCompletionUiKind === "opencode" || lastCompletionUiKind === "multi";
         completionBackendSelect.classList.toggle("backend-opencode", ocAccent);
       }
+      const vsxInstalled = Boolean(settings.vsOpenCodeXExtensionInstalled);
+      if (agentDestinationRow) {
+        agentDestinationRow.hidden = !vsxInstalled;
+      }
+      if (agentDestinationSelect instanceof HTMLSelectElement) {
+        const dest =
+          settings.agentDestination === "vsOpenCodeX" ? "vsOpenCodeX" : "copilotChat";
+        agentDestinationSelect.value = dest;
+      }
       lastSuggestionUiLang =
         settings.effectiveSuggestionLanguage === "es" ? "es" : "en";
       setActiveChip("suggestionModelPolicy", settings.suggestionModelPolicy);
@@ -520,6 +588,7 @@ import { postToHost } from "./protocol/postToHost";
       debugBtn.dataset.enabled = String(isDebug);
       debugBtn.textContent = isDebug ? "Debug: on" : "Debug: off";
       debugBtn.setAttribute("aria-pressed", String(isDebug));
+      applyAgentDestinationFromSettings(settings as Record<string, unknown>);
     } else if (message.type === "languageEffective") {
       lastSuggestionUiLang = message.language === "es" ? "es" : "en";
       setLanguageAutoLabel(message.language);

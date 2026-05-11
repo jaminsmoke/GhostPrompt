@@ -92,5 +92,15 @@ export async function applyWebviewUpdateSetting(
       Boolean(message.value),
       vscode.ConfigurationTarget.Global,
     );
+    return;
+  }
+  if (message.key === "agentDestination") {
+    const value =
+      message.value === "vsOpenCodeX" ? "vsOpenCodeX" : "copilotChat";
+    await config.update(
+      "agentDestination",
+      value,
+      vscode.ConfigurationTarget.Global,
+    );
   }
 }

@@ -24,6 +24,22 @@
             <option value="opencode">OpenCode</option>
           </select>
         </div>
+        <div
+          class="setting-group"
+          data-key="agentDestination"
+          id="agent-destination-row"
+          hidden
+        >
+          <span class="setting-label">Destino</span>
+          <select
+            id="agent-destination-select"
+            class="completion-backend-select chip-backend agent-destination-select"
+            aria-label="Destino del prompt (Copilot Chat o VSOpenCodeX)"
+          >
+            <option value="copilotChat">Copilot Chat</option>
+            <option value="vsOpenCodeX">VSOpenCodeX</option>
+          </select>
+        </div>
         <div class="setting-group" data-key="suggestionModelPolicy">
           <span class="setting-label">Modelo</span>
           <button
@@ -159,6 +175,16 @@
           Debug: off
         </button>
       </div>
+      <p
+        id="gp-vsx-surface-note"
+        class="gp-vsx-surface-note"
+        role="status"
+        hidden
+      >
+        El chat inline está desactivado: el destino del agente es VSOpenCodeX. Usa el
+        chat de VSOpenCodeX para redactar y enviar; las sugerencias siguen el modelo y
+        chips configurados aquí.
+      </p>
       <div class="input-stack">
         <pre id="ghost-inline" class="ghost-inline" aria-hidden="true"></pre>
         <pre

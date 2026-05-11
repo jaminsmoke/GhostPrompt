@@ -2,7 +2,7 @@
 
 Documento de **diseño compartido** entre **VSOpenCodeX** y **GhostPrompt**. Actualizar ambos repos cuando cambie el contrato.
 
-**Relacionado:** [GhostPrompt-OpenCode-coexistence.md](./GhostPrompt-OpenCode-coexistence.md) (puerto, `getOpenCodeConnection`, anti duplicado `opencode serve`). Implementación y fases en GhostPrompt: [Roadmap v0.6](../Plans/Roadmaps/Roadmap-v0.6-vsopencodex-coexistence.md) (**Fase C** alineada con destino VSX = superficie VSX; Send lo gestiona VSX).
+**Relacionado:** [GhostPrompt-OpenCode-coexistence.md](./GhostPrompt-OpenCode-coexistence.md) (puerto, `getOpenCodeConnection`, anti duplicado `opencode serve`). Implementación y fases en GhostPrompt: [Roadmap v0.5](../Plans/Roadmaps/Roadmap-v0.5-vsopencodex-coexistence.md) (**Fase C** alineada con destino VSX = superficie VSX; Send lo gestiona VSX).
 
 ---
 
@@ -83,7 +83,7 @@ El **motor** sigue siendo elegible en GhostPrompt **en los cuatro escenarios**; 
 - Lógica condicional: destino VSX ⇒ no `sendToChat` Copilot para ese modo; política de superficie inline/webview como arriba.
 - Situación 2: documentar reuso SDK VSX vs servidor propio.
 - Tests y QA por fila de la matriz.
-- Roadmap GhostPrompt: [**v0.6 Fase C**](../Plans/Roadmaps/Roadmap-v0.6-vsopencodex-coexistence.md) = destino VSX ⇒ superficie VSX (Send y foco en VSX); en la webview GP solo se desactivan **inline + composer/send a Copilot**; **config** sigue activa; contratos VSX para render de suggestions.
+- Roadmap GhostPrompt: [**v0.5 Fase C**](../Plans/Roadmaps/Roadmap-v0.5-vsopencodex-coexistence.md) = destino VSX ⇒ superficie VSX (Send y foco en VSX); en la webview GP solo se desactivan **inline + composer/send a Copilot**; **config** sigue activa; contratos VSX para render de suggestions.
 
 ### VSOpenCodeX
 

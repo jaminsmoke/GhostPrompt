@@ -15,11 +15,12 @@ function read(rel: string): string {
 }
 
 describe("webview toolbar parity (v0.3.1 Fase A)", () => {
-  it("index.html defines exactly five setting groups with stable data-keys", () => {
+  it("index.html defines exactly six setting groups with stable data-keys", () => {
     const html = read("webview/index.html");
-    expect(html.match(/class="setting-group"/g)?.length).toBe(5);
+    expect(html.match(/class="setting-group"/g)?.length).toBe(6);
     for (const key of [
       "completionProvider",
+      "agentDestination",
       "suggestionModelPolicy",
       "suggestionStyle",
       "contextMode",
@@ -33,12 +34,15 @@ describe("webview toolbar parity (v0.3.1 Fase A)", () => {
     const html = read("webview/index.html");
     for (const id of [
       "completion-backend-select",
+      "agent-destination-select",
+      "agent-destination-row",
       "compose-options-details",
       "compose-options-summary",
       "model-select",
       "model-runtime-label",
       "debug-btn",
       "prompt-input",
+      "gp-vsx-surface-note",
       "send-btn",
     ]) {
       expect(html).toContain(`id="${id}"`);
