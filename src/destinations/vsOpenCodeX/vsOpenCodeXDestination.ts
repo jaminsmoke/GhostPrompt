@@ -1,11 +1,11 @@
 import * as vscode from "vscode";
 import { logSuggestionDebug } from "../../debug/SuggestionDebug";
-import { VS_OPEN_CODE_X_EXTENSION_ID } from "../../engines/opencode/vsOpenCodeXConnection";
 import {
   type DestinationProvider,
   getGhostPromptAgentDestination,
+  registerDestination,
+  VS_OPEN_CODE_X_EXTENSION_ID,
 } from "../destinationRegistry";
-import { registerDestination } from "../destinationRegistry";
 
 /** Comando en VSOpenCodeX: mismo payload que postMessage GP sin campo `broadcast`. */
 export const VS_OPEN_CODE_X_GHOST_PROMPT_INLINE_UI =

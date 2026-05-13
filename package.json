@@ -202,33 +202,7 @@
           "default": 800,
           "minimum": 150,
           "maximum": 2000,
-          "markdownDescription": "Delay after you stop typing before GhostPrompt requests a suggestion (webview debounce). Higher = fewer Copilot/OpenCode calls while typing and fewer races with VSOpenCodeX; lower = faster ghost-text."
-        },
-        "ghostPrompt.preferVsOpenCodeXOpenCode": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "When GhostPrompt needs OpenCode, try to reuse the server started by the **VSOpenCodeX** extension (if installed) instead of spawning a second `opencode serve`. Requires VSOpenCodeX to expose `vsopencodex.getOpenCodeConnection`. If VSOpenCodeX is **not** installed, GhostPrompt falls back to its embedded OpenCode server. If VSOpenCodeX **is** installed and this is **on**, GhostPrompt **never** starts the embedded server after retries — fix the VSX connection or turn this **off** to use embedded only. See `Docs/Integrations/GhostPrompt-OpenCode-coexistence.md`."
-        },
-        "ghostPrompt.vsOpenCodeXProbeDelayMs": {
-          "type": "number",
-          "default": 800,
-          "minimum": 0,
-          "maximum": 3000,
-          "markdownDescription": "Milliseconds to wait before calling VSOpenCodeX for an OpenCode connection (anti-race while both extensions activate). Set to **0** to skip delay. Ignored when VSOpenCodeX is not installed or **preferVsOpenCodeXOpenCode** is false."
-        },
-        "ghostPrompt.vsOpenCodeXConnectionMaxAttempts": {
-          "type": "number",
-          "default": 8,
-          "minimum": 1,
-          "maximum": 25,
-          "markdownDescription": "When **VSOpenCodeX** is installed and **preferVsOpenCodeXOpenCode** is on, GhostPrompt retries **`vsopencodex.getOpenCodeConnection`** this many times (with **vsOpenCodeXConnectionRetryGapMs** between attempts) **before** starting the embedded `opencode serve`. Prevents grabbing the default port while VSX is still registering commands or starting its server."
-        },
-        "ghostPrompt.vsOpenCodeXConnectionRetryGapMs": {
-          "type": "number",
-          "default": 650,
-          "minimum": 100,
-          "maximum": 8000,
-          "markdownDescription": "Pause in milliseconds between VSOpenCodeX connection retries (see **vsOpenCodeXConnectionMaxAttempts**). First attempt still uses **vsOpenCodeXProbeDelayMs** after activation."
+          "markdownDescription": "Delay after you stop typing before GhostPrompt requests a suggestion (webview debounce). Higher = fewer Copilot/OpenCode calls while typing and fewer races; lower = faster ghost-text."
         },
         "ghostPrompt.agentDestination": {
           "type": "string",

@@ -57,5 +57,5 @@ export {
   type CompletionSourceId,
 } from "./completionSources";
 export { listMergedSuggestionModels } from "./catalog/mergedModelCatalog";
-export { listOpencodeSuggestionModels } from "./catalog/opencodeModelCatalog";
+export { listOpencodeSuggestionModels } from "../engines/opencode/catalog/opencodeModelCatalog";
 export { listOllamaSuggestionModels } from "./catalog/ollamaModelCatalog";

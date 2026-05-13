@@ -2,9 +2,9 @@
  * Tier / pricing solo desde metadatos del catálogo OpenCode (`config.providers`).
  * Sin adivinar por nombre de modelo (phi, GPT-*, etc.): si la API no dice precio/free → **unknown**.
  *
- * Política de producto / routing (`nonPremiumOnly`), no “prompt” al LM. Ver `Docs/ARCHITECTURE.md` §3.
+ * Política de producto / routing (`nonPremiumOnly`), no "prompt" al LM. Ver `Docs/ARCHITECTURE.md` §3.
  */
-import type { SuggestionModelTier } from "../types";
+import type { SuggestionModelTier } from "../../../completion/types";
 
 function parsePricingMultiplier(pricing: string): number | undefined {
   const match = /^([0-9]+(?:\.[0-9]+)?)x$/i.exec(pricing.trim());
@@ -45,7 +45,6 @@ export function classifyOpencodeModelTier(
     return { tier: "included", pricing: pricingRaw || undefined };
   }
 
-  // Proveedor embebido del runtime OpenCode (catálogo, no nombre de modelo).
   if (providerID === "opencode") {
     return { tier: "included", pricing: pricingRaw || undefined };
   }

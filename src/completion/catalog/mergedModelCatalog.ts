@@ -4,7 +4,7 @@
  */
 import type { SuggestionModelDescriptor, SuggestionModelPolicy } from "../types";
 import { listSuggestionModels } from "./modelCatalog";
-import { listOpencodeSuggestionModels } from "./opencodeModelCatalog";
+import { listOpencodeSuggestionModels } from "../../engines/opencode/catalog/opencodeModelCatalog";
 import { listOllamaSuggestionModels } from "./ollamaModelCatalog";
 import type { CompletionSourceId } from "../completionSources";
 

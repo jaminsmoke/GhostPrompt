@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeOpencodeProviderModels } from "../src/completion/catalog/normalizeOpencodeProviderModels";
+import { normalizeOpencodeProviderModels } from "../src/engines/opencode/catalog/normalizeOpencodeProviderModels";
 
 describe("normalizeOpencodeProviderModels", () => {
   it("normalizes object map and array forms equivalently", () => {

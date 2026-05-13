@@ -1,14 +1,13 @@
 /**
- * Catálogo de modelos OpenCode para el selector webview (`config.providers()` vía caché snapshot).
+ * Catálogo de modelos OpenCode para el selector webview (`config.providers()` vía API client).
  * Ver `Docs/ARCHITECTURE.md` §3 — Catálogo OpenCode y merge.
  */
 import * as vscode from "vscode";
 
 import { normalizeOpencodeProviderModels } from "./normalizeOpencodeProviderModels";
 import { classifyOpencodeModelTier } from "./opencodeModelTier";
-import type { SuggestionModelDescriptor, SuggestionModelPolicy } from "../types";
-import { getOpenCodeProvidersSnapshot } from "../../opencode/opencodeProvidersSnapshot";
-import { getOpenCodeRuntime } from "../../opencode/OpenCodeRuntime";
+import type { SuggestionModelDescriptor, SuggestionModelPolicy } from "../../../completion/types";
+import { createOpenCodeClient } from "../opencodeApiClient";
 
 type OpencodeProvidersBundle = {
   providers?: Array<{
@@ -20,8 +19,8 @@ type OpencodeProvidersBundle = {
 
 /**
  * Lista modelos instalados/configurados en OpenCode para el dropdown.
- * Vacío si el runtime no arranca o no hay CLI.
- * Con **`nonPremiumOnly`** se ocultan modelos clasificados como **premium** según metadatos del catálogo (p. ej. multiplicador distinto de `0x`).
+ * Vacío si no hay conexión o no hay CLI.
+ * Con **`nonPremiumOnly`** se ocultan modelos clasificados como **premium** según metadatos del catálogo.
  */
 export async function listOpencodeSuggestionModels(
   policy: SuggestionModelPolicy,
@@ -33,24 +32,27 @@ export async function listOpencodeSuggestionModels(
       .filter((id): id is string => typeof id === "string" && id.trim().length > 0),
   );
 
-  const runtime = getOpenCodeRuntime();
-  const started = await runtime.start();
-  if (!started.ok) {
+  const cfg = vscode.workspace.getConfiguration("ghostPrompt");
+  const port = cfg.get<number>("opencodePort");
+  const authToken = cfg.get<string>("opencodeAuthToken");
+
+  let client: unknown;
+  try {
+    client = await createOpenCodeClient({ port, authToken });
+  } catch {
     return [];
   }
 
-  const rawClient = runtime.getClient();
-  if (!rawClient) {
-    return [];
-  }
-
-  const client = rawClient as {
+  const sdkClient = client as {
     config: { providers(): Promise<unknown> };
   };
 
   try {
-    const envelope = await getOpenCodeProvidersSnapshot(client);
-    const data = envelope as OpencodeProvidersBundle | undefined;
+    const raw = await sdkClient.config.providers();
+    const data =
+      raw && typeof raw === "object" && "data" in raw
+        ? (raw as { data?: OpencodeProvidersBundle }).data
+        : undefined;
     const providers = data?.providers ?? [];
     const descriptors: SuggestionModelDescriptor[] = [];
 

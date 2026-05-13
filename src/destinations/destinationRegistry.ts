@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
-import { VS_OPEN_CODE_X_EXTENSION_ID } from "../engines/opencode/vsOpenCodeXConnection";
+
+export const VS_OPEN_CODE_X_EXTENSION_ID = "jaminsmoke.vsopencodex";
 
 export type DestinationId = "copilotChat" | "vsOpenCodeX";
 

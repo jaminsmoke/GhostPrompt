@@ -27,7 +27,6 @@
  *   - Contratos Zod (`shared/webviewMessageSchemas.ts` / `webviewProtocols.ts`): entrada webview → host y salida `settings`.
  */
 import * as vscode from "vscode";
-import { warmOpenCodeRuntimeIfConfigured } from "../opencode/warmOpenCodeRuntime";
 import { ghostPromptSessionStore } from "../session/GhostPromptSessionStore";
 import { buildAndPostGhostPromptSettings } from "./ghostPromptSettingsPostMessage";
 import { buildGhostPromptWebviewHtml } from "./ghostPromptWebviewHtml";
@@ -240,7 +239,6 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     };
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
-    warmOpenCodeRuntimeIfConfigured();
 
     webviewView.webview.onDidReceiveMessage(async (raw: unknown) => {
       const message = parseWebviewInboundMessage(raw);

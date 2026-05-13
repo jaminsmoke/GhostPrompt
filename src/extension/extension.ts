@@ -8,15 +8,9 @@
 import * as vscode from "vscode";
 import { MiniInputViewProvider } from "../host/MiniInputViewProvider";
 import { toggleSuggestionDebug } from "../debug/SuggestionDebug";
-import {
-  getOpenCodeRuntime,
-  invalidateOpenCodeProvidersSnapshot,
-  invalidateOpencodeInlineSuggestionSessionPool,
-  resetOpencodeInlineLmQueue,
-  syncOpenCodeRuntimeFromConfig,
-} from "../opencode";
-import { registerProjectMemory } from "../projectMemory/activateProjectMemory";
+import { resetClient } from "../engines/opencode/opencodeApiClient";
 import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from "../destinations/vsOpenCodeX/vsOpenCodeXDestination";
+import { registerProjectMemory } from "../projectMemory/activateProjectMemory";
 
 export function activate(context: vscode.ExtensionContext): void {
   registerProjectMemory(context);
@@ -54,20 +48,8 @@ export function activate(context: vscode.ExtensionContext): void {
       await MiniInputViewProvider.runSuggestFromExternalHost(text);
     },
   );
-  const openCodeRuntime = getOpenCodeRuntime();
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (
-        e.affectsConfiguration("ghostPrompt.completionProvider") ||
-        e.affectsConfiguration("ghostPrompt.enabledCompletionSources") ||
-        e.affectsConfiguration("ghostPrompt.preferVsOpenCodeXOpenCode") ||
-        e.affectsConfiguration("ghostPrompt.vsOpenCodeXProbeDelayMs") ||
-        e.affectsConfiguration("ghostPrompt.vsOpenCodeXConnectionMaxAttempts") ||
-        e.affectsConfiguration("ghostPrompt.vsOpenCodeXConnectionRetryGapMs")
-      ) {
-        openCodeRuntime.stop();
-        void syncOpenCodeRuntimeFromConfig(openCodeRuntime);
-      }
       if (e.affectsConfiguration("ghostPrompt")) {
         void MiniInputViewProvider.refreshSettingsAllViews();
       }
@@ -76,7 +58,6 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     }),
   );
-  void syncOpenCodeRuntimeFromConfig(openCodeRuntime);
   notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
 
   context.subscriptions.push(
@@ -95,8 +76,5 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export function deactivate(): void {
-  invalidateOpenCodeProvidersSnapshot();
-  invalidateOpencodeInlineSuggestionSessionPool();
-  resetOpencodeInlineLmQueue();
-  getOpenCodeRuntime().stop();
+  resetClient();
 }

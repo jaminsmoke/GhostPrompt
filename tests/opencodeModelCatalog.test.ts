@@ -1,79 +1,62 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockStart, mockGetClient, mockGetOpenCodeRuntime } = vi.hoisted(() => {
-  const mockStart = vi.fn();
-  const mockGetClient = vi.fn();
-  const mockGetOpenCodeRuntime = vi.fn(() => ({
-    start: mockStart,
-    getClient: mockGetClient,
-  }));
-  return { mockStart, mockGetClient, mockGetOpenCodeRuntime };
+const { configProvidersMock, fakeSdkClient } = vi.hoisted(() => {
+  const configProvidersMock = vi.fn();
+  const fakeSdkClient = {
+    config: { providers: configProvidersMock },
+  };
+  return { configProvidersMock, fakeSdkClient };
 });
 
-vi.mock("../src/opencode/OpenCodeRuntime", () => ({
-  getOpenCodeRuntime: mockGetOpenCodeRuntime,
+vi.mock("@opencode-ai/sdk", () => ({
+  createOpencodeClient: vi.fn(() => fakeSdkClient),
 }));
 
-const configGetMock = vi.fn();
-
+const cfgGetMock = vi.fn();
 vi.mock("vscode", () => ({
   workspace: {
     getConfiguration: () => ({
-      get: configGetMock,
+      get: cfgGetMock,
     }),
   },
 }));
 
-import { listOpencodeSuggestionModels } from "../src/completion/catalog/opencodeModelCatalog";
-import { invalidateOpenCodeProvidersSnapshot } from "../src/opencode/opencodeProvidersSnapshot";
+import { listOpencodeSuggestionModels } from "../src/engines/opencode/catalog/opencodeModelCatalog";
+
+beforeEach(() => {
+  vi.resetAllMocks();
+  cfgGetMock.mockImplementation((key: string, defaultValue: unknown) => {
+    if (key === "opencodeExcludedModelIds") return [];
+    if (key === "opencodePort") return 4096;
+    if (key === "opencodeAuthToken") return undefined;
+    return defaultValue;
+  });
+});
 
 describe("listOpencodeSuggestionModels", () => {
-  beforeEach(() => {
-    invalidateOpenCodeProvidersSnapshot();
-    mockStart.mockReset();
-    mockGetClient.mockReset();
-    mockGetOpenCodeRuntime.mockClear();
-    configGetMock.mockReset();
-    configGetMock.mockImplementation((key: string, defaultValue: unknown) => {
-      if (key === "opencodeExcludedModelIds") {
-        return [];
-      }
-      return defaultValue;
+  it("returns empty array when createOpenCodeClient throws", async () => {
+    const sdk = await import("@opencode-ai/sdk");
+    vi.mocked(sdk.createOpencodeClient).mockImplementation(() => {
+      throw new Error("CLI missing");
     });
-  });
-
-  it("returns empty array when runtime start fails", async () => {
-    mockStart.mockResolvedValue({ ok: false, error: "no cli" });
     const models = await listOpencodeSuggestionModels("nonPremiumOnly");
     expect(models).toEqual([]);
-    expect(mockGetClient).not.toHaveBeenCalled();
-  });
-
-  it("returns empty array when client is missing", async () => {
-    mockStart.mockResolvedValue({ ok: true });
-    mockGetClient.mockReturnValue(undefined);
-    expect(await listOpencodeSuggestionModels("nonPremiumOnly")).toEqual([]);
   });
 
   it("maps models array from config.providers() into descriptors", async () => {
-    mockStart.mockResolvedValue({ ok: true });
-    mockGetClient.mockReturnValue({
-      config: {
-        providers: async () => ({
-          data: {
-            providers: [
-              {
-                id: "openai",
-                name: "OpenAI",
-                models: [
-                  { id: "gpt-4o-mini", name: "GPT-4o mini", pricing: "0x" },
-                  { id: "gpt-4", name: "GPT-4", pricing: "1x" },
-                ],
-              },
+    configProvidersMock.mockResolvedValue({
+      data: {
+        providers: [
+          {
+            id: "openai",
+            name: "OpenAI",
+            models: [
+              { id: "gpt-4o-mini", name: "GPT-4o mini", pricing: "0x" },
+              { id: "gpt-4", name: "GPT-4", pricing: "1x" },
             ],
-            default: {},
           },
-        }),
+        ],
+        default: {},
       },
     });
 
@@ -90,23 +73,18 @@ describe("listOpencodeSuggestionModels", () => {
   });
 
   it("maps config.providers() map-shaped models into descriptors", async () => {
-    mockStart.mockResolvedValue({ ok: true });
-    mockGetClient.mockReturnValue({
-      config: {
-        providers: async () => ({
-          data: {
-            providers: [
-              {
-                id: "anthropic",
-                name: "Anthropic",
-                models: {
-                  m1: { id: "claude-3", name: "Claude 3" },
-                },
-              },
-            ],
-            default: {},
+    configProvidersMock.mockResolvedValue({
+      data: {
+        providers: [
+          {
+            id: "anthropic",
+            name: "Anthropic",
+            models: {
+              m1: { id: "claude-3", name: "Claude 3" },
+            },
           },
-        }),
+        ],
+        default: {},
       },
     });
 
@@ -121,30 +99,25 @@ describe("listOpencodeSuggestionModels", () => {
   });
 
   it("respects ghostPrompt.opencodeExcludedModelIds", async () => {
-    configGetMock.mockImplementation((key: string, defaultValue: unknown) => {
-      if (key === "opencodeExcludedModelIds") {
-        return ["anthropic/claude-3"];
-      }
+    cfgGetMock.mockImplementation((key: string, defaultValue: unknown) => {
+      if (key === "opencodeExcludedModelIds") return ["anthropic/claude-3"];
+      if (key === "opencodePort") return 4096;
+      if (key === "opencodeAuthToken") return undefined;
       return defaultValue;
     });
 
-    mockStart.mockResolvedValue({ ok: true });
-    mockGetClient.mockReturnValue({
-      config: {
-        providers: async () => ({
-          data: {
-            providers: [
-              {
-                id: "anthropic",
-                name: "Anthropic",
-                models: {
-                  m1: { id: "claude-3", name: "Claude 3" },
-                },
-              },
-            ],
-            default: {},
+    configProvidersMock.mockResolvedValue({
+      data: {
+        providers: [
+          {
+            id: "anthropic",
+            name: "Anthropic",
+            models: {
+              m1: { id: "claude-3", name: "Claude 3" },
+            },
           },
-        }),
+        ],
+        default: {},
       },
     });
 
@@ -152,15 +125,7 @@ describe("listOpencodeSuggestionModels", () => {
   });
 
   it("returns empty on providers() throw", async () => {
-    mockStart.mockResolvedValue({ ok: true });
-    mockGetClient.mockReturnValue({
-      config: {
-        providers: async () => {
-          throw new Error("network");
-        },
-      },
-    });
-
+    configProvidersMock.mockRejectedValue(new Error("network"));
     expect(await listOpencodeSuggestionModels("nonPremiumOnly")).toEqual([]);
   });
 });
