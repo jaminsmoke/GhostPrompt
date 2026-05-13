@@ -5,10 +5,11 @@
 import type { SuggestionModelDescriptor, SuggestionModelPolicy } from "../types";
 import { listSuggestionModels } from "./modelCatalog";
 import { listOpencodeSuggestionModels } from "./opencodeModelCatalog";
+import { listOllamaSuggestionModels } from "./ollamaModelCatalog";
 import type { CompletionSourceId } from "../completionSources";
 
 /**
- * Concatena modelos Copilot y OpenCode; deduplica por `id` (prioriza el primero: Copilot).
+ * Concatena modelos Copilot + OpenCode + Ollama; deduplica por `id` (prioriza el primero: Copilot).
  */
 export async function listMergedSuggestionModels(
   policy: SuggestionModelPolicy,
@@ -20,6 +21,9 @@ export async function listMergedSuggestionModels(
   }
   if (sources.includes("opencode")) {
     merged.push(...(await listOpencodeSuggestionModels(policy)));
+  }
+  if (sources.includes("ollama")) {
+    merged.push(...(await listOllamaSuggestionModels(policy)));
   }
 
   const seen = new Set<string>();

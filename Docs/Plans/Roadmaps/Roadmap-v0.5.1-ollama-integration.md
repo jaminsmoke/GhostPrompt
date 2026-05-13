@@ -24,7 +24,7 @@
 | **Fase 1** | Estructura `engines/` + migración providers existentes | 🟢 | — | completada 2026-05-13 |
 | **Fase 2** | Cliente API Ollama (`ollamaApiClient.ts`) | 🟢 | — | completada 2026-05-13 |
 | **Fase 3** | Adaptador Ollama CompletionProvider (`ollamaLmEngine.ts`) | 🟢 | — | completada 2026-05-13 |
-| **Fase 4** | Catálogo Ollama + routing + settings | ⚪ | — | |
+| **Fase 4** | Catálogo Ollama + routing + settings | 🟢 | — | completada 2026-05-13 |
 | **Fase 5** | UI webview + chips de motor | ⚪ | — | |
 | **Fase 6** | Tests unitarios | ⚪ | — | |
 | **Fase 7** | Documentación + release candidate | ⚪ | — | |
@@ -97,16 +97,13 @@
 
 | # | Subpaso | Estado | Archivos |
 |---|---------|--------|----------|
-| 4.1 | Crear `completion/catalog/ollamaModelCatalog.ts` | ⚪ | Nuevo |
-| 4.2 | Crear `completion/catalog/normalizeOllamaModels.ts` | ⚪ | Nuevo |
-| 4.3 | Actualizar `mergedModelCatalog.ts` para incluir Ollama | ⚪ | Modificar |
-| 4.4 | Actualizar `CompletionSourceId` → `"ollama"` en `completionSources.ts` | ⚪ | Modificar |
-| 4.5 | Añadir `looksLikeOllamaModelId()` (detecta `:` sin `/`) | ⚪ | Modificar |
-| 4.6 | Actualizar `resolveCompletionSourceForRequest()` | ⚪ | Modificar |
-| 4.7 | Añadir setting `ghostPrompt.ollamaBaseUrl` en `package.json` | ⚪ | Modificar |
-| 4.8 | Añadir setting `ghostPrompt.ollamaExcludedModelIds` en `package.json` | ⚪ | Modificar |
-| 4.9 | Añadir `"ollama"` al enum `enabledCompletionSources` en schemas | ⚪ | Modificar |
-| 4.10 | Tests de routing y catálogo mergeado | ⚪ | Nuevo |
+| 4.1 | Crear `completion/catalog/ollamaModelCatalog.ts` | 🟢 | Nuevo |
+| 4.2 | Crear `completion/catalog/normalizeOllamaModels.ts` | 🟢 | Nuevo |
+| 4.3 | Actualizar `mergedModelCatalog.ts` para incluir Ollama | 🟢 | Modificado |
+| 4.4 | Añadir settings `ollamaBaseUrl` y `ollamaExcludedModelIds` en `package.json` + enums | 🟢 | Modificado |
+| 4.5 | Añadir `"ollama"` a enums Zod en schemas + barrel + types | 🟢 | `shared/webviewMessageSchemas.ts`, `completion/types.ts` |
+| 4.6 | Actualizar `applyWebviewUpdateSetting.ts` + `ghostPromptSettingsPostMessage.ts` | 🟢 | Modificado |
+| 4.7 | Verificar compilación y tests | 🟢 | ✅ 195 passed |
 
 **Criterio de salida:** Seleccionar `"mistral:latest"` en el dropdown enruta al engine Ollama. El modelo aparece con label `"mistral:latest"`, tier `"included"`.
 

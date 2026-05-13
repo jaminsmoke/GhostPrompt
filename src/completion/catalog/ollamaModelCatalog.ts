@@ -1,0 +1,34 @@
+import * as vscode from "vscode";
+
+import type { SuggestionModelDescriptor, SuggestionModelPolicy } from "../types";
+import { listModels } from "../../engines/ollama/ollamaApiClient";
+import { normalizeOllamaModels, ollamaModelToDescriptor } from "./normalizeOllamaModels";
+import { getGhostPromptOllamaBaseUrl } from "../../host/ghostPromptHostWorkspaceGetters";
+
+export async function listOllamaSuggestionModels(
+  _policy: SuggestionModelPolicy,
+): Promise<SuggestionModelDescriptor[]> {
+  const excluded = new Set(
+    vscode.workspace
+      .getConfiguration("ghostPrompt")
+      .get<string[]>("ollamaExcludedModelIds", [])
+      .filter((id): id is string => typeof id === "string" && id.trim().length > 0),
+  );
+
+  const baseUrl = getGhostPromptOllamaBaseUrl();
+  try {
+    const models = await listModels({ baseUrl });
+    const normalized = normalizeOllamaModels(models);
+    const descriptors = normalized
+      .filter((m) => !excluded.has(m.name))
+      .map(ollamaModelToDescriptor);
+
+    descriptors.sort((a, b) =>
+      a.label.localeCompare(b.label, undefined, { sensitivity: "base" }),
+    );
+
+    return descriptors;
+  } catch {
+    return [];
+  }
+}

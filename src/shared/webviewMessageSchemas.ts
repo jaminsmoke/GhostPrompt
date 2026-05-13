@@ -10,14 +10,14 @@ export const suggestionModelDescriptorSchema = z.object({
   tier: z.enum(["included", "premium", "unknown"]),
   pricing: z.string().optional(),
   provider: z.string().optional(),
-  completionSource: z.enum(["copilot", "opencode"]).optional(),
+  completionSource: z.enum(["copilot", "opencode", "ollama"]).optional(),
 });
 
 /** Payload `settings` dentro de `{ type: "settings", settings }` (host → webview). */
 export const webviewSettingsPayloadSchema = z.object({
-  completionProvider: z.enum(["copilot", "opencode"]),
-  completionUiKind: z.enum(["copilot", "opencode", "multi"]),
-  enabledCompletionSources: z.array(z.enum(["copilot", "opencode"])),
+  completionProvider: z.enum(["copilot", "opencode", "ollama"]),
+  completionUiKind: z.enum(["copilot", "opencode", "ollama", "multi"]),
+  enabledCompletionSources: z.array(z.enum(["copilot", "opencode", "ollama"])),
   suggestionModelPolicy: z.enum(["nonPremiumOnly", "anyModel"]),
   selectedModelId: z.string(),
   availableModels: z.array(suggestionModelDescriptorSchema),
@@ -76,7 +76,7 @@ export const webviewUpdateSettingSchema = z.discriminatedUnion("key", [
   z.object({
     type: z.literal("updateSetting"),
     key: z.literal("completionProvider"),
-    value: z.enum(["copilot", "opencode"]),
+    value: z.enum(["copilot", "opencode", "ollama"]),
   }),
   z.object({
     type: z.literal("updateSetting"),

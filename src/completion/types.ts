@@ -21,7 +21,7 @@ export interface SuggestionModelDescriptor {
   pricing?: string;
   provider?: string;
   /** Motor que debe ejecutar esta fila del selector (multi‑fuente). */
-  completionSource?: "copilot" | "opencode";
+  completionSource?: "copilot" | "opencode" | "ollama";
 }
 
 export type CompletionResult =

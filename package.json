@@ -82,10 +82,11 @@
           "type": "string",
           "enum": [
             "copilot",
-            "opencode"
+            "opencode",
+            "ollama"
           ],
           "default": "copilot",
-          "markdownDescription": "Legacy single-backend switch used **only** when `ghostPrompt.enabledCompletionSources` has never been set in User or Workspace settings. Prefer **enabledCompletionSources** for Copilot + OpenCode together."
+          "markdownDescription": "Legacy single-backend switch used **only** when `ghostPrompt.enabledCompletionSources` has never been set in User or Workspace settings. Prefer **enabledCompletionSources** for Copilot + OpenCode + Ollama together."
         },
         "ghostPrompt.enabledCompletionSources": {
           "type": "array",
@@ -93,10 +94,11 @@
             "type": "string",
             "enum": [
               "copilot",
-              "opencode"
+              "opencode",
+              "ollama"
             ]
           },
-          "markdownDescription": "Which completion backends appear in the GhostPrompt model dropdown and receive routed requests. Include **`copilot`** for GitHub Copilot LM (`vscode.lm`) and **`opencode`** for the embedded OpenCode server. Example: `[\"copilot\", \"opencode\"]` lists **both**; GhostPrompt routes by selected model id (`provider/model` → OpenCode). If this array is **unset** in settings (never saved), GhostPrompt keeps using **completionProvider** for backward compatibility."
+          "markdownDescription": "Which completion backends appear in the GhostPrompt model dropdown and receive routed requests. Include **`copilot`** for GitHub Copilot LM (`vscode.lm`), **`opencode`** for the embedded OpenCode server, and **`ollama`** for local models via the Ollama API. Example: `[\"copilot\", \"ollama\"]` lists **both**; GhostPrompt routes by selected model id. If this array is **unset** in settings (never saved), GhostPrompt keeps using **completionProvider** for backward compatibility."
         },
         "ghostPrompt.opencodeExcludedModelIds": {
           "type": "array",
@@ -104,7 +106,20 @@
             "type": "string"
           },
           "default": [],
-          "markdownDescription": "OpenCode models to hide from the GhostPrompt dropdown. Use ids `providerID/modelID` (same as OpenCode). Ignored when completion provider is Copilot."
+          "markdownDescription": "OpenCode models to hide from the GhostPrompt dropdown. Use ids `providerID/modelID` (same as OpenCode). Ignored when completion provider is Copilot or Ollama."
+        },
+        "ghostPrompt.ollamaBaseUrl": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "markdownDescription": "Base URL for the Ollama API. Defaults to `http://localhost:11434`. Change if Ollama runs on a different port or remote host."
+        },
+        "ghostPrompt.ollamaExcludedModelIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Ollama model names to exclude from the GhostPrompt dropdown (e.g. `mistral:latest`). Only applies when the Ollama engine is active."
         },
         "ghostPrompt.suggestionModelPolicy": {
           "type": "string",

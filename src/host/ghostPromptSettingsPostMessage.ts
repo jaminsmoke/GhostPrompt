@@ -7,6 +7,7 @@ import {
   getEnabledCompletionSources,
   listMergedSuggestionModels,
   listOpencodeSuggestionModels,
+  listOllamaSuggestionModels,
   listSuggestionModels,
 } from "../completion";
 import type {
@@ -54,6 +55,8 @@ export async function buildAndPostGhostPromptSettings(
       availableModels = await listMergedSuggestionModels(policy, enabledSources);
     } else if (enabledSources[0] === "opencode") {
       availableModels = await listOpencodeSuggestionModels(policy);
+    } else if (enabledSources[0] === "ollama") {
+      availableModels = await listOllamaSuggestionModels(policy);
     } else {
       availableModels = await listSuggestionModels(policy);
     }

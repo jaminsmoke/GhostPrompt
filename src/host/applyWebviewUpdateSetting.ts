@@ -10,7 +10,7 @@ export async function applyWebviewUpdateSetting(
 ): Promise<void> {
   const config = vscode.workspace.getConfiguration("ghostPrompt");
   if (message.key === "completionProvider") {
-    const value = message.value === "opencode" ? "opencode" : "copilot";
+    const value = message.value === "opencode" ? "opencode" : message.value === "ollama" ? "ollama" : "copilot";
     await config.update(
       "enabledCompletionSources",
       [value],
