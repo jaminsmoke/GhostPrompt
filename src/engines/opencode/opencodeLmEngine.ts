@@ -67,7 +67,7 @@ export async function requestOpencodeCompletion(
     onStreamPreview,
   } = options;
 
-  onLoadingPhase?.("opencode-connecting");
+  onLoadingPhase?.("opencode-start");
 
   const alive = await ensureClient();
   if (!alive) {
@@ -82,17 +82,28 @@ export async function requestOpencodeCompletion(
   const client = getGlobalClient();
   const instruction = buildCompletionInstruction(userText, style, context);
 
-  onLoadingPhase?.("opencode-generating");
-
   try {
     const sessionId = await getSession(client);
 
-    const completionText = await promptOpenCode(
-      sessionId,
-      { providerID: "opencode", modelID: modelName },
-      [{ type: "text", text: instruction }],
-      client,
-    );
+    onLoadingPhase?.("opencode-generating");
+    const completionText = await Promise.race([
+      promptOpenCode(
+        sessionId,
+        { providerID: "opencode", modelID: modelName },
+        [{ type: "text", text: instruction }],
+        client,
+      ),
+      new Promise<string>((_, reject) => {
+        const id = setTimeout(() => {
+          clearTimeout(id);
+          reject(new Error("request-timed-out"));
+        }, requestTimeoutMs);
+        if (token.isCancellationRequested) {
+          clearTimeout(id);
+          reject(new Error("request-cancelled"));
+        }
+      }),
+    ]);
 
     if (token.isCancellationRequested) {
       return { kind: "empty", reason: "request-timeout" };

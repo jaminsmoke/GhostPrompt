@@ -6,10 +6,14 @@ import {
 
 describe("suggestionLoadingStatusText", () => {
   const cases: Array<[SuggestionLoadingPhase, string]> = [
-    ["copilot", "Buscando sugerencia…"],
+    ["copilot", "Buscando modelo…"],
+    ["copilot-generating", "Generando sugerencia…"],
     ["opencode-start", "Iniciando OpenCode…"],
     ["opencode-connecting", "Conectando con el servidor…"],
     ["opencode-generating", "Generando sugerencia…"],
+    ["ollama-start", "Iniciando Ollama…"],
+    ["ollama-loading", "Cargando modelo local…"],
+    ["ollama-generating", "Generando sugerencia…"],
   ];
 
   it.each(cases)("maps %s", (phase, expected) => {

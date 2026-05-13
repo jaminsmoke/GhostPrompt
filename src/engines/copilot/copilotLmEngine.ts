@@ -42,21 +42,24 @@ export async function requestCopilotLmCompletion(
   }
 
   try {
-    const requestTokenSource = new vscode.CancellationTokenSource();
-    const requestCancellation = token.onCancellationRequested(() => {
-      requestTokenSource.cancel();
-    });
-    const timeoutHandle = setTimeout(() => {
-      requestTokenSource.cancel();
-    }, requestTimeoutMs);
-
     const { prefixInstruction, labeledPartial } = buildCompletionInstructionParts(
       userText,
       style,
       context,
     );
+    let requestTokenSource: vscode.CancellationTokenSource | undefined;
+    let requestCancellation: vscode.Disposable | undefined;
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
     try {
       onLoadingPhase?.("copilot");
+      requestTokenSource = new vscode.CancellationTokenSource();
+      requestCancellation = token.onCancellationRequested(() => {
+        requestTokenSource!.cancel();
+      });
+      timeoutHandle = setTimeout(() => {
+        requestTokenSource!.cancel();
+      }, requestTimeoutMs);
+      onLoadingPhase?.("copilot-generating");
       const response = await model.sendRequest(
         [
           vscode.LanguageModelChatMessage.User(prefixInstruction),
@@ -78,8 +81,8 @@ export async function requestCopilotLmCompletion(
       return { kind: "suggestion", suggestion, model: describeModel(model) };
     } finally {
       clearTimeout(timeoutHandle);
-      requestCancellation.dispose();
-      requestTokenSource.dispose();
+      requestCancellation?.dispose();
+      requestTokenSource?.dispose();
     }
   } catch (error) {
     if (token.isCancellationRequested) {

@@ -66,6 +66,8 @@ export async function requestOllamaCompletion(
   const baseUrl = vscode.workspace.getConfiguration("ghostPrompt").get<string>("ollamaBaseUrl", "http://localhost:11434");
   const instruction = buildCompletionInstruction(userText, style, context);
 
+  onLoadingPhase?.("ollama-loading");
+
   onLoadingPhase?.("ollama-generating");
 
   try {

@@ -216,6 +216,6 @@ describe("requestOllamaCompletion", () => {
       onLoadingPhase: (p) => phases.push(p),
     });
 
-    expect(phases).toEqual(["ollama-start", "ollama-generating"]);
+    expect(phases).toEqual(["ollama-start", "ollama-loading", "ollama-generating"]);
   });
 });

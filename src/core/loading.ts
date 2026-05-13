@@ -5,10 +5,12 @@
 
 export type SuggestionLoadingPhase =
   | "copilot"
+  | "copilot-generating"
   | "opencode-start"
   | "opencode-connecting"
   | "opencode-generating"
   | "ollama-start"
+  | "ollama-loading"
   | "ollama-generating";
 
 export function suggestionLoadingStatusText(
@@ -16,7 +18,9 @@ export function suggestionLoadingStatusText(
 ): string {
   switch (phase) {
     case "copilot":
-      return "Buscando sugerencia…";
+      return "Buscando modelo…";
+    case "copilot-generating":
+      return "Generando sugerencia…";
     case "opencode-start":
       return "Iniciando OpenCode…";
     case "opencode-connecting":
@@ -25,6 +29,8 @@ export function suggestionLoadingStatusText(
       return "Generando sugerencia…";
     case "ollama-start":
       return "Iniciando Ollama…";
+    case "ollama-loading":
+      return "Cargando modelo local…";
     case "ollama-generating":
       return "Generando sugerencia…";
   }

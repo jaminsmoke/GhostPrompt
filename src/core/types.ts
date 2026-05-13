@@ -12,6 +12,7 @@ export type SupportedSuggestionLanguage = "es" | "en";
 export type SuggestionModelTier = "included" | "premium" | "unknown";
 
 export const DEFAULT_MAX_SUGGESTION_CHARS = 180;
+/** Timeout desde que el LM empieza a generar (no incluye setup ni carga de modelo). */
 export const DEFAULT_MODEL_REQUEST_TIMEOUT_MS = 12000;
 
 export interface SuggestionModelDescriptor {
