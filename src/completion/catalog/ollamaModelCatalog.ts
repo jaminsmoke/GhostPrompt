@@ -3,19 +3,18 @@ import * as vscode from "vscode";
 import type { SuggestionModelDescriptor, SuggestionModelPolicy } from "../types";
 import { listModels } from "../../engines/ollama/ollamaApiClient";
 import { normalizeOllamaModels, ollamaModelToDescriptor } from "./normalizeOllamaModels";
-import { getGhostPromptOllamaBaseUrl } from "../../host/ghostPromptHostWorkspaceGetters";
 
 export async function listOllamaSuggestionModels(
   _policy: SuggestionModelPolicy,
 ): Promise<SuggestionModelDescriptor[]> {
+  const cfg = vscode.workspace.getConfiguration("ghostPrompt");
   const excluded = new Set(
-    vscode.workspace
-      .getConfiguration("ghostPrompt")
+    cfg
       .get<string[]>("ollamaExcludedModelIds", [])
       .filter((id): id is string => typeof id === "string" && id.trim().length > 0),
   );
 
-  const baseUrl = getGhostPromptOllamaBaseUrl();
+  const baseUrl = cfg.get<string>("ollamaBaseUrl", "http://localhost:11434");
   try {
     const models = await listModels({ baseUrl });
     const normalized = normalizeOllamaModels(models);

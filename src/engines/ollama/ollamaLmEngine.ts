@@ -1,3 +1,5 @@
+import * as vscode from "vscode";
+
 import { buildCompletionInstruction } from "../../completion/instruction";
 import { normalizeSuggestion } from "../../completion/normalize";
 import {
@@ -8,7 +10,6 @@ import {
   type SuggestionModelDescriptor,
 } from "../../completion/types";
 import { listModels, generate } from "./ollamaApiClient";
-import { getGhostPromptOllamaBaseUrl, getGhostPromptOllamaExcludedModelIds } from "../../host/ghostPromptHostWorkspaceGetters";
 
 function describeOllamaModel(modelName: string): SuggestionModelDescriptor {
   return {
@@ -26,8 +27,9 @@ async function resolveOllamaModel(
     return preferredModelId;
   }
 
-  const baseUrl = getGhostPromptOllamaBaseUrl();
-  const excluded = new Set(getGhostPromptOllamaExcludedModelIds());
+  const cfg = vscode.workspace.getConfiguration("ghostPrompt");
+  const baseUrl = cfg.get<string>("ollamaBaseUrl", "http://localhost:11434");
+  const excluded = new Set(cfg.get<string[]>("ollamaExcludedModelIds", []));
   try {
     const models = await listModels({ baseUrl });
     const available = models
@@ -61,7 +63,7 @@ export async function requestOllamaCompletion(
     return { kind: "empty", reason: "no-model" };
   }
 
-  const baseUrl = getGhostPromptOllamaBaseUrl();
+  const baseUrl = vscode.workspace.getConfiguration("ghostPrompt").get<string>("ollamaBaseUrl", "http://localhost:11434");
   const instruction = buildCompletionInstruction(userText, style, context);
 
   onLoadingPhase?.("ollama-generating");

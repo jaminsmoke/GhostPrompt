@@ -4152,12 +4152,12 @@
     tier: external_exports.enum(["included", "premium", "unknown"]),
     pricing: external_exports.string().optional(),
     provider: external_exports.string().optional(),
-    completionSource: external_exports.enum(["copilot", "opencode"]).optional()
+    completionSource: external_exports.enum(["copilot", "opencode", "ollama"]).optional()
   });
   var webviewSettingsPayloadSchema = external_exports.object({
-    completionProvider: external_exports.enum(["copilot", "opencode"]),
-    completionUiKind: external_exports.enum(["copilot", "opencode", "multi"]),
-    enabledCompletionSources: external_exports.array(external_exports.enum(["copilot", "opencode"])),
+    completionProvider: external_exports.enum(["copilot", "opencode", "ollama"]),
+    completionUiKind: external_exports.enum(["copilot", "opencode", "ollama", "multi"]),
+    enabledCompletionSources: external_exports.array(external_exports.enum(["copilot", "opencode", "ollama"])),
     suggestionModelPolicy: external_exports.enum(["nonPremiumOnly", "anyModel"]),
     selectedModelId: external_exports.string(),
     availableModels: external_exports.array(suggestionModelDescriptorSchema),
@@ -4212,7 +4212,7 @@
     external_exports.object({
       type: external_exports.literal("updateSetting"),
       key: external_exports.literal("completionProvider"),
-      value: external_exports.enum(["copilot", "opencode"])
+      value: external_exports.enum(["copilot", "opencode", "ollama"])
     }),
     external_exports.object({
       type: external_exports.literal("updateSetting"),
@@ -4514,7 +4514,7 @@
         return;
       }
       const v = completionBackendSelect.value;
-      if (v !== "copilot" && v !== "opencode") {
+      if (v !== "copilot" && v !== "opencode" && v !== "ollama") {
         return;
       }
       postToHost(vscode, {
@@ -4668,8 +4668,8 @@
         lastCompletionUiKind = typeof settings.completionUiKind === "string" ? settings.completionUiKind : settings.completionProvider === "opencode" ? "opencode" : "copilot";
         const sourcesRaw = settings.enabledCompletionSources;
         const sources = Array.isArray(sourcesRaw) ? sourcesRaw : [];
-        let motorSelectValue = settings.completionProvider === "opencode" ? "opencode" : "copilot";
-        if (sources.length === 1 && (sources[0] === "copilot" || sources[0] === "opencode")) {
+        let motorSelectValue = settings.completionProvider === "opencode" ? "opencode" : settings.completionProvider === "ollama" ? "ollama" : "copilot";
+        if (sources.length === 1 && (sources[0] === "copilot" || sources[0] === "opencode" || sources[0] === "ollama")) {
           motorSelectValue = sources[0];
         } else if (sources.length > 1) {
           motorSelectValue = "copilot";
@@ -4772,7 +4772,7 @@
       for (const model of models) {
         const raw = typeof model?.provider === "string" && model.provider.trim() ? model.provider.trim() : "Other";
         const cs = model?.completionSource;
-        const provider = cs === "opencode" ? `OpenCode \xB7 ${raw}` : cs === "copilot" ? `Copilot \xB7 ${raw}` : raw;
+        const provider = cs === "opencode" ? `OpenCode \xB7 ${raw}` : cs === "copilot" ? `Copilot \xB7 ${raw}` : cs === "ollama" ? "Ollama" : raw;
         const current = byProvider.get(provider) || [];
         current.push(model);
         byProvider.set(provider, current);
@@ -4786,7 +4786,10 @@
           if (k.startsWith("OpenCode \xB7")) {
             return 1;
           }
-          return 2;
+          if (k === "Ollama") {
+            return 2;
+          }
+          return 3;
         };
         const ba = bucket(a);
         const bb = bucket(b);

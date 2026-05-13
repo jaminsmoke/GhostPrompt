@@ -25,7 +25,7 @@
 | **Fase 2** | Cliente API Ollama (`ollamaApiClient.ts`) | 🟢 | — | completada 2026-05-13 |
 | **Fase 3** | Adaptador Ollama CompletionProvider (`ollamaLmEngine.ts`) | 🟢 | — | completada 2026-05-13 |
 | **Fase 4** | Catálogo Ollama + routing + settings | 🟢 | — | completada 2026-05-13 |
-| **Fase 5** | UI webview + chips de motor | ⚪ | — | |
+| **Fase 5** | UI webview + chips de motor | 🟢 | — | completada 2026-05-13 |
 | **Fase 6** | Tests unitarios | ⚪ | — | |
 | **Fase 7** | Documentación + release candidate | ⚪ | — | |
 
@@ -113,15 +113,15 @@
 
 ### Subpasos trackeables
 
-| # | Subpaso | Estado | Archivos |
-|---|---------|--------|----------|
-| 5.1 | Añadir chip "Ollama" en la toolbar del webview | ⚪ | Modificar webview |
-| 5.2 | Mostrar modelos Ollama en el dropdown cuando `"ollama"` está habilitado | ⚪ | Verificar (ya es dinámico) |
-| 5.3 | Añadir setting `ghostPrompt.ollamaBaseUrl` al panel de configuración | ⚪ | Nuevo componente settings |
-| 5.4 | Mostrar Ollama como opción en "completionProvider" legacy | ⚪ | Modificar schema |
-| 5.5 | Verificar fases de loading en status bar UI | ⚪ | — |
+| # | Subpaso | Estado |
+|---|---------|--------|
+| 5.1 | Añadir `<option value="ollama">` en el selector HTML del webview | 🟢 |
+| 5.2 | Actualizar change handler en `main.ts` para aceptar `"ollama"` | 🟢 |
+| 5.3 | Actualizar settings handler `motorSelectValue` para `"ollama"` | 🟢 |
+| 5.4 | Actualizar grouping y sorting de providers en `setModelOptions` | 🟢 |
+| 5.5 | Verificar bundle webview, compilación y tests | 🟢 |
 
-**Criterio de salida:** El usuario ve el chip "Ollama" y puede seleccionarlo. Los modelos Ollama aparecen en el dropdown. La URL base es configurable.
+**Criterio de salida:** El usuario ve el chip "Ollama" en el selector de motor. Los modelos Ollama aparecen en el dropdown. La URL base es configurable.
 
 ---
 

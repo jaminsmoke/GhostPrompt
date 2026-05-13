@@ -368,7 +368,7 @@ import { postToHost } from "./protocol/postToHost";
       return;
     }
     const v = completionBackendSelect.value;
-    if (v !== "copilot" && v !== "opencode") {
+    if (v !== "copilot" && v !== "opencode" && v !== "ollama") {
       return;
     }
     postToHost(vscode, {
@@ -545,9 +545,10 @@ import { postToHost } from "./protocol/postToHost";
             : "copilot";
       const sourcesRaw = settings.enabledCompletionSources;
       const sources = Array.isArray(sourcesRaw) ? sourcesRaw : [];
-      let motorSelectValue: "copilot" | "opencode" =
-        settings.completionProvider === "opencode" ? "opencode" : "copilot";
-      if (sources.length === 1 && (sources[0] === "copilot" || sources[0] === "opencode")) {
+      let motorSelectValue: "copilot" | "opencode" | "ollama" =
+        settings.completionProvider === "opencode" ? "opencode" :
+        settings.completionProvider === "ollama" ? "ollama" : "copilot";
+      if (sources.length === 1 && (sources[0] === "copilot" || sources[0] === "opencode" || sources[0] === "ollama")) {
         motorSelectValue = sources[0];
       } else if (sources.length > 1) {
         motorSelectValue = "copilot";
@@ -683,7 +684,9 @@ import { postToHost } from "./protocol/postToHost";
           ? `OpenCode · ${raw}`
           : cs === "copilot"
             ? `Copilot · ${raw}`
-            : raw;
+            : cs === "ollama"
+              ? "Ollama"
+              : raw;
       const current = byProvider.get(provider) || [];
       current.push(model);
       byProvider.set(provider, current);
@@ -698,7 +701,10 @@ import { postToHost } from "./protocol/postToHost";
         if (k.startsWith("OpenCode ·")) {
           return 1;
         }
-        return 2;
+        if (k === "Ollama") {
+          return 2;
+        }
+        return 3;
       };
       const ba = bucket(a);
       const bb = bucket(b);

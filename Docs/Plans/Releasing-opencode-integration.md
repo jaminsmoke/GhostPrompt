@@ -32,3 +32,6 @@ Suite: [`tests/opencodeSuggestions.integration.test.ts`](../../tests/opencodeSug
 | **`opencode-integration.yml`** | Solo **manual** (`workflow_dispatch`). Falla si no hay `opencode` en el PATH del runner; usar **runner self-hosted** con CLI instalado o ejecutar integración **local** arriba. |
 
 No se ejecuta integración OpenCode en cada PR de forma automática (dependencias externas y coste).
+
+Hay que mejorar el sistema de timeout de las suggestions.
+También hay que exponer un comando o api clara para cancelar el pipeline de generación si es que no lo tenemos ya.
