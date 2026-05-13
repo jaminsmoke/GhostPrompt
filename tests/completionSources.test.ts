@@ -21,6 +21,7 @@ vi.mock("vscode", () => ({
 import {
   getCompletionUiKind,
   getEnabledCompletionSources,
+  looksLikeOllamaModelId,
   looksLikeOpencodeModelId,
   resolveCompletionSourceForRequest,
 } from "../src/completion/completionSources";
@@ -75,5 +76,57 @@ describe("completionSources", () => {
   it("looksLikeOpencodeModelId", () => {
     expect(looksLikeOpencodeModelId("foo/bar")).toBe(true);
     expect(looksLikeOpencodeModelId("gpt-4o-mini")).toBe(false);
+  });
+
+  it("completionProvider legacy con ollama", () => {
+    getMock.mockImplementation((key: string, defaultValue: unknown) => {
+      if (key === "completionProvider") {
+        return "ollama";
+      }
+      return defaultValue;
+    });
+    expect(getEnabledCompletionSources()).toEqual(["ollama"]);
+    expect(getCompletionUiKind()).toBe("ollama");
+  });
+
+  it("enabledCompletionSources incluye ollama", () => {
+    inspectMock.mockImplementation(() => ({
+      globalValue: ["copilot", "opencode", "ollama"],
+      workspaceValue: undefined,
+      workspaceFolderValue: undefined,
+    }));
+    getMock.mockImplementation((key: string, defaultValue: unknown) => {
+      if (key === "enabledCompletionSources") {
+        return ["copilot", "opencode", "ollama"];
+      }
+      return defaultValue;
+    });
+    expect(getEnabledCompletionSources()).toEqual(["copilot", "opencode", "ollama"]);
+    expect(getCompletionUiKind()).toBe("multi");
+  });
+
+  it("resolveCompletionSourceForRequest enruta ids Ollama", () => {
+    expect(
+      resolveCompletionSourceForRequest("mistral:latest", ["copilot", "opencode", "ollama"]),
+    ).toBe("ollama");
+  });
+
+  it("resolveCompletionSourceForRequest prioriza Copilot con auto cuando hay varias fuentes", () => {
+    expect(
+      resolveCompletionSourceForRequest("auto", ["copilot", "ollama"]),
+    ).toBe("copilot");
+    expect(
+      resolveCompletionSourceForRequest("auto", ["opencode", "ollama"]),
+    ).toBe("opencode");
+    expect(
+      resolveCompletionSourceForRequest("auto", ["ollama"]),
+    ).toBe("ollama");
+  });
+
+  it("looksLikeOllamaModelId detecta formato model:tag", () => {
+    expect(looksLikeOllamaModelId("mistral:latest")).toBe(true);
+    expect(looksLikeOllamaModelId("llama3:7b")).toBe(true);
+    expect(looksLikeOllamaModelId("gpt-4o-mini")).toBe(false);
+    expect(looksLikeOllamaModelId("anthropic/claude-3")).toBe(false);
   });
 });

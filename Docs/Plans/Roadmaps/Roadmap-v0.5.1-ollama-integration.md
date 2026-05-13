@@ -26,7 +26,7 @@
 | **Fase 3** | Adaptador Ollama CompletionProvider (`ollamaLmEngine.ts`) | 🟢 | — | completada 2026-05-13 |
 | **Fase 4** | Catálogo Ollama + routing + settings | 🟢 | — | completada 2026-05-13 |
 | **Fase 5** | UI webview + chips de motor | 🟢 | — | completada 2026-05-13 |
-| **Fase 6** | Tests unitarios | ⚪ | — | |
+| **Fase 6** | Tests unitarios | 🟢 | — | completada 2026-05-13 |
 | **Fase 7** | Documentación + release candidate | ⚪ | — | |
 
 ---
@@ -131,12 +131,12 @@
 
 | # | Subpaso | Estado |
 |---|---------|--------|
-| 6.1 | Tests unitarios `ollamaApiClient` (mock fetch) | ⚪ |
-| 6.2 | Tests unitarios `ollamaLmEngine` (mock client) | ⚪ |
-| 6.3 | Tests `resolveCompletionSourceForRequest` con `"ollama"` | ⚪ |
-| 6.4 | Tests `mergedModelCatalog` con modelos Ollama | ⚪ |
-| 6.5 | Tests `completionSources` — `getEnabledCompletionSources` con Ollama | ⚪ |
-| 6.6 | Tests `engineRegistry` — routing a engines | ⚪ |
+| 6.1 | Tests unitarios `ollamaApiClient` (mock fetch) | 🟢 |
+| 6.2 | Tests unitarios `ollamaLmEngine` (mock client) | 🟢 |
+| 6.3 | Tests `resolveCompletionSourceForRequest` con `"ollama"` | 🟢 |
+| 6.4 | Tests `mergedModelCatalog` con modelos Ollama | 🟢 |
+| 6.5 | Tests `completionSources` — `getEnabledCompletionSources` con Ollama | 🟢 |
+| 6.6 | Tests `engineRegistry` — routing a engines | 🟢 |
 
 **Criterio de salida:** `npm run test` pasa sin fallos.
 
