@@ -23,7 +23,7 @@ vi.mock("vscode", () => ({
 import { checkOpenCodeCli } from "../src/opencode/openCodeCli";
 import { invalidateOpenCodeProvidersSnapshot } from "../src/opencode/opencodeProvidersSnapshot";
 import { getOpenCodeRuntime } from "../src/opencode/OpenCodeRuntime";
-import { requestOpencodeCompletion } from "../src/completion/providers/opencodeLmCompletion";
+import { requestOpencodeCompletion } from "../src/engines/opencode/opencodeLmEngine";
 import { listOpencodeSuggestionModels } from "../src/completion/catalog/opencodeModelCatalog";
 
 const integrationEnabled =

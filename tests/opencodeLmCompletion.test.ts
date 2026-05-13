@@ -37,7 +37,7 @@ vi.mock("../src/opencode/OpenCodeRuntime", () => ({
   getOpenCodeRuntime: mockGetOpenCodeRuntime,
 }));
 
-import { requestOpencodeCompletion } from "../src/completion/providers/opencodeLmCompletion";
+import { requestOpencodeCompletion } from "../src/engines/opencode/opencodeLmEngine";
 import { invalidateOpenCodeProvidersSnapshot } from "../src/opencode/opencodeProvidersSnapshot";
 import { invalidateOpencodeInlineSuggestionSessionPool } from "../src/opencode/opencodeInlineSuggestionSession";
 import { resetOpencodeInlineLmQueue } from "../src/opencode/opencodeInlineCompletionQueue";

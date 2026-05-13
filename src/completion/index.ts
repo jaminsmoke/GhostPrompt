@@ -40,7 +40,7 @@ export * from "./language";
 export * from "./streaming";
 export * from "./catalog/modelCatalog";
 
-export { requestCopilotLmCompletion as requestCompletion } from "./providers/copilotLmCompletion";
+export { requestCopilotLmCompletion as requestCompletion } from "../engines/copilot/copilotLmEngine";
 
 export type { CompletionProvider } from "./completionProvider";
 export {

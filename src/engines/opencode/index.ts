@@ -1,0 +1,1 @@
+export { requestOpencodeCompletion } from "./opencodeLmEngine";

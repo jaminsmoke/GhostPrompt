@@ -3,4 +3,4 @@ export {
   getCompletionProviderForSource,
   getActiveCompletionProvider,
   getCompletionProviderKind,
-} from "../engines/engineRegistry";
+} from "./engineRegistry";

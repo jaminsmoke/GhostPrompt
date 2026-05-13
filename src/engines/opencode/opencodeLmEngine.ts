@@ -1,8 +1,5 @@
-/**
- * Completions vía OpenCode (servidor embebido GhostPrompt + `@opencode-ai/sdk`).
- */
-import { buildCompletionInstruction } from "../instruction";
-import { normalizeSuggestion } from "../normalize";
+import { buildCompletionInstruction } from "../../completion/instruction";
+import { normalizeSuggestion } from "../../completion/normalize";
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
@@ -10,9 +7,9 @@ import {
   type CompletionResult,
   type SuggestionModelDescriptor,
   type SuggestionModelPolicy,
-} from "../types";
-import { normalizeOpencodeProviderModels } from "../catalog/normalizeOpencodeProviderModels";
-import { classifyOpencodeModelTier } from "../catalog/opencodeModelTier";
+} from "../../completion/types";
+import { normalizeOpencodeProviderModels } from "../../completion/catalog/normalizeOpencodeProviderModels";
+import { classifyOpencodeModelTier } from "../../completion/catalog/opencodeModelTier";
 import { getOpenCodeRuntime } from "../../opencode/OpenCodeRuntime";
 import {
   getOpenCodeProvidersSnapshot,
@@ -407,7 +404,6 @@ async function executeOpencodeInlineLmCompletion(
         ? perfMsNow()
         : 0;
     await streamPromise.catch(() => {
-      /* cierre SSE ante abort */
     });
     if (tDrain0 > 0) {
       lmPerf(
@@ -423,6 +419,5 @@ async function executeOpencodeInlineLmCompletion(
     );
     clearTimeout(timeoutHandle);
     disposeCancel.dispose();
-    /* Fase H: no `session.delete` en critical path ni por request feliz — pool reused; reset en servidor/abort/errores. */
   }
 }

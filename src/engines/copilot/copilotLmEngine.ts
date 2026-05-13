@@ -1,18 +1,15 @@
-/**
- * Proveedor de completions vía GitHub Copilot Language Model API (`vscode.lm`).
- */
 import * as vscode from "vscode";
 
-import { buildCompletionInstructionParts } from "../instruction";
-import { describeModel, selectModelByPolicy } from "../catalog/modelCatalog";
-import { normalizeSuggestion } from "../normalize";
-import { collectResponseText } from "../streaming";
+import { buildCompletionInstructionParts } from "../../completion/instruction";
+import { describeModel, selectModelByPolicy } from "../../completion/catalog/modelCatalog";
+import { normalizeSuggestion } from "../../completion/normalize";
+import { collectResponseText } from "../../completion/streaming";
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
   type CompletionRequestOptions,
   type CompletionResult,
-} from "../types";
+} from "../../completion/types";
 
 let premiumQuotaBlocked = false;
 
