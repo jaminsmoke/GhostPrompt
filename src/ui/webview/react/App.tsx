@@ -134,6 +134,7 @@ export function App(): JSX.Element {
   const [suggestionDebounceMs, setSuggestionDebounceMs] = useState(800);
   const [agentDestination, setAgentDestination] = useState<AgentDestination>("copilotChat");
   const [vsxActive, setVsxActive] = useState(false);
+  const [vsOpenCodeXExtensionInstalled, setVsOpenCodeXExtensionInstalled] = useState(false);
   const [completionProvider, setCompletionProvider] = useState<CompletionProvider>("copilot");
   const [selectedModelId, setSelectedModelId] = useState("auto");
   const [availableModels, setAvailableModels] = useState<SuggestionModel[]>([]);
@@ -226,6 +227,7 @@ export function App(): JSX.Element {
           setSuggestionDebounceMs(message.settings.suggestionDebounceMs);
           setDebugSuggestions(message.settings.debugSuggestions);
           setAgentDestination(message.settings.agentDestination);
+          setVsOpenCodeXExtensionInstalled(message.settings.vsOpenCodeXExtensionInstalled);
           setVsxActive(message.settings.agentDestination === "vsOpenCodeX");
           if (message.settings.agentDestination === "vsOpenCodeX") {
             setStatus("Destino VSOpenCodeX: usa VSOpenCodeX para enviar prompts.");
@@ -304,12 +306,26 @@ export function App(): JSX.Element {
     };
   }, [requestSuggestion, suggestionDebounceMs, text]);
 
+  useEffect(() => {
+    syncTextareaHeight();
+  }, [syncTextareaHeight]);
+
+  const syncTextareaHeight = useCallback(() => {
+    const input = textareaRef.current;
+    if (!input) {
+      return;
+    }
+    input.style.height = "auto";
+    input.style.height = `${Math.max(input.scrollHeight, 120)}px`;
+  }, []);
+
   const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const nextText = event.target.value;
     setText(nextText);
     if (viewId) {
       postToHost({ type: "draftChanged", text: nextText, originViewId: viewId });
     }
+    syncTextareaHeight();
   };
 
   const handleSend = () => {
@@ -383,19 +399,21 @@ export function App(): JSX.Element {
             </select>
           </div>
 
-          <div className="setting-group" data-key="agentDestination">
-            <span className="setting-label">Destino</span>
-            <select
-              id="agent-destination-select"
-              className="completion-backend-select chip-backend agent-destination-select"
-              value={agentDestination}
-              onChange={handleAgentDestinationChange}
-              aria-label="Destino del prompt (Copilot Chat o VSOpenCodeX)"
-            >
-              <option value="copilotChat">Copilot Chat</option>
-              <option value="vsOpenCodeX">VSOpenCodeX</option>
-            </select>
-          </div>
+          {vsOpenCodeXExtensionInstalled ? (
+            <div className="setting-group" data-key="agentDestination">
+              <span className="setting-label">Destino</span>
+              <select
+                id="agent-destination-select"
+                className="completion-backend-select chip-backend agent-destination-select"
+                value={agentDestination}
+                onChange={handleAgentDestinationChange}
+                aria-label="Destino del prompt (Copilot Chat o VSOpenCodeX)"
+              >
+                <option value="copilotChat">Copilot Chat</option>
+                <option value="vsOpenCodeX">VSOpenCodeX</option>
+              </select>
+            </div>
+          ) : null}
 
           <div className="setting-group" data-key="suggestionModelPolicy">
             <span className="setting-label">Modelo</span>
