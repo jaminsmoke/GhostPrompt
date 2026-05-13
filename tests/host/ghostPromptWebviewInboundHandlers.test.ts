@@ -60,8 +60,13 @@ vi.mock("../../src/log/ConversationLog", () => ({
   append: appendLogMock,
 }));
 
-vi.mock("../../src/destinations/copilotChat/copilotChatDestination", () => ({
-  sendToChat: sendToChatMock,
+vi.mock("../../src/destinations/destinationRegistry", () => ({
+  getGhostPromptAgentDestination: () =>
+    workspaceConfigGetMock("agentDestination", "copilotChat") as string,
+  getActiveDestinationProvider: () => ({
+    id: "copilotChat" as const,
+    sendPrompt: sendToChatMock,
+  }),
 }));
 
 vi.mock("../../src/host/applyWebviewUpdateSetting", () => ({

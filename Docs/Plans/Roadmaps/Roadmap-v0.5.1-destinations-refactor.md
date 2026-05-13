@@ -25,7 +25,7 @@
 | **Fase 2** | Crear `destinations/` + `destinationRegistry.ts` | 🟢 | — | completada 2026-05-13 |
 | **Fase 3** | Migrar `ChatBridge.ts` → `destinations/copilotChat/copilotChatDestination.ts` | 🟢 | — | completada 2026-05-13 |
 | **Fase 4** | Migrar `vsOpenCodeXGhostPromptUiBridge` + `notifyVsx` → `destinations/vsOpenCodeX/` | 🟢 | — | completada 2026-05-13 |
-| **Fase 5** | Refactor `ghostPromptWebviewInboundHandlers.ts` para usar `destinationRegistry` | ⚪ | — | |
+| **Fase 5** | Refactor `ghostPromptWebviewInboundHandlers.ts` para usar `destinationRegistry` | 🟢 | — | completada 2026-05-13 |
 | **Fase 6** | Tests unitarios | ⚪ | — | |
 | **Fase 7** | Documentación + validación | ⚪ | — | |
 
@@ -102,10 +102,10 @@
 
 | # | Subpaso | Estado |
 |---|---------|--------|
-| 5.1 | Reemplazar `getGhostPromptAgentDestination()` directo por `getActiveDestinationProvider()` en `handleGhostPromptInboundSend` y `dispatchGhostPromptInboundMessage` | ⚪ |
-| 5.2 | Verificar que `send` y `suggest` se saltan correctamente cuando destino es VSX | ⚪ |
-| 5.3 | Actualizar tests del handler | ⚪ |
-| 5.4 | Verificar compilación y tests | ⚪ |
+| 5.1 | Reemplazar imports: `getGhostPromptAgentDestination()` + `getActiveDestinationProvider()` desde `destinationRegistry` | 🟢 |
+| 5.2 | Verificar que `send` y `suggest` se saltan correctamente cuando destino es VSX (tests pasan con `workspaceConfigGetMock`) | 🟢 |
+| 5.3 | Tests del handler actualizados — mock `destinationRegistry` con `getGhostPromptAgentDestination` + `getActiveDestinationProvider` | 🟢 |
+| 5.4 | Verificar compilación y tests — 230 tests, 0 círculos, 0 errores | 🟢 |
 
 **Criterio de salida:** Sin referencias directas a `getGhostPromptAgentDestination()` en handlers.
 

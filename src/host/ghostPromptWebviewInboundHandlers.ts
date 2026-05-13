@@ -3,8 +3,10 @@
  * Router: `dispatchGhostPromptInboundMessage`. Roadmap v0.3.2 fase A.
  */
 import * as vscode from "vscode";
-import { sendToChat } from "../destinations/copilotChat/copilotChatDestination";
-import { getGhostPromptAgentDestination } from "./ghostPromptHostWorkspaceGetters";
+import {
+  getActiveDestinationProvider,
+  getGhostPromptAgentDestination,
+} from "../destinations/destinationRegistry";
 import { append as appendLog } from "../log/ConversationLog";
 import { appendSuggestion } from "../log/SuggestionLog";
 import { ghostPromptSessionStore } from "../session/GhostPromptSessionStore";
@@ -96,7 +98,8 @@ export async function handleGhostPromptInboundSend(
     draftText: "",
   });
   await appendLog(dataUri, message.text);
-  await sendToChat(message.text);
+  const provider = getActiveDestinationProvider();
+  await provider.sendPrompt!(message.text);
   broadcastClearAll();
 }
 
