@@ -23,16 +23,16 @@ Filas = carpetas principales de `src/`. Columnas = reglas de dependencia y rol.
 
 | Carpeta `src/` | Rol | Depende típicamente de | No debe importar desde |
 | ---------------- | ----- | -------------------------- | ------------------------- |
-| **`extension/`** | Punto de entrada; registra comandos y vistas; lifecycle `activate` / `deactivate`. | `host`, `projectMemory` (activate), `opencode` (sync runtime), `debug`. | Evitar lógica de negocio pesada aquí (mantener delgado). |
-| **`host/`** | Webview provider, mensajes inbound/outbound, HTML/CSP, wire de suggest → completion. | `completion`, `session`, `projectMemory`, `opencode` (warm), `shared`, `debug`. | No meter aquí runtime OpenCode embebido largo (delegar a `opencode/`). |
+| **`extension/`** | Punto de entrada; registra comandos y vistas; lifecycle `activate` / `deactivate`. | `host`, `projectMemory` (activate), `engines/opencode` (resetClient), `debug`. | Evitar lógica de negocio pesada aquí (mantener delgado). |
+| **`host/`** | Webview provider, mensajes inbound/outbound, HTML/CSP, wire de suggest → completion. | `completion`, `session`, `projectMemory`, `shared`, `debug`. | No meter aquí runtime OpenCode embebido largo. |
 | **`completion/`** | Motores LM en `engines/`, núcleo en raíz (`types`, instrucción, fuentes), **`catalog/`** (modelos Copilot/OpenCode/Ollama, merge, tiers), **`context/`** (bootstrap README/package para prompts). | `engines/`, `vscode`. | No UI webview ni HTML. |
-| **`engines/`** | Motores de completion canónicos. `copilot/copilotLmEngine`, `opencode/opencodeLmEngine`, `ollama/ollamaLmEngine`, `ollama/ollamaApiClient`, `engineRegistry.ts`. | `completion` (types, instruction, normalize), `vscode`. | No importar desde `host/`. |
+| **`engines/`** | Motores de completion canónicos. `copilot/`, `opencode/` (apiClient + catalog), `ollama/`, `engineRegistry.ts`. | `completion` (types, instruction, normalize), `vscode`. | No importar desde `host/`. |
 | **`opencode/`** | Proceso embebido, SDK, SSE, caché providers, sesión inline, cola LM, CLI. | `debug` (logs perf), Node. | **`host/`** — prohibido por ESLint (ver abajo). |
 | **`session/`** | Estado compartido Sidebar/Panel (`GhostPromptSessionStore`). | `vscode`, tipos desde `completion` si hace falta. | Evitar acoplar a un solo handler del webview. |
 | **`governor/`** | Gobernador de peticiones (cache, cooldown, rate limit). | Tipos/config; sin LM directo. | `host/`. |
 | **`projectMemory/`** | Store JSON, reconcile, ingest, watchers. | `vscode`, FS propio. | `host/` (riesgo de cycle conceptual; pasar datos desde host como deps). |
 | **`debug/`** | Canal de salida y toggles de debug. | `vscode`. | `host/` (opcional endurecer en ESLint más adelante). |
-| **`destinations/`** | Destinos de prompt (copilotChat, vsOpenCodeX). Registro `DestinationProvider` en `destinationRegistry.ts`. | `vscode`, `engines/opencode` (VS_OPEN_CODE_X_EXTENSION_ID). | No importar desde `host/` (delegar a `destinationRegistry`). |
+| **`destinations/`** | Destinos de prompt (copilotChat, vsOpenCodeX). Registro `DestinationProvider` en `destinationRegistry.ts`. | `vscode`. | No importar desde `host/` (delegar a `destinationRegistry`). |
 | **`log/`** | Persistencia conversación / suggestions en disco. | `vscode`, FS. | — |
 | **`shared/`** | Schemas/tipos compartidos host ↔ contratos (Zod). | `zod`. | `host/` en runtime del webview bundle (el cliente es otro build). |
 | **`build/`** | Scripts de verificación empaquetado (ej. webview bundle). | Node. | — |
@@ -43,11 +43,10 @@ Reglas en `.eslintrc.json` (nivel `warn`):
 
 | Objetivo (`target`) | No importar desde (`from`) |
 | --------------------- | ---------------------------- |
-| **`src/opencode/**/*`** | **`src/host/**/*`** |
 | **`src/projectMemory/**/*`** | **`src/host/**/*`** |
 | **`src/debug/**/*`** | **`src/host/**/*`** |
 
-Sin excepciones documentadas en la fecha de la [bitácora](#bitácora) (Fase D).
+Nota: la regla `src/opencode/**/*` fue eliminada en v0.5.2 al eliminar la carpeta `src/opencode/`.
 
 ---
 
@@ -60,10 +59,10 @@ No es cobertura de líneas al 100 %; es **contrato de tests que deben seguir pas
 | `extension/extension.ts` | Parcialmente indirecto: `MiniInputViewProvider.test.ts` (registro webview); integración opcional. |
 | `host/*` (MiniInput, handlers, protocols, settings, suggest wiring) | `MiniInputViewProvider.test.ts`, `webviewProtocols.test.ts`, `host/ghostPromptWebviewInboundHandlers.test.ts`, `host/ghostPromptSuggestPipeline.test.ts`, `webviewToolbarParity.test.ts` (incl. paridad dual vista v0.4.3), `webviewThemeTokens.test.ts`, `shared/webviewMessageSchemas.test.ts`, `webview/composeLabels.test.ts`, `webview/userErrorMessage.test.ts` |
 | `host/ghostPromptSuggestPipeline.ts` + `handleGhostPromptSuggest.ts` (wrapper) | `host/ghostPromptSuggestPipeline.test.ts` (deps mínimas + spy `getCompletionProviderForSource`); flujo integrado en `MiniInputViewProvider.test.ts`. |
-| `completion/` (raíz: providers, sources, types; **`catalog/`**, **`context/`**) | `completionProvider.test.ts`, `completionSources.test.ts`, `CopilotCompletion.test.ts`, `opencodeLmCompletion.test.ts`, `completionInstruction.test.ts`, `instructionNormalizeContract.test.ts`, `normalizeOpencodeProviderModels.test.ts`, `opencodeModelTier.test.ts`, `opencodeModelCatalog.test.ts`, `suggestionLoadingUi.test.ts`, `projectBootstrapContext.test.ts`, `opencodeProvidersSnapshot.test.ts`, `opencodeProvidersSnapshot.perf.test.ts`, `logOpenCodePerfCapture.test.ts` |
-| `engines/` (copilot, opencode, ollama, engineRegistry) | `engineRegistry.test.ts`, `ollamaLmEngine.test.ts`, `ollamaApiClient.test.ts`, `mergedModelCatalog.test.ts` |
+| `completion/` (raíz: providers, sources, types; **`catalog/`** Copilot/Ollama; **`context/`**) | `completionProvider.test.ts`, `completionSources.test.ts`, `CopilotCompletion.test.ts`, `opencodeLmCompletion.test.ts`, `completionInstruction.test.ts`, `instructionNormalizeContract.test.ts`, `suggestionLoadingUi.test.ts`, `projectBootstrapContext.test.ts`, `logOpenCodePerfCapture.test.ts` |
+| `engines/` (copilot, opencode, ollama, engineRegistry) | `engineRegistry.test.ts`, `ollamaLmEngine.test.ts`, `ollamaApiClient.test.ts`, `mergedModelCatalog.test.ts`, `opencodeApiClient.test.ts`, `opencodeLmCompletion.test.ts`, `opencodeModelCatalog.test.ts`, `opencodeModelTier.test.ts`, `normalizeOpencodeProviderModels.test.ts` |
 | `destinations/` (copilotChat, vsOpenCodeX, destinationRegistry) | `destinationRegistry.test.ts`, `copilotChatDestination.test.ts`, `vsOpenCodeXDestination.test.ts` |
-| `opencode/` (runtime, stream, cli, queue, session pool, puente VSOpenCodeX) | `opencodeLmCompletion.test.ts`, `opencodeProvidersSnapshot.test.ts`, `opencodeProvidersSnapshot.perf.test.ts`, `opencodeSuggestionStream.test.ts`, `openCodeCli.test.ts`, `nodeFetchDuplex.test.ts`, `vsOpenCodeXBridge.test.ts` (→ `engines/opencode/vsOpenCodeXConnection`), `opencodeSseDebug.test.ts`, `opencodeSuggestions.integration.test.ts` (opcional, env) |
+| `engines/opencode/` (apiClient, catalog, LmEngine) | `opencodeApiClient.test.ts`, `opencodeLmCompletion.test.ts`, `opencodeModelCatalog.test.ts`, `opencodeModelTier.test.ts`, `normalizeOpencodeProviderModels.test.ts` |
 | `session/` | `GhostPromptSessionStore.test.ts` |
 | `governor/` | `SuggestionRequestGovernor.test.ts` |
 | `projectMemory/` | `projectMemoryStore.test.ts`, `projectBootstrapContext.test.ts`, `bootstrapStoredHelpers.test.ts`, `entriesMutation.test.ts`, `editorIngestLru.test.ts` |

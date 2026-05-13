@@ -4,6 +4,10 @@
 
 ---
 
+## Estado: **Fases A-I completadas**. Fase J (documentación) en progreso. Commit `ab4cc14`.
+
+---
+
 ## Contexto y decisiones de diseño
 
 ### El problema actual
@@ -33,16 +37,16 @@
 
 | Fase | Descripción | Estado | PR | Notas |
 |------|-------------|--------|----|-------|
-| **Fase A** | `opencodeApiClient.ts` — health check, session CRUD, prompt, SSE | ⚪ | — | |
-| **Fase B** | `opencodeLmEngine.ts` — usa apiClient, estilo ollamaLmEngine | ⚪ | — | |
-| **Fase C** | Migrar catálogos OpenCode a `engines/opencode/catalog/` | ⚪ | — | |
-| **Fase D** | Eliminar `vsOpenCodeXConnection.ts` de `engines/opencode/` | ⚪ | — | |
-| **Fase E** | Eliminar `src/opencode/` completo (runtime) | ⚪ | — | |
-| **Fase F** | Ajustar settings: eliminar `vsOpenCodeX*` connection, mantener notification | ⚪ | — | |
-| **Fase G** | Actualizar `vsOpenCodeXDestination` — eliminar lógica de conexión | ⚪ | — | |
-| **Fase H** | Actualizar `engineRegistry` + consumers | ⚪ | — | |
-| **Fase I** | Tests: crear, actualizar, eliminar según cambios | ⚪ | — | |
-| **Fase J** | Documentación: ARCHITECTURE, Owners, CHANGELOG | ⚪ | — | |
+| **Fase A** | `opencodeApiClient.ts` — health check, session CRUD, prompt, SSE | 🟢 | `ab4cc14` | SDK sync, dynamic import ESM, session pool TTL+max-size |
+| **Fase B** | `opencodeLmEngine.ts` — usa apiClient, estilo ollamaLmEngine | 🟢 | `ab4cc14` | `requestOpencodeCompletion` con CompletionProvider |
+| **Fase C** | Migrar catálogos OpenCode a `engines/opencode/catalog/` | 🟢 | `ab4cc14` | 3 archivos movidos, imports actualizados |
+| **Fase D** | Eliminar `vsOpenCodeXConnection.ts` de `engines/opencode/` | 🟢 | `ab4cc14` | Constante movida a destinationRegistry |
+| **Fase E** | Eliminar `src/opencode/` completo (runtime) | 🟢 | `ab4cc14` | 16 archivos eliminados, 10 tests eliminados |
+| **Fase F** | Ajustar settings: eliminar `vsOpenCodeX*` connection, mantener notification | 🟢 | `ab4cc14` | 4 settings eliminados de package.json |
+| **Fase G** | Actualizar `vsOpenCodeXDestination` — eliminar lógica de conexión | 🟢 | `ab4cc14` | Import desde destinationRegistry |
+| **Fase H** | Actualizar `engineRegistry` + consumers | 🟢 | `ab4cc14` | extension.ts, MiniInputViewProvider limpios |
+| **Fase I** | Tests: crear, actualizar, eliminar según cambios | 🟢 | `ab4cc14` | 22 tests nuevos, 10 eliminados, 226 passing |
+| **Fase J** | Documentación: ARCHITECTURE, Owners, CHANGELOG | 🟡 | — | En progreso |
 
 ---
 

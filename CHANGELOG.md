@@ -2,6 +2,31 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.5.2] - 2026-05-13
+
+Versión **0.5.2**: OpenCode reestructurado como **API client tipo Ollama** — sin runtime embebido, sin gestión de procesos. Conexión a instancia OpenCode ya corriendo via `@opencode-ai/sdk`.
+
+### Changed
+
+- **OpenCode como API client (Fases A-I):**
+  - Nuevo `engines/opencode/opencodeApiClient.ts`: `createOpenCodeClient` (dynamic import ESM), health check via `config.get()`, session pool con TTL (5min) y max-size (4), `promptOpenCode`, `promptStreamOpenCode`, `getSession`, `closeAllSessions`.
+  - Nuevo `engines/opencode/opencodeLmEngine.ts`: `requestOpencodeCompletion` integrado con `CompletionProvider` interface.
+  - Catálogos OpenCode movidos a `engines/opencode/catalog/` (opencodeModelCatalog, normalizeOpencodeProviderModels, opencodeModelTier).
+  - Puerto por defecto: **4096** (configurable via `ghostPrompt.opencodePort`). Auth via `ghostPrompt.opencodeAuthToken`.
+  - 19 nuevos tests: `opencodeApiClient.test.ts` (9), `opencodeLmCompletion.test.ts` (8), `opencodeModelCatalog.test.ts` (5).
+
+- **Eliminado `src/opencode/` completo (16 archivos):**
+  - Runtime embebido (`OpenCodeRuntime.ts`), CLI detection, lifecycle, warm-up, SSE streams, session inline pool, LM queue, providers snapshot, sdkEnvelope, constants.
+  - Tests eliminados: `openCodeCli.test.ts`, `opencodeProvidersSnapshot.test.ts`, `opencodeProvidersSnapshot.perf.test.ts`, `opencodeSuggestionStream.test.ts`, `nodeFetchDuplex.test.ts`, `vsOpenCodeXBridge.test.ts`, `opencodeSseDebug.test.ts`, `sdkEnvelope.test.ts`, `opencodeSuggestions.integration.test.ts`, `openCodeRuntimeVsxNoEmbedded.test.ts`.
+
+- **Eliminado `vsOpenCodeXConnection.ts`:** puente de conexión a VSOpenCodeX ya no necesario. `VS_OPEN_CODE_X_EXTENSION_ID` movido a `destinationRegistry.ts`.
+
+- **Settings eliminados:** `ghostPrompt.preferVsOpenCodeXOpenCode`, `ghostPrompt.vsOpenCodeXProbeDelayMs`, `ghostPrompt.vsOpenCodeXConnectionMaxAttempts`, `ghostPrompt.vsOpenCodeXConnectionRetryGapMs`.
+
+- **`extension.ts` simplificado:** eliminada gestión de runtime OpenCode, sync from config, stop en deactivate. Ahora usa `resetClient()` del apiClient.
+
+- **`MiniInputViewProvider.ts` simplificado:** eliminado `warmOpenCodeRuntimeIfConfigured()`.
+
 ## [0.5.1] - 2026-05-13
 
 Versión **0.5.1**: integración de **Ollama** como tercer motor de suggestions (local, offline-first). Refactor de la arquitectura de motores a carpeta canónica `src/engines/`.

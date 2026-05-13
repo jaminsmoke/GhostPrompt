@@ -31,7 +31,7 @@
 │                        │      (Copilot LM | OpenCode | Ollama)   │
 │                        ├──► host/handleGhostPromptSuggest        │
 │                        │      (gobernador + LM enrutado + UI)    │
-│                        ├──► opencode/* (runtime embebido, warm) │
+│                        ├──► engines/opencode/* (API client + catalog) │
 │                        ├──► bridge/ChatBridge (chat.open cmd)   │
 │                        ├──► log/ConversationLog (storageUri)    │
 │                        ├──► log/SuggestionLog   (storageUri)    │
@@ -56,20 +56,20 @@
 
 | Location | Responsibility |
 | -------- | -------------- |
-| `src/extension/extension.ts` | Entry point: commands, configuration listeners, two `WebviewViewProvider` registrations, `deactivate` (invalida caché OpenCode / pool sesión / cola LM). |
-| `src/host/MiniInputViewProvider.ts` | Webview HTML/CSP, broadcast a Sidebar+Panel, delegación a handlers y warm OpenCode. |
+| `src/extension/extension.ts` | Entry point: commands, configuration listeners, two `WebviewViewProvider` registrations, `deactivate` (resetea client OpenCode). |
+| `src/host/MiniInputViewProvider.ts` | Webview HTML/CSP, broadcast a Sidebar+Panel, delegación a handlers. |
 | `src/host/handleGhostPromptSuggest.ts` | Wrapper estable → `ghostPromptSuggestPipeline.ts`: gobernador, memoria proyecto (si aplica), `getCompletionProviderForSource` + routing de modelo, loading/stream final. |
 | `src/host/webviewProtocols.ts` | Parseo Zod de mensajes webview→host; validación de sobre `settings` host→webview. |
 | `src/shared/webviewMessageSchemas.ts` | Schemas Zod canónicos host ↔ webview (también consumidos por el bundle webview en build). |
 | `src/session/GhostPromptSessionStore.ts` | Estado compartido (borrador, suggestions, `activeCaptureId`, token de cancelación del intento activo). |
-| `src/engines/` | Motores de completion canónicos. `copilot/`, `opencode/`, `ollama/`, y `engineRegistry.ts` que registra `CompletionProvider` y resuelve `getCompletionProviderForSource`. |
+| `src/engines/` | Motores de completion canónicos. `copilot/`, `opencode/` (apiClient + catalog), `ollama/`, y `engineRegistry.ts` que registra `CompletionProvider` y resuelve `getCompletionProviderForSource`. |
 | `src/destinations/` | Destinos de prompt. `copilotChat/` (`sendToChat`), `vsOpenCodeX/` (forward UI, notify missing), y `destinationRegistry.ts` que registra `DestinationProvider` y resuelve el destino activo. Patrón análogo a `engines/`. |
-| `src/host/MiniInputViewProvider.ts` | Webview HTML/CSP, broadcast a Sidebar+Panel, delegación a handlers y warm OpenCode. |
+| `src/host/MiniInputViewProvider.ts` | Webview HTML/CSP, broadcast a Sidebar+Panel, delegación a handlers. |
 | `src/completion/completionSources.ts` | `enabledCompletionSources` vs legacy `completionProvider`; `resolveCompletionSourceForRequest` (p. ej. `model:tag` → Ollama, `provider/model` → OpenCode). |
-| `src/completion/catalog/*` | Catálogo Copilot (`modelCatalog`), OpenCode (`opencodeModelCatalog`), **Ollama (`ollamaModelCatalog`)**, merge multi-fuente (`mergedModelCatalog`), tiers y normalización de `models`. |
+| `src/completion/catalog/*` | Catálogo Copilot (`modelCatalog`), **Ollama (`ollamaModelCatalog`)**, merge multi-fuente (`mergedModelCatalog`). Catálogos OpenCode movidos a `engines/opencode/catalog/`. |
 | `src/completion/context/projectBootstrapContext.ts` | README/package bootstrap para `contextMode: project`. |
 | `src/completion/index.ts` | Barrel: tipos, instrucción, reexports desde `catalog/` y `context/`; alias `requestCompletion` → solo Copilot (legacy). |
-| `src/opencode/*` | Proceso embebido, SDK, CLI, streams SSE, caché de proveedores, sesión inline, cola de completions. |
+| `src/engines/opencode/catalog/` | Catálogo OpenCode: `opencodeModelCatalog.ts` (lista modelos via `config.providers()`), `normalizeOpencodeProviderModels.ts`, `opencodeModelTier.ts`. |
 | `src/governor/SuggestionRequestGovernor.ts` | Dedupe, cache, cooldown, rate limit, presupuesto antes del LM. |
 | `src/log/ConversationLog.ts` | `conversation.md` bajo `storageUri`. |
 | `src/log/SuggestionLog.ts` | `suggestions.md` bajo `storageUri`. |
@@ -96,7 +96,7 @@ User types in textarea
     └── resolveCompletionSourceForRequest(selectedModelId, enabledSources)
     └── getCompletionProviderForSource(copilot | opencode | ollama).requestCompletion(...)
           ├── Copilot: vscode.lm … sendRequest → texto
-          ├── OpenCode: runtime.start → providers snapshot → sesión pooled →
+          ├── OpenCode: createOpenCodeClient → healthCheck → sesión pooled →
           │             session.prompt; opcional consumeOpencodeSuggestionTextStream (preview SSE)
           └── Ollama: listModels (auto) → generate (HTTP POST /api/generate) → texto
     └── postMessage loading / suggestion-stream (OpenCode) / suggestion | empty | error
@@ -111,7 +111,7 @@ User types in textarea
 
 **Multi-fuente:** si `ghostPrompt.enabledCompletionSources` incluye varias fuentes, el modelo elegido en el selector determina el motor: `model:tag` → Ollama, `providerID/modelID` → OpenCode; id de chat Copilot → LM. Con fuente única no configurada, se usa el legacy `ghostPrompt.completionProvider`.
 
-### Catálogo OpenCode y merge (`completion/catalog`)
+### Catálogo OpenCode y merge (`engines/opencode/catalog/`)
 
 Esta capa **no** define cómo “piensa” el modelo lingüístico: adapta **datos y políticas** antes de llamar al LM.
 
@@ -132,16 +132,13 @@ Mitigaciones ya implementadas en GhostPrompt (sin duplicar trabajo del modelo li
 
 | Mecanismo | Ubicación típica | Efecto |
 | --------- | ------------------ | ------ |
-| **Cola LM serie** | `opencodeInlineCompletionQueue.ts` | Una ejecución `requestOpencodeCompletion` activa; evita prompts concurrentes sobre la misma sesión (timeouts / SSE lento — ver comentario en código). |
-| **Sesión pooled** | `opencodeInlineSuggestionSession.ts` | Un `session.create` reutilizado por `deploymentId`; invalidación por reset del servidor o churn (`poolNonce`, hooks `emitOpenCodeServerWillReset`). |
-| **Snapshot `config.providers()`** | `opencodeProvidersSnapshot.ts` | Caché en memoria + **single-flight** entre solicitudes concurrentes; `invalidateOpenCodeProvidersSnapshot` en `deactivate`. |
-| **SSE preview** | `opencodeSuggestionStream.ts` | Opcional; filtro por `sessionID`, recorte `maxPreviewChars`; abort compartido con el request. |
-| **Runtime embebido** | `OpenCodeRuntime.ts` | `createOpencode` local (puerto fijo), debounce al parar proceso cuando el usuario vuelve solo a Copilot. |
-| **Delegación opcional VSOpenCodeX** | `vsOpenCodeXBridge.ts` + mismo `OpenCodeRuntime.ts` | Si la extensión **VSOpenCodeX** está instalada y devuelve `ok` en `vsopencodex.getOpenCodeConnection`, GhostPrompt construye el cliente SDK con ese `baseUrl` y **`Authorization`** (sin `server.close()` al soltar referencia). Si no, mismo flujo embebido. Ver [`GhostPrompt-OpenCode-coexistence.md`](./Integrations/GhostPrompt-OpenCode-coexistence.md). |
+| **Session pool** | `opencodeApiClient.ts` | Sesiones reutilizadas con TTL (5 min) y max-size (4); evita `create`+`delete` por request. |
+| **Snapshot `config.providers()`** | `opencodeModelCatalog.ts` | Lista modelos del servidor OpenCode para el selector webview. |
+| **SSE preview** | `promptStreamOpenCode` | Opcional; filtro por `sessionID`, recorte `maxPreviewChars`; abort compartido con el request. |
 
-**Dependencia:** `@opencode-ai/sdk` (versión en `package.json`). Convendrá revisar changelogs upstream en releases mayores; **no** se alteró la versión en esta auditoría.
+**Dependencia:** `@opencode-ai/sdk` (versión en `package.json`). El SDK se importa dinámicamente (`await import("@opencode-ai/sdk")`) por ser ESM-only. `createOpencodeClient` es síncrono — devuelve `OpencodeClient` directamente. Health check ligero via `client.config.get()`. Puerto por defecto: **4096** (configurable via `ghostPrompt.opencodePort`). Auth via `ghostPrompt.opencodeAuthToken`.
 
-**No aplicado (rechazado en v0.4.2):** eliminar la cola serie para paralelizar prompts — riesgo documentado frente al comportamiento del servidor embebido.
+**Eliminado (v0.5.2):** runtime embebido (`OpenCodeRuntime.ts`), CLI detection, lifecycle management, warm-up, cola LM serie, sesión inline pool legacy, VSOpenCodeX bridge. OpenCode ahora es un motor tipo Ollama — conecta a instancia ya corriendo, sin levantar procesos propios.
 
 ### captureId pattern
 
