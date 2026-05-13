@@ -15,7 +15,7 @@ Esta roadmap define el plan para convertir el webview de GhostPrompt en una apli
 |------|---------|-----------|--------|
 | Fase 1 | Configurar React + Vite en el webview | Base de build moderna y funcional | 🟢 Completado |
 | Fase 2 | Migrar el webview actual por componentes React | UI funcional en React sin romper el flujo | 🟡 En progreso |
-| Fase 3 | Añadir Tailwind y estilizado utilitario | Webview con UI rica y mantenimiento rápido | 🔵 Planificado |
+| Fase 3 | Añadir Tailwind y estilizado utilitario | Webview con UI rica y mantenimiento rápido | � En progreso |
 | Fase 4 | Pruebas, documentación y lecciones | Reporte de hallazgos y control de calidad | 🔵 Planificado |
 
 Cada fase debe entregarse con un artefacto claro, pruebas ejecutables y una bitácora de problemas/resoluciones.
@@ -102,12 +102,18 @@ Aplicar Tailwind para estilizar el webview y permitir iteraciones rápidas de di
 
 1. Instalar Tailwind con PostCSS:
    - `npm install -D tailwindcss postcss autoprefixer`
-   - Crear `tailwind.config.js` y `postcss.config.js`.
-2. Configurar el CSS global del webview: `src/ui/webview/style.css` o `src/ui/webview/index.css`.
+   - Crear `tailwind.config.js` y `postcss.config.cjs`.
+2. Configurar el CSS global del webview: `src/ui/webview/react/index.css`.
 3. Migrar estilos existentes a clases Tailwind donde tenga sentido.
 4. Agregar utilidades pequeñas como `clsx` para gestionar clases condicionales:
    - `npm install clsx`
 5. Validar el resultado con una UI consistente y responsive dentro del webview.
+
+### Estado actual
+
+- Tailwind y PostCSS se instalaron y configuraron.
+- `src/ui/webview/react/index.css` ya incluye los directivas Tailwind.
+- Fase 3 arrancó y ahora se puede migrar el CSS existente a clases utilitarias.
 
 ### Criterios de aceptación
 
