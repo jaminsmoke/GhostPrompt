@@ -70,7 +70,7 @@ vi.mock("../src/log/ConversationLog", () => ({
   append: appendLogMock,
 }));
 
-vi.mock("../src/bridge/ChatBridge", () => ({
+vi.mock("../src/destinations/copilotChat/copilotChatDestination", () => ({
   sendToChat: sendToChatMock,
 }));
 

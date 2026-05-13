@@ -23,7 +23,7 @@
 |------|-------------|--------|----|-------|
 | **Fase 1** | Mover `vsOpenCodeXBridge.ts` → `engines/opencode/vsOpenCodeXConnection.ts` | 🟢 | — | completada 2026-05-13 |
 | **Fase 2** | Crear `destinations/` + `destinationRegistry.ts` | 🟢 | — | completada 2026-05-13 |
-| **Fase 3** | Migrar `ChatBridge.ts` → `destinations/copilotChat/copilotChatDestination.ts` | ⚪ | — | |
+| **Fase 3** | Migrar `ChatBridge.ts` → `destinations/copilotChat/copilotChatDestination.ts` | 🟢 | — | completada 2026-05-13 |
 | **Fase 4** | Migrar `vsOpenCodeXGhostPromptUiBridge` + `notifyVsx` → `destinations/vsOpenCodeX/` | ⚪ | — | |
 | **Fase 5** | Refactor `ghostPromptWebviewInboundHandlers.ts` para usar `destinationRegistry` | ⚪ | — | |
 | **Fase 6** | Tests unitarios | ⚪ | — | |
@@ -70,11 +70,11 @@
 
 | # | Subpaso | Estado |
 |---|---------|--------|
-| 3.1 | Crear `destinations/copilotChat/copilotChatDestination.ts` con `sendToChat()` y registrar en `destinationRegistry` | ⚪ |
-| 3.2 | Actualizar imports en `host/ghostPromptWebviewInboundHandlers.ts` | ⚪ |
-| 3.3 | Actualizar imports en tests (`MiniInputViewProvider.test.ts`, `ghostPromptWebviewInboundHandlers.test.ts`) | ⚪ |
-| 3.4 | Eliminar `src/bridge/ChatBridge.ts` | ⚪ |
-| 3.5 | Verificar compilación y tests | ⚪ |
+| 3.1 | Crear `destinations/copilotChat/copilotChatDestination.ts` con `sendToChat()` y registrar en `destinationRegistry` | 🟢 |
+| 3.2 | Actualizar imports en `host/ghostPromptWebviewInboundHandlers.ts` | 🟢 |
+| 3.3 | Actualizar imports en tests (`MiniInputViewProvider.test.ts`, `ghostPromptWebviewInboundHandlers.test.ts`) | 🟢 |
+| 3.4 | Eliminar `src/bridge/ChatBridge.ts` | 🟢 |
+| 3.5 | Verificar compilación y tests — 230 tests, 0 círculos, 0 errores | 🟢 |
 
 **Criterio de salida:** `ChatBridge.ts` eliminado. Destino Copilot Chat autoregistrado.
 

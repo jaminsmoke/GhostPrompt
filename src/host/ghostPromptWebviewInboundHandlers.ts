@@ -3,7 +3,7 @@
  * Router: `dispatchGhostPromptInboundMessage`. Roadmap v0.3.2 fase A.
  */
 import * as vscode from "vscode";
-import { sendToChat } from "../bridge/ChatBridge";
+import { sendToChat } from "../destinations/copilotChat/copilotChatDestination";
 import { getGhostPromptAgentDestination } from "./ghostPromptHostWorkspaceGetters";
 import { append as appendLog } from "../log/ConversationLog";
 import { appendSuggestion } from "../log/SuggestionLog";
