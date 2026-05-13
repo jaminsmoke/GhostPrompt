@@ -26,7 +26,7 @@
 | **Fase 3** | Migrar `ChatBridge.ts` → `destinations/copilotChat/copilotChatDestination.ts` | 🟢 | — | completada 2026-05-13 |
 | **Fase 4** | Migrar `vsOpenCodeXGhostPromptUiBridge` + `notifyVsx` → `destinations/vsOpenCodeX/` | 🟢 | — | completada 2026-05-13 |
 | **Fase 5** | Refactor `ghostPromptWebviewInboundHandlers.ts` para usar `destinationRegistry` | 🟢 | — | completada 2026-05-13 |
-| **Fase 6** | Tests unitarios | ⚪ | — | |
+| **Fase 6** | Tests unitarios | 🟢 | — | completada 2026-05-13 |
 | **Fase 7** | Documentación + validación | ⚪ | — | |
 
 ---
@@ -117,11 +117,10 @@
 
 | # | Subpaso | Estado |
 |---|---------|--------|
-| 6.1 | Tests `destinationRegistry` — registro, resolución, activo por defecto | ⚪ |
-| 6.2 | Tests `copilotChatDestination` — `sendToChat` mockea comando VS Code | ⚪ |
-| 6.3 | Tests `vsOpenCodeXDestination` — forwarding condicional según destino | ⚪ |
-| 6.4 | Tests `vsOpenCodeXConnection` (ya existe en `tests/vsOpenCodeXBridge.test.ts` si existe, si no crear) | ⚪ |
-| 6.5 | Verificar que tests existentes de handlers/host siguen pasando | ⚪ |
+| 6.1 | Tests `destinationRegistry` — registro, resolución, activo por defecto | 🟢 |
+| 6.2 | Tests `copilotChatDestination` — `sendToChat` mockea comando VS Code | 🟢 |
+| 6.3 | Tests `vsOpenCodeXDestination` — forwarding condicional, notify | 🟢 |
+| 6.4 | Verificar que tests existentes de handlers/host siguen pasando (245 tests) | 🟢 |
 
 **Criterio de salida:** `npm run test` pasa sin fallos.
 
