@@ -2,6 +2,10 @@ Docs/**
 Scripts/**
 # Scripts de tooling compilados (smoke webview); no runtime del usuario
 out/system/build/**
+# Incluir assets estáticos del webview (cargados en runtime por webviewHtml.ts)
+!src/ui/webview/index.html
+!src/ui/webview/style.css
+!src/ui/webview/dist/**
 src/**
 tests/**
 .gitignore
