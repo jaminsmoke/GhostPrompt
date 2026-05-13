@@ -1,6 +1,19 @@
 import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./index.css";
 
+type GhostPromptCapabilities = {
+  compactToolbar?: boolean;
+};
+
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    __ghostPromptViewId?: string;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    __ghostPromptCapabilities?: GhostPromptCapabilities;
+  }
+}
+
 type AgentDestination = "copilotChat" | "vsOpenCodeX";
 
 type CompletionProvider = "copilot" | "opencode" | "ollama";
@@ -44,12 +57,14 @@ type InboundMessage =
       type: "suggestion-stream";
       text: string;
       captureId: number;
+      broadcast?: boolean;
     }
   | {
       type: "suggestion";
       suggestion: string;
       captureId: number;
       model?: SuggestionModel;
+      broadcast?: boolean;
     }
   | {
       type: "empty";
@@ -63,28 +78,38 @@ type InboundMessage =
         | "duplicate-input"
         | "rate-limited"
         | "session-budget-exhausted";
-      captureId: number;
+      captureId?: number;
+      broadcast?: boolean;
     }
   | {
       type: "error";
       message: string;
-      captureId: number;
+      captureId?: number;
+      broadcast?: boolean;
     }
   | {
       type: "clear";
+      captureId?: number;
+      broadcast?: boolean;
     }
   | {
       type: "draftSync";
       text: string;
       originViewId: string;
+      captureId?: number;
+      broadcast?: boolean;
     }
   | {
       type: "draftHydrate";
       text: string;
+      captureId?: number;
+      broadcast?: boolean;
     }
   | {
       type: "settings";
       settings: SettingsPayload;
+      captureId?: number;
+      broadcast?: boolean;
     };
 
 type UpdateSettingMessage =
@@ -125,6 +150,7 @@ function postToHost(message: OutboundMessage): void {
   getVsCodeApi?.postMessage(message);
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export function App(): JSX.Element {
   const [viewId] = useState(getInitialViewId);
   const [capabilities] = useState(getInitialCapabilities);
@@ -292,6 +318,15 @@ export function App(): JSX.Element {
     return () => window.removeEventListener("message", handleMessage);
   }, [viewId]);
 
+  const syncTextareaHeight = useCallback(() => {
+    const input = textareaRef.current;
+    if (!input) {
+      return;
+    }
+    input.style.height = "auto";
+    input.style.height = `${Math.max(input.scrollHeight, 120)}px`;
+  }, []);
+
   useEffect(() => {
     if (debounceTimer.current !== null) {
       window.clearTimeout(debounceTimer.current);
@@ -309,15 +344,6 @@ export function App(): JSX.Element {
   useEffect(() => {
     syncTextareaHeight();
   }, [syncTextareaHeight]);
-
-  const syncTextareaHeight = useCallback(() => {
-    const input = textareaRef.current;
-    if (!input) {
-      return;
-    }
-    input.style.height = "auto";
-    input.style.height = `${Math.max(input.scrollHeight, 120)}px`;
-  }, []);
 
   const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const nextText = event.target.value;
@@ -359,7 +385,7 @@ export function App(): JSX.Element {
     key: K,
     value: Extract<UpdateSettingMessage, { key: K }>["value"],
   ) => {
-    sendUpdateSetting({ type: "updateSetting", key, value });
+    sendUpdateSetting({ type: "updateSetting", key, value } as UpdateSettingMessage);
   };
 
   const handleDebugToggle = () => {
@@ -373,9 +399,9 @@ export function App(): JSX.Element {
       return null;
     }
     return (
-      <pre className="ghost-suggestion" aria-hidden="true">
-        <span className="typed">{text}</span>
-        <span className="suggestion">{suggestion}</span>
+      <pre className="absolute inset-0 pointer-events-none m-0 p-5 text-slate-400/70 whitespace-pre-wrap break-words" aria-hidden="true">
+        <span className="opacity-30">{text}</span>
+        <span className="text-slate-300">{suggestion}</span>
       </pre>
     );
   }, [suggestion, text]);
@@ -417,30 +443,44 @@ export function App(): JSX.Element {
 
           <div className="flex flex-col gap-3" data-key="suggestionModelPolicy">
             <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Modelo</span>
-            <button
-              type="button"
-              className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm transition ${
-                suggestionModelPolicy === "nonPremiumOnly"
-                  ? "border-sky-500 bg-sky-500/10 text-sky-200"
-                  : "border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-900/80"
-              }`}
-              onClick={() => makeToggle("suggestionModelPolicy", "nonPremiumOnly")}
-              aria-pressed={suggestionModelPolicy === "nonPremiumOnly"}
-            >
-              No premium
-            </button>
-            <button
-              type="button"
-              className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm transition ${
-                suggestionModelPolicy === "anyModel"
-                  ? "border-sky-500 bg-sky-500/10 text-sky-200"
-                  : "border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-900/80"
-              }`}
-              onClick={() => makeToggle("suggestionModelPolicy", "anyModel")}
-              aria-pressed={suggestionModelPolicy === "anyModel"}
-            >
-              Cualquiera
-            </button>
+            {suggestionModelPolicy === "nonPremiumOnly" ? (
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-full border border-sky-500 bg-sky-500/10 px-4 py-2 text-sm text-sky-200 transition"
+                onClick={() => makeToggle("suggestionModelPolicy", "nonPremiumOnly")}
+                aria-pressed="true"
+              >
+                No premium
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm text-slate-300 transition hover:border-slate-500 hover:bg-slate-900/80"
+                onClick={() => makeToggle("suggestionModelPolicy", "nonPremiumOnly")}
+                aria-pressed="false"
+              >
+                No premium
+              </button>
+            )}
+            {suggestionModelPolicy === "anyModel" ? (
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-full border border-sky-500 bg-sky-500/10 px-4 py-2 text-sm text-sky-200 transition"
+                onClick={() => makeToggle("suggestionModelPolicy", "anyModel")}
+                aria-pressed="true"
+              >
+                Cualquiera
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm text-slate-300 transition hover:border-slate-500 hover:bg-slate-900/80"
+                onClick={() => makeToggle("suggestionModelPolicy", "anyModel")}
+                aria-pressed="false"
+              >
+                Cualquiera
+              </button>
+            )}
             <select
               id="model-select"
               className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100 outline-none ring-1 ring-transparent transition focus:border-sky-500 focus:ring-sky-500/30"
@@ -455,7 +495,11 @@ export function App(): JSX.Element {
                 </option>
               ))}
             </select>
-            <span id="model-runtime-label" className="chip chip-runtime" aria-live="polite">
+            <span
+              id="model-runtime-label"
+              className="inline-flex items-center justify-center rounded-full border border-slate-700 bg-slate-900/90 px-3 py-2 text-xs text-slate-300"
+              aria-live="polite"
+            >
               Modelo: {availableModels.find((m) => m.id === selectedModelId)?.label ?? "--"}
             </span>
           </div>
@@ -465,85 +509,121 @@ export function App(): JSX.Element {
               Normal · Básico · Auto (EN)
             </summary>
             <div className="grid gap-3 p-4" role="group" aria-label="Estilo, contexto e idioma">
-              <div className="setting-group" data-key="suggestionStyle">
-                <span className="setting-label">Estilo</span>
+              <div className="flex flex-col gap-2" data-key="suggestionStyle">
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Estilo</span>
                 <button
                   type="button"
-                  className={`chip ${suggestionStyle === "concise" ? "chip-active" : ""}`}
+                  className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500/20 ${
+                    suggestionStyle === "concise"
+                      ? "border-sky-500 bg-sky-500/10 text-sky-200"
+                      : "border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-900/80"
+                  }`}
                   onClick={() => makeToggle("suggestionStyle", "concise")}
-                  aria-pressed={suggestionStyle === "concise"}
+                  aria-pressed={suggestionStyle === "concise" ? "true" : "false"}
                 >
                   Breve
                 </button>
                 <button
                   type="button"
-                  className={`chip ${suggestionStyle === "balanced" ? "chip-active" : ""}`}
+                  className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500/20 ${
+                    suggestionStyle === "balanced"
+                      ? "border-sky-500 bg-sky-500/10 text-sky-200"
+                      : "border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-900/80"
+                  }`}
                   onClick={() => makeToggle("suggestionStyle", "balanced")}
-                  aria-pressed={suggestionStyle === "balanced"}
+                  aria-pressed={suggestionStyle === "balanced" ? "true" : "false"}
                 >
                   Normal
                 </button>
                 <button
                   type="button"
-                  className={`chip ${suggestionStyle === "detailed" ? "chip-active" : ""}`}
+                  className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500/20 ${
+                    suggestionStyle === "detailed"
+                      ? "border-sky-500 bg-sky-500/10 text-sky-200"
+                      : "border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-900/80"
+                  }`}
                   onClick={() => makeToggle("suggestionStyle", "detailed")}
-                  aria-pressed={suggestionStyle === "detailed"}
+                  aria-pressed={suggestionStyle === "detailed" ? "true" : "false"}
                 >
                   Extenso
                 </button>
               </div>
 
-              <div className="setting-group" data-key="contextMode">
-                <span className="setting-label">Contexto</span>
+              <div className="flex flex-col gap-2" data-key="contextMode">
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Contexto</span>
                 <button
                   type="button"
-                  className={`chip ${contextMode === "basic" ? "chip-active" : ""}`}
+                  className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500/20 ${
+                    contextMode === "basic"
+                      ? "border-sky-500 bg-sky-500/10 text-sky-200"
+                      : "border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-900/80"
+                  }`}
                   onClick={() => makeToggle("contextMode", "basic")}
-                  aria-pressed={contextMode === "basic"}
+                  aria-pressed={contextMode === "basic" ? "true" : "false"}
                 >
                   Básico
                 </button>
                 <button
                   type="button"
-                  className={`chip ${contextMode === "project" ? "chip-active" : ""}`}
+                  className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500/20 ${
+                    contextMode === "project"
+                      ? "border-sky-500 bg-sky-500/10 text-sky-200"
+                      : "border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-900/80"
+                  }`}
                   onClick={() => makeToggle("contextMode", "project")}
-                  aria-pressed={contextMode === "project"}
+                  aria-pressed={contextMode === "project" ? "true" : "false"}
                 >
                   Proyecto
                 </button>
                 <button
                   type="button"
-                  className={`chip ${contextMode === "off" ? "chip-active" : ""}`}
+                  className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500/20 ${
+                    contextMode === "off"
+                      ? "border-sky-500 bg-sky-500/10 text-sky-200"
+                      : "border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-900/80"
+                  }`}
                   onClick={() => makeToggle("contextMode", "off")}
-                  aria-pressed={contextMode === "off"}
+                  aria-pressed={contextMode === "off" ? "true" : "false"}
                 >
                   Off
                 </button>
               </div>
 
-              <div className="setting-group" data-key="suggestionLanguageChoice">
-                <span className="setting-label">Idioma</span>
+              <div className="flex flex-col gap-2" data-key="suggestionLanguageChoice">
+                <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Idioma</span>
                 <button
                   type="button"
-                  className={`chip ${suggestionLanguageChoice === "auto" ? "chip-active" : ""}`}
+                  className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500/20 ${
+                    suggestionLanguageChoice === "auto"
+                      ? "border-sky-500 bg-sky-500/10 text-sky-200"
+                      : "border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-900/80"
+                  }`}
                   onClick={() => makeToggle("suggestionLanguageChoice", "auto")}
-                  aria-pressed={suggestionLanguageChoice === "auto"}
+                  aria-pressed={suggestionLanguageChoice === "auto" ? "true" : "false"}
                 >
                   Auto
                 </button>
                 <button
                   type="button"
-                  className={`chip ${suggestionLanguageChoice === "es" ? "chip-active" : ""}`}
+                  className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500/20 ${
+                    suggestionLanguageChoice === "es"
+                      ? "border-sky-500 bg-sky-500/10 text-sky-200"
+                      : "border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-900/80"
+                  }`}
                   onClick={() => makeToggle("suggestionLanguageChoice", "es")}
-                  aria-pressed={suggestionLanguageChoice === "es"}
+                  aria-pressed={suggestionLanguageChoice === "es" ? "true" : "false"}
                 >
                   ES
                 </button>
                 <button
                   type="button"
-                  className={`chip ${suggestionLanguageChoice === "en" ? "chip-active" : ""}`}
+                  className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm transition focus:outline-none focus:ring-2 focus:ring-sky-500/20 ${
+                    suggestionLanguageChoice === "en"
+                      ? "border-sky-500 bg-sky-500/10 text-sky-200"
+                      : "border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-900/80"
+                  }`}
                   onClick={() => makeToggle("suggestionLanguageChoice", "en")}
-                  aria-pressed={suggestionLanguageChoice === "en"}
+                  aria-pressed={suggestionLanguageChoice === "en" ? "true" : "false"}
                 >
                   EN
                 </button>
@@ -551,31 +631,42 @@ export function App(): JSX.Element {
             </div>
           </details>
 
-          <button
-            type="button"
-            id="debug-btn"
-            className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm transition ${
-              debugSuggestions
-                ? "border-sky-500 bg-sky-500/10 text-sky-200"
-                : "border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-900/80"
-            }`}
-            aria-pressed={debugSuggestions}
-            onClick={handleDebugToggle}
-          >
-            Debug: {debugSuggestions ? "on" : "off"}
-          </button>
+          {debugSuggestions ? (
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-full border border-sky-500 bg-sky-500/10 px-4 py-2 text-sm text-sky-200 transition"
+              aria-pressed="true"
+              onClick={handleDebugToggle}
+            >
+              Debug: on
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm text-slate-300 transition hover:border-slate-500 hover:bg-slate-900/80"
+              aria-pressed="false"
+              onClick={handleDebugToggle}
+            >
+              Debug: off
+            </button>
+          )}
         </div>
 
-        <p id="gp-vsx-surface-note" className="gp-vsx-surface-note" role="status" hidden={!vsxActive}>
+        <p
+          id="gp-vsx-surface-note"
+          className="rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-sm text-slate-300"
+          role="status"
+          hidden={!vsxActive}
+        >
           El chat inline está desactivado: el destino del agente es VSOpenCodeX. Usa el chat de VSOpenCodeX para redactar y enviar; las sugerencias siguen el modelo y chips configurados aquí.
         </p>
 
-        <div className="input-stack">
+        <div className="relative mb-4">
           {ghostContent}
           <textarea
             ref={textareaRef}
             id="prompt-input"
-            className="composer-input"
+            className="w-full min-h-[160px] rounded-[18px] border border-slate-700 bg-slate-900/90 px-4 py-4 text-sm leading-6 text-slate-100 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 resize-none"
             value={text}
             onChange={handleTextChange}
             onKeyDown={(event) => {
@@ -602,7 +693,7 @@ export function App(): JSX.Element {
           />
         </div>
 
-        <div id="status-text" className="status-text my-4 min-h-[26px] text-sm text-slate-300" aria-live="polite" aria-relevant="text">
+        <div id="status-text" className="my-4 min-h-[26px] text-sm text-slate-300" aria-live="polite" aria-relevant="text">
           {status}
         </div>
 

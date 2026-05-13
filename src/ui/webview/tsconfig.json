@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "isolatedModules": true
   },
-  "include": ["./**/*.{ts,tsx}", "../../system/contracts/webviewMessageSchemas.ts"]
+  "include": ["./**/*.{ts,tsx}", "./globals.d.ts", "../../system/contracts/webviewMessageSchemas.ts"]
 }

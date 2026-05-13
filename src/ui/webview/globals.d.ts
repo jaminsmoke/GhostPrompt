@@ -14,3 +14,5 @@ interface Window {
   __ghostPromptViewId?: string;
   __ghostPromptCapabilities?: GhostPromptCapabilities;
 }
+
+declare module "*.css";

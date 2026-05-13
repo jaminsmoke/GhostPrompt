@@ -6,6 +6,8 @@ import * as vscode from "vscode";
 
 /**
  * Nonce aleatorio para Content-Security-Policy del webview.
+ *
+ * @returns Un nonce aleatorio seguro para inyección de scripts.
  */
 export function generateGhostPromptWebviewNonce(): string {
   const chars =
@@ -25,6 +27,12 @@ export type GhostPromptWebviewHtmlParams = {
 
 /**
  * Lee `src/ui/webview/index.html` y sustituye placeholders por URIs seguras y nonce.
+ */
+/**
+ * Construye el HTML del webview reemplazando placeholders por URIs seguras y CSP.
+ *
+ * @param params Parámetros de construcción del webview.
+ * @returns HTML final para cargar en el webview.
  */
 export function buildGhostPromptWebviewHtml(
   params: GhostPromptWebviewHtmlParams,

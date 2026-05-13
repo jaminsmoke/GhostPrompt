@@ -14,8 +14,8 @@ Esta roadmap define el plan para convertir el webview de GhostPrompt en una apli
 | Fase | Alcance | Resultado | Estado |
 |------|---------|-----------|--------|
 | Fase 1 | Configurar React + Vite en el webview | Base de build moderna y funcional | 🟢 Completado |
-| Fase 2 | Migrar el webview actual por componentes React | UI funcional en React sin romper el flujo | 🟡 En progreso |
-| Fase 3 | Añadir Tailwind y estilizado utilitario | Webview con UI rica y mantenimiento rápido | � En progreso |
+| Fase 2 | Migrar el webview actual por componentes React | UI funcional en React sin romper el flujo | 🟢 Completado |
+| Fase 3 | Añadir Tailwind y estilizado utilitario | Webview con UI rica y mantenimiento rápido | 🟢 Completado |
 | Fase 4 | Pruebas, documentación y lecciones | Reporte de hallazgos y control de calidad | 🔵 Planificado |
 
 Cada fase debe entregarse con un artefacto claro, pruebas ejecutables y una bitácora de problemas/resoluciones.
@@ -50,7 +50,7 @@ Crear el andamiaje del nuevo webview con React y Vite, manteniendo el host actua
 ### Estado actual
 
 - Fase 1 completada: scaffold React/Vite validado con `npm run build:webview:react` y `npm run validate`.
-- Fase 2 en progreso: comenzar migración del UI actual a React.
+- Fase 2 completada: la UI principal se migró a React y la comunicación host/webview está validada.
 
 ### Riesgos
 
@@ -113,7 +113,7 @@ Aplicar Tailwind para estilizar el webview y permitir iteraciones rápidas de di
 
 - Tailwind y PostCSS se instalaron y configuraron.
 - `src/ui/webview/react/index.css` ya incluye los directivas Tailwind.
-- Fase 3 arrancó y ahora se puede migrar el CSS existente a clases utilitarias.
+- Fase 3 completada: la UI React usa utilidades Tailwind y el bundle se compila sin errores.
 
 ### Criterios de aceptación
 
@@ -136,13 +136,14 @@ Cerrar la integración con pruebas, documentación de problemas y una lista de a
 
 ### Tareas
 
-1. Ejecutar `npm run check` completo y validar que el build React/Webview pase.
-2. Escribir pruebas nuevas o adaptar las existentes al componente React.
-3. Documentar un resumen al final del roadmap con:
+1. Limpiar el sistema no React obsoleto y consolidar solo los assets, estilos y lógica que la UI React usa hoy.
+2. Ejecutar `npm run check` completo y validar que el build React/Webview pase.
+3. Escribir pruebas nuevas o adaptar las existentes al componente React.
+4. Documentar un resumen al final del roadmap con:
    - lo que funcionó bien
    - problemas encontrados
    - decisiones de diseño importantes
-4. Registrar recomendaciones para `0.5.6` o siguientes:
+5. Registrar recomendaciones para `0.5.6` o siguientes:
    - librerías React adicionales a evaluar
    - si conviene migrar más componentes del host a React
    - ajustes de bundle / rendimiento
@@ -164,9 +165,9 @@ Cerrar la integración con pruebas, documentación de problemas y una lista de a
 
 | Hito | Objetivo | Criterio de éxito | Estado |
 |------|----------|-------------------|--------|
-| Hito 1 | Setup del stack | Vite + React + Tailwind configurados y build local funcionando | 🟡 En progreso |
-| Hito 2 | Primer componente React | Mini-input migrado y comunicación con host comprobada | pendiente |
-| Hito 3 | Ghost suggestion migrada | Ghost inline renderiza y acepta sugerencias | pendiente |
+| Hito 1 | Setup del stack | Vite + React + Tailwind configurados y build local funcionando | � Completado |
+| Hito 2 | Primer componente React | Mini-input migrado y comunicación con host comprobada | 🟢 Completado |
+| Hito 3 | Ghost suggestion migrada | Ghost inline renderiza y acepta sugerencias | 🟢 Completado |
 | Hito 4 | Tailwind estiliza la UI | Toolbar y settings migrados con Tailwind | pendiente |
 | Hito 5 | Documentación y lecciones | Roadmap actualizada con hallazgos y recomendaciones | pendiente |
 
