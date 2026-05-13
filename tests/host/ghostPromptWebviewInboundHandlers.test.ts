@@ -7,6 +7,8 @@ const {
   applyWebviewUpdateSettingMock,
   workspaceConfigGetMock,
   handleGhostPromptSuggestMock,
+  getActiveDestinationProviderMock,
+  windowShowErrorMessageMock,
   MockCancellationTokenSource,
 } = vi.hoisted(() => ({
   appendSuggestionMock: vi.fn(),
@@ -15,6 +17,11 @@ const {
   applyWebviewUpdateSettingMock: vi.fn(),
   workspaceConfigGetMock: vi.fn((key: string, fallback: unknown) => fallback),
   handleGhostPromptSuggestMock: vi.fn().mockResolvedValue(undefined),
+  getActiveDestinationProviderMock: vi.fn(() => ({
+    id: "copilotChat" as const,
+    sendPrompt: sendToChatMock,
+  })),
+  windowShowErrorMessageMock: vi.fn(),
   MockCancellationTokenSource: class {
     public token = { isCancellationRequested: false };
     public cancel(): void {
@@ -37,6 +44,9 @@ vi.mock("vscode", () => ({
   },
   extensions: {
     getExtension: vi.fn(() => undefined),
+  },
+  window: {
+    showErrorMessage: windowShowErrorMessageMock,
   },
   CancellationTokenSource: MockCancellationTokenSource,
   Disposable: class {
@@ -63,10 +73,7 @@ vi.mock("../../src/system/log/ConversationLog", () => ({
 vi.mock("../../src/destinations/destinationRegistry", () => ({
   getGhostPromptAgentDestination: () =>
     workspaceConfigGetMock("agentDestination", "copilotChat") as string,
-  getActiveDestinationProvider: () => ({
-    id: "copilotChat" as const,
-    sendPrompt: sendToChatMock,
-  }),
+  getActiveDestinationProvider: () => getActiveDestinationProviderMock(),
 }));
 
 vi.mock("../../src/api/settings/applyWebviewUpdate", () => ({
@@ -192,6 +199,25 @@ describe("ghostPromptWebviewInboundHandlers", () => {
       );
       expect(appendLogMock).not.toHaveBeenCalled();
       expect(sendToChatMock).not.toHaveBeenCalled();
+    });
+
+    it("muestra error si el provider no tiene sendPrompt registrado", async () => {
+      getActiveDestinationProviderMock.mockReturnValue({
+        id: "copilotChat" as const,
+        sendPrompt: undefined as any,
+      });
+      const clearAll = vi.fn();
+      await handleGhostPromptInboundSend(
+        { type: "send", text: "prompt final" },
+        { fsPath: "/global-store" } as Uri,
+        clearAll,
+      );
+      expect(appendLogMock).not.toHaveBeenCalled();
+      expect(sendToChatMock).not.toHaveBeenCalled();
+      expect(windowShowErrorMessageMock).toHaveBeenCalledWith(
+        "GhostPrompt: destino 'copilotChat' no tiene función de envío registrada.",
+      );
+      expect(clearAll).not.toHaveBeenCalled();
     });
 
     it("no envía si agentDestination es vsOpenCodeX", async () => {

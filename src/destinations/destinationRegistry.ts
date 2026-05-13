@@ -24,7 +24,14 @@ export function getDestinationProviderForId(
 
 export function getActiveDestinationProvider(): DestinationProvider {
   const id = resolveEffectiveDestinationId();
-  return registry.get(id) ?? { id, sendPrompt: async () => {} };
+  return (
+    registry.get(id) ?? {
+      id,
+      sendPrompt: async () => {
+        throw new Error(`Destination provider '${id}' no está registrado`);
+      },
+    }
+  );
 }
 
 export type GhostPromptAgentDestination = DestinationId;

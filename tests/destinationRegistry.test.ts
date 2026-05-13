@@ -63,6 +63,14 @@ describe("destinationRegistry", () => {
       expect(active.id).toBe("vsOpenCodeX");
       expect(active.sendPrompt).toBeDefined();
     });
+
+    it("lanza error al invocar sendPrompt de fallback no registrado", async () => {
+      configGetMock.mockReturnValue("vsOpenCodeX");
+      const active = mod.getActiveDestinationProvider();
+      await expect(active.sendPrompt("hola")).rejects.toThrow(
+        "Destination provider 'vsOpenCodeX' no está registrado",
+      );
+    });
   });
 
   describe("getGhostPromptAgentDestination", () => {

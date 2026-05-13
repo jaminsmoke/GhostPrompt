@@ -87,6 +87,22 @@ export async function handleGhostPromptInboundSend(
   if (!message.text) {
     return;
   }
+  const provider = getActiveDestinationProvider();
+  if (typeof provider.sendPrompt !== "function") {
+    void vscode.window.showErrorMessage(
+      `GhostPrompt: destino '${provider.id}' no tiene función de envío registrada.`,
+    );
+    return;
+  }
+  try {
+    await provider.sendPrompt(message.text);
+  } catch (error) {
+    const messageText = error instanceof Error ? error.message : String(error);
+    void vscode.window.showErrorMessage(
+      `GhostPrompt: no se pudo enviar al destino '${provider.id}': ${messageText}`,
+    );
+    return;
+  }
   const recent = [
     message.text,
     ...ghostPromptSessionStore.getSnapshot().recentSentPrompts,
@@ -98,8 +114,6 @@ export async function handleGhostPromptInboundSend(
     draftText: "",
   });
   await appendLog(dataUri, message.text);
-  const provider = getActiveDestinationProvider();
-  await provider.sendPrompt!(message.text);
   broadcastClearAll();
 }
 
