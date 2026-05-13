@@ -235,7 +235,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [vscode.Uri.joinPath(extensionUri, "ui", "webview")],
+      localResourceRoots: [vscode.Uri.joinPath(extensionUri, "src", "ui", "webview")],
     };
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
