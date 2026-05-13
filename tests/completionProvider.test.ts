@@ -18,7 +18,7 @@ vi.mock("vscode", () => ({
 import {
   getActiveCompletionProvider,
   getCompletionProviderKind,
-} from "../src/completion/completionProvider";
+} from "../src/engines/engineRegistry";
 
 describe("getActiveCompletionProvider", () => {
   beforeEach(() => {

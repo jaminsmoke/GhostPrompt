@@ -42,12 +42,12 @@ export * from "../engines/copilot/catalog/modelCatalog";
 
 export { requestCopilotLmCompletion as requestCompletion } from "../engines/copilot/copilotLmEngine";
 
-export type { CompletionProvider } from "./completionProvider";
+export type { CompletionProvider } from "../engines/engineRegistry";
 export {
   getActiveCompletionProvider,
   getCompletionProviderForSource,
   getCompletionProviderKind,
-} from "./completionProvider";
+} from "../engines/engineRegistry";
 export {
   getCompletionUiKind,
   getEnabledCompletionSources,

@@ -1,6 +1,0 @@
-export {
-  CompletionProvider,
-  getCompletionProviderForSource,
-  getActiveCompletionProvider,
-  getCompletionProviderKind,
-} from "../engines/engineRegistry";
