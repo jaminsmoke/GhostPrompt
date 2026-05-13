@@ -381,14 +381,14 @@ export function App(): JSX.Element {
   }, [suggestion, text]);
 
   return (
-    <div className="app-shell">
-      <section className="app-card">
-        <div className="settings-strip" aria-label="Opciones rápidas">
-          <div className="setting-group" data-key="completionProvider">
-            <span className="setting-label">Motor</span>
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <section className="mx-auto w-full max-w-6xl rounded-[28px] border border-slate-700 bg-slate-950/95 p-7 shadow-[0_28px_90px_rgba(15,23,42,0.35)]">
+        <div className="mb-6 grid gap-4 xl:grid-cols-[280px_280px_420px]" aria-label="Opciones rápidas">
+          <div className="flex flex-col gap-3" data-key="completionProvider">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Motor</span>
             <select
               id="completion-backend-select"
-              className="completion-backend-select chip-backend"
+              className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100 outline-none ring-1 ring-transparent transition focus:border-sky-500 focus:ring-sky-500/30"
               value={completionProvider}
               onChange={handleCompletionProviderChange}
               aria-label="Motor de suggestions (Copilot LM u OpenCode)"
@@ -400,11 +400,11 @@ export function App(): JSX.Element {
           </div>
 
           {vsOpenCodeXExtensionInstalled ? (
-            <div className="setting-group" data-key="agentDestination">
-              <span className="setting-label">Destino</span>
+            <div className="flex flex-col gap-3" data-key="agentDestination">
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Destino</span>
               <select
                 id="agent-destination-select"
-                className="completion-backend-select chip-backend agent-destination-select"
+                className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100 outline-none ring-1 ring-transparent transition focus:border-sky-500 focus:ring-sky-500/30"
                 value={agentDestination}
                 onChange={handleAgentDestinationChange}
                 aria-label="Destino del prompt (Copilot Chat o VSOpenCodeX)"
@@ -415,11 +415,15 @@ export function App(): JSX.Element {
             </div>
           ) : null}
 
-          <div className="setting-group" data-key="suggestionModelPolicy">
-            <span className="setting-label">Modelo</span>
+          <div className="flex flex-col gap-3" data-key="suggestionModelPolicy">
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Modelo</span>
             <button
               type="button"
-              className={`chip ${suggestionModelPolicy === "nonPremiumOnly" ? "chip-active" : ""}`}
+              className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm transition ${
+                suggestionModelPolicy === "nonPremiumOnly"
+                  ? "border-sky-500 bg-sky-500/10 text-sky-200"
+                  : "border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-900/80"
+              }`}
               onClick={() => makeToggle("suggestionModelPolicy", "nonPremiumOnly")}
               aria-pressed={suggestionModelPolicy === "nonPremiumOnly"}
             >
@@ -427,7 +431,11 @@ export function App(): JSX.Element {
             </button>
             <button
               type="button"
-              className={`chip ${suggestionModelPolicy === "anyModel" ? "chip-active" : ""}`}
+              className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm transition ${
+                suggestionModelPolicy === "anyModel"
+                  ? "border-sky-500 bg-sky-500/10 text-sky-200"
+                  : "border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-900/80"
+              }`}
               onClick={() => makeToggle("suggestionModelPolicy", "anyModel")}
               aria-pressed={suggestionModelPolicy === "anyModel"}
             >
@@ -435,7 +443,7 @@ export function App(): JSX.Element {
             </button>
             <select
               id="model-select"
-              className="chip model-select"
+              className="rounded-2xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-slate-100 outline-none ring-1 ring-transparent transition focus:border-sky-500 focus:ring-sky-500/30"
               aria-label="Modelo sugerencias"
               value={selectedModelId}
               onChange={handleSelectedModelChange}
@@ -452,11 +460,11 @@ export function App(): JSX.Element {
             </span>
           </div>
 
-          <details className="gp-compose-details" id="compose-options-details">
-            <summary className="gp-compose-summary chip" aria-label="Opciones de composición: estilo, contexto e idioma">
+          <details className="rounded-2xl border border-slate-700 bg-slate-900/90" id="compose-options-details">
+            <summary className="w-full rounded-2xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-left text-sm font-medium text-slate-100" aria-label="Opciones de composición: estilo, contexto e idioma">
               Normal · Básico · Auto (EN)
             </summary>
-            <div className="gp-compose-panel" role="group" aria-label="Estilo, contexto e idioma">
+            <div className="grid gap-3 p-4" role="group" aria-label="Estilo, contexto e idioma">
               <div className="setting-group" data-key="suggestionStyle">
                 <span className="setting-label">Estilo</span>
                 <button
@@ -546,7 +554,11 @@ export function App(): JSX.Element {
           <button
             type="button"
             id="debug-btn"
-            className={`chip chip-debug ${debugSuggestions ? "chip-active" : ""}`}
+            className={`inline-flex items-center justify-center rounded-full border px-4 py-2 text-sm transition ${
+              debugSuggestions
+                ? "border-sky-500 bg-sky-500/10 text-sky-200"
+                : "border-slate-700 text-slate-300 hover:border-slate-500 hover:bg-slate-900/80"
+            }`}
             aria-pressed={debugSuggestions}
             onClick={handleDebugToggle}
           >
@@ -590,13 +602,19 @@ export function App(): JSX.Element {
           />
         </div>
 
-        <div id="status-text" className="status-text" aria-live="polite" aria-relevant="text">
+        <div id="status-text" className="status-text my-4 min-h-[26px] text-sm text-slate-300" aria-live="polite" aria-relevant="text">
           {status}
         </div>
 
-        <div className="toolbar">
-          <span className="hint">Tab: aceptar sugerencia · Enter: enviar · Shift+Enter: nueva línea</span>
-          <button id="send-btn" className="primary-button" type="button" onClick={handleSend} disabled={!canSend}>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <span className="text-sm text-slate-400">Tab: aceptar sugerencia · Enter: enviar · Shift+Enter: nueva línea</span>
+          <button
+            id="send-btn"
+            className="inline-flex items-center justify-center rounded-2xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50"
+            type="button"
+            onClick={handleSend}
+            disabled={!canSend}
+          >
             Enviar ↵
           </button>
         </div>
