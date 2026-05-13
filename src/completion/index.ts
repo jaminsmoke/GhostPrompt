@@ -52,6 +52,7 @@ export {
   getCompletionUiKind,
   getEnabledCompletionSources,
   looksLikeOpencodeModelId,
+  looksLikeOllamaModelId,
   resolveCompletionSourceForRequest,
   type CompletionSourceId,
 } from "./completionSources";

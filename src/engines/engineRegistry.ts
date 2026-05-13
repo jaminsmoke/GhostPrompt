@@ -3,6 +3,7 @@ import { getEnabledCompletionSources } from "../completion/completionSources";
 
 import { requestCopilotLmCompletion } from "./copilot/copilotLmEngine";
 import { requestOpencodeCompletion } from "./opencode/opencodeLmEngine";
+import { requestOllamaCompletion } from "./ollama/ollamaLmEngine";
 
 export interface CompletionProvider {
   readonly id: string;
@@ -22,10 +23,17 @@ const opencodeProvider: CompletionProvider = {
   requestCompletion: requestOpencodeCompletion,
 };
 
+const ollamaProvider: CompletionProvider = {
+  id: "ollama",
+  requestCompletion: requestOllamaCompletion,
+};
+
 export function getCompletionProviderForSource(
-  source: "copilot" | "opencode",
+  source: "copilot" | "opencode" | "ollama",
 ): CompletionProvider {
-  return source === "opencode" ? opencodeProvider : copilotLmProvider;
+  if (source === "opencode") return opencodeProvider;
+  if (source === "ollama") return ollamaProvider;
+  return copilotLmProvider;
 }
 
 export function getActiveCompletionProvider(): CompletionProvider {
@@ -34,7 +42,7 @@ export function getActiveCompletionProvider(): CompletionProvider {
   return getCompletionProviderForSource(source);
 }
 
-export function getCompletionProviderKind(): "copilot" | "opencode" {
+export function getCompletionProviderKind(): "copilot" | "opencode" | "ollama" {
   const s = getEnabledCompletionSources();
   if (s.length === 1) {
     return s[0];

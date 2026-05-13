@@ -184,7 +184,8 @@ export async function runGhostPromptSuggestPipeline(
     `chars=${text.length} policy=${policy} selectedModelId=${selectedModelId} source=${routedSource} style=${style} lang=${effectiveLanguage} metrics=${JSON.stringify(governor.getMetrics())} usage=${JSON.stringify(usage)}`,
   );
   const initialPhase: SuggestionLoadingPhase =
-    routedSource === "opencode" ? "opencode-start" : "copilot";
+    routedSource === "opencode" ? "opencode-start" :
+    routedSource === "ollama" ? "ollama-start" : "copilot";
   const emitLoadingPhase = (phase: SuggestionLoadingPhase) => {
     deps.broadcastUi({
       type: "loading",
@@ -227,7 +228,7 @@ export async function runGhostPromptSuggestPipeline(
       maxSuggestionChars: deps.getMaxSuggestionChars(),
       style,
       onLoadingPhase: emitLoadingPhase,
-      ...(routedSource === "opencode"
+      ...(routedSource === "opencode" || routedSource === "ollama"
         ? {
             onStreamPreview: (accumulated: string) => {
               if (

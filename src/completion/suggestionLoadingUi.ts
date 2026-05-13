@@ -7,7 +7,9 @@ export type SuggestionLoadingPhase =
   | "copilot"
   | "opencode-start"
   | "opencode-connecting"
-  | "opencode-generating";
+  | "opencode-generating"
+  | "ollama-start"
+  | "ollama-generating";
 
 export function suggestionLoadingStatusText(
   phase: SuggestionLoadingPhase,
@@ -20,6 +22,10 @@ export function suggestionLoadingStatusText(
     case "opencode-connecting":
       return "Conectando con el servidor…";
     case "opencode-generating":
+      return "Generando sugerencia…";
+    case "ollama-start":
+      return "Iniciando Ollama…";
+    case "ollama-generating":
       return "Generando sugerencia…";
   }
 }

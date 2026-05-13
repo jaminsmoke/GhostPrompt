@@ -23,7 +23,7 @@
 |------|-------------|--------|----|-------|
 | **Fase 1** | Estructura `engines/` + migración providers existentes | 🟢 | — | completada 2026-05-13 |
 | **Fase 2** | Cliente API Ollama (`ollamaApiClient.ts`) | 🟢 | — | completada 2026-05-13 |
-| **Fase 3** | Adaptador Ollama CompletionProvider (`ollamaLmEngine.ts`) | ⚪ | — | |
+| **Fase 3** | Adaptador Ollama CompletionProvider (`ollamaLmEngine.ts`) | 🟢 | — | completada 2026-05-13 |
 | **Fase 4** | Catálogo Ollama + routing + settings | ⚪ | — | |
 | **Fase 5** | UI webview + chips de motor | ⚪ | — | |
 | **Fase 6** | Tests unitarios | ⚪ | — | |
@@ -80,11 +80,12 @@
 
 | # | Subpaso | Estado | Archivos |
 |---|---------|--------|----------|
-| 3.1 | Crear `src/engines/ollama/ollamaLmEngine.ts` — `requestCompletion()` | ⚪ | Nuevo |
-| 3.2 | Añadir fases de loading `"ollama-start"`, `"ollama-connecting"`, `"ollama-generating"` en `suggestionLoadingUi.ts` | ⚪ | Modificar |
-| 3.3 | Registrar el engine en `engines/engineRegistry.ts` | ⚪ | Modificar |
-| 3.4 | Configurar eliminación en `deactivate()` si aplica | ⚪ | Modificar |
-| 3.5 | Tests unitarios del engine Ollama | ⚪ | Nuevo |
+| 3.1 | Crear `src/engines/ollama/ollamaLmEngine.ts` — `requestCompletion()` | 🟢 | `src/engines/ollama/ollamaLmEngine.ts` |
+| 3.2 | Añadir fases de loading `"ollama-start"`, `"ollama-generating"` en `suggestionLoadingUi.ts` | 🟢 | `src/completion/suggestionLoadingUi.ts` |
+| 3.3 | Registrar el engine en `engines/engineRegistry.ts` | 🟢 | `src/engines/engineRegistry.ts` |
+| 3.4 | Actualizar `completionSources.ts` — `looksLikeOllamaModelId()`, routing `"auto"`, `normalizeCompletionSources` | 🟢 | `src/completion/completionSources.ts`, `src/completion/index.ts` |
+| 3.5 | Actualizar `ghostPromptSuggestPipeline.ts` — fase inicial + streaming para "ollama" | 🟢 | `src/host/ghostPromptSuggestPipeline.ts` |
+| 3.6 | Verificar compilación y tests | 🟢 | ✅ 195 passed |
 
 **Criterio de salida:** `getCompletionProviderForSource("ollama")` devuelve el provider Ollama. El pipeline de sugerencia funciona con Ollama.
 
