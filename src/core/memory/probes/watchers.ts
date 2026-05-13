@@ -4,12 +4,12 @@
  */
 import * as vscode from "vscode";
 
-import { isProjectMemoryBootstrapStoredItem } from "./bootstrapStoredHelpers";
-import { normalizeWorkspaceRelativePath } from "./workspaceRelativePath";
-import { isProjectMemoryEditorIngestStoredItem } from "./editorStoredHelpers";
-import { removeIndexedEntriesForRelativePath } from "./entriesMutation";
-import type { ProjectMemoryStore } from "./ProjectMemoryStore";
-import { workspaceKeyFromRootUriString } from "./workspaceKey";
+import { isProjectMemoryBootstrapStoredItem } from "../entries/bootstrap";
+import { normalizeWorkspaceRelativePath } from "../io/path";
+import { isProjectMemoryEditorIngestStoredItem } from "../entries/editor";
+import { removeIndexedEntriesForRelativePath } from "../entries/mutation";
+import type { ProjectMemoryStore } from "../Store";
+import { workspaceKeyFromRootUriString } from "../io/key";
 
 export function readProjectMemoryFileWatcherConfig(): {
   enabled: boolean;

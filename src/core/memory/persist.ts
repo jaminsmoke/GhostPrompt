@@ -1,24 +1,25 @@
 import * as vscode from "vscode";
 
-import { type ProjectBootstrapPiece } from '../core/context/projectBootstrapContext';
-import { readEditorIngestConfig } from "./editorIngestSettings";
-import { applyEditorIngestLruEviction } from "./editorIngestLru";
+import { type ProjectBootstrapPiece } from '../context/projectBootstrapContext';
+import { readEditorIngestConfig } from "./ingest/settings";
+import { applyEditorIngestLruEviction } from "./ingest/lru";
 import {
+  isProjectMemoryBootstrapStoredItem,
   mergeEntriesReplacingBootstrapSubset,
   mergeValidatedBootstrapWithLive,
-  isProjectMemoryBootstrapStoredItem,
-} from "./bootstrapStoredHelpers";
+  pruneBootstrapStoredAgainstFileProbes,
+} from "./entries/bootstrap";
 import {
   isProjectMemoryEditorIngestStoredItem,
   mergeEntriesReplacingEditorSubset,
   pruneEditorIngestAgainstFileProbes,
-} from "./editorStoredHelpers";
-import type { ProjectMemoryBootstrapStoredItem } from "./projectMemoryTypes";
-import { PROJECT_BOOTSTRAP_ENTRY_KIND } from "./projectMemoryTypes";
-import type { ProjectMemoryStore } from "./ProjectMemoryStore";
-import { scheduleIndexedPathWatcherRefresh } from "./indexedPathsFileWatcher";
-import { workspaceKeyFromRootUriString } from "./workspaceKey";
-import { probeWorkspaceRelativePaths } from "./workspaceFileProbes";
+} from "./entries/editor";
+import type { ProjectMemoryBootstrapStoredItem } from "./types";
+import { PROJECT_BOOTSTRAP_ENTRY_KIND } from "./types";
+import type { ProjectMemoryStore } from "./Store";
+import { scheduleIndexedPathWatcherRefresh } from "./probes/watchers";
+import { workspaceKeyFromRootUriString } from "./io/key";
+import { probeWorkspaceRelativePaths } from "./probes/workspace";
 
 /** @deprecated usar {@link ProjectMemoryReconcileSnapshot} */
 export type ProjectBootstrapReconcileSnapshot = ProjectMemoryReconcileSnapshot;

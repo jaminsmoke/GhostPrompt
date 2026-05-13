@@ -4,7 +4,7 @@ import {
   type ProjectMemoryManifestFile,
   type ProjectMemoryRegistryEntry,
   type ProjectMemoryRegistryFile,
-} from "./projectMemoryTypes";
+} from "../types";
 
 export function defaultRegistry(): ProjectMemoryRegistryFile {
   return { schemaVersion: PROJECT_MEMORY_SCHEMA_VERSION, entries: [] };

@@ -1,7 +1,7 @@
 import {
   PROJECT_BOOTSTRAP_ENTRY_KIND,
   type ProjectMemoryBootstrapStoredItem,
-} from "./projectMemoryTypes";
+} from "../types";
 
 export function isProjectMemoryBootstrapStoredItem(
   x: unknown,

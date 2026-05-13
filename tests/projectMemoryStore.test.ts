@@ -3,13 +3,19 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { NodeProjectMemoryFs } from "../src/projectMemory/projectMemoryNodeFs";
-import { ProjectMemoryStore } from "../src/projectMemory/ProjectMemoryStore";
+import { NodeProjectMemoryFs } from "../src/core/memory/io/fs";
+import { ProjectMemoryStore } from "../src/core/memory/Store";
 import {
-  MANIFEST_FILE,
+  PROJECT_MEMORY_SCHEMA_VERSION,
+  PROJECT_MEMORY_REL_SEGMENTS,
+  REGISTRY_FILE,
   STORES_DIR,
-} from "../src/projectMemory/projectMemoryTypes";
-import { workspaceKeyFromRootUriString } from "../src/projectMemory/workspaceKey";
+  ENTRIES_FILE,
+  MANIFEST_FILE,
+  type ProjectMemoryRegistryFile,
+  type ProjectMemoryManifestFile,
+} from "../src/core/memory/types";
+import { workspaceKeyFromRootUriString } from "../src/core/memory/io/key";
 
 describe("workspaceKeyFromRootUriString", () => {
   it("es determinista por URI canónica", () => {

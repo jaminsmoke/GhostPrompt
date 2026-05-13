@@ -5,14 +5,14 @@ import * as path from "node:path";
 
 import * as vscode from "vscode";
 
-import { ingestActiveEditorDocument } from "./editorIngestActiveDocument";
+import { ingestActiveEditorDocument } from "./ingest/document";
 import {
   bindProjectMemoryIndexedPathWatcher,
   refreshProjectMemoryIndexedPathWatchers,
-} from "./indexedPathsFileWatcher";
-import { NodeProjectMemoryFs } from "./projectMemoryNodeFs";
-import { ProjectMemoryStore } from "./ProjectMemoryStore";
-import { PROJECT_MEMORY_REL_SEGMENTS } from "./projectMemoryTypes";
+} from "./probes/watchers";
+import { NodeProjectMemoryFs } from "./io/fs";
+import { ProjectMemoryStore } from "./Store";
+import { PROJECT_MEMORY_REL_SEGMENTS } from "./types";
 
 function clampTtlDays(raw: number): number {
   if (!Number.isFinite(raw)) {

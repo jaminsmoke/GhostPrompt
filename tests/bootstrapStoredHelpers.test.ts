@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  isProjectMemoryBootstrapStoredItem,
+  mergeEntriesReplacingBootstrapSubset,
   mergeValidatedBootstrapWithLive,
   pruneBootstrapStoredAgainstFileProbes,
-} from "../src/projectMemory/bootstrapStoredHelpers";
-import { PROJECT_BOOTSTRAP_ENTRY_KIND } from "../src/projectMemory/projectMemoryTypes";
-import type { ProjectMemoryBootstrapStoredItem } from "../src/projectMemory/projectMemoryTypes";
+} from "../src/core/memory/entries/bootstrap";
+import { PROJECT_BOOTSTRAP_ENTRY_KIND } from "../src/core/memory/types";
+import type { ProjectMemoryBootstrapStoredItem } from "../src/core/memory/types";
 
 function item(r: Omit<ProjectMemoryBootstrapStoredItem, "kind">): ProjectMemoryBootstrapStoredItem {
   return {

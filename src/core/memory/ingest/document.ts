@@ -5,20 +5,20 @@ import * as vscode from "vscode";
 import {
   sha256HexBytes,
   truncateProjectCardText,
-} from '../core/context/projectBootstrapContext';
-import { readEditorIngestConfig, PROJECT_EDITOR_CARD_MAX_CHARS, normalizeWorkspaceRelativePath, pathLikelyExcludedForEditorIngest } from "./editorIngestSettings";
-import { applyEditorIngestLruEviction } from "./editorIngestLru";
+} from '../../context/projectBootstrapContext';
+import { readEditorIngestConfig, PROJECT_EDITOR_CARD_MAX_CHARS, normalizeWorkspaceRelativePath, pathLikelyExcludedForEditorIngest } from "./settings";
+import { applyEditorIngestLruEviction } from "./lru";
 import {
   isProjectMemoryEditorIngestStoredItem,
   mergeEntriesReplacingEditorSubset,
-} from "./editorStoredHelpers";
+} from "../entries/editor";
 import {
   PROJECT_EDITOR_INGEST_ENTRY_KIND,
   type ProjectMemoryEditorIngestStoredItem,
-} from "./projectMemoryTypes";
-import { scheduleIndexedPathWatcherRefresh } from "./indexedPathsFileWatcher";
-import type { ProjectMemoryStore } from "./ProjectMemoryStore";
-import { workspaceKeyFromRootUriString } from "./workspaceKey";
+} from "../types";
+import { scheduleIndexedPathWatcherRefresh } from "../probes/watchers";
+import type { ProjectMemoryStore } from "../Store";
+import { workspaceKeyFromRootUriString } from "../io/key";
 
 export async function ingestActiveEditorDocument(
   store: ProjectMemoryStore,

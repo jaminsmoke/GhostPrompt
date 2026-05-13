@@ -1,7 +1,7 @@
 import {
   PROJECT_EDITOR_INGEST_ENTRY_KIND,
   type ProjectMemoryEditorIngestStoredItem,
-} from "./projectMemoryTypes";
+} from "../types";
 
 export function isProjectMemoryEditorIngestStoredItem(
   x: unknown,

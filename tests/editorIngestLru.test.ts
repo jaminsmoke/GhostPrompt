@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { applyEditorIngestLruEviction } from "../src/projectMemory/editorIngestLru";
-import { PROJECT_EDITOR_INGEST_ENTRY_KIND } from "../src/projectMemory/projectMemoryTypes";
-import type { ProjectMemoryEditorIngestStoredItem } from "../src/projectMemory/projectMemoryTypes";
+import { applyEditorIngestLruEviction } from "../src/core/memory/ingest/lru";
+import { PROJECT_EDITOR_INGEST_ENTRY_KIND } from "../src/core/memory/types";
+import type { ProjectMemoryEditorIngestStoredItem } from "../src/core/memory/types";
 
 function ed(
   path: string,

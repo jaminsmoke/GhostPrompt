@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { removeIndexedEntriesForRelativePath } from "../src/projectMemory/entriesMutation";
-import {
-  normalizeWorkspaceRelativePath,
-  workspaceRelativePathsMatch,
-} from "../src/projectMemory/workspaceRelativePath";
-import { PROJECT_BOOTSTRAP_ENTRY_KIND } from "../src/projectMemory/projectMemoryTypes";
-import { PROJECT_EDITOR_INGEST_ENTRY_KIND } from "../src/projectMemory/projectMemoryTypes";
+import { removeIndexedEntriesForRelativePath } from "../src/core/memory/entries/mutation";
+import { normalizeWorkspaceRelativePath, workspaceRelativePathsMatch } from "../src/core/memory/io/path";
+import { PROJECT_BOOTSTRAP_ENTRY_KIND } from "../src/core/memory/types";
+import { PROJECT_EDITOR_INGEST_ENTRY_KIND } from "../src/core/memory/types";
 
 const z = "0".repeat(64);
 

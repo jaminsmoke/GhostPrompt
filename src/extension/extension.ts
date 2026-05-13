@@ -10,7 +10,7 @@ import { MiniInputViewProvider } from "../vscode/MiniInputViewProvider";
 import { toggleSuggestionDebug } from '../system/debug/SuggestionDebug';
 import { resetClient } from "../engines/opencode/opencodeApiClient";
 import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from "../destinations/vsOpenCodeX/vsOpenCodeXDestination";
-import { registerProjectMemory } from "../projectMemory/activateProjectMemory";
+import { registerProjectMemory } from "../core/memory/activate";
 
 export function activate(context: vscode.ExtensionContext): void {
   registerProjectMemory(context);

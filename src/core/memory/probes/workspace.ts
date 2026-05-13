@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-import { sha256HexBytes } from '../core/context/projectBootstrapContext';
+import { sha256HexBytes } from '../../context/projectBootstrapContext';
 
 export async function probeWorkspaceRelativePaths(params: {
   workspaceRootUri: vscode.Uri;

@@ -24,14 +24,14 @@
       {
         "zones": [
           {
-            "target": "./src/projectMemory/**/*",
-            "from": "./src/host/**/*",
-            "message": "projectMemory no debe importar desde src/host; pasar datos desde host como deps. Ver Docs/Owners.md."
+            "target": "./src/core/memory/**/*",
+            "from": ["./src/vscode/**/*", "./src/api/**/*"],
+            "message": "core/memory no debe importar desde api/vscode; pasar datos como deps. Ver Docs/Owners.md."
           },
           {
-            "target": "./src/debug/**/*",
-            "from": "./src/host/**/*",
-            "message": "debug no debe importar desde src/host. Ver Docs/Owners.md fase D."
+            "target": "./src/system/debug/**/*",
+            "from": ["./src/vscode/**/*", "./src/api/**/*"],
+            "message": "debug no debe importar desde api/vscode. Ver Docs/Owners.md fase D."
           }
         ]
       }

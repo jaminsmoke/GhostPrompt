@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-import { normalizeWorkspaceRelativePath } from "./workspaceRelativePath";
+import { normalizeWorkspaceRelativePath } from "../io/path";
 
 /** UTF-16 máximas del excerpt de ficheros editor-ingest en el prompt. */
 export const PROJECT_EDITOR_CARD_MAX_CHARS = 1200;

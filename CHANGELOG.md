@@ -4,7 +4,7 @@ All notable changes to this project are documented in this file.
 
 ## [0.5.3] - 2026-05-13
 
-Versión **0.5.3**: `host/` desmantelado en dominios canónicos `api/` + `vscode/` + `core/pipeline/`.
+Versión **0.5.3**: `host/` desmantelado en dominios canónicos `api/` + `vscode/` + `core/pipeline/`. `projectMemory/` movido a `core/memory/` con subcarpetas.
 
 ### Changed
 
@@ -25,8 +25,21 @@ Versión **0.5.3**: `host/` desmantelado en dominios canónicos `api/` + `vscode
     - `core/pipeline/suggestPipeline.ts` — Pipeline completo: governor → LM → broadcast
     - `core/pipeline/index.ts` — Barrel + re-export
 
-- **Todos los imports actualizados:** `extension/`, `api/`, `vscode/`, `core/pipeline/`, tests (~10 files)
-- **Circular dependency eliminada:** pipeline importa directamente de submódulos en vez del barrel `core/`
+- **Movido `src/projectMemory/` → `src/core/memory/` con subcarpetas:**
+  - `memory/io/` — Storage IO (fs adapter, JSON, workspace key, path)
+  - `memory/entries/` — Entry operations (mutation, bootstrap, editor)
+  - `memory/ingest/` — Editor ingest (document, settings, LRU)
+  - `memory/probes/` — Workspace context (file probes, file watchers)
+  - 17 archivos planos → 16 archivos en estructura organizada
+
+- **Config fixes:**
+  - Version bumped to `0.5.3`
+  - `package.json`: `verify:webview-bundle` apunta a `out/system/build/`
+  - `.eslintrc.json`: zones actualizados (`system/debug/`, `core/memory/` → no `api/`, `vscode/`)
+  - `.vscodeignore`: `out/system/build/**` en vez de `out/build/**`
+  - `webview/tsconfig.json`: include path actualizado a `system/contracts/`
+
+- **Todos los imports actualizados:** `extension/`, `vscode/`, `core/pipeline/`, tests
 - **226 tests passing**, `npm run check` verde (0 errors, 34 warnings pre-existing)
 
 ## [0.5.2] - 2026-05-13

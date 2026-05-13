@@ -6,20 +6,20 @@ import {
   parseEntriesJson,
   parseManifestJson,
   parseRegistryJson,
-} from "./projectMemoryJson";
+} from "./io/json";
 import type {
   ProjectMemoryManifestFile,
   ProjectMemoryRegistryFile,
-} from "./projectMemoryTypes";
+} from "./types";
 import {
   ENTRIES_FILE,
   MANIFEST_FILE,
   PROJECT_MEMORY_SCHEMA_VERSION,
   REGISTRY_FILE,
   STORES_DIR,
-} from "./projectMemoryTypes";
-import type { ProjectMemoryFsAdapter } from "./projectMemoryNodeFs";
-import { workspaceKeyFromRootUriString } from "./workspaceKey";
+} from "./types";
+import type { ProjectMemoryFsAdapter } from "./io/fs";
+import { workspaceKeyFromRootUriString } from "./io/key";
 
 export class ProjectMemoryStore {
   public constructor(

@@ -36,9 +36,31 @@ core/
 │   └── GhostPromptSessionStore.ts    # Estado compartido: draft, pending suggestion, captureId, cancel token
 ├── context/
 │   └── projectBootstrapContext.ts    # Contexto del proyecto: README, package.json, bootstrap lines
-└── pipeline/
-    ├── suggestPipeline.ts            # Orquestación completa: governor → LM → broadcast
-    └── index.ts                      # Barrel del pipeline
+├── pipeline/
+│   ├── suggestPipeline.ts            # Orquestación completa: governor → LM → broadcast
+│   └── index.ts                      # Barrel del pipeline
+└── memory/                           # Memoria persistente del proyecto
+    ├── types.ts                      # Tipos de almacenamiento (RegistryEntry, BootstrapEntry, EditorEntry)
+    ├── Store.ts                      # Store principal: reconcile, LRU, persistencia
+    ├── activate.ts                   # Registro en activate: layout, GC, comando clear
+    ├── persist.ts                    # Snapshot reconcile para suggest pipeline
+    ├── io/                           # Storage IO
+    │   ├── fs.ts                     # Adaptador Node FS (ProjectMemoryFsAdapter)
+    │   ├── json.ts                   # Lectura/escritura de JSON en globalStorageUri
+    │   ├── key.ts                    # Generación de clave SHA-256 por workspace
+    │   └── path.ts                   # Paths relativos al workspace
+    ├── entries/                      # Operaciones sobre entradas
+    │   ├── mutation.ts               # Eliminación de entradas por path
+    │   ├── bootstrap.ts              # Helpers de entradas bootstrap
+    │   └── editor.ts                 # Helpers de entradas editor-ingest
+    ├── ingest/                       # Editor ingest
+    │   ├── document.ts               # Ingest del documento activo del editor
+    │   ├── settings.ts               # Settings de editor ingest
+    │   └── lru.ts                    # LRU pool de editor sources
+    ├── probes/                       # Contexto del workspace
+    │   ├── workspace.ts              # Probing de archivos (README*, package.json)
+    │   └── watchers.ts               # FileSystemWatcher para paths indexados
+    └── index.ts                      # Barrel de memory/
 ```
 
 ---
@@ -118,3 +140,7 @@ interface CompletionProvider {
 | `mergedModelCatalog.test.ts` | Merge + dedup de catálogos multi-fuente |
 | `projectBootstrapContext.test.ts` | Bootstrap lines, fingerprint |
 | `host/ghostPromptSuggestPipeline.test.ts` | Pipeline completo con mocks |
+| `projectMemoryStore.test.ts` | Store: reconcile, LRU, registry, GC |
+| `bootstrapStoredHelpers.test.ts` | Merge/prune de entradas bootstrap |
+| `entriesMutation.test.ts` | Eliminación de entradas, path normalization |
+| `editorIngestLru.test.ts` | LRU eviction de editor sources |

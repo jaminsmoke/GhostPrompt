@@ -30,13 +30,13 @@ import * as vscode from "vscode";
 import { ghostPromptSessionStore } from '../core/session/GhostPromptSessionStore';
 import { buildAndPostGhostPromptSettings } from "../api/settings/settingsPostMessage";
 import { buildGhostPromptWebviewHtml } from "./webviewHtml";
-import { getProjectMemoryBaseDir } from "../projectMemory/activateProjectMemory";
+import { getProjectMemoryBaseDir } from "../core/memory/activate";
 import {
   reconcileProjectMemoryForSuggest,
   writeReconciledProjectBootstrapSnapshot,
-} from "../projectMemory/persistProjectBootstrapSnapshot";
-import { NodeProjectMemoryFs } from "../projectMemory/projectMemoryNodeFs";
-import { ProjectMemoryStore } from "../projectMemory/ProjectMemoryStore";
+} from "../core/memory/persist";
+import { NodeProjectMemoryFs } from "../core/memory/io/fs";
+import { ProjectMemoryStore } from "../core/memory/Store";
 import {
   collectGhostPromptProjectContext,
   getGhostPromptContextMode,

@@ -1,4 +1,4 @@
-import type { ProjectMemoryEditorIngestStoredItem } from "./projectMemoryTypes";
+import type { ProjectMemoryEditorIngestStoredItem } from "../types";
 
 function entryApproxByteSize(e: ProjectMemoryEditorIngestStoredItem): number {
   return Buffer.byteLength(JSON.stringify(e), "utf8");

@@ -29,7 +29,7 @@ Filas = carpetas principales de `src/`. Columnas = reglas de dependencia y rol.
 | **`core/`** | Lógica pura de suggestions: tipos, instrucción, normalize, streaming, language, loading, sources, merged catalog, governor, session, context bootstrap, pipeline. | `engines/` (para types/registry), `system/debug/`, `vscode` (Uri types). | No UI webview ni HTML, ni VS Code API directa. |
 | **`engines/`** | Motores de completion canónicos. `copilot/`, `opencode/` (apiClient + catalog), `ollama/`, `engineRegistry.ts`. | `core/` (types, instruction, normalize), `system/debug/`, `vscode`. | No importar desde `host/`, `api/`, `vscode/`. |
 | **`destinations/`** | Destinos de prompt (copilotChat, vsOpenCodeX). Registro `DestinationProvider` en `destinationRegistry.ts`. | `vscode`. | No importar desde `host/`, `api/`, `vscode/`. |
-| **`projectMemory/`** | Store JSON, reconcile, ingest, watchers. | `vscode`, FS propio. | `api/`, `vscode/` (riesgo de cycle conceptual; pasar datos como deps). |
+| **`core/memory/`** | Memoria persistente del proyecto: store JSON, reconcile, ingest, watchers, GC. | `vscode`, `system/debug`. | `api/`, `vscode/` (riesgo de cycle conceptual; pasar datos como deps). |
 | **`system/debug/`** | Canal de salida y toggles de debug. | `vscode`. | `api/`, `vscode/`. |
 | **`system/log/`** | Persistencia conversación / suggestions en disco. | `vscode`, FS. | — |
 | **`system/contracts/`** | Schemas/tipos compartidos host ↔ webview (Zod). | `zod`. | `api/` en runtime del webview bundle (el cliente es otro build). |
@@ -41,7 +41,7 @@ Reglas en `.eslintrc.json` (nivel `warn`):
 
 | Objetivo (`target`) | No importar desde (`from`) |
 | --------------------- | ---------------------------- |
-| **`src/projectMemory/**/*`** | **`src/vscode/**/*`**, **`src/api/**/*`** |
+| **`src/core/memory/**/*`** | **`src/vscode/**/*`**, **`src/api/**/*`** |
 | **`src/system/debug/**/*`** | **`src/vscode/**/*`**, **`src/api/**/*`** |
 
 ---
@@ -61,7 +61,7 @@ No es cobertura de líneas al 100 %; es **contrato de tests que deben seguir pas
 | `engines/` (copilot, opencode, ollama, engineRegistry) | `engineRegistry.test.ts`, `ollamaLmEngine.test.ts`, `ollamaApiClient.test.ts`, `mergedModelCatalog.test.ts`, `opencodeApiClient.test.ts`, `opencodeLmCompletion.test.ts`, `opencodeModelCatalog.test.ts`, `opencodeModelTier.test.ts`, `normalizeOpencodeProviderModels.test.ts` |
 | `destinations/` (copilotChat, vsOpenCodeX, destinationRegistry) | `destinationRegistry.test.ts`, `copilotChatDestination.test.ts`, `vsOpenCodeXDestination.test.ts` |
 | `core/pipeline/` (suggestPipeline) | `host/ghostPromptSuggestPipeline.test.ts`, `MiniInputViewProvider.test.ts` (flujo suggest mock) |
-| `projectMemory/` | `projectMemoryStore.test.ts`, `projectBootstrapContext.test.ts`, `bootstrapStoredHelpers.test.ts`, `entriesMutation.test.ts`, `editorIngestLru.test.ts` |
+| `core/memory/` | `projectMemoryStore.test.ts`, `projectBootstrapContext.test.ts`, `bootstrapStoredHelpers.test.ts`, `entriesMutation.test.ts`, `editorIngestLru.test.ts` |
 
 Antes de una fase que **mueva** ficheros: ejecutar al menos los tests de las filas tocadas.
 
@@ -190,3 +190,4 @@ Si falta un caso (p. ej. export público solo usado desde host), **añadir test*
 | 2026-05-13 | **v0.5.1 Destinations refactor:** nueva carpeta `src/destinations/` con `copilotChat/` (→ `ChatBridge`), `vsOpenCodeX/` (→ `vsOpenCodeXGhostPromptUiBridge` + `notifyVsx`), `destinationRegistry.ts` con interfaz `DestinationProvider`. `vsOpenCodeXBridge.ts` → `engines/opencode/vsOpenCodeXConnection.ts`. Tests: +15, total 245. |
 | 2026-05-13 | **v0.5.2 Core/system reorg:** `core/` (13 archivos) + `system/` (5 archivos). 7 carpetas eliminadas (`completion/`, `governor/`, `session/`, `debug/`, `log/`, `shared/`, `build/`). Todos los imports actualizados en `src/`, `tests/`, `webview/`. 226 tests passing. Docs actualizados. |
 | 2026-05-13 | **v0.5.3 Host refactor:** `host/` desmantelado → `api/` (6 archivos), `vscode/` (3 archivos), `core/pipeline/` (2 archivos). ESLint rules actualizadas (`projectMemory`, `system/debug` → no `api/`, `vscode/`). Mapa de tests actualizado. 226 tests passing. Docs actualizados. |
+| 2026-05-13 | **v0.5.3 Memory reorg:** `projectMemory/` → `core/memory/` con subcarpetas (`io/`, `entries/`, `ingest/`, `probes/`). ESLint rules actualizadas (`core/memory/` → no `api/`, `vscode/`). Matriz de ownership y mapa de tests actualizados. 226 tests passing. |

@@ -9,5 +9,5 @@
     "skipLibCheck": true,
     "isolatedModules": true
   },
-  "include": ["src/**/*.ts", "../src/shared/webviewMessageSchemas.ts"]
+  "include": ["src/**/*.ts", "../src/system/contracts/webviewMessageSchemas.ts"]
 }

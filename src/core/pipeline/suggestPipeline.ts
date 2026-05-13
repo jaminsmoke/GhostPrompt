@@ -28,7 +28,7 @@ import type {
   SupportedSuggestionLanguage,
 } from '../types';
 import type { Uri } from "vscode";
-import type { ProjectMemoryReconcileSnapshot } from "../../projectMemory/persistProjectBootstrapSnapshot";
+import type { ProjectMemoryReconcileSnapshot } from "../memory/persist";
 import { logSuggestionDebug } from '../../system/debug/SuggestionDebug';
 import { SuggestionRequestGovernor } from '../governor/SuggestionRequestGovernor';
 import { ghostPromptSessionStore } from '../session/GhostPromptSessionStore';
