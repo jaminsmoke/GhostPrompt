@@ -13,7 +13,7 @@ Esta roadmap define el plan para convertir el webview de GhostPrompt en una apli
 
 | Fase | Alcance | Resultado | Estado |
 |------|---------|-----------|--------|
-| Fase 1 | Configurar React + Vite en el webview | Base de build moderna y funcional | � Completado |
+| Fase 1 | Configurar React + Vite en el webview | Base de build moderna y funcional | 🟢 Completado |
 | Fase 2 | Migrar el webview actual por componentes React | UI funcional en React sin romper el flujo | 🟡 En progreso |
 | Fase 3 | Añadir Tailwind y estilizado utilitario | Webview con UI rica y mantenimiento rápido | 🔵 Planificado |
 | Fase 4 | Pruebas, documentación y lecciones | Reporte de hallazgos y control de calidad | 🔵 Planificado |
