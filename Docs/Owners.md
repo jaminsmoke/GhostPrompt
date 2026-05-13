@@ -32,7 +32,7 @@ Filas = carpetas principales de `src/`. Columnas = reglas de dependencia y rol.
 | **`governor/`** | Gobernador de peticiones (cache, cooldown, rate limit). | Tipos/config; sin LM directo. | `host/`. |
 | **`projectMemory/`** | Store JSON, reconcile, ingest, watchers. | `vscode`, FS propio. | `host/` (riesgo de cycle conceptual; pasar datos desde host como deps). |
 | **`debug/`** | Canal de salida y toggles de debug. | `vscode`. | `host/` (opcional endurecer en ESLint más adelante). |
-| **`bridge/`** | Abrir Copilot Chat desde la extensión. | `vscode`. | — |
+| **`destinations/`** | Destinos de prompt (copilotChat, vsOpenCodeX). Registro `DestinationProvider` en `destinationRegistry.ts`. | `vscode`, `engines/opencode` (VS_OPEN_CODE_X_EXTENSION_ID). | No importar desde `host/` (delegar a `destinationRegistry`). |
 | **`log/`** | Persistencia conversación / suggestions en disco. | `vscode`, FS. | — |
 | **`shared/`** | Schemas/tipos compartidos host ↔ contratos (Zod). | `zod`. | `host/` en runtime del webview bundle (el cliente es otro build). |
 | **`build/`** | Scripts de verificación empaquetado (ej. webview bundle). | Node. | — |
@@ -61,8 +61,9 @@ No es cobertura de líneas al 100 %; es **contrato de tests que deben seguir pas
 | `host/*` (MiniInput, handlers, protocols, settings, suggest wiring) | `MiniInputViewProvider.test.ts`, `webviewProtocols.test.ts`, `host/ghostPromptWebviewInboundHandlers.test.ts`, `host/ghostPromptSuggestPipeline.test.ts`, `webviewToolbarParity.test.ts` (incl. paridad dual vista v0.4.3), `webviewThemeTokens.test.ts`, `shared/webviewMessageSchemas.test.ts`, `webview/composeLabels.test.ts`, `webview/userErrorMessage.test.ts` |
 | `host/ghostPromptSuggestPipeline.ts` + `handleGhostPromptSuggest.ts` (wrapper) | `host/ghostPromptSuggestPipeline.test.ts` (deps mínimas + spy `getCompletionProviderForSource`); flujo integrado en `MiniInputViewProvider.test.ts`. |
 | `completion/` (raíz: providers, sources, types; **`catalog/`**, **`context/`**) | `completionProvider.test.ts`, `completionSources.test.ts`, `CopilotCompletion.test.ts`, `opencodeLmCompletion.test.ts`, `completionInstruction.test.ts`, `instructionNormalizeContract.test.ts`, `normalizeOpencodeProviderModels.test.ts`, `opencodeModelTier.test.ts`, `opencodeModelCatalog.test.ts`, `suggestionLoadingUi.test.ts`, `projectBootstrapContext.test.ts`, `opencodeProvidersSnapshot.test.ts`, `opencodeProvidersSnapshot.perf.test.ts`, `logOpenCodePerfCapture.test.ts` |
-| `engines/` (copilot, opencode, ollama, engineRegistry) | `engineRegistry.test.ts`, `ollamaLmEngine.test.ts`, `ollamaApiClient.test.ts`, `ollamaApiClient.test.ts`, `mergedModelCatalog.test.ts` |
-| `opencode/` (runtime, stream, cli, queue, session pool, puente VSOpenCodeX) | `opencodeLmCompletion.test.ts`, `opencodeProvidersSnapshot.test.ts`, `opencodeProvidersSnapshot.perf.test.ts`, `opencodeSuggestionStream.test.ts`, `openCodeCli.test.ts`, `nodeFetchDuplex.test.ts`, `vsOpenCodeXBridge.test.ts`, `opencodeSseDebug.test.ts`, `opencodeSuggestions.integration.test.ts` (opcional, env) |
+| `engines/` (copilot, opencode, ollama, engineRegistry) | `engineRegistry.test.ts`, `ollamaLmEngine.test.ts`, `ollamaApiClient.test.ts`, `mergedModelCatalog.test.ts` |
+| `destinations/` (copilotChat, vsOpenCodeX, destinationRegistry) | `destinationRegistry.test.ts`, `copilotChatDestination.test.ts`, `vsOpenCodeXDestination.test.ts` |
+| `opencode/` (runtime, stream, cli, queue, session pool, puente VSOpenCodeX) | `opencodeLmCompletion.test.ts`, `opencodeProvidersSnapshot.test.ts`, `opencodeProvidersSnapshot.perf.test.ts`, `opencodeSuggestionStream.test.ts`, `openCodeCli.test.ts`, `nodeFetchDuplex.test.ts`, `vsOpenCodeXBridge.test.ts` (→ `engines/opencode/vsOpenCodeXConnection`), `opencodeSseDebug.test.ts`, `opencodeSuggestions.integration.test.ts` (opcional, env) |
 | `session/` | `GhostPromptSessionStore.test.ts` |
 | `governor/` | `SuggestionRequestGovernor.test.ts` |
 | `projectMemory/` | `projectMemoryStore.test.ts`, `projectBootstrapContext.test.ts`, `bootstrapStoredHelpers.test.ts`, `entriesMutation.test.ts`, `editorIngestLru.test.ts` |
@@ -174,3 +175,4 @@ Si falta un caso (p. ej. export público solo usado desde host), **añadir test*
 | 2026-05-10 | Roadmap **v0.4.3 Fase 1:** matriz tests `ghostPromptSuggestPipeline` (`contextMode`, OpenCode, empty/error). |
 | 2026-05-10 | Roadmap **v0.4.3 Fase 2:** releasing OpenCode + GitHub Actions (`ci.yml`, integración manual). |
 | 2026-05-13 | **v0.5.1 Ollama:** `src/engines/` como carpeta canónica de motores (copilot, opencode, ollama). `ollamaApiClient`, `ollamaLmEngine`, `ollamaModelCatalog`. Tests: +35, total 230. Docs actualizados. |
+| 2026-05-13 | **v0.5.1 Destinations refactor:** nueva carpeta `src/destinations/` con `copilotChat/` (→ `ChatBridge`), `vsOpenCodeX/` (→ `vsOpenCodeXGhostPromptUiBridge` + `notifyVsx`), `destinationRegistry.ts` con interfaz `DestinationProvider`. `vsOpenCodeXBridge.ts` → `engines/opencode/vsOpenCodeXConnection.ts`. Tests: +15, total 245. |

@@ -63,14 +63,14 @@
 | `src/shared/webviewMessageSchemas.ts` | Schemas Zod canónicos host ↔ webview (también consumidos por el bundle webview en build). |
 | `src/session/GhostPromptSessionStore.ts` | Estado compartido (borrador, suggestions, `activeCaptureId`, token de cancelación del intento activo). |
 | `src/engines/` | Motores de completion canónicos. `copilot/`, `opencode/`, `ollama/`, y `engineRegistry.ts` que registra `CompletionProvider` y resuelve `getCompletionProviderForSource`. |
-| `src/completion/completionProvider.ts` | Reexport desde `engines/engineRegistry.ts`; `getActiveCompletionProvider`, `getCompletionProviderKind`. |
+| `src/destinations/` | Destinos de prompt. `copilotChat/` (`sendToChat`), `vsOpenCodeX/` (forward UI, notify missing), y `destinationRegistry.ts` que registra `DestinationProvider` y resuelve el destino activo. Patrón análogo a `engines/`. |
+| `src/host/MiniInputViewProvider.ts` | Webview HTML/CSP, broadcast a Sidebar+Panel, delegación a handlers y warm OpenCode. |
 | `src/completion/completionSources.ts` | `enabledCompletionSources` vs legacy `completionProvider`; `resolveCompletionSourceForRequest` (p. ej. `model:tag` → Ollama, `provider/model` → OpenCode). |
 | `src/completion/catalog/*` | Catálogo Copilot (`modelCatalog`), OpenCode (`opencodeModelCatalog`), **Ollama (`ollamaModelCatalog`)**, merge multi-fuente (`mergedModelCatalog`), tiers y normalización de `models`. |
 | `src/completion/context/projectBootstrapContext.ts` | README/package bootstrap para `contextMode: project`. |
 | `src/completion/index.ts` | Barrel: tipos, instrucción, reexports desde `catalog/` y `context/`; alias `requestCompletion` → solo Copilot (legacy). |
 | `src/opencode/*` | Proceso embebido, SDK, CLI, streams SSE, caché de proveedores, sesión inline, cola de completions. |
 | `src/governor/SuggestionRequestGovernor.ts` | Dedupe, cache, cooldown, rate limit, presupuesto antes del LM. |
-| `src/bridge/ChatBridge.ts` | Envía el prompt final a Copilot Chat (`workbench.action.chat.open`). |
 | `src/log/ConversationLog.ts` | `conversation.md` bajo `storageUri`. |
 | `src/log/SuggestionLog.ts` | `suggestions.md` bajo `storageUri`. |
 | `src/projectMemory/*` | Store JSON por carpeta, reconcile, ingest, watchers opcionales. |
@@ -247,6 +247,10 @@ Ollama provides **local, offline-first** model inference with no API key or clou
 
 `workbench.panel.chat` is VS Code core-internal and is not an extension point. Third-party extensions cannot register views inside it. The dual `viewsContainers` approach (Activity Bar + Panel) is the correct and supported model.
 
+### Why a `destinations/` module?
+
+Destinations (where the final prompt is sent) are logically distinct from completion engines (which generate suggestions). `copilotChat` opens the Copilot Chat panel; `vsOpenCodeX` forwards the UI to the VSOpenCodeX extension. A registry pattern (`destinationRegistry.ts`) with per-destination modules allows adding new destinations without touching the suggest pipeline or host handlers. The active destination is resolved at runtime via `getGhostPromptAgentDestination()` reading `ghostPrompt.agentDestination`, or auto-detected when VSOpenCodeX is installed but no explicit preference is saved.
+
 ### Why `storageUri ?? globalStorageUri`?
 
 `context.storageUri` is `undefined` when no folder/workspace is open. `globalStorageUri` is always defined. The fallback ensures the extension works in a windowless or folder-less VS Code session.
@@ -255,12 +259,13 @@ Ollama provides **local, offline-first** model inference with no API key or clou
 
 ## 8. Roadmap
 
-### v0.5.1 — Ollama engine integration (**current**)
+### v0.5.1 — Ollama engine integration + destinations refactor (**current**)
 
 - **Ollama** como tercer motor de completado local (offline-first, HTTP REST sin SDK embebido) — [`Roadmap-v0.5.1-ollama-integration.md`](./Plans/Roadmaps/Roadmap-v0.5.1-ollama-integration.md).
 - **Arquitectura engines/:** migración de `completion/providers/` a `src/engines/` canónico (copilot, opencode, ollama).
 - **Catálogo unificado:** merge de modelos Copilot + OpenCode + Ollama en el dropdown webview.
 - **Routing:** `model:tag` → Ollama, `providerID/modelID` → OpenCode, default → Copilot.
+- **Refactor destinations/:** [`Roadmap-v0.5.1-destinations-refactor.md`](./Plans/Roadmaps/Roadmap-v0.5.1-destinations-refactor.md) — `vsOpenCodeXBridge.ts` → `engines/opencode/vsOpenCodeXConnection.ts`, nueva carpeta `src/destinations/` con `copilotChat/` y `vsOpenCodeX/`, `destinationRegistry.ts` con interfaz `DestinationProvider`.
 
 - **Project memory:** per-workspace-folder JSON under `globalStorageUri/ghostPrompt/projectMemory/v1/` — [`Roadmap-v0.4-project-context-store.md`](./Plans/Roadmaps/Roadmap-v0.4-project-context-store.md).
 - **OpenCode:** catalog cache, pooled inline session, debug perf logs, serialized LM queue — [`Roadmap-v0.4-opencode-perf-catalog-telemetry.md`](./Plans/Roadmaps/Roadmap-v0.4-opencode-perf-catalog-telemetry.md).

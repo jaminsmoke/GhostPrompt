@@ -27,7 +27,7 @@
 | **Fase 4** | Migrar `vsOpenCodeXGhostPromptUiBridge` + `notifyVsx` → `destinations/vsOpenCodeX/` | 🟢 | — | completada 2026-05-13 |
 | **Fase 5** | Refactor `ghostPromptWebviewInboundHandlers.ts` para usar `destinationRegistry` | 🟢 | — | completada 2026-05-13 |
 | **Fase 6** | Tests unitarios | 🟢 | — | completada 2026-05-13 |
-| **Fase 7** | Documentación + validación | ⚪ | — | |
+| **Fase 7** | Documentación + validación | 🟢 | — | completada 2026-05-13 |
 
 ---
 
@@ -132,10 +132,10 @@
 
 | # | Subpaso | Estado |
 |---|---------|--------|
-| 7.1 | Actualizar `Docs/ARCHITECTURE.md` — `destinations/` en module map, pipeline, sección "Why destinations?" | ⚪ |
-| 7.2 | Actualizar `Docs/Owners.md` — `destinations/` en matriz y cobertura | ⚪ |
-| 7.3 | Actualizar `CHANGELOG.md` — entrada v0.5.1 con refactor destinations | ⚪ |
-| 7.4 | `npm run validate` pasa completo | ⚪ |
+| 7.1 | Actualizar `Docs/ARCHITECTURE.md` — `destinations/` en module map, pipeline, sección "Why destinations?" | 🟢 |
+| 7.2 | Actualizar `Docs/Owners.md` — `destinations/` en matriz y cobertura | 🟢 |
+| 7.3 | Actualizar `CHANGELOG.md` — entrada v0.5.1 con refactor destinations | 🟢 |
+| 7.4 | `npm run validate` pasa completo (0 errores, 0 círculos, bundle OK) | 🟢 |
 
 **Criterio de salida:** `npm run check` verde, docs actualizados.
 

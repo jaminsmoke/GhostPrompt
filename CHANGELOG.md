@@ -35,6 +35,18 @@ Versión **0.5.1**: integración de **Ollama** como tercer motor de suggestions 
 - **Provider grouping en webview:** orden de buckets: Copilot → OpenCode → Ollama → Otros.
 - **Ownership:** `Owners.md` actualizado con `engines/` y cobertura de tests.
 
+### Destinations refactor (Phase 7)
+
+- **Nueva carpeta `src/destinations/`:** carpeta canónica para destinos de prompt (análoga a `src/engines/`):
+  - `destinations/copilotChat/copilotChatDestination.ts`: `sendToChat()` + autoregistro en `destinationRegistry`.
+  - `destinations/vsOpenCodeX/vsOpenCodeXDestination.ts`: `forwardGhostPromptInlineUiToVsOpenCodeIfApplicable()`, `notifyIfVsxAgentDestinationWithoutVsOpenCodeX()` + autoregistro.
+  - `destinationRegistry.ts`: interfaz `DestinationProvider`, `registerDestination()`, `getDestinationProviderForId()`, `getActiveDestinationProvider()`.
+- **`vsOpenCodeXBridge.ts` → `engines/opencode/vsOpenCodeXConnection.ts`:** movido a `engines/opencode/`.
+- **`bridge/ChatBridge.ts` eliminado:** funcional reemplazado por `copilotChatDestination`.
+- **`ghostPromptWebviewInboundHandlers.ts`:** actualizado para usar `getGhostPromptAgentDestination()` y `getActiveDestinationProvider()` desde `destinationRegistry`.
+- **Getters migrados:** `getGhostPromptAgentDestination()` + `isVsOpenCodeXExtensionInstalled()` reexportados desde `destinationRegistry` (backward compat via re-export en `ghostPromptHostWorkspaceGetters.ts`).
+- **Tests:** +15 nuevos tests (`destinationRegistry.test.ts`, `copilotChatDestination.test.ts`, `vsOpenCodeXDestination.test.ts`). Total 245.
+
 ### Docs
 
 - `Docs/ARCHITECTURE.md`: diagrama actualizado con Ollama, módulo `engines/` en tabla, pipeline con rama Ollama, sección "Why Ollama".
