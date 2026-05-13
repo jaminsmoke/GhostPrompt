@@ -4,8 +4,8 @@
  */
 import * as vscode from "vscode";
 
-import { logOpenCodeDebug } from "../debug/SuggestionDebug";
-import { ensureNodeFetchDuplex } from "./nodeFetchDuplex";
+import { logOpenCodeDebug } from "../../debug/SuggestionDebug";
+import { ensureNodeFetchDuplex } from "../../opencode/nodeFetchDuplex";
 
 /** Ajustar sólo en tests internos si hiciera falta. */
 export const VS_OPEN_CODE_X_EXTENSION_ID = "jaminsmoke.vsopencodex";

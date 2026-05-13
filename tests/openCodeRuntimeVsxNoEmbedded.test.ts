@@ -20,7 +20,7 @@ vi.mock("../src/opencode/openCodeCli", () => ({
   checkOpenCodeCli: (...args: unknown[]) => checkOpenCodeCliMock(...args),
 }));
 
-vi.mock("../src/opencode/vsOpenCodeXBridge", () => ({
+vi.mock("../src/engines/opencode/vsOpenCodeXConnection", () => ({
   tryCreateSdkClientViaVsOpenCodeX: (...args: unknown[]) => tryCreateMock(...args),
   VS_OPEN_CODE_X_EXTENSION_ID: "jaminsmoke.vsopencodex",
 }));

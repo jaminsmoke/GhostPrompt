@@ -33,7 +33,7 @@ import {
   COMMAND_GET_OPENCODE_CONNECTION,
   tryCreateSdkClientViaVsOpenCodeX,
   VS_OPEN_CODE_X_EXTENSION_ID,
-} from "../src/opencode/vsOpenCodeXBridge";
+} from "../src/engines/opencode/vsOpenCodeXConnection";
 
 describe("vsOpenCodeXBridge", () => {
   beforeEach(() => {

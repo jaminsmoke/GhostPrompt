@@ -9,7 +9,7 @@ import type {
   SuggestionStyle,
   SupportedSuggestionLanguage,
 } from "../completion";
-import { VS_OPEN_CODE_X_EXTENSION_ID } from "../opencode/vsOpenCodeXBridge";
+import { VS_OPEN_CODE_X_EXTENSION_ID } from "../engines/opencode/vsOpenCodeXConnection";
 
 /** Destino del agente que ejecuta el prompt final (v0.5 Fase C). */
 export type GhostPromptAgentDestination = "copilotChat" | "vsOpenCodeX";

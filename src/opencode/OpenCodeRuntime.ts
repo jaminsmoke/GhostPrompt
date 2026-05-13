@@ -11,7 +11,7 @@ import { emitOpenCodeServerWillReset } from "./openCodeServerLifecycleHooks";
 import {
   tryCreateSdkClientViaVsOpenCodeX,
   VS_OPEN_CODE_X_EXTENSION_ID,
-} from "./vsOpenCodeXBridge";
+} from "../engines/opencode/vsOpenCodeXConnection";
 
 export type OpenCodeStartOk = { ok: true };
 export type OpenCodeStartFailed = { ok: false; error: string };

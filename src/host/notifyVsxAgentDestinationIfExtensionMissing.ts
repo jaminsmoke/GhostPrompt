@@ -2,7 +2,7 @@
  * Aviso si el usuario eligió destino VSOpenCodeX pero la extensión no está disponible (Fase D / roadmap v0.5).
  */
 import * as vscode from "vscode";
-import { VS_OPEN_CODE_X_EXTENSION_ID } from "../opencode/vsOpenCodeXBridge";
+import { VS_OPEN_CODE_X_EXTENSION_ID } from "../engines/opencode/vsOpenCodeXConnection";
 import { getGhostPromptAgentDestination } from "./ghostPromptHostWorkspaceGetters";
 
 let notifiedMissingVsxThisSession = false;
