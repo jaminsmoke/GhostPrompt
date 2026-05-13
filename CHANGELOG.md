@@ -27,6 +27,24 @@ Versión **0.5.2**: OpenCode reestructurado como **API client tipo Ollama** — 
 
 - **`MiniInputViewProvider.ts` simplificado:** eliminado `warmOpenCodeRuntimeIfConfigured()`.
 
+### Structural cleanup (Fases 1-9)
+
+- **Catálogos engine-specific movidos a `engines/*/catalog/`:**
+  - `modelCatalog.ts` → `engines/copilot/catalog/modelCatalog.ts` (Copilot-specific)
+  - `normalizeOllamaModels.ts` + `ollamaModelCatalog.ts` → `engines/ollama/catalog/` (Ollama-specific)
+  - `mergedModelCatalog.ts` aplanado a `completion/mergedModelCatalog.ts` (cross-engine)
+  - Carpeta `completion/catalog/` eliminada
+
+- **Eliminado `completion/completionProvider.ts`:** re-export redundante de 6 líneas; imports ahora directo desde `engines/engineRegistry`.
+
+- **Barrels completos:**
+  - `destinations/index.ts` creado (re-exporta `destinationRegistry`, `copilotChatDestination`, `vsOpenCodeXDestination`)
+  - `engines/index.ts` completado (agrega re-exports de `copilot/` y `opencode/`)
+
+- **ESLint limpio:** eliminada regla huérfana `src/opencode/**/*` de `.eslintrc.json`.
+
+- **README actualizado:** eliminadas referencias a servidor embebido, puerto 17433, warm-up, lifecycle, y settings VSOpenCodeX coexistence. Puerto actualizado a 4096, conexión descrita como API client.
+
 ## [0.5.1] - 2026-05-13
 
 Versión **0.5.1**: integración de **Ollama** como tercer motor de suggestions (local, offline-first). Refactor de la arquitectura de motores a carpeta canónica `src/engines/`.

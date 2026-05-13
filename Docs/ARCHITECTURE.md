@@ -66,7 +66,7 @@
 | `src/destinations/` | Destinos de prompt. `copilotChat/` (`sendToChat`), `vsOpenCodeX/` (forward UI, notify missing), y `destinationRegistry.ts` que registra `DestinationProvider` y resuelve el destino activo. Patrón análogo a `engines/`. |
 | `src/host/MiniInputViewProvider.ts` | Webview HTML/CSP, broadcast a Sidebar+Panel, delegación a handlers. |
 | `src/completion/completionSources.ts` | `enabledCompletionSources` vs legacy `completionProvider`; `resolveCompletionSourceForRequest` (p. ej. `model:tag` → Ollama, `provider/model` → OpenCode). |
-| `src/completion/catalog/*` | Catálogo Copilot (`modelCatalog`), **Ollama (`ollamaModelCatalog`)**, merge multi-fuente (`mergedModelCatalog`). Catálogos OpenCode movidos a `engines/opencode/catalog/`. |
+| `src/completion/` | Core cross-engine: tipos, instrucción, normalize, streaming, merged catalog, context bootstrap. Sin `catalog/` subfolder (catálogos engine-specific viven en `engines/*/catalog/`). |
 | `src/completion/context/projectBootstrapContext.ts` | README/package bootstrap para `contextMode: project`. |
 | `src/completion/index.ts` | Barrel: tipos, instrucción, reexports desde `catalog/` y `context/`; alias `requestCompletion` → solo Copilot (legacy). |
 | `src/engines/opencode/catalog/` | Catálogo OpenCode: `opencodeModelCatalog.ts` (lista modelos via `config.providers()`), `normalizeOpencodeProviderModels.ts`, `opencodeModelTier.ts`. |

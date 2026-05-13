@@ -108,13 +108,13 @@ For the full settings matrix, search **`ghostPrompt.projectMemory`** in VS Code 
 
 ### Optional: OpenCode backend
 
-If you set **`ghostPrompt.completionProvider`** to **`opencode`**, GhostPrompt starts its **own** local OpenCode server (see [`Roadmap-v0.3-opencode-integration.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md)). You need the **OpenCode CLI** on your PATH (`opencode --version` should succeed). Configure models and provider credentials in OpenCode as described in the upstream docs ([OpenCode SDK](https://opencode.ai/docs/sdk)). Authentication for third-party APIs is handled by OpenCode, not by GhostPrompt.
+If you set **`ghostPrompt.completionProvider`** to **`opencode`** (or include `"opencode"` in **`ghostPrompt.enabledCompletionSources`**), GhostPrompt connects to an **already-running** OpenCode instance via HTTP (default `http://127.0.0.1:4096`). You need the **OpenCode CLI** installed and running (`opencode serve`). Configure models and provider credentials in OpenCode as described in the upstream docs ([OpenCode SDK](https://opencode.ai/docs/sdk)). Authentication for third-party APIs is handled by OpenCode, not by GhostPrompt.
 
-**Cold start & lifecycle (v0.3.0c):** The first suggestion after the embedded server has been stopped can take noticeably longer (spawn + listen + health). Opening a GhostPrompt view while OpenCode is selected runs a **warm-up** (`start` + light health ping) in the background, throttled so Sidebar + Panel do not double work. Switching back to **Copilot** **schedules** shutdown of the OpenCode process after **45 seconds** so quick toggles avoid paying cold start again. Use **GhostPrompt: Toggle Debug** and the **GhostPrompt Suggestions** output channel to see `[opencode]` timing lines (`cold-start-complete`, `first-config-get`, `first-session-prompt`).
+**Connection settings:** **`ghostPrompt.opencodePort`** (default `4096`) and **`ghostPrompt.opencodeAuthToken`** (Bearer token, optional). GhostPrompt performs a lightweight health check (`config.get()`) before each suggestion request and maintains a session pool (TTL 5 min, max 4) to avoid `create`+`delete` overhead per request.
 
-**Model catalog cache (v0.4+):** GhostPrompt keeps a single in-memory snapshot of OpenCode’s **`config.providers()`** (shared by the webview dropdown and inline suggestions) once the server is running; the warm-up **prefetches** that snapshot. The cache is **cleared when the extension deactivates** (reload window or quit). If you change providers or models in OpenCode externally, **reload the window** so the list and model routing match the new configuration. See [`Roadmap-v0.4-opencode-perf-catalog-telemetry.md`](./Docs/Plans/Roadmaps/Roadmap-v0.4-opencode-perf-catalog-telemetry.md).
+**Model catalog:** The webview lists models from OpenCode's **`config.providers()`** on demand. If you change providers or models in OpenCode externally, reload the window so the list and model routing match the new configuration.
 
-**Inline session reuse (v0.4+, phase H):** While the embedded server stays up, GhostPrompt **reuses one OpenCode session** for repeated inline suggestions (`session.create` is not fired on every keystroke). The pool resets when the server restarts, on timeout/cancellation, or on envelope errors (see roadmap phase H). If OpenCode retains prior turns inside that session and you notice odd context bleed, reload the window to force a new session cycle.
+**Inline session reuse:** GhostPrompt **reuses pooled sessions** for repeated inline suggestions. Stale sessions (unused > 5 min) are evicted automatically. If you notice odd context bleed, reload the window to force a new session cycle.
 
 ---
 
@@ -130,7 +130,6 @@ Switch providers in **Settings** (search `ghostPrompt.completionProvider` or `en
 
 Related settings: **`ghostPrompt.opencodeExcludedModelIds`** (hide specific `providerID/modelID` rows), **`ghostPrompt.selectedModelId`** (`auto` or an explicit id), **`ghostPrompt.agentDestination`** (`copilotChat` | `vsOpenCodeX` — see [Agent destination](#completion-provider-copilot-lm-vs-opencode) above).
 
-**VSOpenCodeX coexistence (OpenCode motor):** If you use the sibling extension **VSOpenCodeX** (`jaminsmoke.vsopencodex`), GhostPrompt can reuse its OpenCode server (via `vsopencodex.getOpenCodeConnection`) instead of starting a **second** `opencode serve` on the same port. Settings **`ghostPrompt.preferVsOpenCodeXOpenCode`** (default on), **`ghostPrompt.vsOpenCodeXProbeDelayMs`**, **`ghostPrompt.vsOpenCodeXConnectionMaxAttempts`**, and **`ghostPrompt.vsOpenCodeXConnectionRetryGapMs`** control the handshake and retries while VSX comes up. **If VSOpenCodeX is installed** and **prefer** is on, GhostPrompt **does not** fall back to the embedded server after those retries (avoids stealing the shared port); open VSX’s chat/server or turn **prefer** off to use embedded only. **If VSOpenCodeX is not installed**, GhostPrompt uses the **embedded** OpenCode runtime as before. Specification: [`Docs/Integrations/GhostPrompt-OpenCode-coexistence.md`](./Docs/Integrations/GhostPrompt-OpenCode-coexistence.md).
 
 **Agent destination (who owns Send + chat thread):** Setting **`ghostPrompt.agentDestination`** separates the **suggestion motor** (Copilot LM / OpenCode, chips in GhostPrompt) from **where the final prompt is sent**. **Effective default:** if **VSOpenCodeX** is installed and you have **never** saved `agentDestination` in User/Workspace settings, GhostPrompt behaves as **`vsOpenCodeX`** until you set it explicitly. The GhostPrompt view shows a **Destino** dropdown next to **Motor** when VSOpenCodeX is installed (`Copilot Chat` | `VSOpenCodeX`). With **`vsOpenCodeX`**, GhostPrompt hides the inline composer and **Send to Copilot** in the webview but keeps the **configuration strip**. VSOpenCodeX drives suggestions via **`ghostPrompt.runSuggestPipeline`** and receives UI via **`vsopencodex.ghostPromptInlineUi`** (see roadmap). If you choose **`vsOpenCodeX`** but the extension is not installed, GhostPrompt shows a one-time-per-session hint. Matriz motor/destino: [`GhostPrompt-motor-destino-matrix.md`](./Docs/Integrations/GhostPrompt-motor-destino-matrix.md); roadmap [**v0.5.0**](./Docs/Plans/Roadmaps/Roadmap-v0.5-vsopencodex-coexistence.md).
 
@@ -269,13 +268,12 @@ High-level roadmap: [`Docs/Plans/Roadmaps/Roadmap-v0.3.2-host-refactor-webview-t
 | `npm run deps:circular` | Fails with exit code `1` if circular imports are found (same entrypoint). Also runs automatically as part of **`npm run validate`** / **`npm run check`**. |
 | `npm run verify:webview-bundle` | Runs the compiled smoke script `out/build/verifyWebviewBundle.js` (source: [`src/build/verifyWebviewBundle.ts`](./src/build/verifyWebviewBundle.ts)). Checks that `webview/dist/main.js` exists after esbuild. **Not shipped in the VSIX** — `.vscodeignore` excludes `out/build/**`; this is dev/CI tooling only, not extension runtime. |
 
-**Layering (ESLint):** files under `src/opencode/` must not import from `src/host/` (`import/no-restricted-paths`). The host may depend on OpenCode (e.g. warm-up), but not the reverse.
 
 **Soft size guideline:** prefer keeping new host modules under ~400 lines per file unless the content is mostly data; split extractors before crossing ~800 lines without a strong reason (same spirit as roadmap Phase A).
 
 ### OpenCode integration tests (optional)
 
-These exercises use your real **OpenCode CLI**, GhostPrompt’s embedded server on **127.0.0.1:17433**, and a configured model. They are **off by default** (`describe.skipIf`) so `npm run test` stays fast without CLI or API keys.
+These exercises use your real **OpenCode CLI**, GhostPrompt’s API client connecting to `http://127.0.0.1:4096`, and a configured model. They are **off by default** (`describe.skipIf`) so `npm run test` stays fast without CLI or API keys.
 
 **Prerequisites:** `opencode --version` succeeds; providers and models are configured in OpenCode (same as using the extension with **`ghostPrompt.completionProvider`: `opencode`**).
 
@@ -339,7 +337,7 @@ Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 
 - **Architecture:** `src/` split into layered folders (`completion/`, `host/`, `session/`, etc.) and a documented completion pipeline (`CompletionProvider`, provider registry).
 - **Copilot LM:** existing `vscode.lm` path unchanged as default (`ghostPrompt.completionProvider`: `copilot`).
-- **OpenCode (optional):** `ghostPrompt.completionProvider`: `opencode`, embedded server on **127.0.0.1:17433**, CLI detection, webview catalog + exclusions, `@opencode-ai/sdk` bundled in the VSIX.
+- **OpenCode (optional):** `ghostPrompt.completionProvider`: `opencode`, API client connecting to `http://127.0.0.1:4096`, CLI detection, webview catalog + exclusions, `@opencode-ai/sdk` bundled in the VSIX.
 - **Docs & tests:** README provider section and [Developing and tests](#developing-and-tests); CHANGELOG; unit tests mock the OpenCode runtime (no network in CI); optional live OpenCode integration test behind `GHOST_PROMPT_OPENCODE_INTEGRATION=1` (`npm run test:integration`).
 - **Release:** build a VSIX anytime with `npm run vsix`; git tag `v0.3.0` optional—see [`CHANGELOG.md`](./CHANGELOG.md).
 

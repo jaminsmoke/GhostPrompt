@@ -4,7 +4,7 @@
 
 ---
 
-## Estado: **Fases 1-3 completadas**. Fases 4-10 pendientes.
+## Estado: **Todas las fases (1-10) completadas**. Roadmap cerrado.
 
 ---
 
@@ -28,16 +28,16 @@ Tras la reestructuración de OpenCode (commits `ab4cc14`, `9a16b95`), quedaron i
 
 | Fase | Descripción | Estado | Commit | Notas |
 |------|-------------|--------|--------|-------|
-| **Fase 1** | Mover `modelCatalog.ts` → `engines/copilot/catalog/` | 🟢 | TBD | Barrel copilot actualizado, imports locales |
-| **Fase 2** | Mover `normalizeOllamaModels.ts` + `ollamaModelCatalog.ts` → `engines/ollama/catalog/` | 🟢 | TBD | Barrel ollama actualizado, imports locales |
-| **Fase 3** | Aplanar `catalog/mergedModelCatalog.ts` → `completion/mergedModelCatalog.ts` | 🟢 | TBD | Carpeta `completion/catalog/` eliminada |
-| **Fase 4** | Eliminar `completion/completionProvider.ts` (redundante) | ⚪ | — | |
-| **Fase 5** | Crear `destinations/index.ts` barrel | ⚪ | — | |
-| **Fase 6** | Completar `engines/index.ts` barrel | ⚪ | — | |
-| **Fase 7** | Actualizar barrel `completion/index.ts` | ⚪ | — | |
-| **Fase 8** | Tests: actualizar mocks e imports rotos | ⚪ | — | |
-| **Fase 9** | Config: eliminar regla ESLint huérfana `src/opencode/` | ⚪ | — | |
-| **Fase 10** | Docs: actualizar README + bitácora | ⚪ | — | |
+| **Fase 1** | Mover `modelCatalog.ts` → `engines/copilot/catalog/` | 🟢 | `9b2f97e` | Barrel copilot actualizado, imports locales |
+| **Fase 2** | Mover `normalizeOllamaModels.ts` + `ollamaModelCatalog.ts` → `engines/ollama/catalog/` | 🟢 | `9b2f97e` | Barrel ollama actualizado, imports locales |
+| **Fase 3** | Aplanar `catalog/mergedModelCatalog.ts` → `completion/mergedModelCatalog.ts` | 🟢 | `9b2f97e` | Carpeta `completion/catalog/` eliminada |
+| **Fase 4** | Eliminar `completion/completionProvider.ts` (redundante) | 🟢 | `57afb5a` | Imports directo a `engineRegistry` |
+| **Fase 5** | Crear `destinations/index.ts` barrel | 🟢 | `705d110` | |
+| **Fase 6** | Completar `engines/index.ts` barrel | 🟢 | `705d110` | Agregar copilot + opencode re-exports |
+| **Fase 7** | Actualizar barrel `completion/index.ts` | 🟢 | `9b2f97e` | Sin refs a `catalog/` eliminada |
+| **Fase 8** | Tests: actualizar mocks e imports rotos | 🟢 | `9b2f97e` | mergedModelCatalog.test.ts mocks actualizados |
+| **Fase 9** | Config: eliminar regla ESLint huérfana `src/opencode/` | 🟢 | `705d110` | |
+| **Fase 10** | Docs: actualizar README + bitácora | 🟢 | TBD | README, ARCHITECTURE, Owners, CHANGELOG actualizados |
 
 ---
 

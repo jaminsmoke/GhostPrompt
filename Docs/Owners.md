@@ -25,7 +25,7 @@ Filas = carpetas principales de `src/`. Columnas = reglas de dependencia y rol.
 | ---------------- | ----- | -------------------------- | ------------------------- |
 | **`extension/`** | Punto de entrada; registra comandos y vistas; lifecycle `activate` / `deactivate`. | `host`, `projectMemory` (activate), `engines/opencode` (resetClient), `debug`. | Evitar lógica de negocio pesada aquí (mantener delgado). |
 | **`host/`** | Webview provider, mensajes inbound/outbound, HTML/CSP, wire de suggest → completion. | `completion`, `session`, `projectMemory`, `shared`, `debug`. | No meter aquí runtime OpenCode embebido largo. |
-| **`completion/`** | Motores LM en `engines/`, núcleo en raíz (`types`, instrucción, fuentes), **`catalog/`** (modelos Copilot/OpenCode/Ollama, merge, tiers), **`context/`** (bootstrap README/package para prompts). | `engines/`, `vscode`. | No UI webview ni HTML. |
+| **`completion/`** | Core cross-engine: tipos, instrucción, normalize, streaming, merged catalog, context bootstrap. | `engines/`, `vscode`. | No UI webview ni HTML. |
 | **`engines/`** | Motores de completion canónicos. `copilot/`, `opencode/` (apiClient + catalog), `ollama/`, `engineRegistry.ts`. | `completion` (types, instruction, normalize), `vscode`. | No importar desde `host/`. |
 | **`opencode/`** | Proceso embebido, SDK, SSE, caché providers, sesión inline, cola LM, CLI. | `debug` (logs perf), Node. | **`host/`** — prohibido por ESLint (ver abajo). |
 | **`session/`** | Estado compartido Sidebar/Panel (`GhostPromptSessionStore`). | `vscode`, tipos desde `completion` si hace falta. | Evitar acoplar a un solo handler del webview. |
