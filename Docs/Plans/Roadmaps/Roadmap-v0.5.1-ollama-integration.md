@@ -27,7 +27,7 @@
 | **Fase 4** | Catálogo Ollama + routing + settings | 🟢 | — | completada 2026-05-13 |
 | **Fase 5** | UI webview + chips de motor | 🟢 | — | completada 2026-05-13 |
 | **Fase 6** | Tests unitarios | 🟢 | — | completada 2026-05-13 |
-| **Fase 7** | Documentación + release candidate | ⚪ | — | |
+| **Fase 7** | Documentación + release candidate | 🟢 | — | completada 2026-05-13 |
 
 ---
 
@@ -148,12 +148,12 @@
 
 | # | Subpaso | Estado |
 |---|---------|--------|
-| 7.1 | Actualizar `Docs/ARCHITECTURE.md` — sección engines/ | ⚪ |
-| 7.2 | Actualizar `GhostPrompt-motor-destino-matrix.md` — Situaciones 5 y 6 | ⚪ |
-| 7.3 | Crear `Docs/Plans/Roadmaps/Roadmap-v0.5.1-ollama.md` | ⚪ |
-| 7.4 | Actualizar `Owners.md` | ⚪ |
-| 7.5 | CHANGELOG.md — entrada v0.5.1 | ⚪ |
-| 7.6 | `npm run validate` pasa completo | ⚪ |
+| 7.1 | Actualizar `Docs/ARCHITECTURE.md` — sección engines/ | 🟢 |
+| 7.2 | Actualizar `GhostPrompt-motor-destino-matrix.md` — Situaciones 5 y 6 | 🟢 |
+| 7.3 | Crear `Docs/Plans/Roadmaps/Roadmap-v0.5.1-ollama.md` | 🟢 |
+| 7.4 | Actualizar `Owners.md` | 🟢 |
+| 7.5 | CHANGELOG.md — entrada v0.5.1 | 🟢 |
+| 7.6 | `npm run validate` pasa completo | 🟢 |
 
 ---
 

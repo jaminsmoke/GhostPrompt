@@ -64,6 +64,26 @@ El **motor** sigue siendo elegible en GhostPrompt **en los cuatro escenarios**; 
 | OpenCode | **Ideal:** una sola instancia — la gestionada por VSX (`getOpenCodeConnection` + cabecera Basic). |
 | Superficie | **Solo VSOpenCodeX**; inline GhostPrompt deshabilitado. |
 
+### Situación 5 — Motor Ollama · Destino Copilot
+
+| Aspecto | Comportamiento |
+|---------|----------------|
+| Rol | GhostPrompt **autónomo**: suggestions con Ollama local, envío a Copilot Chat. |
+| Suggestions | Ollama (HTTP REST contra `ollama serve`). |
+| Send | **GitHub Copilot** (`workbench.action.chat.open` o API). |
+| Superficie | Webview GhostPrompt + inline GhostPrompt. |
+| Ollama | Debe tener `ollama serve` corriendo; GhostPrompt no lo inicia. |
+
+### Situación 6 — Motor Ollama · Destino VSOpenCodeX
+
+| Aspecto | Comportamiento |
+|---------|----------------|
+| Rol | GhostPrompt genera suggestions con Ollama local, envía a VSOpenCodeX. |
+| Suggestions | Ollama (HTTP REST). |
+| Send | **VSOpenCodeX** (tubería propia). |
+| Superficie | **Solo VSOpenCodeX**; inline GhostPrompt deshabilitado. |
+| Ollama | Independiente de la instancia OpenCode; no implica `getOpenCodeConnection`.
+
 ---
 
 ## Reglas transversas

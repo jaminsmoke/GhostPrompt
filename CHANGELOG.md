@@ -2,7 +2,46 @@
 
 All notable changes to this project are documented in this file.
 
-## [0.5.0] - 2026-05-11
+## [0.5.1] - 2026-05-13
+
+Versión **0.5.1**: integración de **Ollama** como tercer motor de suggestions (local, offline-first). Refactor de la arquitectura de motores a carpeta canónica `src/engines/`.
+
+### Added
+
+- **Ollama engine (Phases 1-5):** nuevo motor de completado local vía HTTP REST contra `ollama serve`. Incluye:
+  - Cliente API (`ollamaApiClient.ts`): `listModels()` (GET /api/tags) y `generate()` (POST /api/generate) con streaming SSE opcional.
+  - Adaptador `ollamaLmEngine.ts`: resolución automática de modelo desde `listModels`, respeta `ollamaExcludedModelIds`, fases de loading `ollama-start`/`ollama-generating`.
+  - Catálogo `ollamaModelCatalog.ts`: lista modelos desde /api/tags, normaliza a `SuggestionModelDescriptor`.
+  - Routing: `looksLikeOllamaModelId` detecta `model:tag` (contiene `:` sin `/`).
+  - Settings: `ghostPrompt.ollamaBaseUrl` (default `http://localhost:11434`), `ghostPrompt.ollamaExcludedModelIds`.
+  - Webview UI: selector de motor incluye "Ollama", modelos agrupados bajo bucket "Ollama" (entre OpenCode y Other).
+
+- **Arquitectura `src/engines/` (Phase 1):** carpeta canónica para todos los motores de completion:
+  - `engines/copilot/copilotLmEngine.ts`, `engines/opencode/opencodeLmEngine.ts`, `engines/ollama/*`.
+  - `engineRegistry.ts`: interfaz `CompletionProvider` + `getCompletionProviderForSource()`.
+  - `completion/completionProvider.ts` convertido en reexport desde `engineRegistry`.
+  - Antiguos `completion/providers/` eliminados.
+
+- **Tests (Phase 6):** 35 nuevos tests unitarios:
+  - `ollamaApiClient.test.ts`: mock fetch, testea listModels y generate (éxito, HTTP error, network error, custom baseUrl).
+  - `ollamaLmEngine.test.ts`: mock api client, 11 tests (modelo explícito, auto-resolve, exclusión, errores, loading phases).
+  - `completionSources.test.ts`: +5 tests (legacy ollama, enabledSources con ollama, routing Ollama/Copilot/OpenCode, `looksLikeOllamaModelId`).
+  - `mergedModelCatalog.test.ts`: merge con modelos Ollama, dedup, propagación de errores.
+  - `engineRegistry.test.ts`: `getCompletionProviderForSource` con ollama.
+
+### Changed
+
+- **Engine routing:** `resolveCompletionSourceForRequest` ahora enruta `model:tag` (Ollama), `providerID/modelID` (OpenCode), otros (Copilot).
+- **Provider grouping en webview:** orden de buckets: Copilot → OpenCode → Ollama → Otros.
+- **Ownership:** `Owners.md` actualizado con `engines/` y cobertura de tests.
+
+### Docs
+
+- `Docs/ARCHITECTURE.md`: diagrama actualizado con Ollama, módulo `engines/` en tabla, pipeline con rama Ollama, sección "Why Ollama".
+- `Docs/Integrations/GhostPrompt-motor-destino-matrix.md`: Situaciones 5 y 6 (Motor Ollama · Destino Copilot / VSOpenCodeX).
+- `Docs/Plans/Roadmaps/Roadmap-v0.5.1-ollama-integration.md` (full integration roadmap).
+- `Docs/Plans/Roadmaps/Roadmap-v0.5.1-ollama.md` (shipped summary).
+- `CHANGELOG.md`: entrada v0.5.1.
 
 Versión **0.5.0**: integración VSOpenCodeX (host), destino agente, coexistencia OpenCode sin `opencode serve` embebido cuando VSX está instalada y **prefer** activo, debounce webview por defecto **800 ms**, selector **Destino** en la webview. Incluye el trabajo de OpenCode perf / colas que estaba preparado para **0.4.1**. Última versión en marketplace de referencia en documentación: **[0.4.0]** (ajusta la nota si ya publicaste **0.4.1**).
 

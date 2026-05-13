@@ -28,7 +28,7 @@
 │  extension/extension.ts ──► host/MiniInputViewProvider          │
 │                        │                                        │
 │                        ├──► completion: CompletionProvider      │
-│                        │      (Copilot LM | OpenCode por fuente) │
+│                        │      (Copilot LM | OpenCode | Ollama)   │
 │                        ├──► host/handleGhostPromptSuggest        │
 │                        │      (gobernador + LM enrutado + UI)    │
 │                        ├──► opencode/* (runtime embebido, warm) │
@@ -62,12 +62,11 @@
 | `src/host/webviewProtocols.ts` | Parseo Zod de mensajes webview→host; validación de sobre `settings` host→webview. |
 | `src/shared/webviewMessageSchemas.ts` | Schemas Zod canónicos host ↔ webview (también consumidos por el bundle webview en build). |
 | `src/session/GhostPromptSessionStore.ts` | Estado compartido (borrador, suggestions, `activeCaptureId`, token de cancelación del intento activo). |
-| `src/completion/completionProvider.ts` | Registro `CompletionProvider`; `getCompletionProviderForSource`, `getActiveCompletionProvider`, `getCompletionProviderKind`. |
-| `src/completion/completionSources.ts` | `enabledCompletionSources` vs legacy `completionProvider`; `resolveCompletionSourceForRequest` (p. ej. `provider/model` → OpenCode). |
-| `src/completion/catalog/*` | Catálogo Copilot (`modelCatalog`), OpenCode (`opencodeModelCatalog`), merge multi-fuente (`mergedModelCatalog`), tiers y normalización de `models`. |
+| `src/engines/` | Motores de completion canónicos. `copilot/`, `opencode/`, `ollama/`, y `engineRegistry.ts` que registra `CompletionProvider` y resuelve `getCompletionProviderForSource`. |
+| `src/completion/completionProvider.ts` | Reexport desde `engines/engineRegistry.ts`; `getActiveCompletionProvider`, `getCompletionProviderKind`. |
+| `src/completion/completionSources.ts` | `enabledCompletionSources` vs legacy `completionProvider`; `resolveCompletionSourceForRequest` (p. ej. `model:tag` → Ollama, `provider/model` → OpenCode). |
+| `src/completion/catalog/*` | Catálogo Copilot (`modelCatalog`), OpenCode (`opencodeModelCatalog`), **Ollama (`ollamaModelCatalog`)**, merge multi-fuente (`mergedModelCatalog`), tiers y normalización de `models`. |
 | `src/completion/context/projectBootstrapContext.ts` | README/package bootstrap para `contextMode: project`. |
-| `src/completion/providers/copilotLmCompletion.ts` | Adaptador Copilot: `vscode.lm.selectChatModels` + `sendRequest`. |
-| `src/completion/providers/opencodeLmCompletion.ts` | Adaptador OpenCode: runtime, snapshot `config.providers()`, sesión inline pooled, `prompt`, SSE opcional, cola serie LM. |
 | `src/completion/index.ts` | Barrel: tipos, instrucción, reexports desde `catalog/` y `context/`; alias `requestCompletion` → solo Copilot (legacy). |
 | `src/opencode/*` | Proceso embebido, SDK, CLI, streams SSE, caché de proveedores, sesión inline, cola de completions. |
 | `src/governor/SuggestionRequestGovernor.ts` | Dedupe, cache, cooldown, rate limit, presupuesto antes del LM. |
@@ -95,10 +94,11 @@ User types in textarea
   parseWebviewInboundMessage → handleGhostPromptSuggest
     └── SuggestionRequestGovernor.decide (cache / cooldown / block / serve-cache)
     └── resolveCompletionSourceForRequest(selectedModelId, enabledSources)
-    └── getCompletionProviderForSource(copilot | opencode).requestCompletion(...)
+    └── getCompletionProviderForSource(copilot | opencode | ollama).requestCompletion(...)
           ├── Copilot: vscode.lm … sendRequest → texto
-          └── OpenCode: runtime.start → providers snapshot → sesión pooled →
-              session.prompt; opcional consumeOpencodeSuggestionTextStream (preview SSE)
+          ├── OpenCode: runtime.start → providers snapshot → sesión pooled →
+          │             session.prompt; opcional consumeOpencodeSuggestionTextStream (preview SSE)
+          └── Ollama: listModels (auto) → generate (HTTP POST /api/generate) → texto
     └── postMessage loading / suggestion-stream (OpenCode) / suggestion | empty | error
         │
         ▼  [Webview]
@@ -109,7 +109,7 @@ User types in textarea
   postMessage { type:'accept', ... } → SuggestionLog
 ```
 
-**Multi-fuente:** si `ghostPrompt.enabledCompletionSources` incluye copilot y opencode, el modelo elegido en el selector determina el motor (`providerID/modelID` → OpenCode; id de chat Copilot → LM). Con fuente única no configurada, se usa el legacy `ghostPrompt.completionProvider`.
+**Multi-fuente:** si `ghostPrompt.enabledCompletionSources` incluye varias fuentes, el modelo elegido en el selector determina el motor: `model:tag` → Ollama, `providerID/modelID` → OpenCode; id de chat Copilot → LM. Con fuente única no configurada, se usa el legacy `ghostPrompt.completionProvider`.
 
 ### Catálogo OpenCode y merge (`completion/catalog`)
 
@@ -120,7 +120,8 @@ Esta capa **no** define cómo “piensa” el modelo lingüístico: adapta **dat
 | `normalizeOpencodeProviderModels` | El SDK puede devolver `models` como **array** o como **mapa**; se normaliza a lista de `{ id, … }` sin inventar campos. | **No** — sin esto no hay ids estables para `session.prompt`. |
 | `classifyOpencodeModelTier` | A partir de metadatos del catálogo (`pricing` tipo `0x`/`1x`, `free`) y reglas conservadoras por `providerID` (p. ej. proveedor `opencode`, backends locales), clasifica **included / premium / unknown** para `ghostPrompt.suggestionModelPolicy`. | **No** para cumplir **nonPremiumOnly**; no es redacción de sugerencias. |
 | `listOpencodeSuggestionModels` | Construye filas del dropdown (etiqueta, tier), respeta `ghostPrompt.opencodeExcludedModelIds`. | UX |
-| `listMergedSuggestionModels` | Concatena Copilot + OpenCode y deduplica por `id` (prioriza Copilot). | Multi-fuente |
+| `listOllamaSuggestionModels` | Lista modelos locales de Ollama vía `/api/tags`, respeta `ghostPrompt.ollamaExcludedModelIds`. | UX |
+| `listMergedSuggestionModels` | Concatena Copilot + OpenCode + **Ollama** y deduplica por `id` (prioriza Copilot). | Multi-fuente |
 | Resolución en `opencodeLmCompletion.ts` (`resolveOpencodeModelIdsFromSnapshot`) | Elige `providerID`/`modelID` alineado al snapshot cacheado y la política. | Contrato del SDK |
 
 El **texto** de la suggestion sigue gobernado por `instruction.ts`, post-proceso `normalize.ts`, y el LM/OpenCode en sí — véase roadmap v0.4.2 Fase 1.
@@ -167,7 +168,7 @@ Los mensajes son JSON. Contratos **Zod** en `src/shared/webviewMessageSchemas.ts
 | `type` | Rol |
 | ------ | --- |
 | `settings` | Payload completo de UI (modelos, motor, `completionUiKind`, …). |
-| `loading` | Fase de carga (`phase`, `statusText`, `captureId`); incluye fases OpenCode/Copilot. |
+| `loading` | Fase de carga (`phase`, `statusText`, `captureId`); incluye fases Copilot, OpenCode y **Ollama** (`ollama-start`, `ollama-generating`). |
 | `suggestion-stream` | OpenCode: texto acumulado por SSE antes del resultado final (`captureId`). |
 | `suggestion` / `empty` / `error` | Resultado del intento (`captureId`). |
 | `languageEffective` | Idioma efectivo resuelto para la suggestion. |
@@ -238,6 +239,10 @@ The original implementation used `showTextDocument` + `editor.action.inlineSugge
 
 Optional path **`ghostPrompt.completionProvider`** / **`enabledCompletionSources`** routes to an **embedded OpenCode server** (CLI + `@opencode-ai/sdk`) so suggestions can use the user’s OpenCode models and providers. Latency is higher than Copilot LM (extra process + HTTP/SSE); GhostPrompt mitigates with provider snapshot cache, pooled session, serialized LM queue, and debug `[opencode-perf]` lines. See [`Roadmap-v0.4-opencode-perf-catalog-telemetry.md`](./Plans/Roadmaps/Roadmap-v0.4-opencode-perf-catalog-telemetry.md).
 
+### Why Ollama as a third backend?
+
+Ollama provides **local, offline-first** model inference with no API key or cloud dependency. GhostPrompt communicates with it via HTTP REST (`/api/tags` for model listing, `/api/generate` for completions with optional streaming). No embedded process or SDK is required; the user must have `ollama serve` running separately. Models are identified by their Ollama name literal (e.g. `mistral:latest`, `llama3:7b`). The routing heuristic `looksLikeOllamaModelId` detects the `model:tag` pattern (contains `:` but no `/`).
+
 ### Why two view containers instead of anchoring to `workbench.panel.chat`?
 
 `workbench.panel.chat` is VS Code core-internal and is not an extension point. Third-party extensions cannot register views inside it. The dual `viewsContainers` approach (Activity Bar + Panel) is the correct and supported model.
@@ -250,7 +255,12 @@ Optional path **`ghostPrompt.completionProvider`** / **`enabledCompletionSources
 
 ## 8. Roadmap
 
-### v0.4 — Project memory + OpenCode perf (shipped / doc)
+### v0.5.1 — Ollama engine integration (**current**)
+
+- **Ollama** como tercer motor de completado local (offline-first, HTTP REST sin SDK embebido) — [`Roadmap-v0.5.1-ollama-integration.md`](./Plans/Roadmaps/Roadmap-v0.5.1-ollama-integration.md).
+- **Arquitectura engines/:** migración de `completion/providers/` a `src/engines/` canónico (copilot, opencode, ollama).
+- **Catálogo unificado:** merge de modelos Copilot + OpenCode + Ollama en el dropdown webview.
+- **Routing:** `model:tag` → Ollama, `providerID/modelID` → OpenCode, default → Copilot.
 
 - **Project memory:** per-workspace-folder JSON under `globalStorageUri/ghostPrompt/projectMemory/v1/` — [`Roadmap-v0.4-project-context-store.md`](./Plans/Roadmaps/Roadmap-v0.4-project-context-store.md).
 - **OpenCode:** catalog cache, pooled inline session, debug perf logs, serialized LM queue — [`Roadmap-v0.4-opencode-perf-catalog-telemetry.md`](./Plans/Roadmaps/Roadmap-v0.4-opencode-perf-catalog-telemetry.md).
