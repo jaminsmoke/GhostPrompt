@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { logSuggestionDebug } from "../../debug/SuggestionDebug";
+import { logSuggestionDebug } from '../../system/debug/SuggestionDebug';
 import {
   type DestinationProvider,
   getGhostPromptAgentDestination,

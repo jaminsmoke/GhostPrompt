@@ -2,6 +2,33 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.5.3] - 2026-05-13
+
+Versión **0.5.3**: `host/` desmantelado en dominios canónicos `api/` + `vscode/` + `core/pipeline/`.
+
+### Changed
+
+- **Desmantelado `src/host/` (10 archivos) en 3 dominios:**
+  - **`src/api/`** — API interna webview↔host (6 archivos + barrel):
+    - `api/protocols/webviewProtocols.ts` — Validación Zod boundary postMessage
+    - `api/protocols/inboundHandlers.ts` — Router/dispatch mensajes inbound
+    - `api/settings/settingsPostMessage.ts` — Build + post settings al webview
+    - `api/settings/applyWebviewUpdate.ts` — Aplica `updateSetting` via config API
+    - `api/getters/workspaceGetters.ts` — Lectores `vscode.workspace.getConfiguration`
+    - `api/index.ts` — Barrel público
+  - **`src/vscode/`** — Integración VS Code (3 archivos + barrel):
+    - `vscode/MiniInputViewProvider.ts` — `WebviewViewProvider` (sidebar + panel)
+    - `vscode/webviewHtml.ts` — HTML template + CSP nonce generation
+    - `vscode/suggestionNotification.ts` — `vscode.window.showWarningMessage` notifications
+    - `vscode/index.ts` — Barrel público
+  - **`src/core/pipeline/`** — Orquestación (2 archivos):
+    - `core/pipeline/suggestPipeline.ts` — Pipeline completo: governor → LM → broadcast
+    - `core/pipeline/index.ts` — Barrel + re-export
+
+- **Todos los imports actualizados:** `extension/`, `api/`, `vscode/`, `core/pipeline/`, tests (~10 files)
+- **Circular dependency eliminada:** pipeline importa directamente de submódulos en vez del barrel `core/`
+- **226 tests passing**, `npm run check` verde (0 errors, 34 warnings pre-existing)
+
 ## [0.5.2] - 2026-05-13
 
 Versión **0.5.2**: OpenCode reestructurado como **API client tipo Ollama** — sin runtime embebido, sin gestión de procesos. Conexión a instancia OpenCode ya corriendo via `@opencode-ai/sdk`.
@@ -44,6 +71,21 @@ Versión **0.5.2**: OpenCode reestructurado como **API client tipo Ollama** — 
 - **ESLint limpio:** eliminada regla huérfana `src/opencode/**/*` de `.eslintrc.json`.
 
 - **README actualizado:** eliminadas referencias a servidor embebido, puerto 17433, warm-up, lifecycle, y settings VSOpenCodeX coexistence. Puerto actualizado a 4096, conexión descrita como API client.
+
+### Core/system reorganization (Fases 1-8)
+
+- **Nuevo `src/core/`** — Lógica pura de suggestions (13 archivos):
+  - `types.ts`, `instruction.ts`, `normalize.ts`, `streaming.ts`, `language.ts`, `loading.ts` (renamed from `suggestionLoadingUi`), `sources.ts` (renamed from `completionSources`), `index.ts`
+  - `catalog/mergedModelCatalog.ts`, `governor/SuggestionRequestGovernor.ts`, `session/GhostPromptSessionStore.ts`, `context/projectBootstrapContext.ts`
+
+- **Nuevo `src/system/`** — Infra transversal (5 archivos):
+  - `debug/SuggestionDebug.ts`, `log/ConversationLog.ts`, `log/SuggestionLog.ts`, `contracts/webviewMessageSchemas.ts` (renamed from `shared/`), `build/verifyWebviewBundle.ts`
+
+- **Carpetas eliminadas (7):** `completion/`, `governor/`, `session/`, `debug/`, `log/`, `shared/`, `build/`
+
+- **Todos los imports actualizados:** `src/` (engines, host, extension, destinations, projectMemory), `tests/` (16 files), `webview/` (postToHost.ts)
+
+- **226 tests passing**, `npm run check` verde (0 errors, 34 warnings pre-existing)
 
 ## [0.5.1] - 2026-05-13
 

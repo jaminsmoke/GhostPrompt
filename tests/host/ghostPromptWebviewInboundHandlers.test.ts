@@ -52,11 +52,11 @@ vi.mock("vscode", () => ({
   },
 }));
 
-vi.mock("../../src/log/SuggestionLog", () => ({
+vi.mock("../../src/system/log/SuggestionLog", () => ({
   appendSuggestion: appendSuggestionMock,
 }));
 
-vi.mock("../../src/log/ConversationLog", () => ({
+vi.mock("../../src/system/log/ConversationLog", () => ({
   append: appendLogMock,
 }));
 
@@ -69,25 +69,25 @@ vi.mock("../../src/destinations/destinationRegistry", () => ({
   }),
 }));
 
-vi.mock("../../src/host/applyWebviewUpdateSetting", () => ({
+vi.mock("../../src/api/settings/applyWebviewUpdate", () => ({
   applyWebviewUpdateSetting: applyWebviewUpdateSettingMock,
 }));
 
-vi.mock("../../src/host/handleGhostPromptSuggest", () => ({
+vi.mock("../../src/core/pipeline", () => ({
   handleGhostPromptSuggest: (...args: unknown[]) =>
     handleGhostPromptSuggestMock(...args),
 }));
 
 import type { Uri, Webview } from "vscode";
-import { ghostPromptSessionStore } from "../../src/session/GhostPromptSessionStore";
+import { ghostPromptSessionStore } from "../../src/core/session/GhostPromptSessionStore";
 import {
   dispatchGhostPromptInboundMessage,
   handleGhostPromptInboundDraftChanged,
   handleGhostPromptInboundInit,
   handleGhostPromptInboundSend,
   type GhostPromptInboundDispatchServices,
-} from "../../src/host/ghostPromptWebviewInboundHandlers";
-import type { GhostPromptSuggestDeps } from "../../src/host/handleGhostPromptSuggest";
+} from "../../src/api/protocols/inboundHandlers";
+import type { GhostPromptSuggestDeps } from "../../src/core/pipeline";
 
 function minimalSuggestDeps(): GhostPromptSuggestDeps {
   return {

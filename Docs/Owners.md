@@ -23,19 +23,17 @@ Filas = carpetas principales de `src/`. Columnas = reglas de dependencia y rol.
 
 | Carpeta `src/` | Rol | Depende típicamente de | No debe importar desde |
 | ---------------- | ----- | -------------------------- | ------------------------- |
-| **`extension/`** | Punto de entrada; registra comandos y vistas; lifecycle `activate` / `deactivate`. | `host`, `projectMemory` (activate), `engines/opencode` (resetClient), `debug`. | Evitar lógica de negocio pesada aquí (mantener delgado). |
-| **`host/`** | Webview provider, mensajes inbound/outbound, HTML/CSP, wire de suggest → completion. | `completion`, `session`, `projectMemory`, `shared`, `debug`. | No meter aquí runtime OpenCode embebido largo. |
-| **`completion/`** | Core cross-engine: tipos, instrucción, normalize, streaming, merged catalog, context bootstrap. | `engines/`, `vscode`. | No UI webview ni HTML. |
-| **`engines/`** | Motores de completion canónicos. `copilot/`, `opencode/` (apiClient + catalog), `ollama/`, `engineRegistry.ts`. | `completion` (types, instruction, normalize), `vscode`. | No importar desde `host/`. |
-| **`opencode/`** | Proceso embebido, SDK, SSE, caché providers, sesión inline, cola LM, CLI. | `debug` (logs perf), Node. | **`host/`** — prohibido por ESLint (ver abajo). |
-| **`session/`** | Estado compartido Sidebar/Panel (`GhostPromptSessionStore`). | `vscode`, tipos desde `completion` si hace falta. | Evitar acoplar a un solo handler del webview. |
-| **`governor/`** | Gobernador de peticiones (cache, cooldown, rate limit). | Tipos/config; sin LM directo. | `host/`. |
-| **`projectMemory/`** | Store JSON, reconcile, ingest, watchers. | `vscode`, FS propio. | `host/` (riesgo de cycle conceptual; pasar datos desde host como deps). |
-| **`debug/`** | Canal de salida y toggles de debug. | `vscode`. | `host/` (opcional endurecer en ESLint más adelante). |
-| **`destinations/`** | Destinos de prompt (copilotChat, vsOpenCodeX). Registro `DestinationProvider` en `destinationRegistry.ts`. | `vscode`. | No importar desde `host/` (delegar a `destinationRegistry`). |
-| **`log/`** | Persistencia conversación / suggestions en disco. | `vscode`, FS. | — |
-| **`shared/`** | Schemas/tipos compartidos host ↔ contratos (Zod). | `zod`. | `host/` en runtime del webview bundle (el cliente es otro build). |
-| **`build/`** | Scripts de verificación empaquetado (ej. webview bundle). | Node. | — |
+| **`extension/`** | Punto de entrada; registra comandos y vistas; lifecycle `activate` / `deactivate`. | `vscode`, `projectMemory` (activate), `engines/opencode` (resetClient), `system/debug`. | Evitar lógica de negocio pesada aquí (mantener delgado). |
+| **`vscode/`** | Integración VS Code: `WebviewViewProvider`, HTML/CSP generation, notifications. | `api/`, `core/pipeline/`, `projectMemory`, `destinations/`, `vscode`. | No meter aquí lógica de suggestion, contratos Zod, ni orquestación. |
+| **`api/`** | API interna webview↔host: protocolos Zod, inbound handlers, settings flow, workspace getters. | `core/`, `system/`, `destinations/`, `vscode` (config API). | No importar desde `vscode/` (providers). |
+| **`core/`** | Lógica pura de suggestions: tipos, instrucción, normalize, streaming, language, loading, sources, merged catalog, governor, session, context bootstrap, pipeline. | `engines/` (para types/registry), `system/debug/`, `vscode` (Uri types). | No UI webview ni HTML, ni VS Code API directa. |
+| **`engines/`** | Motores de completion canónicos. `copilot/`, `opencode/` (apiClient + catalog), `ollama/`, `engineRegistry.ts`. | `core/` (types, instruction, normalize), `system/debug/`, `vscode`. | No importar desde `host/`, `api/`, `vscode/`. |
+| **`destinations/`** | Destinos de prompt (copilotChat, vsOpenCodeX). Registro `DestinationProvider` en `destinationRegistry.ts`. | `vscode`. | No importar desde `host/`, `api/`, `vscode/`. |
+| **`projectMemory/`** | Store JSON, reconcile, ingest, watchers. | `vscode`, FS propio. | `api/`, `vscode/` (riesgo de cycle conceptual; pasar datos como deps). |
+| **`system/debug/`** | Canal de salida y toggles de debug. | `vscode`. | `api/`, `vscode/`. |
+| **`system/log/`** | Persistencia conversación / suggestions en disco. | `vscode`, FS. | — |
+| **`system/contracts/`** | Schemas/tipos compartidos host ↔ webview (Zod). | `zod`. | `api/` en runtime del webview bundle (el cliente es otro build). |
+| **`system/build/`** | Scripts de verificación empaquetado (ej. webview bundle). | Node. | — |
 
 ### ESLint (`import/no-restricted-paths`)
 
@@ -43,10 +41,8 @@ Reglas en `.eslintrc.json` (nivel `warn`):
 
 | Objetivo (`target`) | No importar desde (`from`) |
 | --------------------- | ---------------------------- |
-| **`src/projectMemory/**/*`** | **`src/host/**/*`** |
-| **`src/debug/**/*`** | **`src/host/**/*`** |
-
-Nota: la regla `src/opencode/**/*` fue eliminada en v0.5.2 al eliminar la carpeta `src/opencode/`.
+| **`src/projectMemory/**/*`** | **`src/vscode/**/*`**, **`src/api/**/*`** |
+| **`src/system/debug/**/*`** | **`src/vscode/**/*`**, **`src/api/**/*`** |
 
 ---
 
@@ -57,14 +53,14 @@ No es cobertura de líneas al 100 %; es **contrato de tests que deben seguir pas
 | Área `src/` | Ficheros de test relevantes (Vitest) |
 | ------------- | -------------------------------------- |
 | `extension/extension.ts` | Parcialmente indirecto: `MiniInputViewProvider.test.ts` (registro webview); integración opcional. |
-| `host/*` (MiniInput, handlers, protocols, settings, suggest wiring) | `MiniInputViewProvider.test.ts`, `webviewProtocols.test.ts`, `host/ghostPromptWebviewInboundHandlers.test.ts`, `host/ghostPromptSuggestPipeline.test.ts`, `webviewToolbarParity.test.ts` (incl. paridad dual vista v0.4.3), `webviewThemeTokens.test.ts`, `shared/webviewMessageSchemas.test.ts`, `webview/composeLabels.test.ts`, `webview/userErrorMessage.test.ts` |
-| `host/ghostPromptSuggestPipeline.ts` + `handleGhostPromptSuggest.ts` (wrapper) | `host/ghostPromptSuggestPipeline.test.ts` (deps mínimas + spy `getCompletionProviderForSource`); flujo integrado en `MiniInputViewProvider.test.ts`. |
-| `completion/` (raíz: providers, sources, types; **`catalog/`** Copilot/Ollama; **`context/`**) | `completionProvider.test.ts`, `completionSources.test.ts`, `CopilotCompletion.test.ts`, `opencodeLmCompletion.test.ts`, `completionInstruction.test.ts`, `instructionNormalizeContract.test.ts`, `suggestionLoadingUi.test.ts`, `projectBootstrapContext.test.ts`, `logOpenCodePerfCapture.test.ts` |
+| `vscode/*` (MiniInput, webviewHtml, notification) | `MiniInputViewProvider.test.ts`, `webviewToolbarParity.test.ts`, `webviewThemeTokens.test.ts` |
+| `api/protocols/*` (webviewProtocols, inboundHandlers) | `webviewProtocols.test.ts`, `host/ghostPromptWebviewInboundHandlers.test.ts`, `shared/webviewMessageSchemas.test.ts` |
+| `api/settings/*` (settingsPostMessage, applyWebviewUpdate) | `host/applyWebviewUpdateSetting.test.ts`, `MiniInputViewProvider.test.ts` (settings flow) |
+| `api/getters/*` (workspaceGetters) | Indirecto via `MiniInputViewProvider.test.ts`, `host/ghostPromptSuggestPipeline.test.ts` |
+| `core/` (types, instruction, normalize, streaming, language, loading, sources, catalog, governor, session, context, pipeline) | `completionProvider.test.ts`, `completionSources.test.ts`, `CopilotCompletion.test.ts`, `opencodeLmCompletion.test.ts`, `completionInstruction.test.ts`, `instructionNormalizeContract.test.ts`, `loading.test.ts`, `projectBootstrapContext.test.ts`, `logOpenCodePerfCapture.test.ts`, `mergedModelCatalog.test.ts`, `SuggestionRequestGovernor.test.ts`, `GhostPromptSessionStore.test.ts`, `host/ghostPromptSuggestPipeline.test.ts` |
 | `engines/` (copilot, opencode, ollama, engineRegistry) | `engineRegistry.test.ts`, `ollamaLmEngine.test.ts`, `ollamaApiClient.test.ts`, `mergedModelCatalog.test.ts`, `opencodeApiClient.test.ts`, `opencodeLmCompletion.test.ts`, `opencodeModelCatalog.test.ts`, `opencodeModelTier.test.ts`, `normalizeOpencodeProviderModels.test.ts` |
 | `destinations/` (copilotChat, vsOpenCodeX, destinationRegistry) | `destinationRegistry.test.ts`, `copilotChatDestination.test.ts`, `vsOpenCodeXDestination.test.ts` |
-| `engines/opencode/` (apiClient, catalog, LmEngine) | `opencodeApiClient.test.ts`, `opencodeLmCompletion.test.ts`, `opencodeModelCatalog.test.ts`, `opencodeModelTier.test.ts`, `normalizeOpencodeProviderModels.test.ts` |
-| `session/` | `GhostPromptSessionStore.test.ts` |
-| `governor/` | `SuggestionRequestGovernor.test.ts` |
+| `core/pipeline/` (suggestPipeline) | `host/ghostPromptSuggestPipeline.test.ts`, `MiniInputViewProvider.test.ts` (flujo suggest mock) |
 | `projectMemory/` | `projectMemoryStore.test.ts`, `projectBootstrapContext.test.ts`, `bootstrapStoredHelpers.test.ts`, `entriesMutation.test.ts`, `editorIngestLru.test.ts` |
 
 Antes de una fase que **mueva** ficheros: ejecutar al menos los tests de las filas tocadas.
@@ -86,7 +82,7 @@ Orden recomendado; cada fase es **independiente** si la anterior está estable.
 
 ### Fase A — Documentación alineada con el código real
 
-**Objetivo:** `Docs/ARCHITECTURE.md` y barrel `completion/index.ts` describen multi-fuente, OpenCode y flujo suggest sin contradecir el código.
+**Objetivo:** `Docs/ARCHITECTURE.md` y barrel `core/index.ts` describen multi-fuente, OpenCode y flujo suggest sin contradecir el código.
 
 **Posibles cambios:** solo markdown y comentarios en barrels.
 
@@ -94,7 +90,7 @@ Orden recomendado; cada fase es **independiente** si la anterior está estable.
 
 **Riesgo:** bajo.
 
-**Estado:** **Hecho (2026-05-10)** — Overview y §2–8 de `ARCHITECTURE.md` actualizados; cabecera de `completion/index.ts`; roadmap §8 enlaza Owners + OpenCode perf.
+**Estado:** **Hecho (2026-05-10)** — Overview y §2–8 de `ARCHITECTURE.md` actualizados; cabecera de `core/index.ts`; roadmap §8 enlaza Owners + OpenCode perf.
 
 ---
 
@@ -140,13 +136,29 @@ Si falta un caso (p. ej. export público solo usado desde host), **añadir test*
 
 ### Fase D — ESLint ampliado (opcional)
 
-**Objetivo:** zonas extra (p. ej. `projectMemory` → no `host`; `debug` → no `host`) una regla cada vez.
+**Objetivo:** zonas extra (p. ej. `projectMemory` → no `host`; `system/debug` → no `host`) una regla cada vez.
 
 **Gate:** `npm run lint` tras cada zona nueva; corregir imports reales o documentar excepción en la tabla § ESLint.
 
 **Riesgo:** bajo si es incremental.
 
-**Estado:** **Hecho (2026-05-10)** — Añadidas zonas `projectMemory` y `debug` → no `host`; sin violaciones en `src/` al activarlas.
+**Estado:** **Hecho (2026-05-10)** — Añadidas zonas `projectMemory` y `system/debug` → no `host`; sin violaciones en `src/` al activarlas.
+
+---
+
+### Fase E — Reorganización `core/` + `system/` (v0.5.2)
+
+**Objetivo:** consolidar carpetas sueltas de 1 archivo en dos dominios canónicos.
+
+**Estado:** **Hecho (2026-05-13)** — `core/` (13 archivos) + `system/` (5 archivos). 7 carpetas eliminadas. 226 tests passing. `npm run check` verde.
+
+---
+
+### Fase F — Desmantelar `host/` → `api/` + `vscode/` + `core/pipeline/` (v0.5.3)
+
+**Objetivo:** separar las 4 responsabilidades mezcladas en `host/` en dominios canónicos con nombres auto-explicativos.
+
+**Estado:** **Hecho (2026-05-13)** — `api/` (6 archivos + barrel), `vscode/` (3 archivos + barrel), `core/pipeline/` (2 archivos). `host/` eliminada. 226 tests passing. `npm run check` verde.
 
 ---
 
@@ -154,6 +166,7 @@ Si falta un caso (p. ej. export público solo usado desde host), **añadir test*
 
 - Roadmap modularidad host: [`Docs/Plans/Roadmaps/Roadmap-v0.3.2-host-refactor-webview-tooling.md`](./Plans/Roadmaps/Roadmap-v0.3.2-host-refactor-webview-tooling.md)
 - Arquitectura general: [`Docs/ARCHITECTURE.md`](./ARCHITECTURE.md)
+- Roadmap v0.5.2: [`Docs/Plans/Roadmaps/Roadmap-v0.5.2-core-system-reorg.md`](./Plans/Roadmaps/Roadmap-v0.5.2-core-system-reorg.md)
 
 ---
 
@@ -175,3 +188,5 @@ Si falta un caso (p. ej. export público solo usado desde host), **añadir test*
 | 2026-05-10 | Roadmap **v0.4.3 Fase 2:** releasing OpenCode + GitHub Actions (`ci.yml`, integración manual). |
 | 2026-05-13 | **v0.5.1 Ollama:** `src/engines/` como carpeta canónica de motores (copilot, opencode, ollama). `ollamaApiClient`, `ollamaLmEngine`, `ollamaModelCatalog`. Tests: +35, total 230. Docs actualizados. |
 | 2026-05-13 | **v0.5.1 Destinations refactor:** nueva carpeta `src/destinations/` con `copilotChat/` (→ `ChatBridge`), `vsOpenCodeX/` (→ `vsOpenCodeXGhostPromptUiBridge` + `notifyVsx`), `destinationRegistry.ts` con interfaz `DestinationProvider`. `vsOpenCodeXBridge.ts` → `engines/opencode/vsOpenCodeXConnection.ts`. Tests: +15, total 245. |
+| 2026-05-13 | **v0.5.2 Core/system reorg:** `core/` (13 archivos) + `system/` (5 archivos). 7 carpetas eliminadas (`completion/`, `governor/`, `session/`, `debug/`, `log/`, `shared/`, `build/`). Todos los imports actualizados en `src/`, `tests/`, `webview/`. 226 tests passing. Docs actualizados. |
+| 2026-05-13 | **v0.5.3 Host refactor:** `host/` desmantelado → `api/` (6 archivos), `vscode/` (3 archivos), `core/pipeline/` (2 archivos). ESLint rules actualizadas (`projectMemory`, `system/debug` → no `api/`, `vscode/`). Mapa de tests actualizado. 226 tests passing. Docs actualizados. |

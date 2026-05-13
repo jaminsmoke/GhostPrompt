@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-import { type ProjectBootstrapPiece } from "../completion/context/projectBootstrapContext";
+import { type ProjectBootstrapPiece } from '../core/context/projectBootstrapContext';
 import { readEditorIngestConfig } from "./editorIngestSettings";
 import { applyEditorIngestLruEviction } from "./editorIngestLru";
 import {

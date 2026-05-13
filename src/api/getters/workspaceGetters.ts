@@ -8,13 +8,13 @@ import type {
   SuggestionModelPolicy,
   SuggestionStyle,
   SupportedSuggestionLanguage,
-} from "../completion";
+} from '../../core';
 
 export {
   type GhostPromptAgentDestination,
   getGhostPromptAgentDestination,
   isVsOpenCodeXExtensionInstalled,
-} from "../destinations/destinationRegistry";
+} from "../../destinations/destinationRegistry";
 
 function trimContextField(value: string, maxChars: number): string {
   const normalized = value.replace(/\s+/g, " ").trim();

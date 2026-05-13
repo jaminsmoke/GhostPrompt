@@ -2,11 +2,11 @@
  * Catálogo unificado cuando hay varias fuentes habilitadas.
  * Ver `Docs/ARCHITECTURE.md` §3 — Catálogo OpenCode y merge.
  */
-import type { SuggestionModelDescriptor, SuggestionModelPolicy } from "./types";
-import { listSuggestionModels } from "../engines/copilot/catalog/modelCatalog";
-import { listOpencodeSuggestionModels } from "../engines/opencode/catalog/opencodeModelCatalog";
-import { listOllamaSuggestionModels } from "../engines/ollama/catalog/ollamaModelCatalog";
-import type { CompletionSourceId } from "./completionSources";
+import type { SuggestionModelDescriptor, SuggestionModelPolicy } from "../types";
+import { listSuggestionModels } from "../../engines/copilot/catalog/modelCatalog";
+import { listOpencodeSuggestionModels } from "../../engines/opencode/catalog/opencodeModelCatalog";
+import { listOllamaSuggestionModels } from "../../engines/ollama/catalog/ollamaModelCatalog";
+import type { CompletionSourceId } from "../sources";
 
 /**
  * Concatena modelos Copilot + OpenCode + Ollama; deduplica por `id` (prioriza el primero: Copilot).

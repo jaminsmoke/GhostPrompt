@@ -9,20 +9,20 @@ import {
   listOpencodeSuggestionModels,
   listOllamaSuggestionModels,
   listSuggestionModels,
-} from "../completion";
+} from '../../core';
 import type {
   SuggestionModelDescriptor,
   SuggestionModelPolicy,
   SuggestionStyle,
   SupportedSuggestionLanguage,
-} from "../completion";
-import { isSuggestionDebugEnabled } from "../debug/SuggestionDebug";
-import { ghostPromptSessionStore } from "../session/GhostPromptSessionStore";
+} from '../../core';
+import { isSuggestionDebugEnabled } from '../../system/debug/SuggestionDebug';
+import { ghostPromptSessionStore } from '../../core/session/GhostPromptSessionStore';
 import {
   getGhostPromptAgentDestination,
   isVsOpenCodeXExtensionInstalled,
-} from "./ghostPromptHostWorkspaceGetters";
-import { parseOutboundSettingsEnvelope } from "./webviewProtocols";
+} from "../getters/workspaceGetters";
+import { parseOutboundSettingsEnvelope } from "../protocols/webviewProtocols";
 
 export type GhostPromptSettingsGetters = {
   getSuggestionModelPolicy: () => SuggestionModelPolicy;

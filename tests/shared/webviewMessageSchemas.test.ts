@@ -7,10 +7,10 @@ import {
   webviewInboundMessageSchema,
   webviewOutboundSettingsEnvelopeSchema,
   webviewSettingsPayloadSchema,
-} from "../../src/shared/webviewMessageSchemas";
+} from "../../src/system/contracts/webviewMessageSchemas";
 import {
   webviewInboundMessageSchema as hostInboundSchema,
-} from "../../src/host/webviewProtocols";
+} from "../../src/api/protocols/webviewProtocols";
 
 describe("webviewMessageSchemas (shared)", () => {
   it("el host reexporta el mismo schema inbound que shared", () => {

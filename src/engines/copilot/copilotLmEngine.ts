@@ -1,15 +1,15 @@
 import * as vscode from "vscode";
 
-import { buildCompletionInstructionParts } from "../../completion/instruction";
+import { buildCompletionInstructionParts } from '../../core/instruction';
 import { describeModel, selectModelByPolicy } from "./catalog/modelCatalog";
-import { normalizeSuggestion } from "../../completion/normalize";
-import { collectResponseText } from "../../completion/streaming";
+import { normalizeSuggestion } from '../../core/normalize';
+import { collectResponseText } from '../../core/streaming';
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
   type CompletionRequestOptions,
   type CompletionResult,
-} from "../../completion/types";
+} from '../../core/types';
 
 let premiumQuotaBlocked = false;
 

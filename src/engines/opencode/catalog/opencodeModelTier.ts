@@ -4,7 +4,7 @@
  *
  * Política de producto / routing (`nonPremiumOnly`), no "prompt" al LM. Ver `Docs/ARCHITECTURE.md` §3.
  */
-import type { SuggestionModelTier } from "../../../completion/types";
+import type { SuggestionModelTier } from '../../../core/types';
 
 function parsePricingMultiplier(pricing: string): number | undefined {
   const match = /^([0-9]+(?:\.[0-9]+)?)x$/i.exec(pricing.trim());

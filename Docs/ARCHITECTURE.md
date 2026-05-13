@@ -25,18 +25,20 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │  VS Code Extension Host (Node.js)                               │
 │                                                                 │
-│  extension/extension.ts ──► host/MiniInputViewProvider          │
+│  extension/extension.ts ──► vscode/MiniInputViewProvider        │
 │                        │                                        │
-│                        ├──► completion: CompletionProvider      │
+│                        ├──► core/pipeline: suggest pipeline     │
 │                        │      (Copilot LM | OpenCode | Ollama)   │
-│                        ├──► host/handleGhostPromptSuggest        │
-│                        │      (gobernador + LM enrutado + UI)    │
+│                        ├──► api/protocols: inbound handlers     │
+│                        │      (Zod validation + dispatch)        │
+│                        ├──► api/settings: settings postMessage  │
+│                        ├──► api/getters: workspace config       │
 │                        ├──► engines/opencode/* (API client + catalog) │
-│                        ├──► bridge/ChatBridge (chat.open cmd)   │
-│                        ├──► log/ConversationLog (storageUri)    │
-│                        ├──► log/SuggestionLog   (storageUri)    │
+│                        ├──► destinations/ (chat.open cmd)       │
+│                        ├──► system/log/ConversationLog (storageUri)    │
+│                        ├──► system/log/SuggestionLog   (storageUri)    │
 │                        ├──► projectMemory/* (globalStorageUri)   │
-│                        └──► session/GhostPromptSessionStore      │
+│                        └──► core/session/GhostPromptSessionStore      │
 │                                                                 │
 └───────────────────────────┬─────────────────────────────────────┘
                             │ postMessage / onDidReceiveMessage
@@ -57,26 +59,28 @@
 | Location | Responsibility |
 | -------- | -------------- |
 | `src/extension/extension.ts` | Entry point: commands, configuration listeners, two `WebviewViewProvider` registrations, `deactivate` (resetea client OpenCode). |
-| `src/host/MiniInputViewProvider.ts` | Webview HTML/CSP, broadcast a Sidebar+Panel, delegación a handlers. |
-| `src/host/handleGhostPromptSuggest.ts` | Wrapper estable → `ghostPromptSuggestPipeline.ts`: gobernador, memoria proyecto (si aplica), `getCompletionProviderForSource` + routing de modelo, loading/stream final. |
-| `src/host/webviewProtocols.ts` | Parseo Zod de mensajes webview→host; validación de sobre `settings` host→webview. |
-| `src/shared/webviewMessageSchemas.ts` | Schemas Zod canónicos host ↔ webview (también consumidos por el bundle webview en build). |
-| `src/session/GhostPromptSessionStore.ts` | Estado compartido (borrador, suggestions, `activeCaptureId`, token de cancelación del intento activo). |
-| `src/engines/` | Motores de completion canónicos. `copilot/`, `opencode/` (apiClient + catalog), `ollama/`, y `engineRegistry.ts` que registra `CompletionProvider` y resuelve `getCompletionProviderForSource`. |
-| `src/destinations/` | Destinos de prompt. `copilotChat/` (`sendToChat`), `vsOpenCodeX/` (forward UI, notify missing), y `destinationRegistry.ts` que registra `DestinationProvider` y resuelve el destino activo. Patrón análogo a `engines/`. |
-| `src/host/MiniInputViewProvider.ts` | Webview HTML/CSP, broadcast a Sidebar+Panel, delegación a handlers. |
-| `src/completion/completionSources.ts` | `enabledCompletionSources` vs legacy `completionProvider`; `resolveCompletionSourceForRequest` (p. ej. `model:tag` → Ollama, `provider/model` → OpenCode). |
-| `src/completion/` | Core cross-engine: tipos, instrucción, normalize, streaming, merged catalog, context bootstrap. Sin `catalog/` subfolder (catálogos engine-specific viven en `engines/*/catalog/`). |
-| `src/completion/context/projectBootstrapContext.ts` | README/package bootstrap para `contextMode: project`. |
-| `src/completion/index.ts` | Barrel: tipos, instrucción, reexports desde `catalog/` y `context/`; alias `requestCompletion` → solo Copilot (legacy). |
-| `src/engines/opencode/catalog/` | Catálogo OpenCode: `opencodeModelCatalog.ts` (lista modelos via `config.providers()`), `normalizeOpencodeProviderModels.ts`, `opencodeModelTier.ts`. |
-| `src/governor/SuggestionRequestGovernor.ts` | Dedupe, cache, cooldown, rate limit, presupuesto antes del LM. |
-| `src/log/ConversationLog.ts` | `conversation.md` bajo `storageUri`. |
-| `src/log/SuggestionLog.ts` | `suggestions.md` bajo `storageUri`. |
+| `src/vscode/MiniInputViewProvider.ts` | Webview HTML/CSP, broadcast a Sidebar+Panel, delegación a handlers. |
+| `src/vscode/webviewHtml.ts` | HTML template generation, CSP nonce, secure URI substitution. |
+| `src/vscode/suggestionNotification.ts` | Non-intrusive `vscode.window.showWarningMessage` for actionable suggestion failures. |
+| `src/api/protocols/webviewProtocols.ts` | Zod parseo de mensajes webview→host; validación de sobre `settings` host→webview. |
+| `src/api/protocols/inboundHandlers.ts` | Router/dispatch de mensajes inbound (`init`, `suggest`, `send`, `accept`, `draftChanged`, `updateSetting`). |
+| `src/api/settings/settingsPostMessage.ts` | Construye y envía el mensaje `settings` al webview (lista de modelos, chips, etc.). |
+| `src/api/settings/applyWebviewUpdate.ts` | Aplica cambios de configuración originados en el webview (`updateSetting`). |
+| `src/api/getters/workspaceGetters.ts` | Lectores de `vscode.workspace.getConfiguration` + resolución de destino agente. |
+| `src/core/` | Core cross-engine: tipos, instrucción, normalize, streaming, language, loading, sources, merged catalog, governor, session, context bootstrap, pipeline. |
+| `src/core/pipeline/suggestPipeline.ts` | Orquestación completa: governor → LM routing → loading phases → broadcast UI. |
+| `src/core/session/GhostPromptSessionStore.ts` | Estado compartido (borrador, suggestions, `activeCaptureId`, token de cancelación). |
+| `src/core/governor/SuggestionRequestGovernor.ts` | Dedupe, cache, cooldown, rate limit, presupuesto antes del LM. |
+| `src/engines/` | Motores de completion canónicos. `copilot/`, `opencode/` (apiClient + catalog), `ollama/`, y `engineRegistry.ts`. |
+| `src/destinations/` | Destinos de prompt. `copilotChat/` (`sendToChat`), `vsOpenCodeX/` (forward UI, notify missing). |
+| `src/system/contracts/webviewMessageSchemas.ts` | Schemas Zod canónicos host ↔ webview. |
+| `src/system/log/ConversationLog.ts` | `conversation.md` bajo `storageUri`. |
+| `src/system/log/SuggestionLog.ts` | `suggestions.md` bajo `storageUri`. |
+| `src/system/debug/SuggestionDebug.ts` | Toggle debug y canal **GhostPrompt Suggestions**. |
+| `src/system/build/verifyWebviewBundle.ts` | Verificación del bundle webview en CI/dev. |
 | `src/projectMemory/*` | Store JSON por carpeta, reconcile, ingest, watchers opcionales. |
-| `src/debug/SuggestionDebug.ts` | Toggle debug y canal **GhostPrompt Suggestions** (`[opencode-perf]` cuando aplica). |
 | `webview/index.html` | Shell HTML; tokens `{{nonce}}`, CSP, URIs de script/estilo inyectados en runtime. |
-| `webview/dist/main.js` (build) | Bundle generado desde `webview/src` (`npm run build:webview`); es el script que carga la vista. |
+| `webview/dist/main.js` (build) | Bundle generado desde `webview/src` (`npm run build:webview`). |
 | `webview/style.css` | Estilos basados en variables VS Code; ghost text. |
 
 ---
@@ -148,7 +152,7 @@ Each debounce cycle increments `currentCaptureId` (webview-local counter). The h
 
 ## 4. Host ↔ Webview message protocol
 
-Los mensajes son JSON. Contratos **Zod** en `src/shared/webviewMessageSchemas.ts`; el host valida entrada con `parseWebviewInboundMessage` (`webviewProtocols.ts`). El cliente webview empaqueta la misma forma en el bundle.
+Los mensajes son JSON. Contratos **Zod** en `src/system/contracts/webviewMessageSchemas.ts`; el host valida entrada con `parseWebviewInboundMessage` (`webviewProtocols.ts`). El cliente webview empaqueta la misma forma en el bundle.
 
 ### Webview → Host (resumen)
 
@@ -256,7 +260,22 @@ Destinations (where the final prompt is sent) are logically distinct from comple
 
 ## 8. Roadmap
 
-### v0.5.1 — Ollama engine integration + destinations refactor (**current**)
+### v0.5.3 — Desmantelar `host/` → `api/` + `vscode/` + `core/pipeline/` (**current**)
+
+- **`api/`** — API interna webview↔host: protocolos Zod, inbound handlers, settings flow, workspace getters.
+- **`vscode/`** — Integración VS Code: `WebviewViewProvider`, HTML/CSP generation, notifications.
+- **`core/pipeline/`** — Orquestación de suggestion (lógica pura): governor → LM routing → loading phases → broadcast.
+- Carpeta `host/` eliminada completamente.
+- 226 tests passing, `npm run check` verde.
+
+### v0.5.2 — Reorganización `core/` + `system/`
+
+- **`core/`** — Lógica pura de suggestions (types, instruction, normalize, streaming, language, loading, sources, catalog, governor, session, context).
+- **`system/`** — Infra transversal (debug, log, contracts, build).
+- Carpetas eliminadas: `completion/`, `governor/`, `session/`, `debug/`, `log/`, `shared/`, `build/`.
+- 226 tests passing, `npm run check` verde.
+
+### v0.5.1 — Ollama engine integration + destinations refactor
 
 - **Ollama** como tercer motor de completado local (offline-first, HTTP REST sin SDK embebido) — [`Roadmap-v0.5.1-ollama-integration.md`](./Plans/Roadmaps/Roadmap-v0.5.1-ollama-integration.md).
 - **Arquitectura engines/:** migración de `completion/providers/` a `src/engines/` canónico (copilot, opencode, ollama).

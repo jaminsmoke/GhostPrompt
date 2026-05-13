@@ -5,7 +5,7 @@ import {
   webviewInboundMessageSchema,
   webviewOutboundSettingsEnvelopeSchema,
   webviewSettingsPayloadSchema,
-} from "../src/host/webviewProtocols";
+} from "../src/api/protocols/webviewProtocols";
 
 const minimalSettingsPayload = {
   completionProvider: "copilot" as const,

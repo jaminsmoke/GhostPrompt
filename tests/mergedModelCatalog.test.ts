@@ -24,7 +24,7 @@ vi.mock("vscode", () => ({
   },
 }));
 
-import { listMergedSuggestionModels } from "../src/completion/mergedModelCatalog";
+import { listMergedSuggestionModels } from "../src/core/catalog/mergedModelCatalog";
 
 describe("listMergedSuggestionModels", () => {
   beforeEach(() => {

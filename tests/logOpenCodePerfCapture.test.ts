@@ -17,7 +17,7 @@ vi.mock("vscode", () => ({
   },
 }));
 
-import { logOpenCodePerfCapture } from "../src/debug/SuggestionDebug";
+import { logOpenCodePerfCapture } from "../src/system/debug/SuggestionDebug";
 
 describe("logOpenCodePerfCapture", () => {
   beforeEach(() => {

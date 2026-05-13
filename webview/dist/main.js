@@ -4145,7 +4145,7 @@
   };
   var NEVER = INVALID;
 
-  // src/shared/webviewMessageSchemas.ts
+  // src/system/contracts/webviewMessageSchemas.ts
   var suggestionModelDescriptorSchema = external_exports.object({
     id: external_exports.string(),
     label: external_exports.string(),

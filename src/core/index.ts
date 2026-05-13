@@ -1,25 +1,22 @@
 /**
- * @fileoverview Punto de entrada público del dominio “completion” (barrel).
+ * @fileoverview Punto de entrada público del dominio "core" (barrel).
  *
- * Motores de suggestion:
- * - **Copilot LM:** `providers/copilotLmCompletion.ts` (`vscode.lm`).
- * - **OpenCode:** `providers/opencodeLmCompletion.ts` (servidor embebido + `@opencode-ai/sdk`).
+ * Lógica pura de suggestions: tipos, instrucción, normalización, streaming,
+ * governor, session, catálogo merged, context bootstrap, y resolución de fuentes.
  *
  * El **host** enruta por modelo y fuentes: `getCompletionProviderForSource` +
- * `resolveCompletionSourceForRequest` (`completionSources.ts`). Con una sola fuente,
+ * `resolveCompletionSourceForRequest` (`sources.ts`). Con una sola fuente,
  * `getActiveCompletionProvider()` sigue siendo válido; con varias fuentes y `auto`,
- * el UI puede seguir mostrando Copilot como “primario” para el kind legacy.
+ * el UI puede seguir mostrando Copilot como "primario" para el kind legacy.
  *
  * **Alias:** `requestCompletion` reexporta solo `requestCopilotLmCompletion` por
- * compatibilidad histórica; el flujo webview usa los proveedores registrados arriba.
- *
- * **Layout:** `catalog/` — listados y tiers de modelo; `context/` — bootstrap proyecto para prompts.
+ * compatibilidad histórica; el flujo webview usa los proveedores registrados en engines.
  */
 export * from "./types";
 export {
   suggestionLoadingStatusText,
   type SuggestionLoadingPhase,
-} from "./suggestionLoadingUi";
+} from "./loading";
 export {
   buildProjectBootstrapCardLines,
   collectProjectBootstrapPieces,
@@ -55,7 +52,11 @@ export {
   looksLikeOllamaModelId,
   resolveCompletionSourceForRequest,
   type CompletionSourceId,
-} from "./completionSources";
-export { listMergedSuggestionModels } from "./mergedModelCatalog";
+} from "./sources";
+export { listMergedSuggestionModels } from "./catalog/mergedModelCatalog";
 export { listOpencodeSuggestionModels } from "../engines/opencode/catalog/opencodeModelCatalog";
 export { listOllamaSuggestionModels } from "../engines/ollama/catalog/ollamaModelCatalog";
+export { SuggestionRequestGovernor } from "./governor/SuggestionRequestGovernor";
+export { GhostPromptSessionStore } from "./session/GhostPromptSessionStore";
+export type { GhostPromptSuggestDeps } from "./pipeline";
+export { runGhostPromptSuggestPipeline, handleGhostPromptSuggest } from "./pipeline";

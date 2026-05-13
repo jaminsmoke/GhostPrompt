@@ -24,7 +24,7 @@ import {
   looksLikeOllamaModelId,
   looksLikeOpencodeModelId,
   resolveCompletionSourceForRequest,
-} from "../src/completion/completionSources";
+} from "../src/core/sources";
 
 describe("completionSources", () => {
   beforeEach(() => {

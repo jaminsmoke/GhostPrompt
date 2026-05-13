@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { showWarningMessageMock, wsConfigGetMock } = vi.hoisted(() => ({
   showWarningMessageMock: vi.fn(),
@@ -34,13 +34,36 @@ vi.mock("vscode", () => ({
 
 import * as vscode from "vscode";
 
-import * as completion from "../../src/completion";
 import {
   runGhostPromptSuggestPipeline,
   type GhostPromptSuggestDeps,
-} from "../../src/host/ghostPromptSuggestPipeline";
-import { resetSuggestionHostNotificationThrottleForTests } from "../../src/host/suggestionHostNotification";
-import { ghostPromptSessionStore } from "../../src/session/GhostPromptSessionStore";
+} from "../../src/core/pipeline/suggestPipeline";
+import { resolveCompletionSourceForRequest } from "../../src/core/sources";
+import { resetSuggestionHostNotificationThrottleForTests } from "../../src/vscode/suggestionNotification";
+import { ghostPromptSessionStore } from "../../src/core/session/GhostPromptSessionStore";
+
+const requestCompletion = vi.fn();
+
+vi.mock("../../src/engines/engineRegistry", () => ({
+  getCompletionProviderForSource: () => ({
+    id: "copilotLm",
+    requestCompletion,
+  }),
+  getCompletionProviderKind: () => "copilot" as const,
+}));
+
+vi.mock("../../src/core/sources", () => ({
+  getEnabledCompletionSources: () => ["copilot"] as const,
+  resolveCompletionSourceForRequest: vi.fn(() => "copilot" as const),
+  getCompletionUiKind: () => "copilot" as const,
+}));
+
+vi.mock("../../src/core/context/projectBootstrapContext", () => ({
+  resolveGhostPromptWorkspaceFolderUri: () => vscode.Uri.file("/tmp/ws"),
+  collectProjectBootstrapPieces: vi.fn(async () => []),
+  sortProjectBootstrapPieces: (pieces: unknown[]) => pieces,
+  fingerprintProjectBootstrapLines: (lines: string[]) => lines.join("|"),
+}));
 
 function minimalDeps(overrides?: Partial<GhostPromptSuggestDeps>): GhostPromptSuggestDeps {
   return {
@@ -61,9 +84,6 @@ function minimalDeps(overrides?: Partial<GhostPromptSuggestDeps>): GhostPromptSu
 }
 
 describe("runGhostPromptSuggestPipeline", () => {
-  const requestCompletion = vi.fn();
-  let getProviderSpy: ReturnType<typeof vi.spyOn>;
-
   beforeEach(() => {
     vi.clearAllMocks();
     wsConfigGetMock.mockImplementation((key: string, fallback: unknown) => fallback);
@@ -78,16 +98,6 @@ describe("runGhostPromptSuggestPipeline", () => {
         tier: "included",
       },
     });
-    getProviderSpy = vi.spyOn(completion, "getCompletionProviderForSource").mockImplementation(
-      (source: string) => ({
-        id: source === "opencode" ? "opencodeLm" : "copilotLm",
-        requestCompletion,
-      }),
-    );
-  });
-
-  afterEach(() => {
-    getProviderSpy.mockRestore();
   });
 
   it("no emite UI si text está vacío", async () => {
@@ -171,10 +181,8 @@ describe("runGhostPromptSuggestPipeline", () => {
   });
 
   it("contextMode project incluye projectBootstrapLines cuando hay piezas", async () => {
-    const folderSpy = vi
-      .spyOn(completion, "resolveGhostPromptWorkspaceFolderUri")
-      .mockReturnValue(vscode.Uri.file("/tmp/ws"));
-    const collectSpy = vi.spyOn(completion, "collectProjectBootstrapPieces").mockResolvedValue([
+    const { collectProjectBootstrapPieces } = await import("../../src/core/context/projectBootstrapContext");
+    vi.mocked(collectProjectBootstrapPieces).mockResolvedValue([
       {
         relativePath: "README.md",
         promptLine: "README excerpt (README.md): hello project",
@@ -197,14 +205,10 @@ describe("runGhostPromptSuggestPipeline", () => {
       "README excerpt (README.md): hello project",
     ]);
     expect(opts?.context?.workspaceName).toBe("ws-test");
-    folderSpy.mockRestore();
-    collectSpy.mockRestore();
   });
 
   it("ruta OpenCode: loading inicial opencode-start y onStreamPreview en opciones", async () => {
-    const routeSpy = vi
-      .spyOn(completion, "resolveCompletionSourceForRequest")
-      .mockReturnValue("opencode");
+    vi.mocked(resolveCompletionSourceForRequest).mockReturnValue("opencode");
     try {
       const deps = minimalDeps();
       const text = "long enough phrase for governor pass unique-oc";
@@ -224,7 +228,7 @@ describe("runGhostPromptSuggestPipeline", () => {
       };
       expect(typeof opts?.onStreamPreview).toBe("function");
     } finally {
-      routeSpy.mockRestore();
+      vi.mocked(resolveCompletionSourceForRequest).mockReturnValue("copilot");
     }
   });
 

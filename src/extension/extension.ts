@@ -6,8 +6,8 @@
  * they prefer relative to the Copilot chat.
  */
 import * as vscode from "vscode";
-import { MiniInputViewProvider } from "../host/MiniInputViewProvider";
-import { toggleSuggestionDebug } from "../debug/SuggestionDebug";
+import { MiniInputViewProvider } from "../vscode/MiniInputViewProvider";
+import { toggleSuggestionDebug } from '../system/debug/SuggestionDebug';
 import { resetClient } from "../engines/opencode/opencodeApiClient";
 import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from "../destinations/vsOpenCodeX/vsOpenCodeXDestination";
 import { registerProjectMemory } from "../projectMemory/activateProjectMemory";

@@ -6,15 +6,15 @@ import * as vscode from "vscode";
 import {
   getActiveDestinationProvider,
   getGhostPromptAgentDestination,
-} from "../destinations/destinationRegistry";
-import { append as appendLog } from "../log/ConversationLog";
-import { appendSuggestion } from "../log/SuggestionLog";
-import { ghostPromptSessionStore } from "../session/GhostPromptSessionStore";
-import { applyWebviewUpdateSetting } from "./applyWebviewUpdateSetting";
+} from "../../destinations/destinationRegistry";
+import { append as appendLog } from '../../system/log/ConversationLog';
+import { appendSuggestion } from '../../system/log/SuggestionLog';
+import { ghostPromptSessionStore } from '../../core/session/GhostPromptSessionStore';
+import { applyWebviewUpdateSetting } from "../settings/applyWebviewUpdate";
 import {
   type GhostPromptSuggestDeps,
   handleGhostPromptSuggest,
-} from "./handleGhostPromptSuggest";
+} from "../../core/pipeline";
 import type { WebviewInboundMessage } from "./webviewProtocols";
 
 export type GhostPromptInboundBroadcastServices = {

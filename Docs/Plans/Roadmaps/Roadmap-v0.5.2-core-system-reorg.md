@@ -1,0 +1,94 @@
+# Roadmap v0.5.2 — Reorganización `core/` + `system/`
+
+> Estado general: 🔵 Planificado → ⚪ No iniciado | 🟡 En progreso | 🟢 Completado | 🔴 Bloqueado
+
+---
+
+## Contexto
+
+Tras cerrar el structural cleanup (catálogos a `engines/*/catalog/`, barrels completos), `src/` tiene 12 carpetas top-level con responsabilidades mezcladas. Carpetas de 1 archivo (`governor/`, `session/`, `debug/`, `log/`, `shared/`, `build/`) conviven con dominios grandes (`completion/`, `projectMemory/`, `host/`).
+
+### Problema
+
+- `completion/` (9 archivos) es el **core** de suggestions pero comparte nivel con infra (`debug/`, `log/`, `build/`)
+- `governor/`, `session/` son lógica core pero están como carpetas top-level independientes
+- `shared/` tiene 1 archivo (schemas Zod) — es contrato, no "shared" genérico
+- `debug/`, `log/`, `build/` son herramientas de sistema/infra, no dominio de negocio
+
+### Solución
+
+Dos nuevos dominios canónicos:
+- **`core/`** — Lógica pura de suggestions (types, instruction, normalize, streaming, governor, session, catalog, context)
+- **`system/`** — Infra transversal (debug, logs, contratos host↔webview, build verification)
+
+---
+
+## Estructura objetivo (✅ lograda)
+
+```
+src/
+├── core/                          # ✅ suggestion core (13 archivos)
+│   ├── types.ts
+│   ├── instruction.ts
+│   ├── normalize.ts
+│   ├── streaming.ts
+│   ├── language.ts
+│   ├── loading.ts                 # ← rename de suggestionLoadingUi
+│   ├── sources.ts                 # ← rename de completionSources
+│   ├── index.ts
+│   ├── catalog/
+│   │   └── mergedModelCatalog.ts
+│   ├── governor/
+│   │   └── SuggestionRequestGovernor.ts
+│   ├── session/
+│   │   └── GhostPromptSessionStore.ts
+│   └── context/
+│       └── projectBootstrapContext.ts
+│
+├── engines/                       # ✅ sin cambios (ya canónico)
+├── destinations/                  # ✅ sin cambios (ya canónico)
+├── host/                          # ✅ sin cambios
+├── projectMemory/                 # ✅ sin cambios
+│
+├── system/                        # ✅ infra transversal (5 archivos)
+│   ├── debug/
+│   │   └── SuggestionDebug.ts
+│   ├── log/
+│   │   ├── ConversationLog.ts
+│   │   └── SuggestionLog.ts
+│   ├── contracts/
+│   │   └── webviewMessageSchemas.ts
+│   └── build/
+│       └── verifyWebviewBundle.ts
+│
+└── extension/                     # ✅ sin cambios
+    └── extension.ts
+```
+
+### Carpetas eliminadas ✅
+
+`completion/`, `governor/`, `session/`, `debug/`, `log/`, `shared/`, `build/`
+
+---
+
+## Progreso general — TODAS LAS FASES COMPLETADAS 🟢
+
+| Fase | Descripción | Estado | Commit | Notas |
+|------|-------------|--------|--------|-------|
+| **Fase 1** | Crear `core/` — mover `completion/`, `governor/`, `session/` | 🟢 | — | 13 archivos, `npm run compile` verde |
+| **Fase 2** | Crear `system/` — mover `debug/`, `log/`, `shared/`, `build/` | 🟢 | — | 5 archivos, `npm run compile` verde |
+| **Fase 3** | Actualizar imports en `engines/` | 🟢 | — | 8 archivos actualizados |
+| **Fase 4** | Actualizar imports en `host/` | 🟢 | — | 9 archivos actualizados |
+| **Fase 5** | Actualizar imports en `extension/`, `destinations/`, `projectMemory/` | 🟢 | — | 3 archivos actualizados |
+| **Fase 6** | Eliminar carpetas vacías | 🟢 | — | 7 carpetas eliminadas |
+| **Fase 7** | Tests: actualizar paths de imports | 🟢 | — | 16 test files, 226 tests passing |
+| **Fase 8** | Docs: README, ARCHITECTURE, Owners, CHANGELOG | 🟢 | — | Todos actualizados |
+
+---
+
+## Bitácora
+
+| Fecha | Cambio |
+|-------|--------|
+| 2026-05-13 | Roadmap creado post-structural-cleanup (commits `9b2f97e`, `57afb5a`, `705d110`, `e425846`) |
+| 2026-05-13 | **Fases 1-8 completadas.** `src/` reorganizado en `core/` + `system/`. 7 carpetas eliminadas. 226 tests passing. `npm run check` verde. Docs actualizados (ARCHITECTURE.md, README.md, CHANGELOG.md, Owners.md). |

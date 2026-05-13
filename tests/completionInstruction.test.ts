@@ -4,7 +4,7 @@ import {
   COMPLETION_PARTIAL_LABEL,
   buildCompletionInstruction,
   buildCompletionInstructionParts,
-} from "../src/completion/instruction";
+} from "../src/core/instruction";
 
 describe("buildCompletionInstruction", () => {
   it("prefix + labeledPartial coincide con la instrucción completa (contrato Copilot 2× User)", () => {

@@ -1,14 +1,14 @@
 import * as vscode from "vscode";
 
-import { buildCompletionInstruction } from "../../completion/instruction";
-import { normalizeSuggestion } from "../../completion/normalize";
+import { buildCompletionInstruction } from '../../core/instruction';
+import { normalizeSuggestion } from '../../core/normalize';
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
   type CompletionRequestOptions,
   type CompletionResult,
   type SuggestionModelDescriptor,
-} from "../../completion/types";
+} from '../../core/types';
 import {
   createOpenCodeClient,
   getGlobalClient,

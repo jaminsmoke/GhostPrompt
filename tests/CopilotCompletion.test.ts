@@ -33,7 +33,7 @@ import {
   resolveSuggestionLanguage,
   selectModelByPolicy,
   suggestionStyleDirective,
-} from "../src/completion";
+} from "../src/core";
 
 function createTextStream(chunks: string[]): AsyncIterable<string> {
   return {

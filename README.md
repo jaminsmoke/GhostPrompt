@@ -1,7 +1,7 @@
 # GhostPrompt
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.5.0-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
+[![GhostPrompt](https://img.shields.io/badge/GhostPrompt-0.5.3-6366f1?style=flat)](https://github.com/jaminsmoke/GhostPrompt)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![VS Code](https://img.shields.io/badge/VS%20Code-1.90%2B-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
 [![GitHub Copilot](https://img.shields.io/badge/Uses-GitHub_Copilot-24292f?logo=github&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot)
@@ -11,7 +11,7 @@
 > Ghost-text completions for your Copilot prompts — write faster, think clearer.
 
 <!-- markdownlint-disable-next-line MD036 -->
-**Version 0.5.0** *(pendiente de publicación en marketplace; última publicada de referencia: **0.4.0** — actualiza si ya publicaste **0.4.1**.)*
+**Version 0.5.3** *(host/ desmantelado en api/ + vscode/ + core/pipeline/; última publicada de referencia: **0.4.0**)*
 
 ---
 
@@ -231,7 +231,7 @@ From the repo root:
 
 | Command | What it does |
 | ------- | ------------ |
-| `npm run validate` | ESLint on `src` + **no circular deps** (`deps:circular`) + extension `tsc` + **webview** typecheck (`webview/tsconfig.json`) + esbuild bundle (`webview/dist/main.js`) + **`verify:webview-bundle`** (`src/build` → `out/build`) |
+| `npm run validate` | ESLint on `src` + **no circular deps** (`deps:circular`) + extension `tsc` + **webview** typecheck (`webview/tsconfig.json`) + esbuild bundle (`webview/dist/main.js`) + **`verify:webview-bundle`** (`src/system/build` → `out/build`) |
 | `npm run build:webview` | Build webview only: `webview/src/main.ts` (+ modules under `webview/src/`) → **`webview/dist/main.js`** (IIFE, esbuild). The extension host loads this file via CSP-safe URI substitution in `ghostPromptWebviewHtml.ts`. |
 | `npm run typecheck:webview` | `tsc --noEmit` for the webview tree only |
 | `npm run test` | Vitest unit tests (OpenCode is **mocked**; safe for CI, no network) |
@@ -241,11 +241,11 @@ Edit webview behavior in **TypeScript** under `webview/src/` (not hand-edit `web
 
 ### Webview ↔ host message contracts (v0.3.2)
 
-- **Canonical Zod schemas:** [`src/shared/webviewMessageSchemas.ts`](./src/shared/webviewMessageSchemas.ts) — single source of truth for `postMessage` payloads (inbound to the extension host and the mirrored outbound shape from the webview).
+- **Canonical Zod schemas:** [`src/system/contracts/webviewMessageSchemas.ts`](./src/system/contracts/webviewMessageSchemas.ts) — single source of truth for `postMessage` payloads (inbound to the extension host and the mirrored outbound shape from the webview).
 - **Host boundary:** [`src/host/webviewProtocols.ts`](./src/host/webviewProtocols.ts) re-exports those schemas and runs `parseWebviewInboundMessage` / `parseOutboundSettingsEnvelope` at the channel edge.
 - **Webview boundary:** [`webview/src/protocol/postToHost.ts`](./webview/src/protocol/postToHost.ts) validates outbound messages with the same inbound schema before calling `postMessage` (bundled with the webview).
 
-**Checklist when you change message shapes:** edit `src/shared/webviewMessageSchemas.ts` first; update protocol comments in `webview/src/main.ts` if needed; run **`npm run check`** (runs extension `tsc`, webview typecheck + esbuild bundle, and tests including `tests/shared/webviewMessageSchemas.test.ts` and `tests/webviewProtocols.test.ts`).
+**Checklist when you change message shapes:** edit `src/system/contracts/webviewMessageSchemas.ts` first; update protocol comments in `webview/src/main.ts` if needed; run **`npm run check`** (runs extension `tsc`, webview typecheck + esbuild bundle, and tests including `tests/system/contracts/webviewMessageSchemas.test.ts` and `tests/webviewProtocols.test.ts`).
 
 ### Dual webview (sidebar + panel) — contributor checklist (v0.4.3)
 
@@ -266,7 +266,7 @@ High-level roadmap: [`Docs/Plans/Roadmaps/Roadmap-v0.3.2-host-refactor-webview-t
 | ------- | ------------ |
 | `npm run deps:graph` | Lists the dependency tree from `src/extension/extension.ts` (uses [madge](https://github.com/pahen/madge); optional ad‑hoc inspection — **`deps:circular`** is what runs in `validate`). |
 | `npm run deps:circular` | Fails with exit code `1` if circular imports are found (same entrypoint). Also runs automatically as part of **`npm run validate`** / **`npm run check`**. |
-| `npm run verify:webview-bundle` | Runs the compiled smoke script `out/build/verifyWebviewBundle.js` (source: [`src/build/verifyWebviewBundle.ts`](./src/build/verifyWebviewBundle.ts)). Checks that `webview/dist/main.js` exists after esbuild. **Not shipped in the VSIX** — `.vscodeignore` excludes `out/build/**`; this is dev/CI tooling only, not extension runtime. |
+| `npm run verify:webview-bundle` | Runs the compiled smoke script `out/build/verifyWebviewBundle.js` (source: [`src/system/build/verifyWebviewBundle.ts`](./src/system/build/verifyWebviewBundle.ts)). Checks that `webview/dist/main.js` exists after esbuild. **Not shipped in the VSIX** — `.vscodeignore` excludes `out/build/**`; this is dev/CI tooling only, not extension runtime. |
 
 
 **Soft size guideline:** prefer keeping new host modules under ~400 lines per file unless the content is mostly data; split extractors before crossing ~800 lines without a strong reason (same spirit as roadmap Phase A).
@@ -321,6 +321,14 @@ Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## Release notes
 
+### 0.5.3
+
+- **Desmantelado `host/` → `api/` + `vscode/` + `core/pipeline/`:** `api/` gestiona protocolos Zod, handlers inbound, settings y workspace getters; `vscode/` contiene `WebviewViewProvider`, HTML/CSP y notifications; `core/pipeline/` orquesta el flujo de suggestion (governor → LM → broadcast). 226 tests passing.
+
+### 0.5.2
+
+- **Reorganización `src/` → dominios canónicos:** `core/` (lógica pura de suggestions: types, instruction, normalize, streaming, language, loading, sources, catalog, governor, session, context) y `system/` (infra transversal: debug, log, contracts, build). Carpetas eliminadas: `completion/`, `governor/`, `session/`, `debug/`, `log/`, `shared/`, `build/`. 226 tests passing, `npm run check` verde.
+
 ### 0.5.0 *(pendiente de publicación)*
 
 - **VSOpenCodeX:** coexistencia OpenCode (reintentos, sin servidor embebido en el puerto compartido si VSX está instalada y **prefer** activo), destino agente (`ghostPrompt.agentDestination`), comandos **`ghostPrompt.runSuggestPipeline`** / **`vsopencodex.ghostPromptInlineUi`**, selector **Destino** en webview, debounce suggestions por defecto **800 ms**.
@@ -335,7 +343,7 @@ Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ### 0.3.0
 
-- **Architecture:** `src/` split into layered folders (`completion/`, `host/`, `session/`, etc.) and a documented completion pipeline (`CompletionProvider`, provider registry).
+- **Architecture:** `src/` reorganized into layered domains (`core/`, `system/`, `engines/`, `destinations/`, `host/`, `session/`, etc.) and a documented completion pipeline (`CompletionProvider`, provider registry).
 - **Copilot LM:** existing `vscode.lm` path unchanged as default (`ghostPrompt.completionProvider`: `copilot`).
 - **OpenCode (optional):** `ghostPrompt.completionProvider`: `opencode`, API client connecting to `http://127.0.0.1:4096`, CLI detection, webview catalog + exclusions, `@opencode-ai/sdk` bundled in the VSIX.
 - **Docs & tests:** README provider section and [Developing and tests](#developing-and-tests); CHANGELOG; unit tests mock the OpenCode runtime (no network in CI); optional live OpenCode integration test behind `GHOST_PROMPT_OPENCODE_INTEGRATION=1` (`npm run test:integration`).

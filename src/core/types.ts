@@ -3,7 +3,7 @@
  */
 import type { CancellationToken } from "vscode";
 
-import type { SuggestionLoadingPhase } from "./suggestionLoadingUi";
+import type { SuggestionLoadingPhase } from "./loading";
 
 export type SuggestionModelPolicy = "nonPremiumOnly" | "anyModel";
 export type SuggestionStyle = "concise" | "balanced" | "detailed";

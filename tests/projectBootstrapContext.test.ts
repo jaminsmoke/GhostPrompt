@@ -37,7 +37,7 @@ import {
   fingerprintProjectBootstrapLines,
   summarizePackageJsonForProjectCard,
   truncateProjectCardText,
-} from "../src/completion/context/projectBootstrapContext";
+} from "../src/core/context/projectBootstrapContext";
 
 describe("truncateProjectCardText", () => {
   it("devuelve el texto cuando cabe en el techo", () => {

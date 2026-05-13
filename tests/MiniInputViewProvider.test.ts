@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-type TestSuggestionModel = import("../src/completion/types").SuggestionModelDescriptor;
+type TestSuggestionModel = import("../src/core/types").SuggestionModelDescriptor;
 
 const {
   requestCompletionMock,
@@ -44,29 +44,127 @@ vi.mock("fs", () => ({
   readFileSync: readFileSyncMock,
 }));
 
-vi.mock("../src/completion", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../src/completion")>();
+vi.mock("../src/engines/engineRegistry", () => ({
+  getCompletionProviderForSource: () => ({
+    id: "copilotLm",
+    requestCompletion: requestCompletionMock,
+  }),
+  getCompletionProviderKind: () => "copilot" as const,
+}));
+
+vi.mock("../src/core/sources", () => ({
+  getEnabledCompletionSources: () => ["copilot"],
+  resolveCompletionSourceForRequest: () => "copilot" as const,
+  getCompletionUiKind: () => "copilot" as const,
+  looksLikeOpencodeModelId: () => false,
+  looksLikeOllamaModelId: () => false,
+}));
+
+vi.mock("../src/core/language", () => ({
+  resolveSuggestionLanguage: resolveSuggestionLanguageMock,
+}));
+
+vi.mock("../src/core/catalog/mergedModelCatalog", () => ({
+  listMergedSuggestionModels: listSuggestionModelsMock,
+}));
+
+vi.mock("../src/engines/copilot/catalog/modelCatalog", () => ({
+  listSuggestionModels: listSuggestionModelsMock,
+}));
+
+vi.mock("../src/engines/opencode/catalog/opencodeModelCatalog", () => ({
+  listOpencodeSuggestionModels: vi.fn(async () => []),
+}));
+
+vi.mock("../src/engines/ollama/catalog/ollamaModelCatalog", () => ({
+  listOllamaSuggestionModels: vi.fn(async () => []),
+}));
+
+vi.mock("../src/api/protocols/inboundHandlers", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/api/protocols/inboundHandlers")>();
   return {
     ...actual,
-    getCompletionProviderForSource: () => ({
-      id: "copilotLm",
-      requestCompletion: requestCompletionMock,
+    dispatchGhostPromptInboundMessage: vi.fn(async (message: unknown, services: unknown) => {
+      if (typeof message === "object" && message !== null && "type" in message && (message as { type: string }).type === "suggest") {
+        const { handleGhostPromptSuggest } = await import("../src/core/pipeline");
+        const deps = (services as { suggestDeps: unknown }).suggestDeps;
+        return handleGhostPromptSuggest(message as never, deps as never);
+      }
+      return actual.dispatchGhostPromptInboundMessage(message as never, services as never);
     }),
-    getEnabledCompletionSources: () => ["copilot"],
-    getCompletionUiKind: () => "copilot",
-    getCompletionProviderKind: () => "copilot" as const,
-    resolveSuggestionLanguage: resolveSuggestionLanguageMock,
-    listSuggestionModels: listSuggestionModelsMock,
-    listMergedSuggestionModels: listSuggestionModelsMock,
-    listOpencodeSuggestionModels: vi.fn(async () => []),
   };
 });
 
-vi.mock("../src/log/SuggestionLog", () => ({
+vi.mock("../src/api/protocols/webviewProtocols", () => ({
+  parseWebviewInboundMessage: (raw: unknown) => {
+    if (
+      typeof raw === "object" &&
+      raw !== null &&
+      "type" in raw &&
+      typeof (raw as { type: unknown }).type === "string"
+    ) {
+      const msg = raw as Record<string, unknown>;
+      if (msg.type === "suggest" && (typeof msg.captureId !== "number" || typeof msg.text !== "string")) {
+        return undefined;
+      }
+      return raw;
+    }
+    return undefined;
+  },
+}));
+
+vi.mock("../src/api/settings/settingsPostMessage", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/api/settings/settingsPostMessage")>();
+  return {
+    ...actual,
+    buildAndPostGhostPromptSettings: vi.fn(async (webview: { postMessage: (m: unknown) => void }, getters: unknown) => {
+      const models = await listSuggestionModelsMock();
+      webview.postMessage({
+        type: "settings",
+        settings: {
+          completionProvider: "copilot",
+          completionUiKind: "copilot",
+          enabledCompletionSources: ["copilot"],
+          suggestionModelPolicy: "nonPremiumOnly",
+          selectedModelId: "auto",
+          availableModels: models,
+          suggestionStyle: "balanced",
+          contextMode: "basic",
+          suggestionLanguageChoice: "auto",
+          effectiveSuggestionLanguage: "en",
+          effectiveModel: undefined,
+          debugSuggestions: false,
+          suggestionDebounceMs: 800,
+          agentDestination: "copilotChat",
+          vsOpenCodeXExtensionInstalled: false,
+        },
+      });
+    }),
+  };
+});
+
+vi.mock("../src/api/getters/workspaceGetters", () => ({
+  collectGhostPromptProjectContext: () => ({}),
+  getGhostPromptContextMode: () => "basic",
+  getGhostPromptMaxSuggestionChars: () => 180,
+  getGhostPromptProjectMemoryEnabled: () => true,
+  getGhostPromptSelectedModelId: () => "auto",
+  getGhostPromptSuggestionLanguage: () => "en",
+  getGhostPromptSuggestionLanguageChoice: () => "auto",
+  getGhostPromptSuggestionLanguageMode: () => "auto",
+  getGhostPromptSuggestionModelPolicy: () => "nonPremiumOnly",
+  getGhostPromptSuggestionStyle: () => "balanced",
+  getGhostPromptAgentDestination: () => "copilotChat",
+  isVsOpenCodeXExtensionInstalled: () => false,
+  getGhostPromptOllamaBaseUrl: () => "http://localhost:11434",
+  getGhostPromptOllamaExcludedModelIds: () => [],
+}));
+
+vi.mock("../src/system/log/SuggestionLog", () => ({
   appendSuggestion: appendSuggestionMock,
 }));
 
-vi.mock("../src/log/ConversationLog", () => ({
+vi.mock("../src/system/log/ConversationLog", () => ({
   append: appendLogMock,
 }));
 
@@ -74,7 +172,7 @@ vi.mock("../src/destinations/copilotChat/copilotChatDestination", () => ({
   sendToChat: sendToChatMock,
 }));
 
-vi.mock("../src/debug/SuggestionDebug", () => ({
+vi.mock("../src/system/debug/SuggestionDebug", () => ({
   logSuggestionDebug: logSuggestionDebugMock,
   isSuggestionDebugEnabled: () => false,
 }));
@@ -111,9 +209,9 @@ vi.mock("vscode", () => ({
 }));
 /* eslint-enable @typescript-eslint/naming-convention */
 
-import { suggestionLoadingStatusText } from "../src/completion/suggestionLoadingUi";
-import { ghostPromptSessionStore } from "../src/session/GhostPromptSessionStore";
-import { MiniInputViewProvider } from "../src/host/MiniInputViewProvider";
+import { suggestionLoadingStatusText } from "../src/core/loading";
+import { ghostPromptSessionStore } from "../src/core/session/GhostPromptSessionStore";
+import { MiniInputViewProvider } from "../src/vscode/MiniInputViewProvider";
 
 function createView() {
   suggestHandler = undefined;

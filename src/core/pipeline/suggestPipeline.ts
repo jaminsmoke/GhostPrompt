@@ -8,24 +8,32 @@ import {
   resolveGhostPromptWorkspaceFolderUri,
   type ProjectBootstrapPiece,
   sortProjectBootstrapPieces,
+} from '../context/projectBootstrapContext';
+import {
   getCompletionProviderForSource,
+} from '../../engines/engineRegistry';
+import {
   getEnabledCompletionSources,
   resolveCompletionSourceForRequest,
-  resolveSuggestionLanguage,
+} from '../sources';
+import { resolveSuggestionLanguage } from '../language';
+import {
   suggestionLoadingStatusText,
   type SuggestionLoadingPhase,
-  type SuggestionLanguageMode,
-  type SuggestionModelPolicy,
-  type SuggestionStyle,
-  type SupportedSuggestionLanguage,
-} from "../completion";
+} from '../loading';
+import type {
+  SuggestionLanguageMode,
+  SuggestionModelPolicy,
+  SuggestionStyle,
+  SupportedSuggestionLanguage,
+} from '../types';
 import type { Uri } from "vscode";
-import type { ProjectMemoryReconcileSnapshot } from "../projectMemory/persistProjectBootstrapSnapshot";
-import { logSuggestionDebug } from "../debug/SuggestionDebug";
-import { SuggestionRequestGovernor } from "../governor/SuggestionRequestGovernor";
-import { ghostPromptSessionStore } from "../session/GhostPromptSessionStore";
-import { maybeNotifySuggestionIssue } from "./suggestionHostNotification";
-import type { WebviewInboundMessage } from "./webviewProtocols";
+import type { ProjectMemoryReconcileSnapshot } from "../../projectMemory/persistProjectBootstrapSnapshot";
+import { logSuggestionDebug } from '../../system/debug/SuggestionDebug';
+import { SuggestionRequestGovernor } from '../governor/SuggestionRequestGovernor';
+import { ghostPromptSessionStore } from '../session/GhostPromptSessionStore';
+import { maybeNotifySuggestionIssue } from "../../vscode/suggestionNotification";
+import type { WebviewInboundMessage } from "../../api/protocols/webviewProtocols";
 
 export type GhostPromptSuggestDeps = {
   broadcastUi: (payload: Record<string, unknown>) => void;

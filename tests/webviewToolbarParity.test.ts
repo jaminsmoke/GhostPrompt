@@ -68,7 +68,7 @@ describe("webview toolbar parity (v0.3.1 Fase A)", () => {
 
 describe("webview dual-view governance (v0.4.3 Fase 5)", () => {
   it("ghostPromptWebviewHtml carga un único index + bundle + CSS", () => {
-    const src = read("src/host/ghostPromptWebviewHtml.ts");
+    const src = read("src/vscode/webviewHtml.ts");
     expect(src).toContain('"webview"');
     expect(src).toContain('"index.html"');
     expect(src).toContain('"dist"');
@@ -77,7 +77,7 @@ describe("webview dual-view governance (v0.4.3 Fase 5)", () => {
   });
 
   it("MiniInputViewProvider usa ambas contribuciones y el HTML compartido", () => {
-    const src = read("src/host/MiniInputViewProvider.ts");
+    const src = read("src/vscode/MiniInputViewProvider.ts");
     expect(src).toContain("ghostPrompt.input");
     expect(src).toContain("ghostPrompt.inputPanel");
     expect(src).toContain("buildGhostPromptWebviewHtml");

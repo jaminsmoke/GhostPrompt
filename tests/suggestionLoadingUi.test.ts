@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   suggestionLoadingStatusText,
   type SuggestionLoadingPhase,
-} from "../src/completion/suggestionLoadingUi";
+} from "../src/core/loading";
 
 describe("suggestionLoadingStatusText", () => {
   const cases: Array<[SuggestionLoadingPhase, string]> = [

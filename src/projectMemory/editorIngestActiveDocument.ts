@@ -5,7 +5,7 @@ import * as vscode from "vscode";
 import {
   sha256HexBytes,
   truncateProjectCardText,
-} from "../completion/context/projectBootstrapContext";
+} from '../core/context/projectBootstrapContext';
 import { readEditorIngestConfig, PROJECT_EDITOR_CARD_MAX_CHARS, normalizeWorkspaceRelativePath, pathLikelyExcludedForEditorIngest } from "./editorIngestSettings";
 import { applyEditorIngestLruEviction } from "./editorIngestLru";
 import {

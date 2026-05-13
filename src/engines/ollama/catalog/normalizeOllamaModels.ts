@@ -1,4 +1,4 @@
-import type { SuggestionModelDescriptor } from "../../../completion/types";
+import type { SuggestionModelDescriptor } from '../../../core/types';
 
 export type OllamaApiModelRecord = {
   name: string;

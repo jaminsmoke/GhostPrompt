@@ -1,14 +1,14 @@
 /**
  * @fileoverview WebviewViewProvider para el input de GhostPrompt.
  *
- * **Composición (v0.3.2 fase A):**
- * - Contratos Zod y parseo: `webviewProtocols.ts` (schemas en `../shared/webviewMessageSchemas.ts`)
- * - HTML/CSP y plantilla: `ghostPromptWebviewHtml.ts`
- * - Mensaje `settings` → webview: `ghostPromptSettingsPostMessage.ts`
- * - Mensaje `suggest`: `handleGhostPromptSuggest.ts` → `ghostPromptSuggestPipeline.ts`
- * - Router/handlers webview → host (`init`, `draftChanged`, `updateSetting`, `send`, `accept`): `ghostPromptWebviewInboundHandlers.ts`
- * - Lectura de workspace / contexto editor: `ghostPromptHostWorkspaceGetters.ts`
- * - Actualización desde chips (`updateSetting`): `applyWebviewUpdateSetting.ts`
+ * **Composición (v0.5.3):**
+ * - Contratos Zod y parseo: `api/protocols/webviewProtocols.ts`
+ * - HTML/CSP y plantilla: `vscode/webviewHtml.ts`
+ * - Mensaje `settings` → webview: `api/settings/settingsPostMessage.ts`
+ * - Mensaje `suggest`: `core/pipeline/suggestPipeline.ts`
+ * - Router/handlers webview → host (`init`, `draftChanged`, `updateSetting`, `send`, `accept`): `api/protocols/inboundHandlers.ts`
+ * - Lectura de workspace / contexto editor: `api/getters/workspaceGetters.ts`
+ * - Actualización desde chips (`updateSetting`): `api/settings/applyWebviewUpdate.ts`
  *
  * Registra la vista en el activity bar y el panel inferior (C2).
  * Protocolo host↔webview:
@@ -24,12 +24,12 @@
  *   - `draftChanged` (webview → host): texto del borrador para sincronizar vistas.
  *   - `draftSync` / `draftHydrate` (host → webview): aplicar borrador remoto o estado inicial.
  *   - Mensajes de suggestion pueden llevar `broadcast: true` para espejar Sidebar + Panel.
- *   - Contratos Zod (`shared/webviewMessageSchemas.ts` / `webviewProtocols.ts`): entrada webview → host y salida `settings`.
+ *   - Contratos Zod (`system/contracts/webviewMessageSchemas.ts` / `api/protocols/webviewProtocols.ts`): entrada webview → host y salida `settings`.
  */
 import * as vscode from "vscode";
-import { ghostPromptSessionStore } from "../session/GhostPromptSessionStore";
-import { buildAndPostGhostPromptSettings } from "./ghostPromptSettingsPostMessage";
-import { buildGhostPromptWebviewHtml } from "./ghostPromptWebviewHtml";
+import { ghostPromptSessionStore } from '../core/session/GhostPromptSessionStore';
+import { buildAndPostGhostPromptSettings } from "../api/settings/settingsPostMessage";
+import { buildGhostPromptWebviewHtml } from "./webviewHtml";
 import { getProjectMemoryBaseDir } from "../projectMemory/activateProjectMemory";
 import {
   reconcileProjectMemoryForSuggest,
@@ -48,13 +48,13 @@ import {
   getGhostPromptSuggestionLanguageMode,
   getGhostPromptSuggestionModelPolicy,
   getGhostPromptSuggestionStyle,
-} from "./ghostPromptHostWorkspaceGetters";
-import { handleGhostPromptSuggest } from "./handleGhostPromptSuggest";
+} from "../api/getters/workspaceGetters";
+import { handleGhostPromptSuggest } from "../core/pipeline";
 import {
   dispatchGhostPromptInboundMessage,
-} from "./ghostPromptWebviewInboundHandlers";
-import type { GhostPromptSuggestDeps } from "./ghostPromptSuggestPipeline";
-import { parseWebviewInboundMessage } from "./webviewProtocols";
+} from "../api/protocols/inboundHandlers";
+import type { GhostPromptSuggestDeps } from "../core/pipeline";
+import { parseWebviewInboundMessage } from "../api/protocols/webviewProtocols";
 import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from "../destinations/vsOpenCodeX/vsOpenCodeXDestination";
 
 export class MiniInputViewProvider implements vscode.WebviewViewProvider {

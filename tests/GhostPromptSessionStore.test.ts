@@ -16,7 +16,7 @@ vi.mock("vscode", () => ({
   },
 }));
 
-import { GhostPromptSessionStore } from "../src/session/GhostPromptSessionStore";
+import { GhostPromptSessionStore } from "../src/core/session/GhostPromptSessionStore";
 
 describe("GhostPromptSessionStore", () => {
   let store: GhostPromptSessionStore;

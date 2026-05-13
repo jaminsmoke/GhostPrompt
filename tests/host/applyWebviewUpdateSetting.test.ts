@@ -11,7 +11,7 @@ vi.mock("vscode", () => ({
   ConfigurationTarget: { Global: 1 },
 }));
 
-import { applyWebviewUpdateSetting } from "../../src/host/applyWebviewUpdateSetting";
+import { applyWebviewUpdateSetting } from "../../src/api/settings/applyWebviewUpdate";
 
 describe("applyWebviewUpdateSetting", () => {
   beforeEach(() => {
