@@ -39,7 +39,7 @@ describe("notifyVsxAgentDestinationIfExtensionMissing", () => {
 
   it("no notifica si destino es Copilot Chat", async () => {
     const { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } = await import(
-      "../src/host/notifyVsxAgentDestinationIfExtensionMissing"
+"../src/destinations/vsOpenCodeX/vsOpenCodeXDestination"
     );
     notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
     expect(showInformationMessageMock).not.toHaveBeenCalled();
@@ -50,7 +50,7 @@ describe("notifyVsxAgentDestinationIfExtensionMissing", () => {
       key === "agentDestination" ? "vsOpenCodeX" : fallback,
     );
     const { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } = await import(
-      "../src/host/notifyVsxAgentDestinationIfExtensionMissing"
+"../src/destinations/vsOpenCodeX/vsOpenCodeXDestination"
     );
     notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
     notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
@@ -59,7 +59,7 @@ describe("notifyVsxAgentDestinationIfExtensionMissing", () => {
 
   it("reinicia el aviso al volver a copilotChat y otra vez a VSX", async () => {
     const { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } = await import(
-      "../src/host/notifyVsxAgentDestinationIfExtensionMissing"
+"../src/destinations/vsOpenCodeX/vsOpenCodeXDestination"
     );
     configGetMock.mockImplementation((key: string, fallback: unknown) =>
       key === "agentDestination" ? "vsOpenCodeX" : fallback,
@@ -82,7 +82,7 @@ describe("notifyVsxAgentDestinationIfExtensionMissing", () => {
     );
     getExtensionMock.mockReturnValue({ id: "jaminsmoke.vsopencodex" });
     const { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } = await import(
-      "../src/host/notifyVsxAgentDestinationIfExtensionMissing"
+"../src/destinations/vsOpenCodeX/vsOpenCodeXDestination"
     );
     notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
     expect(showInformationMessageMock).not.toHaveBeenCalled();

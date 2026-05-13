@@ -16,7 +16,7 @@ import {
   syncOpenCodeRuntimeFromConfig,
 } from "../opencode";
 import { registerProjectMemory } from "../projectMemory/activateProjectMemory";
-import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from "../host/notifyVsxAgentDestinationIfExtensionMissing";
+import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from "../destinations/vsOpenCodeX/vsOpenCodeXDestination";
 
 export function activate(context: vscode.ExtensionContext): void {
   registerProjectMemory(context);

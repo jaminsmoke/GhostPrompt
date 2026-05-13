@@ -56,7 +56,7 @@ import {
 } from "./ghostPromptWebviewInboundHandlers";
 import type { GhostPromptSuggestDeps } from "./ghostPromptSuggestPipeline";
 import { parseWebviewInboundMessage } from "./webviewProtocols";
-import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from "./vsOpenCodeXGhostPromptUiBridge";
+import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from "../destinations/vsOpenCodeX/vsOpenCodeXDestination";
 
 export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /** View ID for the activity bar container. */

@@ -28,7 +28,7 @@ vi.mock("vscode", () => ({
 import {
   forwardGhostPromptInlineUiToVsOpenCodeIfApplicable,
   VS_OPEN_CODE_X_GHOST_PROMPT_INLINE_UI,
-} from "../src/host/vsOpenCodeXGhostPromptUiBridge";
+} from "../src/destinations/vsOpenCodeX/vsOpenCodeXDestination";
 
 describe("vsOpenCodeXGhostPromptUiBridge", () => {
   beforeEach(() => {

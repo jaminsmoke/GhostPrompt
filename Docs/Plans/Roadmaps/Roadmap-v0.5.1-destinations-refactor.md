@@ -24,7 +24,7 @@
 | **Fase 1** | Mover `vsOpenCodeXBridge.ts` → `engines/opencode/vsOpenCodeXConnection.ts` | 🟢 | — | completada 2026-05-13 |
 | **Fase 2** | Crear `destinations/` + `destinationRegistry.ts` | 🟢 | — | completada 2026-05-13 |
 | **Fase 3** | Migrar `ChatBridge.ts` → `destinations/copilotChat/copilotChatDestination.ts` | 🟢 | — | completada 2026-05-13 |
-| **Fase 4** | Migrar `vsOpenCodeXGhostPromptUiBridge` + `notifyVsx` → `destinations/vsOpenCodeX/` | ⚪ | — | |
+| **Fase 4** | Migrar `vsOpenCodeXGhostPromptUiBridge` + `notifyVsx` → `destinations/vsOpenCodeX/` | 🟢 | — | completada 2026-05-13 |
 | **Fase 5** | Refactor `ghostPromptWebviewInboundHandlers.ts` para usar `destinationRegistry` | ⚪ | — | |
 | **Fase 6** | Tests unitarios | ⚪ | — | |
 | **Fase 7** | Documentación + validación | ⚪ | — | |
@@ -86,11 +86,11 @@
 
 | # | Subpaso | Estado |
 |---|---------|--------|
-| 4.1 | Crear `destinations/vsOpenCodeX/vsOpenCodeXDestination.ts` con `forwardGhostPromptInlineUiIfApplicable()` y registrar en `destinationRegistry` | ⚪ |
-| 4.2 | Mover `notifyVsxAgentDestinationIfExtensionMissing` a `destinations/vsOpenCodeX/` (o integrar en el destino VSX) | ⚪ |
-| 4.3 | Actualizar imports en host (`MiniInputViewProvider`, `extension.ts`, etc.) | ⚪ |
-| 4.4 | Eliminar `src/host/vsOpenCodeXGhostPromptUiBridge.ts` y `src/host/notifyVsxAgentDestinationIfExtensionMissing.ts` | ⚪ |
-| 4.5 | Verificar compilación y tests | ⚪ |
+| 4.1 | Crear `destinations/vsOpenCodeX/vsOpenCodeXDestination.ts` con `forwardGhostPromptInlineUiIfApplicable()` y registrar en `destinationRegistry` | 🟢 |
+| 4.2 | Mover `notifyVsxAgentDestinationIfExtensionMissing` a `destinations/vsOpenCodeX/` (integrado en el mismo archivo) | 🟢 |
+| 4.3 | Actualizar imports en host (`MiniInputViewProvider`, `extension.ts`, etc.) | 🟢 |
+| 4.4 | Eliminar `src/host/vsOpenCodeXGhostPromptUiBridge.ts` y `src/host/notifyVsxAgentDestinationIfExtensionMissing.ts` | 🟢 |
+| 4.5 | Verificar compilación y tests — 230 tests, 0 círculos, 0 errores | 🟢 |
 
 **Criterio de salida:** Archivos fuente eliminados. Destino VSX autoregistrado.
 
