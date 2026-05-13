@@ -21,7 +21,7 @@
 
 | Fase | Descripción | Estado | PR | Notas |
 |------|-------------|--------|----|-------|
-| **Fase 1** | Mover `vsOpenCodeXBridge.ts` → `engines/opencode/vsOpenCodeXConnection.ts` | ⚪ | — | |
+| **Fase 1** | Mover `vsOpenCodeXBridge.ts` → `engines/opencode/vsOpenCodeXConnection.ts` | 🟢 | — | completada 2026-05-13 |
 | **Fase 2** | Crear `destinations/` + `destinationRegistry.ts` | ⚪ | — | |
 | **Fase 3** | Migrar `ChatBridge.ts` → `destinations/copilotChat/copilotChatDestination.ts` | ⚪ | — | |
 | **Fase 4** | Migrar `vsOpenCodeXGhostPromptUiBridge` + `notifyVsx` → `destinations/vsOpenCodeX/` | ⚪ | — | |
@@ -37,12 +37,12 @@
 
 | # | Subpaso | Estado |
 |---|---------|--------|
-| 1.1 | Renombrar `vsOpenCodeXBridge.ts` → `vsOpenCodeXConnection.ts` en destino | ⚪ |
-| 1.2 | Actualizar import en `opencode/OpenCodeRuntime.ts` a `../engines/opencode/vsOpenCodeXConnection` | ⚪ |
-| 1.3 | Actualizar import en `host/ghostPromptHostWorkspaceGetters.ts` | ⚪ |
-| 1.4 | Actualizar import en `host/notifyVsxAgentDestinationIfExtensionMissing.ts` | ⚪ |
-| 1.5 | Eliminar `src/opencode/vsOpenCodeXBridge.ts` original | ⚪ |
-| 1.6 | Verificar compilación y tests (npm run check) | ⚪ |
+| 1.1 | Crear `engines/opencode/vsOpenCodeXConnection.ts` con imports actualizados | 🟢 |
+| 1.2 | Actualizar import en `opencode/OpenCodeRuntime.ts` | 🟢 |
+| 1.3 | Actualizar import en `host/ghostPromptHostWorkspaceGetters.ts` | 🟢 |
+| 1.4 | Actualizar import en `host/notifyVsxAgentDestinationIfExtensionMissing.ts` | 🟢 |
+| 1.5 | Eliminar `src/opencode/vsOpenCodeXBridge.ts` original | 🟢 |
+| 1.6 | Verificar compilación y tests — 230 tests, 0 círculos, 0 errores | 🟢 |
 
 **Criterio de salida:** `vsOpenCodeXBridge.ts` ya no existe. Todos los imports apuntan a `engines/opencode/vsOpenCodeXConnection.ts`.
 
