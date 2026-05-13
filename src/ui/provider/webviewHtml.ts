@@ -31,14 +31,54 @@ export function buildGhostPromptWebviewHtml(
 ): string {
   const { extensionUri, webview, viewContributionId, capabilitiesPayload } =
     params;
+  const nonce = generateGhostPromptWebviewNonce();
+  const reactIndexHtmlPath = vscode.Uri.joinPath(
+    extensionUri,
+    "src",
+    "ui",
+    "webview",
+    "dist",
+    "react",
+    "index.html",
+  ).fsPath;
+
+  if (fs.existsSync(reactIndexHtmlPath)) {
+    const rawHtml = fs.readFileSync(reactIndexHtmlPath, "utf-8");
+    const reactAssetRoot = vscode.Uri.joinPath(
+      extensionUri,
+      "src",
+      "ui",
+      "webview",
+      "dist",
+      "react",
+    );
+    const htmlWithAssets = rawHtml.replace(
+      /(src|href)="\.\/([^"\s]+)"/g,
+      (_, attr, relativePath) => {
+        const assetUri = webview.asWebviewUri(
+          vscode.Uri.joinPath(reactAssetRoot, relativePath),
+        );
+        return `${attr}="${assetUri.toString()}"`;
+      },
+    );
+    const htmlWithCsp = htmlWithAssets.replace(
+      /<meta http-equiv="Content-Security-Policy"[^>]*>/,
+      `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src ${webview.cspSource} 'nonce-${nonce}'; style-src ${webview.cspSource};" />`,
+    );
+    const scriptInjection = `  <script nonce="${nonce}">window.__ghostPromptViewId=${JSON.stringify(
+      viewContributionId,
+    )}; window.__ghostPromptCapabilities=${JSON.stringify(
+      capabilitiesPayload,
+    )};</script>`;
+    return htmlWithCsp.replace("</head>", `${scriptInjection}\n</head>`);
+  }
+
   const scriptUri = webview.asWebviewUri(
     vscode.Uri.joinPath(extensionUri, "src", "ui", "webview", "dist", "main.js"),
   );
   const styleUri = webview.asWebviewUri(
     vscode.Uri.joinPath(extensionUri, "src", "ui", "webview", "style.css"),
   );
-  const nonce = generateGhostPromptWebviewNonce();
-
   const templatePath = vscode.Uri.joinPath(
     extensionUri,
     "src",
