@@ -22,7 +22,7 @@
 | Fase | Descripción | Estado | PR | Notas |
 |------|-------------|--------|----|-------|
 | **Fase 1** | Mover `vsOpenCodeXBridge.ts` → `engines/opencode/vsOpenCodeXConnection.ts` | 🟢 | — | completada 2026-05-13 |
-| **Fase 2** | Crear `destinations/` + `destinationRegistry.ts` | ⚪ | — | |
+| **Fase 2** | Crear `destinations/` + `destinationRegistry.ts` | 🟢 | — | completada 2026-05-13 |
 | **Fase 3** | Migrar `ChatBridge.ts` → `destinations/copilotChat/copilotChatDestination.ts` | ⚪ | — | |
 | **Fase 4** | Migrar `vsOpenCodeXGhostPromptUiBridge` + `notifyVsx` → `destinations/vsOpenCodeX/` | ⚪ | — | |
 | **Fase 5** | Refactor `ghostPromptWebviewInboundHandlers.ts` para usar `destinationRegistry` | ⚪ | — | |
@@ -54,11 +54,11 @@
 
 | # | Subpaso | Estado |
 |---|---------|--------|
-| 2.1 | Crear directorio `src/destinations/` y subdirectorios (`copilotChat/`, `vsOpenCodeX/`) | ⚪ |
-| 2.2 | Definir interfaz `DestinationProvider` (id, sendPrompt?, forwardUi?) | ⚪ |
-| 2.3 | Crear `destinationRegistry.ts` con `registerDestination()`, `getActiveDestinationProvider()`, `getDestinationProviderForId()` | ⚪ |
-| 2.4 | Getters: migrar `getGhostPromptAgentDestination()` + `isVsOpenCodeXExtensionInstalled()` a `destinationRegistry` | ⚪ |
-| 2.5 | Verificar compilación y tests | ⚪ |
+| 2.1 | Crear directorio `src/destinations/` y subdirectorios (`copilotChat/`, `vsOpenCodeX/`) | 🟢 |
+| 2.2 | Definir interfaz `DestinationProvider` (id, sendPrompt?, forwardUi?) | 🟢 |
+| 2.3 | Crear `destinationRegistry.ts` con `registerDestination()`, `getActiveDestinationProvider()`, `getDestinationProviderForId()` | 🟢 |
+| 2.4 | Getters: migrar `getGhostPromptAgentDestination()` + `isVsOpenCodeXExtensionInstalled()` a `destinationRegistry` | 🟢 |
+| 2.5 | Verificar compilación y tests — 230 tests, 0 círculos, 0 errores | 🟢 |
 
 **Criterio de salida:** `destinationRegistry.ts` exporta interfaz y registro. Getters accesibles sin pasar por `ghostPromptHostWorkspaceGetters`.
 
