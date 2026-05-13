@@ -4,3 +4,5 @@ export {
   getActiveCompletionProvider,
   getCompletionProviderKind,
 } from "./engineRegistry";
+
+export * from "./ollama/index";

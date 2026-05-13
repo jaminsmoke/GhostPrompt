@@ -22,7 +22,7 @@
 | Fase | Descripción | Estado | PR | Notas |
 |------|-------------|--------|----|-------|
 | **Fase 1** | Estructura `engines/` + migración providers existentes | 🟢 | — | completada 2026-05-13 |
-| **Fase 2** | Cliente API Ollama (`ollamaApiClient.ts`) | ⚪ | — | |
+| **Fase 2** | Cliente API Ollama (`ollamaApiClient.ts`) | 🟢 | — | completada 2026-05-13 |
 | **Fase 3** | Adaptador Ollama CompletionProvider (`ollamaLmEngine.ts`) | ⚪ | — | |
 | **Fase 4** | Catálogo Ollama + routing + settings | ⚪ | — | |
 | **Fase 5** | UI webview + chips de motor | ⚪ | — | |
@@ -62,11 +62,13 @@
 
 | # | Subpaso | Estado | Archivos |
 |---|---------|--------|----------|
-| 2.1 | Crear `src/engines/ollama/ollamaTypes.ts` — tipos request/response | ⚪ | Nuevo |
-| 2.2 | Crear `src/engines/ollama/ollamaApiClient.ts` — `listModels()`, `generate()`, `showModel()` | ⚪ | Nuevo |
-| 2.3 | Añadir `getGhostPromptOllamaBaseUrl()` a `ghostPromptHostWorkspaceGetters.ts` | ⚪ | Modificar |
-| 2.4 | Crear `src/engines/ollama/index.ts` (barrel) | ⚪ | Nuevo |
-| 2.5 | Verificar compilación y tests | ⚪ | — |
+| # | Subpaso | Estado | Archivos creados/modificados |
+|---|---------|--------|------------------------------|
+| 2.1 | Crear `src/engines/ollama/ollamaTypes.ts` — tipos request/response | 🟢 | `src/engines/ollama/ollamaTypes.ts` |
+| 2.2 | Crear `src/engines/ollama/ollamaApiClient.ts` — `listModels()`, `generate()` con streaming | 🟢 | `src/engines/ollama/ollamaApiClient.ts` |
+| 2.3 | Añadir `getGhostPromptOllamaBaseUrl()` + `getGhostPromptOllamaExcludedModelIds()` a `ghostPromptHostWorkspaceGetters.ts` | 🟢 | `src/host/ghostPromptHostWorkspaceGetters.ts` |
+| 2.4 | Crear `src/engines/ollama/index.ts` (barrel) y actualizar `engines/index.ts` | 🟢 | `src/engines/ollama/index.ts`, `src/engines/index.ts` |
+| 2.5 | Verificar compilación y tests | 🟢 | ✅ 195 passed |
 
 **Criterio de salida:** El cliente Ollama funciona con `fetch` de Node 18+. Maneja errores gracefully.
 

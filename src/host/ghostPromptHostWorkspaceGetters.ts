@@ -141,6 +141,18 @@ export function getGhostPromptSuggestionLanguageChoice():
   return getGhostPromptSuggestionLanguage();
 }
 
+export function getGhostPromptOllamaBaseUrl(): string {
+  return vscode.workspace
+    .getConfiguration("ghostPrompt")
+    .get<string>("ollamaBaseUrl", "http://localhost:11434");
+}
+
+export function getGhostPromptOllamaExcludedModelIds(): string[] {
+  return vscode.workspace
+    .getConfiguration("ghostPrompt")
+    .get<string[]>("ollamaExcludedModelIds", []);
+}
+
 export function collectGhostPromptProjectContext(): {
   workspaceName?: string;
   activeFilePath?: string;
