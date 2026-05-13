@@ -4,7 +4,7 @@ import type {
   SuggestionModelDescriptor,
   SuggestionModelPolicy,
   SuggestionModelTier,
-} from "../types";
+} from "../../../completion/types";
 
 export function selectModelByPolicy(
   models: readonly vscode.LanguageModelChat[],

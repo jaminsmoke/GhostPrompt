@@ -4,15 +4,15 @@ const mockListSuggestionModels = vi.hoisted(() => vi.fn());
 const mockListOpencodeSuggestionModels = vi.hoisted(() => vi.fn());
 const mockListOllamaSuggestionModels = vi.hoisted(() => vi.fn());
 
-vi.mock("../src/completion/catalog/modelCatalog", () => ({
+vi.mock("../src/engines/copilot/catalog/modelCatalog", () => ({
   listSuggestionModels: mockListSuggestionModels,
 }));
 
-vi.mock("../src/completion/catalog/opencodeModelCatalog", () => ({
+vi.mock("../src/engines/opencode/catalog/opencodeModelCatalog", () => ({
   listOpencodeSuggestionModels: mockListOpencodeSuggestionModels,
 }));
 
-vi.mock("../src/completion/catalog/ollamaModelCatalog", () => ({
+vi.mock("../src/engines/ollama/catalog/ollamaModelCatalog", () => ({
   listOllamaSuggestionModels: mockListOllamaSuggestionModels,
 }));
 
@@ -24,7 +24,7 @@ vi.mock("vscode", () => ({
   },
 }));
 
-import { listMergedSuggestionModels } from "../src/completion/catalog/mergedModelCatalog";
+import { listMergedSuggestionModels } from "../src/completion/mergedModelCatalog";
 
 describe("listMergedSuggestionModels", () => {
   beforeEach(() => {

@@ -38,7 +38,7 @@ export * from "./instruction";
 export * from "./normalize";
 export * from "./language";
 export * from "./streaming";
-export * from "./catalog/modelCatalog";
+export * from "../engines/copilot/catalog/modelCatalog";
 
 export { requestCopilotLmCompletion as requestCompletion } from "../engines/copilot/copilotLmEngine";
 
@@ -56,6 +56,6 @@ export {
   resolveCompletionSourceForRequest,
   type CompletionSourceId,
 } from "./completionSources";
-export { listMergedSuggestionModels } from "./catalog/mergedModelCatalog";
+export { listMergedSuggestionModels } from "./mergedModelCatalog";
 export { listOpencodeSuggestionModels } from "../engines/opencode/catalog/opencodeModelCatalog";
-export { listOllamaSuggestionModels } from "./catalog/ollamaModelCatalog";
+export { listOllamaSuggestionModels } from "../engines/ollama/catalog/ollamaModelCatalog";

@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
-import type { SuggestionModelDescriptor, SuggestionModelPolicy } from "../types";
-import { listModels } from "../../engines/ollama/ollamaApiClient";
+import type { SuggestionModelDescriptor, SuggestionModelPolicy } from "../../../completion/types";
+import { listModels } from "../ollamaApiClient";
 import { normalizeOllamaModels, ollamaModelToDescriptor } from "./normalizeOllamaModels";
 
 export async function listOllamaSuggestionModels(

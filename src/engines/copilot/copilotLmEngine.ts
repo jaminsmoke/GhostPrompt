@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 import { buildCompletionInstructionParts } from "../../completion/instruction";
-import { describeModel, selectModelByPolicy } from "../../completion/catalog/modelCatalog";
+import { describeModel, selectModelByPolicy } from "./catalog/modelCatalog";
 import { normalizeSuggestion } from "../../completion/normalize";
 import { collectResponseText } from "../../completion/streaming";
 import {
