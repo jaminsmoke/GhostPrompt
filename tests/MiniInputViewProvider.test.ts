@@ -211,7 +211,7 @@ vi.mock("vscode", () => ({
 
 import { suggestionLoadingStatusText } from "../src/core/loading";
 import { ghostPromptSessionStore } from "../src/core/session/GhostPromptSessionStore";
-import { MiniInputViewProvider } from "../src/vscode/MiniInputViewProvider";
+import { MiniInputViewProvider } from "../src/ui/provider/MiniInputViewProvider";
 
 function createView() {
   suggestHandler = undefined;

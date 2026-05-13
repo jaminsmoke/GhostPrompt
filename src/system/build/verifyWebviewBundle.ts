@@ -1,19 +1,19 @@
 /**
- * Smoke check: existe `webview/dist/main.js` y contiene la firma esperada del cliente webview.
+ * Smoke check: existe `src/ui/webview/dist/main.js` y contiene la firma esperada del cliente webview.
  * Ejecutar desde la raíz del repo (`npm run verify:webview-bundle`).
  *
- * Compila a `out/build/` — excluido del VSIX (`.vscodeignore`): solo herramienta de desarrollo/CI,
+ * Compila a `out/system/build/` — excluido del VSIX (`.vscodeignore`): solo herramienta de desarrollo/CI,
  * no forma parte del runtime de la extensión instalada.
  */
 import * as fs from "node:fs";
 import * as path from "node:path";
 
 const root = process.cwd();
-const bundlePath = path.join(root, "webview", "dist", "main.js");
+const bundlePath = path.join(root, "src", "ui", "webview", "dist", "main.js");
 
 if (!fs.existsSync(bundlePath)) {
   console.error(
-    "[GhostPrompt] Falta webview/dist/main.js — ejecuta npm run build:webview",
+    "[GhostPrompt] Falta src/ui/webview/dist/main.js — ejecuta npm run build:webview",
   );
   process.exit(1);
 }

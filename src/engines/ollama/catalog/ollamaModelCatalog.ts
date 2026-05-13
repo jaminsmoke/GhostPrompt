@@ -28,6 +28,12 @@ export async function listOllamaSuggestionModels(
 
     return descriptors;
   } catch {
-    return [];
+    return [{
+      id: "ollama/unavailable",
+      label: "Ollama (no disponible)",
+      tier: "unknown" as const,
+      completionSource: "ollama" as const,
+      provider: "ollama",
+    }];
   }
 }

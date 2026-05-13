@@ -23,8 +23,8 @@ Filas = carpetas principales de `src/`. Columnas = reglas de dependencia y rol.
 
 | Carpeta `src/` | Rol | Depende típicamente de | No debe importar desde |
 | ---------------- | ----- | -------------------------- | ------------------------- |
-| **`extension/`** | Punto de entrada; registra comandos y vistas; lifecycle `activate` / `deactivate`. | `vscode`, `projectMemory` (activate), `engines/opencode` (resetClient), `system/debug`. | Evitar lógica de negocio pesada aquí (mantener delgado). |
-| **`vscode/`** | Integración VS Code: `WebviewViewProvider`, HTML/CSP generation, notifications. | `api/`, `core/pipeline/`, `projectMemory`, `destinations/`, `vscode`. | No meter aquí lógica de suggestion, contratos Zod, ni orquestación. |
+| **`ui/`** | Interfaz de usuario. `ui/webview/` (sandbox navegador), `ui/provider/` (WebviewViewProvider, HTML/CSP), `ui/notifications/` (alertas host). | `core/`, `api/`, `destinations/`, `projectMemory`. | No meter aquí lógica de negocio de suggestion. |
+| **`extension/`** | Punto de entrada; registra comandos y vistas; lifecycle `activate` / `deactivate`. | `ui/provider/`, `core/memory/`, `engines/opencode`, `system/debug`. | Evitar lógica de negocio pesada aquí (mantener delgado). |
 | **`api/`** | API interna webview↔host: protocolos Zod, inbound handlers, settings flow, workspace getters. | `core/`, `system/`, `destinations/`, `vscode` (config API). | No importar desde `vscode/` (providers). |
 | **`core/`** | Lógica pura de suggestions: tipos, instrucción, normalize, streaming, language, loading, sources, merged catalog, governor, session, context bootstrap, pipeline. | `engines/` (para types/registry), `system/debug/`, `vscode` (Uri types). | No UI webview ni HTML, ni VS Code API directa. |
 | **`engines/`** | Motores de completion canónicos. `copilot/`, `opencode/` (apiClient + catalog), `ollama/`, `engineRegistry.ts`. | `core/` (types, instruction, normalize), `system/debug/`, `vscode`. | No importar desde `host/`, `api/`, `vscode/`. |
@@ -53,7 +53,7 @@ No es cobertura de líneas al 100 %; es **contrato de tests que deben seguir pas
 | Área `src/` | Ficheros de test relevantes (Vitest) |
 | ------------- | -------------------------------------- |
 | `extension/extension.ts` | Parcialmente indirecto: `MiniInputViewProvider.test.ts` (registro webview); integración opcional. |
-| `vscode/*` (MiniInput, webviewHtml, notification) | `MiniInputViewProvider.test.ts`, `webviewToolbarParity.test.ts`, `webviewThemeTokens.test.ts` |
+| `ui/` (webview, provider, notifications) | `MiniInputViewProvider.test.ts`, `webviewToolbarParity.test.ts`, `webviewThemeTokens.test.ts`, `webview/composeLabels.test.ts`, `webview/userErrorMessage.test.ts`, `host/suggestionHostNotification.test.ts` |
 | `api/protocols/*` (webviewProtocols, inboundHandlers) | `webviewProtocols.test.ts`, `host/ghostPromptWebviewInboundHandlers.test.ts`, `shared/webviewMessageSchemas.test.ts` |
 | `api/settings/*` (settingsPostMessage, applyWebviewUpdate) | `host/applyWebviewUpdateSetting.test.ts`, `MiniInputViewProvider.test.ts` (settings flow) |
 | `api/getters/*` (workspaceGetters) | Indirecto via `MiniInputViewProvider.test.ts`, `host/ghostPromptSuggestPipeline.test.ts` |
@@ -191,3 +191,4 @@ Si falta un caso (p. ej. export público solo usado desde host), **añadir test*
 | 2026-05-13 | **v0.5.2 Core/system reorg:** `core/` (13 archivos) + `system/` (5 archivos). 7 carpetas eliminadas (`completion/`, `governor/`, `session/`, `debug/`, `log/`, `shared/`, `build/`). Todos los imports actualizados en `src/`, `tests/`, `webview/`. 226 tests passing. Docs actualizados. |
 | 2026-05-13 | **v0.5.3 Host refactor:** `host/` desmantelado → `api/` (6 archivos), `vscode/` (3 archivos), `core/pipeline/` (2 archivos). ESLint rules actualizadas (`projectMemory`, `system/debug` → no `api/`, `vscode/`). Mapa de tests actualizado. 226 tests passing. Docs actualizados. |
 | 2026-05-13 | **v0.5.3 Memory reorg:** `projectMemory/` → `core/memory/` con subcarpetas (`io/`, `entries/`, `ingest/`, `probes/`). ESLint rules actualizadas (`core/memory/` → no `api/`, `vscode/`). Matriz de ownership y mapa de tests actualizados. 226 tests passing. |
+| 2026-05-13 | **v0.5.3 UI domain:** `webview/` (root) → `src/ui/webview/`. `vscode/` → disuelto en `ui/provider/` + `ui/notifications/`. Ollama fix: placeholder "no disponible" cuando no responde. ESLint zones actualizadas (`vscode/` removido). 226 tests passing. |

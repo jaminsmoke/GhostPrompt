@@ -39,7 +39,7 @@ import {
   type GhostPromptSuggestDeps,
 } from "../../src/core/pipeline/suggestPipeline";
 import { resolveCompletionSourceForRequest } from "../../src/core/sources";
-import { resetSuggestionHostNotificationThrottleForTests } from "../../src/vscode/suggestionNotification";
+import { resetSuggestionHostNotificationThrottleForTests } from "../../src/ui/notifications/suggestionNotification";
 import { ghostPromptSessionStore } from "../../src/core/session/GhostPromptSessionStore";
 
 const requestCompletion = vi.fn();

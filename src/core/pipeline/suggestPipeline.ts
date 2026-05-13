@@ -32,7 +32,7 @@ import type { ProjectMemoryReconcileSnapshot } from "../memory/persist";
 import { logSuggestionDebug } from '../../system/debug/SuggestionDebug';
 import { SuggestionRequestGovernor } from '../governor/SuggestionRequestGovernor';
 import { ghostPromptSessionStore } from '../session/GhostPromptSessionStore';
-import { maybeNotifySuggestionIssue } from "../../vscode/suggestionNotification";
+import { maybeNotifySuggestionIssue } from "../../ui/notifications/suggestionNotification";
 import type { WebviewInboundMessage } from "../../api/protocols/webviewProtocols";
 
 export type GhostPromptSuggestDeps = {

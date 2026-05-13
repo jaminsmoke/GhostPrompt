@@ -3,7 +3,7 @@ import {
   composeContextShort,
   composeLangShort,
   composeStyleShort,
-} from "../../webview/src/lib/composeLabels";
+} from "../../src/ui/webview/lib/composeLabels";
 
 describe("webview composeLabels", () => {
   it("composeStyleShort", () => {

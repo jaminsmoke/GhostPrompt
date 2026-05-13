@@ -42,6 +42,23 @@ Versión **0.5.3**: `host/` desmantelado en dominios canónicos `api/` + `vscode
 - **Todos los imports actualizados:** `extension/`, `vscode/`, `core/pipeline/`, tests
 - **226 tests passing**, `npm run check` verde (0 errors, 34 warnings pre-existing)
 
+### Added
+
+- **Ollama placeholder "no disponible":** cuando el servidor Ollama no responde, aparece `Ollama (no disponible)` en el selector de modelos en vez de desaparecer de la lista (`src/engines/ollama/catalog/ollamaModelCatalog.ts`)
+
+### Changed
+
+- **Movido `webview/` (root) → `src/ui/webview/`:** todo el código del webview sandbox bajo `src/`:
+  - `index.html`, `style.css`, `tsconfig.json`, `main.ts`, `globals.d.ts`
+  - `lib/composeLabels.ts`, `lib/htmlEscape.ts`, `lib/userErrorMessage.ts`
+  - `protocol/postToHost.ts`
+  - Subcarpeta `panels/` para futura extracción de lógica de capacidades
+- **Disuelto `src/vscode/`** → `src/ui/provider/` (MiniInputViewProvider, webviewHtml) + `src/ui/notifications/` (suggestionNotification)
+- **Creado `src/ui/README.md`:** documentación del dominio UI con subdominios webview/provider/notifications
+- **`tsconfig.json` raíz:** excluye `src/ui/webview` (tiene su propio tsconfig con `lib: ["DOM"]`)
+- **ESLint zones:** actualizadas de `vscode/` a `ui/provider/` y `ui/notifications/`
+- **Todos los paths actualizados:** `package.json` scripts, `webviewHtml.ts`, `MiniInputViewProvider.ts`, `verifyWebviewBundle.ts`, tests
+
 ## [0.5.2] - 2026-05-13
 
 Versión **0.5.2**: OpenCode reestructurado como **API client tipo Ollama** — sin runtime embebido, sin gestión de procesos. Conexión a instancia OpenCode ya corriendo via `@opencode-ai/sdk`.

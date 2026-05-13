@@ -6,12 +6,12 @@
       __defProp(target, name, { get: all[name], enumerable: true });
   };
 
-  // webview/src/lib/htmlEscape.ts
+  // src/ui/webview/lib/htmlEscape.ts
   function escapeHtml(value) {
     return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
   }
 
-  // webview/src/lib/composeLabels.ts
+  // src/ui/webview/lib/composeLabels.ts
   function composeStyleShort(v) {
     if (v === "concise") {
       return "Breve";
@@ -38,7 +38,7 @@
     return choice === "es" ? "ES" : "EN";
   }
 
-  // webview/src/lib/userErrorMessage.ts
+  // src/ui/webview/lib/userErrorMessage.ts
   function messageForEmptySuggestion(reason, ctx) {
     switch (reason) {
       case "no-model":
@@ -4244,7 +4244,7 @@
     webviewUpdateSettingSchema
   ]);
 
-  // webview/src/protocol/postToHost.ts
+  // src/ui/webview/protocol/postToHost.ts
   function postToHost(api, msg) {
     const r = webviewInboundMessageSchema.safeParse(msg);
     if (!r.success) {
@@ -4258,7 +4258,7 @@
     api.postMessage(r.data);
   }
 
-  // webview/src/main.ts
+  // src/ui/webview/main.ts
   (function() {
     "use strict";
     const vscode = acquireVsCodeApi();

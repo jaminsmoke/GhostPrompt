@@ -10,7 +10,7 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 describe("webview theme tokens (v0.3.1 Fase D)", () => {
   it(".status-text.error usa solo --vscode-errorForeground", () => {
-    const css = readFileSync(join(repoRoot, "webview/style.css"), "utf8");
+    const css = readFileSync(join(repoRoot, "src/ui/webview/style.css"), "utf8");
     expect(css).toMatch(
       /\.status-text\.error\s*\{[^}]*color:\s*var\(--vscode-errorForeground\)\s*;/,
     );

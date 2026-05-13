@@ -18,7 +18,7 @@ import * as vscode from "vscode";
 import {
   maybeNotifySuggestionIssue,
   resetSuggestionHostNotificationThrottleForTests,
-} from "../../src/vscode/suggestionNotification";
+} from "../../src/ui/notifications/suggestionNotification";
 
 describe("maybeNotifySuggestionIssue", () => {
   beforeEach(() => {

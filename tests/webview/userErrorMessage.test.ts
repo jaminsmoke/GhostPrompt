@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   messageForEmptySuggestion,
   toUserErrorMessage,
-} from "../../webview/src/lib/userErrorMessage";
+} from "../../src/ui/webview/lib/userErrorMessage";
 
 const ctxCopilot = {
   completionUiKind: "copilot",

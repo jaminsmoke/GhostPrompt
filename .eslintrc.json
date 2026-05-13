@@ -25,13 +25,13 @@
         "zones": [
           {
             "target": "./src/core/memory/**/*",
-            "from": ["./src/vscode/**/*", "./src/api/**/*"],
-            "message": "core/memory no debe importar desde api/vscode; pasar datos como deps. Ver Docs/Owners.md."
+            "from": ["./src/ui/provider/**/*", "./src/ui/notifications/**/*", "./src/api/**/*"],
+            "message": "core/memory no debe importar desde ui/provider, ui/notifications ni api. Ver Docs/Owners.md."
           },
           {
             "target": "./src/system/debug/**/*",
-            "from": ["./src/vscode/**/*", "./src/api/**/*"],
-            "message": "debug no debe importar desde api/vscode. Ver Docs/Owners.md fase D."
+            "from": ["./src/ui/provider/**/*", "./src/ui/notifications/**/*", "./src/api/**/*"],
+            "message": "debug no debe importar desde ui/provider, ui/notifications ni api. Ver Docs/Owners.md fase D."
           }
         ]
       }

@@ -24,7 +24,7 @@ export type GhostPromptWebviewHtmlParams = {
 };
 
 /**
- * Lee `webview/index.html` y sustituye placeholders por URIs seguras y nonce.
+ * Lee `src/ui/webview/index.html` y sustituye placeholders por URIs seguras y nonce.
  */
 export function buildGhostPromptWebviewHtml(
   params: GhostPromptWebviewHtmlParams,
@@ -32,15 +32,16 @@ export function buildGhostPromptWebviewHtml(
   const { extensionUri, webview, viewContributionId, capabilitiesPayload } =
     params;
   const scriptUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(extensionUri, "webview", "dist", "main.js"),
+    vscode.Uri.joinPath(extensionUri, "ui", "webview", "dist", "main.js"),
   );
   const styleUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(extensionUri, "webview", "style.css"),
+    vscode.Uri.joinPath(extensionUri, "ui", "webview", "style.css"),
   );
   const nonce = generateGhostPromptWebviewNonce();
 
   const templatePath = vscode.Uri.joinPath(
     extensionUri,
+    "ui",
     "webview",
     "index.html",
   ).fsPath;

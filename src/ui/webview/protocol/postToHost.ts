@@ -1,7 +1,7 @@
 /**
  * Envío al host validado con el mismo Zod que `parseWebviewInboundMessage` (fase C).
  */
-import { webviewInboundMessageSchema } from "../../../src/system/contracts/webviewMessageSchemas";
+import { webviewInboundMessageSchema } from "../../../system/contracts/webviewMessageSchemas";
 
 export type VsCodePostMessageApi = {
   postMessage(message: unknown): void;

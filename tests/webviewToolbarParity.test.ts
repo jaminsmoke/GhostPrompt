@@ -16,7 +16,7 @@ function read(rel: string): string {
 
 describe("webview toolbar parity (v0.3.1 Fase A)", () => {
   it("index.html defines exactly six setting groups with stable data-keys", () => {
-    const html = read("webview/index.html");
+    const html = read("src/ui/webview/index.html");
     expect(html.match(/class="setting-group"/g)?.length).toBe(6);
     for (const key of [
       "completionProvider",
@@ -31,7 +31,7 @@ describe("webview toolbar parity (v0.3.1 Fase A)", () => {
   });
 
   it("index.html exposes stable toolbar control ids shared by both webviews", () => {
-    const html = read("webview/index.html");
+    const html = read("src/ui/webview/index.html");
     for (const id of [
       "completion-backend-select",
       "agent-destination-select",
@@ -50,14 +50,14 @@ describe("webview toolbar parity (v0.3.1 Fase A)", () => {
   });
 
   it("webview entry documents VIEW_ID / VIEW_CAPS parity rules (sidebar vs panel)", () => {
-    const js = read("webview/src/main.ts");
+    const js = read("src/ui/webview/main.ts");
     expect(js).toContain("Paridad sidebar vs panel");
     expect(js).toContain("draftChanged");
     expect(js).toContain("draftSync");
   });
 
   it("compact-toolbar CSS does not hide setting groups", () => {
-    const css = read("webview/style.css");
+    const css = read("src/ui/webview/style.css");
     const blockStart = css.indexOf("body.gp-cap-compact-toolbar");
     expect(blockStart).toBeGreaterThan(-1);
     const blockEnd = css.indexOf("#send-btn", blockStart);
@@ -68,7 +68,7 @@ describe("webview toolbar parity (v0.3.1 Fase A)", () => {
 
 describe("webview dual-view governance (v0.4.3 Fase 5)", () => {
   it("ghostPromptWebviewHtml carga un único index + bundle + CSS", () => {
-    const src = read("src/vscode/webviewHtml.ts");
+    const src = read("src/ui/provider/webviewHtml.ts");
     expect(src).toContain('"webview"');
     expect(src).toContain('"index.html"');
     expect(src).toContain('"dist"');
@@ -77,7 +77,7 @@ describe("webview dual-view governance (v0.4.3 Fase 5)", () => {
   });
 
   it("MiniInputViewProvider usa ambas contribuciones y el HTML compartido", () => {
-    const src = read("src/vscode/MiniInputViewProvider.ts");
+    const src = read("src/ui/provider/MiniInputViewProvider.ts");
     expect(src).toContain("ghostPrompt.input");
     expect(src).toContain("ghostPrompt.inputPanel");
     expect(src).toContain("buildGhostPromptWebviewHtml");
@@ -85,7 +85,7 @@ describe("webview dual-view governance (v0.4.3 Fase 5)", () => {
   });
 
   it("el cliente webview centraliza mensajes de estado en userErrorMessage.ts", () => {
-    const main = read("webview/src/main.ts");
+    const main = read("src/ui/webview/main.ts");
     expect(main).toContain("./lib/userErrorMessage");
     expect(main).toContain("messageForEmptySuggestion");
     expect(main).toContain("toUserErrorMessage");

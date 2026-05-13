@@ -3,7 +3,7 @@
  *
  * **Composición (v0.5.3):**
  * - Contratos Zod y parseo: `api/protocols/webviewProtocols.ts`
- * - HTML/CSP y plantilla: `vscode/webviewHtml.ts`
+ * - HTML/CSP y plantilla: `ui/provider/webviewHtml.ts`
  * - Mensaje `settings` → webview: `api/settings/settingsPostMessage.ts`
  * - Mensaje `suggest`: `core/pipeline/suggestPipeline.ts`
  * - Router/handlers webview → host (`init`, `draftChanged`, `updateSetting`, `send`, `accept`): `api/protocols/inboundHandlers.ts`
@@ -27,16 +27,16 @@
  *   - Contratos Zod (`system/contracts/webviewMessageSchemas.ts` / `api/protocols/webviewProtocols.ts`): entrada webview → host y salida `settings`.
  */
 import * as vscode from "vscode";
-import { ghostPromptSessionStore } from '../core/session/GhostPromptSessionStore';
-import { buildAndPostGhostPromptSettings } from "../api/settings/settingsPostMessage";
+import { ghostPromptSessionStore } from '../../core/session/GhostPromptSessionStore';
+import { buildAndPostGhostPromptSettings } from "../../api/settings/settingsPostMessage";
 import { buildGhostPromptWebviewHtml } from "./webviewHtml";
-import { getProjectMemoryBaseDir } from "../core/memory/activate";
+import { getProjectMemoryBaseDir } from "../../core/memory/activate";
 import {
   reconcileProjectMemoryForSuggest,
   writeReconciledProjectBootstrapSnapshot,
-} from "../core/memory/persist";
-import { NodeProjectMemoryFs } from "../core/memory/io/fs";
-import { ProjectMemoryStore } from "../core/memory/Store";
+} from "../../core/memory/persist";
+import { NodeProjectMemoryFs } from "../../core/memory/io/fs";
+import { ProjectMemoryStore } from "../../core/memory/Store";
 import {
   collectGhostPromptProjectContext,
   getGhostPromptContextMode,
@@ -48,14 +48,14 @@ import {
   getGhostPromptSuggestionLanguageMode,
   getGhostPromptSuggestionModelPolicy,
   getGhostPromptSuggestionStyle,
-} from "../api/getters/workspaceGetters";
-import { handleGhostPromptSuggest } from "../core/pipeline";
+} from "../../api/getters/workspaceGetters";
+import { handleGhostPromptSuggest } from "../../core/pipeline";
 import {
   dispatchGhostPromptInboundMessage,
-} from "../api/protocols/inboundHandlers";
-import type { GhostPromptSuggestDeps } from "../core/pipeline";
-import { parseWebviewInboundMessage } from "../api/protocols/webviewProtocols";
-import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from "../destinations/vsOpenCodeX/vsOpenCodeXDestination";
+} from "../../api/protocols/inboundHandlers";
+import type { GhostPromptSuggestDeps } from "../../core/pipeline";
+import { parseWebviewInboundMessage } from "../../api/protocols/webviewProtocols";
+import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from "../../destinations/vsOpenCodeX/vsOpenCodeXDestination";
 
 export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /** View ID for the activity bar container. */
@@ -235,7 +235,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [vscode.Uri.joinPath(extensionUri, "webview")],
+      localResourceRoots: [vscode.Uri.joinPath(extensionUri, "ui", "webview")],
     };
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
@@ -261,7 +261,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   }
 
   /**
-   * Loads `webview/index.html` and injects secure asset URIs and the CSP nonce.
+   * Loads `src/ui/webview/index.html` and injects secure asset URIs and the CSP nonce.
    *
    * @param webview - The webview instance to generate HTML for.
    */
