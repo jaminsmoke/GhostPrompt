@@ -45,7 +45,7 @@
 ┌───────────────────────────▼─────────────────────────────────────┐
 │  Webview (isolated renderer — no Node.js access)                │
 │                                                                 │
-│  index.html + style.css + bundle (p. ej. webview/dist/main.js)  │
+│  src/ui/webview/dist/react/index.html + bundle React (Vite)       │
 │                                                                 │
 │  - Debounced input; captureId; ghost-text                        │
 │  - Tab-to-accept / Enter-to-send                                 │
@@ -79,9 +79,9 @@
 | `src/system/debug/SuggestionDebug.ts` | Toggle debug y canal **GhostPrompt Suggestions**. |
 | `src/system/build/verifyWebviewBundle.ts` | Verificación del bundle webview en CI/dev. |
 | `src/projectMemory/*` | Store JSON por carpeta, reconcile, ingest, watchers opcionales. |
-| `webview/index.html` | Shell HTML; tokens `{{nonce}}`, CSP, URIs de script/estilo inyectados en runtime. |
-| `webview/dist/main.js` (build) | Bundle generado desde `webview/src` (`npm run build:webview`). |
-| `webview/style.css` | Estilos basados en variables VS Code; ghost text. |
+| `src/ui/webview/react/index.html` | Shell HTML; Vite entry template. CSP, URIs de assets inyectados en runtime por `webviewHtml.ts`. |
+| `src/ui/webview/dist/react/index.html` (build) | Bundle generado por Vite desde `src/ui/webview/react/` (`npm run build:webview`). |
+| `src/ui/webview/react/index.css` | Tailwind + variables VS Code; ghost text. |
 
 ---
 

@@ -1,0 +1,234 @@
+# Roadmap v0.7.0 — Sistema de estados de proveedores (motores y destinos)
+
+<!-- markdownlint-disable MD022 MD024 MD060 -->
+
+> Estado general: 🔵 Planificado → ⚪ No iniciado | 🟡 En progreso | 🟢 Completado | 🔴 Bloqueado
+>
+> Objetivo: Implementar un sistema de estados visible para cada motor (Copilot, OpenCode, Ollama) y destino (CopilotChat, VSOpenCodeX), donde cada uno reporte su disponibilidad mediante iconos + texto, y permita acciones de inicio/parada según corresponda.
+>
+> Los estados se checkean solo al abrir el popup del chip, no en background.
+
+---
+
+## Resumen
+
+| Fase | Alcance | Resultado | Estado |
+|------|---------|-----------|--------|
+| Fase 1 | Tipos compartidos + ProviderStatusManager | Base del sistema de estados | ⚪ No iniciado |
+| Fase 2 | Módulos de estado individuales (copilot, opencode, ollama, destinos) | Cada provider sabe checkear su estado | ⚪ No iniciado |
+| Fase 3 | Mensajes host↔webview | Protocolo completo de estados | ⚪ No iniciado |
+| Fase 4 | GhostToolbar: chip Motor con estados + acciones | UI muestra estado, permite iniciar/detener | ⚪ No iniciado |
+| Fase 5 | Validación + tests | Build + 219+ tests | ⚪ No iniciado |
+
+---
+
+## Fase 1 — Tipos compartidos + ProviderStatusManager
+
+### Tareas
+
+1. Crear `src/system/status/types.ts`:
+   ```ts
+   export type ProviderKind = "engine" | "destination";
+   
+   export type ProviderState = "running" | "stopped" | "starting" | "unavailable" | "error";
+   
+   export interface ProviderStateRecord {
+     id: string;
+     kind: ProviderKind;
+     status: ProviderState;
+     label: string;
+     statusText?: string;       // texto descriptivo (ej. "3 modelos instalados")
+     actions?: ("start" | "stop")[];
+   }
+   
+   export interface ProviderStatusModule {
+     id: string;
+     kind: ProviderKind;
+     label: string;
+     check(): Promise<ProviderStateRecord>;
+     start?(): Promise<void>;
+     stop?(): Promise<void>;
+   }
+   ```
+
+2. Crear `src/system/status/ProviderStatusManager.ts`:
+   - Registro de módulos via `register(module: ProviderStatusModule)`
+   - `refreshAll()` → itera todos los módulos y ejecuta `check()`
+   - `refresh(id)` → ejecuta `check()` de un módulo específico
+   - `start(id)` → delega al módulo
+   - `stop(id)` → delega al módulo
+   - `onDidChange` → EventEmitter cuando estados cambian
+
+3. Exportar barrel `src/system/status/index.ts`
+
+### Criterios de aceptación
+
+- ProviderStatusManager puede registrar módulos
+- `refreshAll()` retorna estado de todos los módulos
+- `refresh("ollama")` retorna solo el estado de Ollama
+
+---
+
+## Fase 2 — Módulos de estado individuales
+
+### Tareas
+
+1. `src/engines/copilot/copilotStatus.ts`:
+   - `check()` → retorna `{ status: "running", label: "Copilot LM", statusText: "Siempre disponible" }`
+   - Sin `start()`/`stop()` (Copilot no requiere gestión)
+
+2. `src/engines/opencode/opencodeStatus.ts`:
+   - `check()` → ping a `http://127.0.0.1:4096` → `running` si responde, `stopped` si no
+   - `start()` → inicia servidor OpenCode headless
+   - `stop()` → envía `/exit` o mata el proceso
+   - `label: "OpenCode", kind: "engine"`
+
+3. `src/engines/ollama/ollamaStatus.ts`:
+   - `check()` → `exec("ollama --version")` → si falla → `unavailable`
+     - Si ok → `exec("ollama list")` → si hay modelos → `running`, si no → `stopped`
+     - `statusText`: "X modelos instalados" o "No instalado"
+   - `start()` → abre el popup de modelo para que usuario seleccione
+   - `stop()` → `ollamaModelManager.stopAll()`
+
+4. `src/destinations/copilotChat/copilotChatStatus.ts`:
+   - `check()` → `{ status: "running", label: "Copilot Chat" }`
+
+5. `src/destinations/vsOpenCodeX/vsOpenCodeXStatus.ts`:
+   - `check()` → `isVsOpenCodeXExtensionInstalled()` → `running` o `unavailable`
+   - `label: "VSOpenCodeX"`
+
+6. Registrar todos los módulos en `ProviderStatusManager`
+
+### Criterios de aceptación
+
+- Cada módulo retorna el estado correcto según su tecnología
+- OpenCode: ping HTTP detecta si el servidor está corriendo
+- Ollama: CLI detecta instalación y modelos disponibles
+
+---
+
+## Fase 3 — Mensajes host ↔ webview
+
+### Tareas
+
+1. Agregar schemas en `webviewMessageSchemas.ts`:
+   ```ts
+   // Host → Webview
+   { type: "providerStatus"; providers: ProviderStateRecord[] }
+   
+   // Webview → Host
+   { type: "requestProviderStatus" }
+   { type: "startProvider"; provider: string }
+   { type: "stopProvider"; provider: string }
+   ```
+
+2. Agregar tipos en `types.ts` (webview):
+   - `InboundMessage`: + `{ type: "providerStatus"; providers: ProviderStateRecord[] }`
+   - `OutboundMessage`: + `{ type: "requestProviderStatus" }` + `{ type: "startProvider" }` + `{ type: "stopProvider" }`
+
+3. Agregar handler en `useGhostPrompt.ts`:
+   - Recibir `providerStatus` → actualizar estado local `providerStatuses`
+   - Función `requestProviderStatus()` → envía mensaje al host
+
+4. Agregar handler en `inboundHandlers.ts` (host):
+   - `requestProviderStatus` → `providerStatusManager.refreshAll()` → `broadcastUi({ type: "providerStatus", providers })`
+   - `startProvider` → `providerStatusManager.start(id)` → `refresh(id)` → broadcast
+   - `stopProvider` → `providerStatusManager.stop(id)` → `refresh(id)` → broadcast
+
+### Criterios de aceptación
+
+- Webview puede solicitar estados al host
+- Host responde con estados actualizados
+- Webview puede solicitar iniciar/detener un provider
+
+---
+
+## Fase 4 — GhostToolbar: chip Motor con estados + acciones
+
+### Tareas
+
+1. Modificar `GhostToolbar.tsx`:
+   - Pasar `providerStatuses` como prop desde App
+   - Motor chip label: `{icon} {providerLabel}` con icono de estado
+   - Popup del Motor: cada provider muestra su estado + acciones disponibles:
+     ```tsx
+     {providers.map(p => (
+       <div key={p.id}>
+         <span class={statusClass(p.status)}>{iconFor(p.status)}</span>
+         <span>{p.label}</span>
+         <span class="status-text">{p.statusText}</span>
+         {p.actions?.includes("start") && (
+           <button onClick={() => onStartProvider(p.id)}>▶ Iniciar</button>
+         )}
+         {p.actions?.includes("stop") && (
+           <button onClick={() => onStopProvider(p.id)}>■ Detener</button>
+         )}
+       </div>
+     ))}
+     ```
+   - Si provider tiene `status === "running"`, al clickearlo cambia el motor
+   - Si provider tiene `status === "stopped"`, al clickearlo inicia el provider
+
+2. Modificar `App.tsx`:
+   - Pasar `providerStatuses`, `onRequestStatus`, `onStartProvider`, `onStopProvider` a GhostToolbar
+
+3. Agregar `ProviderStateRecord` en `types.ts` webview
+
+### Criterios de aceptación
+
+- Chip Motor muestra ● ○ junto al label según estado
+- Popup del Motor lista cada provider con su estado
+- Providers stopped tienen botón "Iniciar"
+- Providers running tienen botón "Detener" (si aplica)
+
+---
+
+## Fase 5 — Validación + tests
+
+### Tareas
+
+1. Ejecutar `npm run validate`
+2. Ejecutar `npm run test`
+3. Verificar 219+ tests pasan
+4. Prueba manual: abrir popup Motor, verificar estados de cada provider
+
+---
+
+## Hitos clave
+
+| Hito | Objetivo | Criterio de éxito | Estado |
+|------|----------|-------------------|--------|
+| Hito 1 | ProviderStatusManager funcional | Registra módulos, refreshAll funciona | ⚪ No iniciado |
+| Hito 2 | Módulos de estado completos | Cada provider checkea su estado correctamente | ⚪ No iniciado |
+| Hito 3 | Comunicación host↔webview | Mensajes providerStatus fluyen en ambos sentidos | ⚪ No iniciado |
+| Hito 4 | Chip Motor con estados | Estados visibles con iconos + acciones en popup | ⚪ No iniciado |
+| Hito 5 | Validación final | Build + tests pasan | ⚪ No iniciado |
+
+---
+
+## Archivos plan
+
+### Nuevos (8)
+
+| Archivo | Fase |
+|---------|------|
+| `src/system/status/types.ts` | F1 |
+| `src/system/status/ProviderStatusManager.ts` | F1 |
+| `src/system/status/index.ts` | F1 |
+| `src/engines/copilot/copilotStatus.ts` | F2 |
+| `src/engines/opencode/opencodeStatus.ts` | F2 |
+| `src/engines/ollama/ollamaStatus.ts` | F2 |
+| `src/destinations/copilotChat/copilotChatStatus.ts` | F2 |
+| `src/destinations/vsOpenCodeX/vsOpenCodeXStatus.ts` | F2 |
+
+### Modificar (7)
+
+| Archivo | Fase |
+|---------|------|
+| `src/ui/webview/react/types.ts` | F3 |
+| `src/system/contracts/webviewMessageSchemas.ts` | F3 |
+| `src/ui/webview/react/hooks/useGhostPrompt.ts` | F3 |
+| `src/ui/webview/react/components/GhostToolbar.tsx` | F4 |
+| `src/ui/webview/react/App.tsx` | F4 |
+| `src/api/protocols/inboundHandlers.ts` | F3 |
+| `src/ui/provider/MiniInputViewProvider.ts` | F3 |

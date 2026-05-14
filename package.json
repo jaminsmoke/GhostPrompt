@@ -329,8 +329,7 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p src/ui/webview/tsconfig.json",
     "typecheck:webview": "tsc -p src/ui/webview/tsconfig.json",
     "build:webview": "vite build --config vite.config.ts",
-    "build:webview:react": "vite build --config vite.config.ts",
-    "dev:webview:react": "vite --config vite.config.ts",
+    "dev:webview": "vite --config vite.config.ts",
     "verify:webview-bundle": "node out/system/build/verifyWebviewBundle.js",
     "validate": "npm run lint && npm run deps:circular && npm run typecheck && npm run build:webview && npm run verify:webview-bundle",
     "test": "vitest run",
@@ -338,7 +337,7 @@
     "deps:graph": "madge --ts-config tsconfig.json --extensions ts src/extension/extension.ts",
     "deps:circular": "madge --ts-config tsconfig.json --extensions ts --circular src/extension/extension.ts",
     "check": "npm run validate && npm run test",
-    "vscode:prepublish": "npm run clean && npm run build:webview:react && npm run build:webview && npm run compile",
+    "vscode:prepublish": "npm run clean && npm run build:webview && npm run compile",
     "vsix": "npx vsce package"
   },
   "devDependencies": {

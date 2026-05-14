@@ -2,8 +2,7 @@ import "./index.css";
 import { useGhostPrompt } from "./hooks/useGhostPrompt";
 import { GhostToolbar } from "./components/GhostToolbar";
 import { PromptInput } from "./components/PromptInput";
-import { GhostStatusLine } from "./components/GhostStatusLine";
-import { ActionBar } from "./components/ActionBar";
+import { BottomBar } from "./components/BottomBar";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 export { postToHost } from "./hooks/useGhostPrompt";
@@ -14,6 +13,7 @@ export function App(): JSX.Element {
     suggestion,
     status,
     capabilities,
+    isLoading,
     vsxActive,
     vsOpenCodeXExtensionInstalled,
     textareaRef,
@@ -83,9 +83,12 @@ export function App(): JSX.Element {
         onAccept={acceptSuggestion}
       />
 
-      <GhostStatusLine status={status} />
-
-      <ActionBar canSend={canSend} onSend={handleSend} />
+      <BottomBar
+        status={status}
+        isLoading={isLoading}
+        canSend={canSend}
+        onSend={handleSend}
+      />
     </ErrorBoundary>
   );
 }

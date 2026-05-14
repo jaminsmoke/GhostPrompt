@@ -116,7 +116,7 @@ Canal **GhostPrompt Suggestions** (`vscode.window.createOutputChannel`).
 ## `build/verifyWebviewBundle.ts`
 
 Script de verificación CI/dev que:
-1. Lee `webview/dist/main.js`
+1. Lee `src/ui/webview/dist/react/index.html`
 2. Verifica que existe y tiene contenido (>0 bytes)
 3. Loguea el tamaño del bundle
 

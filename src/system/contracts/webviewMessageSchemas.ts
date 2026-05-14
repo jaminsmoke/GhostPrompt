@@ -40,6 +40,13 @@ export const webviewOutboundSettingsEnvelopeSchema = z.object({
   settings: webviewSettingsPayloadSchema,
 });
 
+export const webviewOutboundOllamaStatusSchema = z.object({
+  type: z.literal("ollama-status"),
+  status: z.enum(["checking-install", "not-installed", "listing-models", "starting-model", "model-ready", "model-error"]),
+  model: z.string().optional(),
+  message: z.string().optional(),
+});
+
 export type WebviewSettingsPayload = z.infer<typeof webviewSettingsPayloadSchema>;
 
 export const webviewUpdateSettingSchema = z.discriminatedUnion("key", [

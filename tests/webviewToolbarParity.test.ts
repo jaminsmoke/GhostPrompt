@@ -33,7 +33,6 @@ describe("React webview toolbar parity", () => {
   it("component files expose stable toolbar chip ids shared by both webviews", () => {
     const toolbar = read("src/ui/webview/react/components/GhostToolbar.tsx");
     const input = read("src/ui/webview/react/components/PromptInput.tsx");
-    const footer = read("src/ui/webview/react/components/ActionBar.tsx");
     const app = read("src/ui/webview/react/App.tsx");
 
     // Chip IDs in GhostToolbar
@@ -48,7 +47,9 @@ describe("React webview toolbar parity", () => {
 
     expect(input).toContain('id="prompt-input"');
     expect(app).toContain('id="gp-vsx-surface-note"');
-    expect(footer).toContain('id="send-btn"');
+    // send-btn ahora en BottomBar
+    const bbar = read("src/ui/webview/react/components/BottomBar.tsx");
+    expect(bbar).toContain('id="send-btn"');
   });
 
   it("webviewHtml loads the React built index document", () => {

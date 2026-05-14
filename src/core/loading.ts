@@ -11,7 +11,11 @@ export type SuggestionLoadingPhase =
   | "opencode-generating"
   | "ollama-start"
   | "ollama-loading"
-  | "ollama-generating";
+  | "ollama-generating"
+  | "ollama-checking-install"
+  | "ollama-listing-models"
+  | "ollama-starting-model"
+  | "ollama-model-ready";
 
 export function suggestionLoadingStatusText(
   phase: SuggestionLoadingPhase,
@@ -33,5 +37,13 @@ export function suggestionLoadingStatusText(
       return "Cargando modelo local…";
     case "ollama-generating":
       return "Generando sugerencia…";
+    case "ollama-checking-install":
+      return "Verificando instalación de Ollama…";
+    case "ollama-listing-models":
+      return "Obteniendo modelos locales…";
+    case "ollama-starting-model":
+      return "Iniciando modelo…";
+    case "ollama-model-ready":
+      return "Modelo listo";
   }
 }

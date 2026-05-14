@@ -13,6 +13,7 @@ import {
   toggleSuggestionDebug,
 } from '../system/debug/SuggestionDebug';
 import { resetClient } from "../engines/opencode/opencodeApiClient";
+import { ollamaModelManager } from "../engines/ollama";
 import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from "../destinations/vsOpenCodeX/vsOpenCodeXDestination";
 import "../destinations/copilotChat/copilotChatDestination";
 import { registerProjectMemory } from "../core/memory/activate";
@@ -86,4 +87,5 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {
   resetClient();
+  ollamaModelManager.stopAll();
 }

@@ -11,12 +11,11 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { App, postToHost } from "../../src/ui/webview/react/App";
 
 describe("GhostPrompt React webview App", () => {
-  it("renders the chip bar with current values and initial status line", () => {
+  it("renders the bottom bar with initial status line", () => {
     const html = renderToStaticMarkup(<App />);
 
     expect(html).toContain("Copilot LM");
     expect(html).toContain("Auto");
-    expect(html).toContain("Normal · Básico · Auto");
     expect(html).toContain("Empieza a escribir para obtener sugerencias...");
   });
 

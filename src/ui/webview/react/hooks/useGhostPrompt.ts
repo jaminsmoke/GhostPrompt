@@ -207,6 +207,21 @@ export function useGhostPrompt() {
           }
           setText(message.text);
           break;
+        case "ollama-status":
+          if (message.status === "checking-install") {
+            setStatus("Verificando instalación de Ollama…");
+          } else if (message.status === "not-installed") {
+            setStatus("Ollama no está instalado. Instálalo desde ollama.com");
+          } else if (message.status === "listing-models") {
+            setStatus("Obteniendo modelos locales…");
+          } else if (message.status === "starting-model") {
+            setStatus("Iniciando modelo…");
+          } else if (message.status === "model-ready") {
+            setStatus("Modelo listo");
+          } else if (message.status === "model-error") {
+            setStatus(`Error: ${message.message ?? "Error al iniciar el modelo"}`);
+          }
+          break;
         default:
           break;
       }

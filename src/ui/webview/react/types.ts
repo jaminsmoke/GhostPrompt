@@ -105,6 +105,14 @@ export type InboundMessage =
       settings: SettingsPayload;
       captureId?: number;
       broadcast?: boolean;
+    }
+  | {
+      type: "ollama-status";
+      status: "checking-install" | "not-installed" | "listing-models" | "starting-model" | "model-ready" | "model-error";
+      model?: string;
+      message?: string;
+      captureId?: number;
+      broadcast?: boolean;
     };
 
 export type UpdateSettingMessage =
