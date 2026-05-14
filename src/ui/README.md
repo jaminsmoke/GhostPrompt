@@ -1,5 +1,7 @@
 # `ui/` — Dominio de interfaz de usuario
 
+<!-- markdownlint-disable MD032 MD040 MD060 -->
+
 > Dominio canónico que contiene todo el código de interfaz de usuario de GhostPrompt, tanto el que corre en el webview (sandbox del navegador) como el que corre en el extension host (Node).
 
 ---
@@ -24,23 +26,19 @@
 ```
 ui/
 ├── README.md
-├── webview/                          # Sandbox del navegador (IIFE bundle via esbuild)
-│   ├── index.html                    # Template HTML con placeholders {{nonce}}, {{cspSource}}, etc.
-│   ├── style.css                     # Estilos del webview (basados en variables VS Code)
+├── webview/                          # Sandbox del navegador (React + Vite)
 │   ├── tsconfig.json                 # TypeScript config para el webview (lib: ["ES2022", "DOM"])
-│   ├── dist/
-│   │   └── main.js                   # Build output (esbuild)
-│   ├── main.ts                       # Entry point: init, handlers, message loop
 │   ├── globals.d.ts                  # Type declarations para window.__ghostPrompt*
-│   ├── lib/
-│   │   ├── composeLabels.ts          # Textos cortos para chips de configuración
-│   │   ├── htmlEscape.ts             # HTML entity escaping
-│   │   └── userErrorMessage.ts       # Mensajes de error para el usuario
-│   ├── protocol/
-│   │   └── postToHost.ts             # Validación Zod antes de postMessage al host
-│   └── panels/
-│       ├── capabilities.ts           # Detección de capacidades por viewId
-│       └── register.ts               # Handlers específicos por panel
+│   ├── dist/
+│   │   └── react/                    # Vite build output for the React webview
+│   │       └── index.html
+│   ├── react/
+│   │   ├── index.html                # Vite entry template
+│   │   ├── index.css                 # Tailwind + global styles
+│   │   ├── css.d.ts
+│   │   ├── main.tsx                  # React entry point
+│   │   └── App.tsx                   # React component tree
+│   ├── globals.d.ts                  # Type declarations para window.__ghostPrompt*
 ├── provider/                         # Extension host (Node)
 │   ├── MiniInputViewProvider.ts      # WebviewViewProvider (sidebar + panel)
 │   ├── webviewHtml.ts                # HTML template + CSP nonce generation
@@ -61,14 +59,12 @@ extension.ts: activate
 ui/provider/MiniInputViewProvider.ts
     ├── Resolve webview view (sidebar o panel)
     ├── ui/provider/webviewHtml.ts → build HTML con CSP
-    └── ui/webview/index.html + ui/webview/dist/main.js ← carga en el webview
+    └── ui/webview/dist/react/index.html (React bundle generado por Vite) ← carga en el webview
     │
     ▼
-ui/webview/main.ts (corre en el navegador)
+ui/webview/react/main.tsx (corre en el navegador)
     ├── window.__ghostPromptCapabilities → detecta panel
-    ├── ui/webview/lib/composeLabels → etiquetas de chips
-    ├── ui/webview/protocol/postToHost.ts → valida mensajes antes de enviar
-    └── ui/webview/lib/userErrorMessage → mensajes de error
+    └── App.tsx → maneja UI, comunicación host y lógica de sugerencias
     │
     ▼
 postMessage → api/protocols/inboundHandlers.ts → core/pipeline/
@@ -91,5 +87,4 @@ Ambos paneles deben mantener **paridad funcional**: los chips, el protocolo de m
 | `MiniInputViewProvider.test.ts` | Flujo completo: init, suggest, accept, send, settings |
 | `webviewToolbarParity.test.ts` | Paridad dual vista (sidebar + panel) |
 | `webviewThemeTokens.test.ts` | Tokens CSS del webview |
-| `webview/composeLabels.test.ts` | Etiquetas de configuración |
-| `webview/userErrorMessage.test.ts` | Mensajes de error |
+| `tests/webview/App.test.tsx` | React webview render smoke test |

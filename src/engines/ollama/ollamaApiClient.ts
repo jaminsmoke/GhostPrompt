@@ -19,8 +19,10 @@ function resolveUrl(
 function buildOptions(
   opts: OllamaClientOptions,
 ): { headers: Record<string, string>; signal?: AbortSignal } {
+  const headers: Record<string, string> = {};
+  headers["Content-Type"] = "application/json";
   return {
-    headers: { "Content-Type": "application/json" },
+    headers,
     ...(opts.signal ? { signal: opts.signal } : {}),
   };
 }
@@ -102,8 +104,12 @@ export async function generate(
     prompt,
     stream: false,
   };
-  if (opts.system) body.system = opts.system;
-  if (opts.options) body.options = opts.options;
+  if (opts.system) {
+    body.system = opts.system;
+  }
+  if (opts.options) {
+    body.options = opts.options;
+  }
 
   const { headers, signal } = buildOptions(opts);
   const res = await fetchJson<OllamaGenerateResponse>(
@@ -142,13 +148,20 @@ async function streamGenerate(
     prompt,
     stream: true,
   };
-  if (opts.system) body.system = opts.system;
-  if (opts.options) body.options = opts.options;
+  if (opts.system) {
+    body.system = opts.system;
+  }
+  if (opts.options) {
+    body.options = opts.options;
+  }
 
   try {
+    const headers: Record<string, string> = {};
+    headers["Content-Type"] = "application/json";
+
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       signal,
       body: JSON.stringify(body),
     });
@@ -170,14 +183,16 @@ async function streamGenerate(
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
+      if (done) {
+        break;
+      }
       const lines = buffer.split("\n");
       buffer = lines.pop() ?? "";
 
       for (const line of lines) {
-        if (!line.trim()) continue;
+        if (!line.trim()) {
+          continue;
+        }
         try {
           const chunk = JSON.parse(line) as OllamaGenerateResponse;
           if (chunk.response) {

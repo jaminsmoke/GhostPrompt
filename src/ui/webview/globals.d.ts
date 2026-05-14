@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/naming-convention */
 /**
  * APIs globales del webview VS Code (no exportadas por `@types/vscode` para el panel web).
  */

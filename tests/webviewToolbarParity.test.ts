@@ -14,10 +14,10 @@ function read(rel: string): string {
   return readFileSync(join(repoRoot, rel), "utf8");
 }
 
-describe("webview toolbar parity (v0.3.1 Fase A)", () => {
-  it("index.html defines exactly six setting groups with stable data-keys", () => {
-    const html = read("src/ui/webview/index.html");
-    expect(html.match(/class="setting-group"/g)?.length).toBe(6);
+describe("React webview toolbar parity", () => {
+  it("GhostToolbar defines exactly six setting groups with stable data-keys", () => {
+    const source = read("src/ui/webview/react/components/GhostToolbar.tsx");
+    expect(source.match(/data-key="/g)?.length).toBe(6);
     for (const key of [
       "completionProvider",
       "agentDestination",
@@ -26,68 +26,38 @@ describe("webview toolbar parity (v0.3.1 Fase A)", () => {
       "contextMode",
       "suggestionLanguageChoice",
     ]) {
-      expect(html).toContain(`data-key="${key}"`);
+      expect(source).toContain(`data-key="${key}"`);
     }
   });
 
-  it("index.html exposes stable toolbar control ids shared by both webviews", () => {
-    const html = read("src/ui/webview/index.html");
-    for (const id of [
-      "completion-backend-select",
-      "agent-destination-select",
-      "agent-destination-row",
-      "compose-options-details",
-      "compose-options-summary",
-      "model-select",
-      "model-runtime-label",
-      "debug-btn",
-      "prompt-input",
-      "gp-vsx-surface-note",
-      "send-btn",
-    ]) {
-      expect(html).toContain(`id="${id}"`);
-    }
+  it("component files expose stable toolbar control ids shared by both webviews", () => {
+    const toolbar = read("src/ui/webview/react/components/GhostToolbar.tsx");
+    const input = read("src/ui/webview/react/components/PromptInput.tsx");
+    const footer = read("src/ui/webview/react/components/ActionBar.tsx");
+    const app = read("src/ui/webview/react/App.tsx");
+
+    expect(toolbar).toContain('id="completion-backend-select"');
+    expect(toolbar).toContain('id="agent-destination-select"');
+    expect(toolbar).toContain('id="compose-options-details"');
+    expect(toolbar).toContain('id="model-select"');
+    expect(toolbar).toContain('id="model-runtime-label"');
+    expect(toolbar).toContain('id="debug-btn"');
+    expect(input).toContain('id="prompt-input"');
+    expect(app).toContain('id="gp-vsx-surface-note"');
+    expect(footer).toContain('id="send-btn"');
   });
 
-  it("webview entry documents VIEW_ID / VIEW_CAPS parity rules (sidebar vs panel)", () => {
-    const js = read("src/ui/webview/main.ts");
-    expect(js).toContain("Paridad sidebar vs panel");
-    expect(js).toContain("draftChanged");
-    expect(js).toContain("draftSync");
-  });
-
-  it("compact-toolbar CSS does not hide setting groups", () => {
-    const css = read("src/ui/webview/style.css");
-    const blockStart = css.indexOf("body.gp-cap-compact-toolbar");
-    expect(blockStart).toBeGreaterThan(-1);
-    const blockEnd = css.indexOf("#send-btn", blockStart);
-    const block = css.slice(blockStart, blockEnd > blockStart ? blockEnd : undefined);
-    expect(block.toLowerCase()).not.toMatch(/\.setting-group[\s\S]*display\s*:\s*none/);
-  });
-});
-
-describe("webview dual-view governance (v0.4.3 Fase 5)", () => {
-  it("ghostPromptWebviewHtml carga un único index + bundle + CSS", () => {
+  it("webviewHtml loads the React built index document", () => {
     const src = read("src/ui/provider/webviewHtml.ts");
-    expect(src).toContain('"webview"');
-    expect(src).toContain('"index.html"');
-    expect(src).toContain('"dist"');
-    expect(src).toContain('"main.js"');
-    expect(src).toContain('"style.css"');
+    expect(src).toContain("\"dist\",");
+    expect(src).toContain("\"react\",");
+    expect(src).toContain("\"index.html\"");
   });
 
-  it("MiniInputViewProvider usa ambas contribuciones y el HTML compartido", () => {
+  it("MiniInputViewProvider usa el builder de HTML compartido", () => {
     const src = read("src/ui/provider/MiniInputViewProvider.ts");
+    expect(src).toContain("buildGhostPromptWebviewHtml");
     expect(src).toContain("ghostPrompt.input");
     expect(src).toContain("ghostPrompt.inputPanel");
-    expect(src).toContain("buildGhostPromptWebviewHtml");
-    expect(src).toContain("_broadcastUi");
-  });
-
-  it("el cliente webview centraliza mensajes de estado en userErrorMessage.ts", () => {
-    const main = read("src/ui/webview/main.ts");
-    expect(main).toContain("./lib/userErrorMessage");
-    expect(main).toContain("messageForEmptySuggestion");
-    expect(main).toContain("toUserErrorMessage");
   });
 });

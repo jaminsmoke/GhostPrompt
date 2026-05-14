@@ -25,10 +25,11 @@ function buildBaseUrl(options: OpenCodeClientOptions): string {
 }
 
 function buildHeaders(options: OpenCodeClientOptions): Record<string, string> {
+  const headers: Record<string, string> = {};
   if (options.authToken) {
-    return { Authorization: `Bearer ${options.authToken}` };
+    headers.Authorization = `Bearer ${options.authToken}`;
   }
-  return {};
+  return headers;
 }
 
 export async function createOpenCodeClient(
@@ -152,13 +153,17 @@ function evictStaleSessions(): void {
 }
 
 function extractSessionId(result: unknown): string {
-  if (!result || typeof result !== "object") return "";
+  if (!result || typeof result !== "object") {
+    return "";
+  }
   const r = result as { data?: { id?: string } };
   return r.data?.id ?? "";
 }
 
 function extractPromptText(result: unknown): string {
-  if (!result || typeof result !== "object") return "";
+  if (!result || typeof result !== "object") {
+    return "";
+  }
   const r = result as { data?: { parts?: Array<{ type?: string; text?: string }> } };
   const parts = r.data?.parts ?? [];
   let text = "";
@@ -171,11 +176,19 @@ function extractPromptText(result: unknown): string {
 }
 
 function extractDeltaText(data: unknown): string | undefined {
-  if (!data || typeof data !== "object") return undefined;
+  if (!data || typeof data !== "object") {
+    return undefined;
+  }
   const d = data as Record<string, unknown>;
-  if (d.type !== "message") return undefined;
+  if (d.type !== "message") {
+    return undefined;
+  }
   const part = d.part as Record<string, unknown> | undefined;
-  if (!part) return undefined;
-  if (part.field !== "text" || typeof part.delta !== "string") return undefined;
+  if (!part) {
+    return undefined;
+  }
+  if (part.field !== "text" || typeof part.delta !== "string") {
+    return undefined;
+  }
   return part.delta;
 }

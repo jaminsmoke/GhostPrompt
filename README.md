@@ -130,7 +130,6 @@ Switch providers in **Settings** (search `ghostPrompt.completionProvider` or `en
 
 Related settings: **`ghostPrompt.opencodeExcludedModelIds`** (hide specific `providerID/modelID` rows), **`ghostPrompt.selectedModelId`** (`auto` or an explicit id), **`ghostPrompt.agentDestination`** (`copilotChat` | `vsOpenCodeX` — see [Agent destination](#completion-provider-copilot-lm-vs-opencode) above).
 
-
 **Agent destination (who owns Send + chat thread):** Setting **`ghostPrompt.agentDestination`** separates the **suggestion motor** (Copilot LM / OpenCode, chips in GhostPrompt) from **where the final prompt is sent**. **Effective default:** if **VSOpenCodeX** is installed and you have **never** saved `agentDestination` in User/Workspace settings, GhostPrompt behaves as **`vsOpenCodeX`** until you set it explicitly. The GhostPrompt view shows a **Destino** dropdown next to **Motor** when VSOpenCodeX is installed (`Copilot Chat` | `VSOpenCodeX`). With **`vsOpenCodeX`**, GhostPrompt hides the inline composer and **Send to Copilot** in the webview but keeps the **configuration strip**. VSOpenCodeX drives suggestions via **`ghostPrompt.runSuggestPipeline`** and receives UI via **`vsopencodex.ghostPromptInlineUi`** (see roadmap). If you choose **`vsOpenCodeX`** but the extension is not installed, GhostPrompt shows a one-time-per-session hint. Matriz motor/destino: [`GhostPrompt-motor-destino-matrix.md`](./Docs/Integrations/GhostPrompt-motor-destino-matrix.md); roadmap [**v0.5.0**](./Docs/Plans/Roadmaps/Roadmap-v0.5-vsopencodex-coexistence.md).
 
 **OpenCode model tiers (dropdown):** Tiers come **only** from catalog metadata (`pricing` multipliers such as `0x` / `1x`, **`free`**, or the provider id for the built-in **`opencode`** / typical **local** backends like Ollama). GhostPrompt does **not** infer premium vs free from model names. Rows without usable signals stay **Sin clasificar** / **UNKNOWN**. With **`nonPremiumOnly`**, models classified as **premium** are hidden from the list and excluded from **Auto** selection.
@@ -231,19 +230,19 @@ From the repo root:
 
 | Command | What it does |
 | ------- | ------------ |
-| `npm run validate` | ESLint on `src` + **no circular deps** (`deps:circular`) + extension `tsc` + **webview** typecheck (`webview/tsconfig.json`) + esbuild bundle (`webview/dist/main.js`) + **`verify:webview-bundle`** (`src/system/build` → `out/build`) |
-| `npm run build:webview` | Build webview only: `webview/src/main.ts` (+ modules under `webview/src/`) → **`webview/dist/main.js`** (IIFE, esbuild). The extension host loads this file via CSP-safe URI substitution in `ghostPromptWebviewHtml.ts`. |
+| `npm run validate` | ESLint on `src` + **no circular deps** (`deps:circular`) + extension `tsc` + **webview** typecheck (`webview/tsconfig.json`) + React webview build + **`verify:webview-bundle`** (`src/system/build` → `out/build`) |
+| `npm run build:webview` | Build webview only: React app in `src/ui/webview/react/` → `src/ui/webview/dist/react/index.html` + assets. The extension host loads this bundle via CSP-safe URI substitution in `src/ui/provider/webviewHtml.ts`. |
 | `npm run typecheck:webview` | `tsc --noEmit` for the webview tree only |
 | `npm run test` | Vitest unit tests (OpenCode is **mocked**; safe for CI, no network) |
 | `npm run check` | `validate` + `test` — run before shipping or opening a PR |
 
-Edit webview behavior in **TypeScript** under `webview/src/` (not hand-edit `webview/dist/main.js`; it is regenerated). After changing webview sources, `npm run validate` or `npm run build:webview` refreshes the bundle.
+Edit webview behavior in **TypeScript** under `src/ui/webview/react/` (not hand-edit `src/ui/webview/dist/react/index.html`; it is regenerated). After changing webview sources, `npm run validate` or `npm run build:webview` refreshes the bundle.
 
 ### Webview ↔ host message contracts (v0.3.2)
 
 - **Canonical Zod schemas:** [`src/system/contracts/webviewMessageSchemas.ts`](./src/system/contracts/webviewMessageSchemas.ts) — single source of truth for `postMessage` payloads (inbound to the extension host and the mirrored outbound shape from the webview).
 - **Host boundary:** [`src/host/webviewProtocols.ts`](./src/host/webviewProtocols.ts) re-exports those schemas and runs `parseWebviewInboundMessage` / `parseOutboundSettingsEnvelope` at the channel edge.
-- **Webview boundary:** [`webview/src/protocol/postToHost.ts`](./webview/src/protocol/postToHost.ts) validates outbound messages with the same inbound schema before calling `postMessage` (bundled with the webview).
+- **Webview boundary:** The current React webview bundle validates outbound messages within `src/ui/webview/react/App.tsx` before calling `postMessage` to the host.
 
 **Checklist when you change message shapes:** edit `src/system/contracts/webviewMessageSchemas.ts` first; update protocol comments in `webview/src/main.ts` if needed; run **`npm run check`** (runs extension `tsc`, webview typecheck + esbuild bundle, and tests including `tests/system/contracts/webviewMessageSchemas.test.ts` and `tests/webviewProtocols.test.ts`).
 
@@ -253,7 +252,7 @@ GhostPrompt registers **two** `WebviewViewProvider` instances (`ghostPrompt.inpu
 
 | Rule | Detail |
 | ---- | ------ |
-| **Single bundle** | HTML is built only in `src/host/ghostPromptWebviewHtml.ts` → `webview/index.html`, **`webview/dist/main.js`**, `webview/style.css`. Do not maintain separate templates per view. |
+| **Single bundle** | HTML is built only in `src/ui/provider/webviewHtml.ts` → `src/ui/webview/dist/react/index.html` + React assets. Do not maintain separate templates per view. |
 | **Capabilities** | `MiniInputViewProvider` passes `viewContributionId` into `window.__ghostPromptCapabilities`; use it for layout flags only—keep suggestion/settings behavior identical across views. |
 | **Shared copy** | User-visible empty/error strings for the status line live in **`webview/src/lib/userErrorMessage.ts`**. Optional host toasts (`src/host/suggestionHostNotification.ts`) should stay aligned for the same actionable cases. |
 | **Regression tests** | Before merging webview or toolbar edits, run **`npm run check`** (includes `tests/webviewToolbarParity.test.ts`, `tests/webviewProtocols.test.ts`, `tests/webview/userErrorMessage.test.ts`). |
@@ -266,8 +265,7 @@ High-level roadmap: [`Docs/Plans/Roadmaps/Roadmap-v0.3.2-host-refactor-webview-t
 | ------- | ------------ |
 | `npm run deps:graph` | Lists the dependency tree from `src/extension/extension.ts` (uses [madge](https://github.com/pahen/madge); optional ad‑hoc inspection — **`deps:circular`** is what runs in `validate`). |
 | `npm run deps:circular` | Fails with exit code `1` if circular imports are found (same entrypoint). Also runs automatically as part of **`npm run validate`** / **`npm run check`**. |
-| `npm run verify:webview-bundle` | Runs the compiled smoke script `out/build/verifyWebviewBundle.js` (source: [`src/system/build/verifyWebviewBundle.ts`](./src/system/build/verifyWebviewBundle.ts)). Checks that `webview/dist/main.js` exists after esbuild. **Not shipped in the VSIX** — `.vscodeignore` excludes `out/build/**`; this is dev/CI tooling only, not extension runtime. |
-
+| `npm run verify:webview-bundle` | Runs the compiled smoke script `out/build/verifyWebviewBundle.js` (source: [`src/system/build/verifyWebviewBundle.ts`](./src/system/build/verifyWebviewBundle.ts)). Checks that `src/ui/webview/dist/react/index.html` exists after the React build. **Not shipped in the VSIX** — `.vscodeignore` excludes `out/build/**`; this is dev/CI tooling only, not extension runtime. |
 
 **Soft size guideline:** prefer keeping new host modules under ~400 lines per file unless the content is mostly data; split extractors before crossing ~800 lines without a strong reason (same spirit as roadmap Phase A).
 
@@ -277,14 +275,14 @@ These exercises use your real **OpenCode CLI**, GhostPrompt’s API client conne
 
 **Prerequisites:** `opencode --version` succeeds; providers and models are configured in OpenCode (same as using the extension with **`ghostPrompt.completionProvider`: `opencode`**).
 
-**PowerShell**
+### PowerShell
 
 ```powershell
 $env:GHOST_PROMPT_OPENCODE_INTEGRATION = "1"
 npm run test:integration
 ```
 
-**bash**
+### bash
 
 ```bash
 export GHOST_PROMPT_OPENCODE_INTEGRATION=1

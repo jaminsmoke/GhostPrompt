@@ -42,6 +42,7 @@ const postMessageMock = vi.fn();
 
 vi.mock("fs", () => ({
   readFileSync: readFileSyncMock,
+  existsSync: vi.fn(() => true),
 }));
 
 vi.mock("../src/engines/engineRegistry", () => ({

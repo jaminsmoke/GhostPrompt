@@ -1,5 +1,7 @@
 # Roadmap v0.5.5 — Integración React + Vite + Tailwind
 
+<!-- markdownlint-disable MD022 MD024 MD060 -->
+
 > Estado general: 🔵 Planificado → ⚪ No iniciado | 🟡 En progreso | 🟢 Completado | 🔴 Bloqueado
 >
 > Objetivo: migrar el webview de GhostPrompt a un stack moderno para UI rica, velocidad de desarrollo y mejor compatibilidad con librerías React-first.
@@ -16,7 +18,7 @@ Esta roadmap define el plan para convertir el webview de GhostPrompt en una apli
 | Fase 1 | Configurar React + Vite en el webview | Base de build moderna y funcional | 🟢 Completado |
 | Fase 2 | Migrar el webview actual por componentes React | UI funcional en React sin romper el flujo | 🟢 Completado |
 | Fase 3 | Añadir Tailwind y estilizado utilitario | Webview con UI rica y mantenimiento rápido | 🟢 Completado |
-| Fase 4 | Pruebas, documentación y lecciones | Reporte de hallazgos y control de calidad | 🔵 Planificado |
+| Fase 4 | Pruebas, documentación y lecciones | Reporte de hallazgos y control de calidad | 🟢 Completado |
 
 Cada fase debe entregarse con un artefacto claro, pruebas ejecutables y una bitácora de problemas/resoluciones.
 
@@ -133,6 +135,13 @@ Aplicar Tailwind para estilizar el webview y permitir iteraciones rápidas de di
 ### Objetivo
 
 Cerrar la integración con pruebas, documentación de problemas y una lista de aprendizajes para futuras versiones.
+### Estado actual
+
+- Limpieza del código legacy completada.
+- Validación completa `npm run check` pasa con `218` tests.
+- Añadido un test React de renderizado para el webview: `tests/webview/App.test.tsx`.
+- Tailwind ya está integrado en `src/ui/webview/react/index.css` y la UI React se construye correctamente.
+- La fase está cerrada: los hitos 4 y 5 se completaron y el roadmap ahora refleja el estado final.
 
 ### Tareas
 
@@ -165,11 +174,11 @@ Cerrar la integración con pruebas, documentación de problemas y una lista de a
 
 | Hito | Objetivo | Criterio de éxito | Estado |
 |------|----------|-------------------|--------|
-| Hito 1 | Setup del stack | Vite + React + Tailwind configurados y build local funcionando | � Completado |
+| Hito 1 | Setup del stack | Vite + React + Tailwind configurados y build local funcionando | 🟢 Completado |
 | Hito 2 | Primer componente React | Mini-input migrado y comunicación con host comprobada | 🟢 Completado |
 | Hito 3 | Ghost suggestion migrada | Ghost inline renderiza y acepta sugerencias | 🟢 Completado |
-| Hito 4 | Tailwind estiliza la UI | Toolbar y settings migrados con Tailwind | pendiente |
-| Hito 5 | Documentación y lecciones | Roadmap actualizada con hallazgos y recomendaciones | pendiente |
+| Hito 4 | Tailwind estiliza la UI | Toolbar y settings migrados con Tailwind | 🟢 Completado |
+| Hito 5 | Documentación y lecciones | Roadmap actualizada con hallazgos y recomendaciones | 🟢 Completado |
 
 ---
 
@@ -199,6 +208,36 @@ Opcional a evaluar después de esta fase mayor:
 - `@vscode/webview-ui-toolkit` si queremos componentes VS Code nativos.
 - `ts-pattern` para lógica de mensajes compleja.
 - `@testing-library/dom` si los tests del webview necesitan más precisión.
+
+---
+
+## Post-migration: Component split + Layout VS Code nativo
+
+Durante la fase de cierre se realizaron dos mejoras estructurales importantes:
+
+### 1. División de `App.tsx` (709 → ~30 líneas)
+
+Se extrajeron los siguientes módulos:
+
+| Archivo | Contenido | Líneas |
+|---------|-----------|--------|
+| `src/ui/webview/react/types.ts` | Todos los tipos compartidos | ~50 |
+| `src/ui/webview/react/hooks/useGhostPrompt.ts` | Estado, message listener, handlers | ~200 |
+| `src/ui/webview/react/components/GhostToolbar.tsx` | Toolbar de configuración | ~220 |
+| `src/ui/webview/react/components/PromptInput.tsx` | Textarea + ghost overlay | ~60 |
+| `src/ui/webview/react/components/GhostStatusLine.tsx` | Línea de estado | ~15 |
+| `src/ui/webview/react/components/ActionBar.tsx` | Botón enviar + atajos | ~30 |
+
+**Beneficio:** cada archivo tiene una responsabilidad única; `App.tsx` solo orquesta.
+
+### 2. Layout nativo VS Code
+
+Se eliminó el contenedor exterior (card con border/shadow/rounded) que no es idiomático en un webview de VS Code. El layout ahora:
+
+- Usa `var(--vscode-*)` para fondo, texto, inputs, botones y bordes respetando el tema del usuario.
+- Elimina `min-h-screen`, `max-w-[1200px]`, `mx-auto` y sombras externas.
+- Reduce padding, gaps y border-radii para ocupar el espacio mínimo en sidebar/panel.
+- Activa `compactToolbar: true` para la vista sidebar via `_webviewCapabilitiesPayload()`.
 
 ---
 

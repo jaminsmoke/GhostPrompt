@@ -213,7 +213,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * Payload opcional para `window.__ghostPromptCapabilities` (webview).
    *
    * **Paridad v0.3.1:** Sidebar (`ghostPrompt.input`) y Panel (`ghostPrompt.inputPanel`)
-   * comparten el mismo `index.html` / `dist/main.js`; este objeto debe ser **funcionalmente
+   * comparten el mismo bundle React (`dist/react/index.html`); este objeto debe ser **funcionalmente
    * idéntico** para ambas contribuciones (misma forma y mismos flags). Solo se permiten
    * claves que afecten **presentación** en CSS (p. ej. `compactToolbar`), nunca un catálogo
    * distinto de controles por vista.
@@ -221,7 +221,9 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * Por defecto vacío: misma UX en ambas superficies.
    */
   private _webviewCapabilitiesPayload(): Record<string, unknown> {
-    return {};
+    return this.viewContributionId === "ghostPrompt.input"
+      ? { compactToolbar: true }
+      : {};
   }
 
   public resolveWebviewView(
@@ -264,7 +266,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   }
 
   /**
-   * Loads `src/ui/webview/index.html` and injects secure asset URIs and the CSP nonce.
+   * Builds HTML from the React webview bundle and injects secure asset URIs and the CSP nonce.
    *
    * @param webview - The webview instance to generate HTML for.
    */

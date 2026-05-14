@@ -31,8 +31,12 @@ const ollamaProvider: CompletionProvider = {
 export function getCompletionProviderForSource(
   source: "copilot" | "opencode" | "ollama",
 ): CompletionProvider {
-  if (source === "opencode") return opencodeProvider;
-  if (source === "ollama") return ollamaProvider;
+  if (source === "opencode") {
+    return opencodeProvider;
+  }
+  if (source === "ollama") {
+    return ollamaProvider;
+  }
   return copilotLmProvider;
 }
 

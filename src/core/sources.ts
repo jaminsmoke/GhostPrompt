@@ -30,8 +30,12 @@ function legacySourcesFromCompletionProvider(): CompletionSourceId[] {
   const v = vscode.workspace
     .getConfiguration("ghostPrompt")
     .get<string>("completionProvider", "copilot");
-  if (v === "opencode") return ["opencode"];
-  if (v === "ollama") return ["ollama"];
+  if (v === "opencode") {
+    return ["opencode"];
+  }
+  if (v === "ollama") {
+    return ["ollama"];
+  }
   return ["copilot"];
 }
 
