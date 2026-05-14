@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const getMock = vi.hoisted(() => vi.fn());
 const inspectMock = vi.hoisted(() =>
@@ -9,7 +9,7 @@ const inspectMock = vi.hoisted(() =>
   })),
 );
 
-vi.mock("vscode", () => ({
+vi.mock('vscode', () => ({
   workspace: {
     getConfiguration: () => ({
       get: getMock,
@@ -21,9 +21,9 @@ vi.mock("vscode", () => ({
 import {
   getActiveCompletionProvider,
   getCompletionProviderKind,
-} from "../src/engines/engineRegistry";
+} from '../src/engines/engineRegistry';
 
-describe("getActiveCompletionProvider", () => {
+describe('getActiveCompletionProvider', () => {
   beforeEach(() => {
     getMock.mockReset();
     inspectMock.mockReset();
@@ -34,33 +34,33 @@ describe("getActiveCompletionProvider", () => {
     }));
   });
 
-  it("returns Copilot LM when completionProvider defaults", () => {
+  it('returns Copilot LM when completionProvider defaults', () => {
     getMock.mockImplementation((_key: string, defaultValue: unknown) => defaultValue);
-    expect(getActiveCompletionProvider().id).toBe("copilotLm");
+    expect(getActiveCompletionProvider().id).toBe('copilotLm');
   });
 
-  it("returns OpenCode when completionProvider is opencode", () => {
+  it('returns OpenCode when completionProvider is opencode', () => {
     getMock.mockImplementation((key: string, defaultValue: unknown) =>
-      key === "completionProvider" ? "opencode" : defaultValue,
+      key === 'completionProvider' ? 'opencode' : defaultValue,
     );
-    expect(getActiveCompletionProvider().id).toBe("opencode");
-    expect(getCompletionProviderKind()).toBe("opencode");
+    expect(getActiveCompletionProvider().id).toBe('opencode');
+    expect(getCompletionProviderKind()).toBe('opencode');
   });
 
-  it("getCompletionProviderKind tracks configuration", () => {
+  it('getCompletionProviderKind tracks configuration', () => {
     getMock.mockImplementation((key: string, defaultValue: unknown) =>
-      key === "completionProvider" ? "opencode" : defaultValue,
+      key === 'completionProvider' ? 'opencode' : defaultValue,
     );
-    expect(getCompletionProviderKind()).toBe("opencode");
+    expect(getCompletionProviderKind()).toBe('opencode');
     getMock.mockImplementation((_key: string, defaultValue: unknown) => defaultValue);
-    expect(getCompletionProviderKind()).toBe("copilot");
+    expect(getCompletionProviderKind()).toBe('copilot');
   });
 
-  it("returns OpenCode when enabledCompletionSources is explicitly configured", () => {
+  it('returns OpenCode when enabledCompletionSources is explicitly configured', () => {
     inspectMock.mockImplementation((key: string) =>
-      key === "enabledCompletionSources"
+      key === 'enabledCompletionSources'
         ? {
-            globalValue: ["opencode"],
+            globalValue: ['opencode'],
             workspaceValue: undefined,
             workspaceFolderValue: undefined,
           }
@@ -71,22 +71,22 @@ describe("getActiveCompletionProvider", () => {
           },
     );
     getMock.mockImplementation((key: string, defaultValue: unknown) =>
-      key === "enabledCompletionSources"
-        ? ["opencode"]
-        : key === "completionProvider"
-        ? "copilot"
-        : defaultValue,
+      key === 'enabledCompletionSources'
+        ? ['opencode']
+        : key === 'completionProvider'
+          ? 'copilot'
+          : defaultValue,
     );
 
-    expect(getActiveCompletionProvider().id).toBe("opencode");
-    expect(getCompletionProviderKind()).toBe("opencode");
+    expect(getActiveCompletionProvider().id).toBe('opencode');
+    expect(getCompletionProviderKind()).toBe('opencode');
   });
 
-  it("returns Copilot when multiple enabledCompletionSources are active", () => {
+  it('returns Copilot when multiple enabledCompletionSources are active', () => {
     inspectMock.mockImplementation((key: string) =>
-      key === "enabledCompletionSources"
+      key === 'enabledCompletionSources'
         ? {
-            globalValue: ["copilot", "opencode"],
+            globalValue: ['copilot', 'opencode'],
             workspaceValue: undefined,
             workspaceFolderValue: undefined,
           }
@@ -97,14 +97,14 @@ describe("getActiveCompletionProvider", () => {
           },
     );
     getMock.mockImplementation((key: string, defaultValue: unknown) =>
-      key === "enabledCompletionSources"
-        ? ["copilot", "opencode"]
-        : key === "completionProvider"
-        ? "opencode"
-        : defaultValue,
+      key === 'enabledCompletionSources'
+        ? ['copilot', 'opencode']
+        : key === 'completionProvider'
+          ? 'opencode'
+          : defaultValue,
     );
 
-    expect(getActiveCompletionProvider().id).toBe("copilotLm");
-    expect(getCompletionProviderKind()).toBe("copilot");
+    expect(getActiveCompletionProvider().id).toBe('copilotLm');
+    expect(getCompletionProviderKind()).toBe('copilot');
   });
 });

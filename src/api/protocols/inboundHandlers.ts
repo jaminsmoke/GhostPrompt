@@ -2,25 +2,22 @@
  * Handlers por `message.type` del canal webview → host (init, suggest, send, …).
  * Router: `dispatchGhostPromptInboundMessage`. Roadmap v0.3.2 fase A.
  */
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 import {
   getActiveDestinationProvider,
   getGhostPromptAgentDestination,
-} from "../../destinations/destinationRegistry";
+} from '../../destinations/destinationRegistry';
 import { append as appendLog } from '../../system/log/ConversationLog';
 import { appendSuggestion } from '../../system/log/SuggestionLog';
 import { ghostPromptSessionStore } from '../../core/session/GhostPromptSessionStore';
-import { applyWebviewUpdateSetting } from "../settings/applyWebviewUpdate";
+import { applyWebviewUpdateSetting } from '../settings/applyWebviewUpdate';
 import { logDebugInfo } from '../../system/debug/SuggestionDebug';
-import {
-  type GhostPromptSuggestDeps,
-  handleGhostPromptSuggest,
-} from "../../core/pipeline";
-import { providerStatusManager } from "../../system/status";
-import { ollamaModelManager } from "../../engines/ollama";
-import { looksLikeOllamaModelId } from "../../core/sources";
-import { parseWebviewOutboundMessage } from "./webviewProtocols";
-import type { WebviewInboundMessage } from "./webviewProtocols";
+import { type GhostPromptSuggestDeps, handleGhostPromptSuggest } from '../../core/pipeline';
+import { providerStatusManager } from '../../system/status';
+import { ollamaModelManager } from '../../engines/ollama';
+import { looksLikeOllamaModelId } from '../../core/sources';
+import { parseWebviewOutboundMessage } from './webviewProtocols';
+import type { WebviewInboundMessage } from './webviewProtocols';
 
 export type GhostPromptInboundBroadcastServices = {
   broadcastDraftSync: (originViewId: string, text: string) => void;
@@ -29,15 +26,14 @@ export type GhostPromptInboundBroadcastServices = {
   broadcastUi: (payload: Record<string, unknown>) => void;
 };
 
-export type GhostPromptInboundDispatchServices =
-  GhostPromptInboundBroadcastServices & {
-    viewContributionId: string;
-    webview: vscode.Webview;
-    /** `storageUri ?? GlobalStorageUri` del ExtensionContext (siempre hay `globalStorageUri`). */
-    dataUri: vscode.Uri;
-    postSettings: (webview: vscode.Webview) => Promise<void>;
-    suggestDeps: GhostPromptSuggestDeps;
-  };
+export type GhostPromptInboundDispatchServices = GhostPromptInboundBroadcastServices & {
+  viewContributionId: string;
+  webview: vscode.Webview;
+  /** `storageUri ?? GlobalStorageUri` del ExtensionContext (siempre hay `globalStorageUri`). */
+  dataUri: vscode.Uri;
+  postSettings: (webview: vscode.Webview) => Promise<void>;
+  suggestDeps: GhostPromptSuggestDeps;
+};
 
 /**
  * Inicializa la vista webview y envía el estado inicial a la UI.
@@ -51,7 +47,7 @@ export async function handleGhostPromptInboundInit(
 ): Promise<void> {
   await postSettings(webview);
   const draftPayload = {
-    type: "draftHydrate" as const,
+    type: 'draftHydrate' as const,
     text: ghostPromptSessionStore.getSnapshot().draftText,
   };
   const validated = parseWebviewOutboundMessage(draftPayload);
@@ -68,11 +64,8 @@ export async function handleGhostPromptInboundInit(
  * @return {void} Void.
  */
 export function handleGhostPromptInboundDraftChanged(
-  message: Extract<WebviewInboundMessage, { type: "draftChanged" }>,
-  services: Pick<
-    GhostPromptInboundDispatchServices,
-    "viewContributionId" | "broadcastDraftSync"
-  >,
+  message: Extract<WebviewInboundMessage, { type: 'draftChanged' }>,
+  services: Pick<GhostPromptInboundDispatchServices, 'viewContributionId' | 'broadcastDraftSync'>,
 ): void {
   if (message.originViewId !== services.viewContributionId) {
     return;
@@ -94,31 +87,34 @@ export function handleGhostPromptInboundDraftChanged(
  * @return {Promise<void>} Promise que se resuelve cuando la actualización termina.
  */
 export async function handleGhostPromptInboundUpdateSetting(
-  message: Extract<WebviewInboundMessage, { type: "updateSetting" }>,
+  message: Extract<WebviewInboundMessage, { type: 'updateSetting' }>,
   broadcastSettingsToAllViews: () => Promise<void>,
   dispatchServices?: GhostPromptInboundDispatchServices,
 ): Promise<void> {
   await applyWebviewUpdateSetting(message);
   await broadcastSettingsToAllViews();
 
-  if (message.key === "selectedModelId" && message.value && dispatchServices) {
+  if (message.key === 'selectedModelId' && message.value && dispatchServices) {
     if (looksLikeOllamaModelId(message.value)) {
       ollamaModelManager.stopAll();
-      ollamaModelManager.startModel(message.value).then(async () => {
-        const providers = await providerStatusManager.refreshAll();
-        dispatchServices!.broadcastUi({ type: "providerStatus", providers });
-      }).catch(async () => {
-        const providers = await providerStatusManager.refreshAll();
-        dispatchServices!.broadcastUi({ type: "providerStatus", providers });
-      });
+      ollamaModelManager
+        .startModel(message.value)
+        .then(async () => {
+          const providers = await providerStatusManager.refreshAll();
+          dispatchServices!.broadcastUi({ type: 'providerStatus', providers });
+        })
+        .catch(async () => {
+          const providers = await providerStatusManager.refreshAll();
+          dispatchServices!.broadcastUi({ type: 'providerStatus', providers });
+        });
     }
   }
 
-  if (message.key === "completionProvider" && dispatchServices) {
-    if (message.value !== "ollama") {
+  if (message.key === 'completionProvider' && dispatchServices) {
+    if (message.value !== 'ollama') {
       ollamaModelManager.stopAll();
       const providers = await providerStatusManager.refreshAll();
-      dispatchServices.broadcastUi({ type: "providerStatus", providers });
+      dispatchServices.broadcastUi({ type: 'providerStatus', providers });
     }
   }
 }
@@ -130,7 +126,7 @@ export async function handleGhostPromptInboundUpdateSetting(
  * @return {Promise<void>} Promise que se resuelve cuando la sugerencia se registra.
  */
 export async function handleGhostPromptInboundAccept(
-  message: Extract<WebviewInboundMessage, { type: "accept" }>,
+  message: Extract<WebviewInboundMessage, { type: 'accept' }>,
   dataUri: vscode.Uri,
 ): Promise<void> {
   ghostPromptSessionStore.patchState({
@@ -147,18 +143,18 @@ export async function handleGhostPromptInboundAccept(
  * @return {Promise<void>} Promise que se resuelve cuando el envío se procesa.
  */
 export async function handleGhostPromptInboundSend(
-  message: Extract<WebviewInboundMessage, { type: "send" }>,
+  message: Extract<WebviewInboundMessage, { type: 'send' }>,
   dataUri: vscode.Uri,
   broadcastClearAll: () => void,
 ): Promise<void> {
-  if (getGhostPromptAgentDestination() === "vsOpenCodeX") {
+  if (getGhostPromptAgentDestination() === 'vsOpenCodeX') {
     return;
   }
   if (!message.text) {
     return;
   }
   const provider = getActiveDestinationProvider();
-  if (typeof provider.sendPrompt !== "function") {
+  if (typeof provider.sendPrompt !== 'function') {
     void vscode.window.showErrorMessage(
       `GhostPrompt: destino '${provider.id}' no tiene función de envío registrada.`,
     );
@@ -173,15 +169,15 @@ export async function handleGhostPromptInboundSend(
     );
     return;
   }
-  const recent = [
-    message.text,
-    ...ghostPromptSessionStore.getSnapshot().recentSentPrompts,
-  ].slice(0, 5);
+  const recent = [message.text, ...ghostPromptSessionStore.getSnapshot().recentSentPrompts].slice(
+    0,
+    5,
+  );
   ghostPromptSessionStore.patchState({
     lastSentPrompt: message.text,
     recentSentPrompts: recent,
-    pendingSuggestion: "",
-    draftText: "",
+    pendingSuggestion: '',
+    draftText: '',
   });
   await appendLog(dataUri, message.text);
   broadcastClearAll();
@@ -200,43 +196,43 @@ export async function dispatchGhostPromptInboundMessage(
   const dispatchServices = services satisfies GhostPromptInboundDispatchServices;
   logDebugInfo(`Dispatching inbound webview message type=${message.type}`);
   switch (message.type) {
-    case "init":
+    case 'init':
       await handleGhostPromptInboundInit(dispatchServices.webview, dispatchServices.postSettings);
       return;
-    case "draftChanged":
+    case 'draftChanged':
       handleGhostPromptInboundDraftChanged(message, dispatchServices);
       return;
-    case "updateSetting":
+    case 'updateSetting':
       await handleGhostPromptInboundUpdateSetting(
         message,
         dispatchServices.broadcastSettingsToAllViews,
         dispatchServices,
       );
       return;
-    case "suggest":
-      if (getGhostPromptAgentDestination() === "vsOpenCodeX") {
+    case 'suggest':
+      if (getGhostPromptAgentDestination() === 'vsOpenCodeX') {
         return;
       }
       await handleGhostPromptSuggest(message, dispatchServices.suggestDeps);
       return;
-    case "accept":
+    case 'accept':
       await handleGhostPromptInboundAccept(message, dispatchServices.dataUri);
       return;
-    case "send":
+    case 'send':
       await handleGhostPromptInboundSend(
         message,
         dispatchServices.dataUri,
         dispatchServices.broadcastClearAll,
       );
       return;
-    case "requestProviderStatus":
+    case 'requestProviderStatus':
       await handleProviderStatusRequest(dispatchServices.webview, dispatchServices);
       return;
-    case "startProvider":
+    case 'startProvider':
       await providerStatusManager.start(message.provider);
       await postProviderStatus(dispatchServices.webview, dispatchServices);
       return;
-    case "stopProvider":
+    case 'stopProvider':
       await providerStatusManager.stop(message.provider);
       await postProviderStatus(dispatchServices.webview, dispatchServices);
       return;
@@ -253,7 +249,10 @@ export async function dispatchGhostPromptInboundMessage(
  * @param {GhostPromptInboundDispatchServices} services Servicios de dispatch necesarios.
  * @return {Promise<void>} Promise que se resuelve cuando el status se envía.
  */
-async function handleProviderStatusRequest(webview: vscode.Webview, services: GhostPromptInboundDispatchServices): Promise<void> {
+async function handleProviderStatusRequest(
+  webview: vscode.Webview,
+  services: GhostPromptInboundDispatchServices,
+): Promise<void> {
   await postProviderStatus(webview, services);
 }
 
@@ -263,9 +262,12 @@ async function handleProviderStatusRequest(webview: vscode.Webview, services: Gh
  * @param {GhostPromptInboundDispatchServices} services Servicios de broadcast y dispatch.
  * @return {Promise<void>} Promise que se resuelve cuando el mensaje se disparó.
  */
-async function postProviderStatus(webview: vscode.Webview, services: GhostPromptInboundDispatchServices): Promise<void> {
+async function postProviderStatus(
+  webview: vscode.Webview,
+  services: GhostPromptInboundDispatchServices,
+): Promise<void> {
   const providers = await providerStatusManager.refreshAll();
-  const msg = { type: "providerStatus" as const, providers };
+  const msg = { type: 'providerStatus' as const, providers };
   const validated = parseWebviewOutboundMessage(msg);
   if (!validated) {
     return;

@@ -337,6 +337,8 @@
     "deps:graph": "madge --ts-config tsconfig.json --extensions ts src/extension/extension.ts",
     "deps:circular": "madge --ts-config tsconfig.json --extensions ts --circular src/extension/extension.ts",
     "check": "npm run validate && npm run test",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,css,scss,html,mdx}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md,css,scss,html,mdx}\"",
     "vscode:prepublish": "npm run clean && npm run build:webview && npm run compile",
     "vsix": "npx vsce package"
   },
@@ -360,6 +362,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "madge": "^8.0.0",
     "postcss": "^8.4.37",
+    "prettier": "^3.8.3",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "tailwindcss": "^4.3.0",

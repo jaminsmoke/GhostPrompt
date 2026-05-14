@@ -34,8 +34,8 @@
 
 ```ts
 deps.broadcastUi({
-  type: "languageEffective",
-  language: effectiveLanguage,  // <-- campo 'language'
+  type: 'languageEffective',
+  language: effectiveLanguage, // <-- campo 'language'
 });
 ```
 
@@ -43,8 +43,8 @@ deps.broadcastUi({
 
 ```ts
 export const webviewOutboundLanguageEffectiveSchema = z.object({
-  type: z.literal("languageEffective"),
-  language: z.enum(["es", "en"]),
+  type: z.literal('languageEffective'),
+  language: z.enum(['es', 'en']),
   captureId: z.number().optional(),
   broadcast: z.boolean().optional(),
 });
@@ -93,12 +93,12 @@ private static _broadcastUi(payload: Record<string, unknown>): void {
 
 Se testean 12 de 12 fases. Se agregaron casos faltantes para:
 
-| Fase | Source (`src/core/loading.ts`) |
-|---|---|
-| `ollama-checking-install` | L46 |
-| `ollama-listing-models` | L48 |
-| `ollama-starting-model` | L49 |
-| `ollama-model-ready` | L52 |
+| Fase                      | Source (`src/core/loading.ts`) |
+| ------------------------- | ------------------------------ |
+| `ollama-checking-install` | L46                            |
+| `ollama-listing-models`   | L48                            |
+| `ollama-starting-model`   | L49                            |
+| `ollama-model-ready`      | L52                            |
 
 **Impacto:** Bajo ahora, pero la cobertura ya protege los cambios de texto y asegura que todas las fases Ollama estén validadas.
 
@@ -146,13 +146,13 @@ El mock se actualizó para conservar la implementación real de `parseWebviewOut
 
 ## Resumen de prioridades sugeridas
 
-| # | Issue | Prioridad | Esfuerzo estimado |
-|---|---|---|---|
-| 1 | Mock paths rotos | 🔴 Alta | 5 min |
-| 2 | `languageEffective` desincronizado | 🔴 Alta | 30 min (3 archivos) |
-| 3 | Return value descartado en `_broadcastUi` | 🟡 Media | 10 min |
-| 4 | Fases de loading sin test | 🟡 Media | 10 min |
-| 5 | Docs desactualizados | 🟡 Media | 10 min |
-| 6 | Coverage legacy-only | 🟢 Baja | 15 min |
-| 7 | Tipos webview vs Zod | 🟢 Baja | 5 min |
-| 8 | Mock no-op en test | 🟢 Baja | 10 min |
+| #   | Issue                                     | Prioridad | Esfuerzo estimado   |
+| --- | ----------------------------------------- | --------- | ------------------- |
+| 1   | Mock paths rotos                          | 🔴 Alta   | 5 min               |
+| 2   | `languageEffective` desincronizado        | 🔴 Alta   | 30 min (3 archivos) |
+| 3   | Return value descartado en `_broadcastUi` | 🟡 Media  | 10 min              |
+| 4   | Fases de loading sin test                 | 🟡 Media  | 10 min              |
+| 5   | Docs desactualizados                      | 🟡 Media  | 10 min              |
+| 6   | Coverage legacy-only                      | 🟢 Baja   | 15 min              |
+| 7   | Tipos webview vs Zod                      | 🟢 Baja   | 5 min               |
+| 8   | Mock no-op en test                        | 🟢 Baja   | 10 min              |

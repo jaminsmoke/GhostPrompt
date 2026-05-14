@@ -26,17 +26,17 @@
  *   - Mensajes de suggestion pueden llevar `broadcast: true` para espejar Sidebar + Panel.
  *   - Contratos Zod (`system/contracts/webviewMessageSchemas.ts` / `api/protocols/webviewProtocols.ts`): entrada webview → host y salida `settings`.
  */
-import * as vscode from "vscode";
-import { buildAndPostGhostPromptSettings } from "../../api/settings/settingsPostMessage";
-import { buildGhostPromptWebviewHtml } from "./webviewHtml";
+import * as vscode from 'vscode';
+import { buildAndPostGhostPromptSettings } from '../../api/settings/settingsPostMessage';
+import { buildGhostPromptWebviewHtml } from './webviewHtml';
 import { logDebugInfo } from '../../system/debug/SuggestionDebug';
-import { getProjectMemoryBaseDir } from "../../core/memory/activate";
+import { getProjectMemoryBaseDir } from '../../core/memory/activate';
 import {
   reconcileProjectMemoryForSuggest,
   writeReconciledProjectBootstrapSnapshot,
-} from "../../core/memory/persist";
-import { NodeProjectMemoryFs } from "../../core/memory/io/fs";
-import { ProjectMemoryStore } from "../../core/memory/Store";
+} from '../../core/memory/persist';
+import { NodeProjectMemoryFs } from '../../core/memory/io/fs';
+import { ProjectMemoryStore } from '../../core/memory/Store';
 import {
   collectGhostPromptProjectContext,
   getGhostPromptContextMode,
@@ -48,20 +48,21 @@ import {
   getGhostPromptSuggestionLanguageMode,
   getGhostPromptSuggestionModelPolicy,
   getGhostPromptSuggestionStyle,
-} from "../../api/getters/workspaceGetters";
-import { handleGhostPromptSuggest } from "../../core/pipeline";
+} from '../../api/getters/workspaceGetters';
+import { handleGhostPromptSuggest } from '../../core/pipeline';
+import { dispatchGhostPromptInboundMessage } from '../../api/protocols/inboundHandlers';
+import type { GhostPromptSuggestDeps } from '../../core/pipeline';
 import {
-  dispatchGhostPromptInboundMessage,
-} from "../../api/protocols/inboundHandlers";
-import type { GhostPromptSuggestDeps } from "../../core/pipeline";
-import { parseWebviewInboundMessage, parseWebviewOutboundMessage } from "../../api/protocols/webviewProtocols";
-import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from "../../destinations/vsOpenCodeX/vsOpenCodeXDestination";
+  parseWebviewInboundMessage,
+  parseWebviewOutboundMessage,
+} from '../../api/protocols/webviewProtocols';
+import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from '../../destinations/vsOpenCodeX/vsOpenCodeXDestination';
 
 export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /** View ID for the activity bar container. */
-  public static readonly viewId = "ghostPrompt.input";
+  public static readonly viewId = 'ghostPrompt.input';
   /** View ID for the bottom panel container. */
-  public static readonly panelViewId = "ghostPrompt.inputPanel";
+  public static readonly panelViewId = 'ghostPrompt.inputPanel';
 
   private static readonly _instances = new Set<MiniInputViewProvider>();
 
@@ -123,7 +124,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
       if (instance.viewContributionId === originViewId) {
         continue;
       }
-      const msg = { type: "draftSync" as const, text, originViewId };
+      const msg = { type: 'draftSync' as const, text, originViewId };
       const validated = parseWebviewOutboundMessage(msg);
       if (!validated) {
         continue;
@@ -135,10 +136,10 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /** Vacía el composer en todas las vistas (p. Ej. Tras enviar al chat). */
   private static _broadcastClearAll(): void {
     forwardGhostPromptInlineUiToVsOpenCodeIfApplicable({
-      type: "clear",
+      type: 'clear',
       broadcast: true,
     });
-    const msg = { type: "clear" as const };
+    const msg = { type: 'clear' as const };
     const validated = parseWebviewOutboundMessage(msg);
     if (!validated) {
       return;
@@ -191,12 +192,10 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     if (!trimmed) {
       return;
     }
-    const first =
-      [...MiniInputViewProvider._instances][0] ??
-      undefined;
+    const first = [...MiniInputViewProvider._instances][0] ?? undefined;
     const captureId = Date.now();
     await handleGhostPromptSuggest(
-      { type: "suggest", text: trimmed, captureId },
+      { type: 'suggest', text: trimmed, captureId },
       MiniInputViewProvider.ghostPromptSuggestDeps(first),
     );
   }
@@ -220,9 +219,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
 
   private static async _broadcastSettingsToAllViews(): Promise<void> {
     await Promise.all(
-      Array.from(MiniInputViewProvider._instances, (instance) =>
-        instance._postSettingsIfReady(),
-      ),
+      Array.from(MiniInputViewProvider._instances, (instance) => instance._postSettingsIfReady()),
     );
   }
 
@@ -259,18 +256,18 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [
-        vscode.Uri.joinPath(extensionUri, "src", "ui", "webview"),
-        vscode.Uri.joinPath(extensionUri, "src", "ui", "webview", "dist", "react"),
+        vscode.Uri.joinPath(extensionUri, 'src', 'ui', 'webview'),
+        vscode.Uri.joinPath(extensionUri, 'src', 'ui', 'webview', 'dist', 'react'),
       ],
     };
 
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
     webviewView.webview.onDidReceiveMessage(async (raw: unknown) => {
-      logDebugInfo("Received raw webview message.");
+      logDebugInfo('Received raw webview message.');
       const message = parseWebviewInboundMessage(raw);
       if (!message) {
-        logDebugInfo("Webview inbound message failed validation.");
+        logDebugInfo('Webview inbound message failed validation.');
         return;
       }
       logDebugInfo(`Parsed webview message type=${message.type}`);
@@ -280,12 +277,10 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         dataUri,
         postSettings: (w) => this._postSettings(w),
         broadcastDraftSync: MiniInputViewProvider._broadcastDraftSync,
-        broadcastSettingsToAllViews:
-          MiniInputViewProvider._broadcastSettingsToAllViews,
+        broadcastSettingsToAllViews: MiniInputViewProvider._broadcastSettingsToAllViews,
         broadcastClearAll: MiniInputViewProvider._broadcastClearAll,
         broadcastUi: MiniInputViewProvider._broadcastUi,
-        suggestDeps:
-          MiniInputViewProvider.ghostPromptSuggestDeps(this),
+        suggestDeps: MiniInputViewProvider.ghostPromptSuggestDeps(this),
       });
     });
   }
