@@ -14,8 +14,8 @@
 
 | Fase | Alcance | Resultado | Estado |
 |------|---------|-----------|--------|
-| Fase 1 | Tipos compartidos + ProviderStatusManager | Base del sistema de estados | ⚪ No iniciado |
-| Fase 2 | Módulos de estado individuales (copilot, opencode, ollama, destinos) | Cada provider sabe checkear su estado | ⚪ No iniciado |
+| Fase 1 | Tipos compartidos + ProviderStatusManager | Base del sistema de estados | 🟢 Completado |
+| Fase 2 | Módulos de estado individuales (copilot, opencode, ollama, destinos) | Cada provider sabe checkear su estado | 🟢 Completado |
 | Fase 3 | Mensajes host↔webview | Protocolo completo de estados | ⚪ No iniciado |
 | Fase 4 | GhostToolbar: chip Motor con estados + acciones | UI muestra estado, permite iniciar/detener | ⚪ No iniciado |
 | Fase 5 | Validación + tests | Build + 219+ tests | ⚪ No iniciado |
@@ -198,8 +198,8 @@
 
 | Hito | Objetivo | Criterio de éxito | Estado |
 |------|----------|-------------------|--------|
-| Hito 1 | ProviderStatusManager funcional | Registra módulos, refreshAll funciona | ⚪ No iniciado |
-| Hito 2 | Módulos de estado completos | Cada provider checkea su estado correctamente | ⚪ No iniciado |
+| Hito 1 | ProviderStatusManager funcional | Registra módulos, refreshAll funciona | 🟢 Completado |
+| Hito 2 | Módulos de estado completos | Cada provider checkea su estado correctamente | 🟢 Completado |
 | Hito 3 | Comunicación host↔webview | Mensajes providerStatus fluyen en ambos sentidos | ⚪ No iniciado |
 | Hito 4 | Chip Motor con estados | Estados visibles con iconos + acciones en popup | ⚪ No iniciado |
 | Hito 5 | Validación final | Build + tests pasan | ⚪ No iniciado |
