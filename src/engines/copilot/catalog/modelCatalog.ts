@@ -53,7 +53,11 @@ export async function listSuggestionModels(
   return descriptors;
 }
 
-/** Expuesto para el proveedor LM al armar el resultado de suggestion. */
+/**
+ * Expuesto para el proveedor LM al armar el resultado de suggestion.
+ * @param model
+ * @returns Descriptor del modelo.
+ */
 export function describeModel(model: unknown): SuggestionModelDescriptor {
   const data = model as {
     id?: string;

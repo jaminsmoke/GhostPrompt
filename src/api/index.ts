@@ -1,5 +1,5 @@
 /**
- * @fileoverview Barrel público de la API interna webview↔host.
+ * @file Barrel público de la API interna webview↔host.
  *
  * La API interna de GhostPrompt gestiona toda la comunicación entre el webview
  * (UI del mini-input) y el extension host. Se organiza en tres subdominios:

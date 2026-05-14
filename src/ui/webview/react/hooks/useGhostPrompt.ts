@@ -327,6 +327,9 @@ export function useGhostPrompt() {
   const handleCompletionProviderChange = (value: CompletionProvider) => {
     setCompletionProvider(value);
     sendUpdateSetting({ type: "updateSetting", key: "completionProvider", value });
+    if (value === "ollama") {
+      setSelectedModelId("");
+    }
   };
 
   const handleAgentDestinationChange = (value: AgentDestination) => {
@@ -338,6 +341,11 @@ export function useGhostPrompt() {
   const handleSelectedModelChange = (value: string) => {
     setSelectedModelId(value);
     sendUpdateSetting({ type: "updateSetting", key: "selectedModelId", value });
+    if (completionProvider === "ollama" && value) {
+      queryClient.setQueryData<ProviderStateRecord[]>(["providerStatus"], (old) =>
+        old.map((p) => (p.id === "ollama" ? { ...p, status: "starting" as const, statusText: "Iniciando…" } : p)),
+      );
+    }
   };
 
   const handleDebugToggle = () => {

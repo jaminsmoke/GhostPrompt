@@ -1,5 +1,5 @@
 /**
- * @fileoverview Estado de sesión único para todas las vistas GhostPrompt (Sidebar + Panel).
+ * @file Estado de sesión único para todas las vistas GhostPrompt (Sidebar + Panel).
  * Sprint v0.2.4b: fuente de verdad en host para draft/suggestions efectivas y settings runtime.
  */
 import * as vscode from "vscode";
@@ -52,7 +52,7 @@ export type GhostPromptSessionListener = (
 ) => void;
 
 /**
- * Store singleton compartido por todas las instancias de {@link MiniInputViewProvider}.
+ * Store singleton compartido por todas las instancias de MiniInputViewProvider.
  */
 export class GhostPromptSessionStore {
   private _state: GhostPromptSessionState = createInitialSessionState();
@@ -65,6 +65,7 @@ export class GhostPromptSessionStore {
 
   /**
    * Fusiona campos en el estado y notifica suscriptores.
+   * @param partial
    */
   public patchState(partial: Partial<GhostPromptSessionState>): void {
     const next: GhostPromptSessionState = {
@@ -80,6 +81,9 @@ export class GhostPromptSessionStore {
 
   /**
    * Suscripción por identificador de vista (ej. `ghostPrompt.input` vs `ghostPrompt.inputPanel`).
+   * @param viewId
+   * @param listener
+   * @returns Disposable para cancelar la suscripción.
    */
   public subscribe(viewId: string, listener: GhostPromptSessionListener): vscode.Disposable {
     let set = this._subscribers.get(viewId);
@@ -99,6 +103,8 @@ export class GhostPromptSessionStore {
 
   /**
    * Inicia un nuevo intento de suggestion: cancela request anterior, fija capture id y estado loading.
+   * @param captureId
+   * @returns Token de cancelación para la request.
    */
   public prepareSuggestionRequest(captureId: number): vscode.CancellationTokenSource {
     this._activeSuggestionToken?.cancel();

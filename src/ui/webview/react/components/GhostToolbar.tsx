@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { AgentDestination, CompletionProvider, ProviderState, ProviderStateRecord, SuggestionModel } from "../types";
 import { ToolbarChip } from "./ToolbarChip";
 
@@ -106,7 +106,13 @@ export function GhostToolbar({
     ? `${statusIcon(currentProviderStatus.status)} ${providerLabel}`
     : providerLabel;
 
-  const currentModel = availableModels.find((m) => m.id === selectedModelId);
+  const filteredModels = useMemo(() => {
+    if (completionProvider === "ollama") { return availableModels.filter((m) => m.completionSource === "ollama"); }
+    if (completionProvider === "opencode") { return availableModels.filter((m) => m.completionSource === "opencode"); }
+    return availableModels;
+  }, [completionProvider, availableModels]);
+
+  const currentModel = filteredModels.find((m) => m.id === selectedModelId);
   const modeloLabel = currentModel?.label ?? (selectedModelId === "auto" ? "Auto" : selectedModelId);
 
   const styleLabel = suggestionStyle === "concise" ? "Breve" : suggestionStyle === "balanced" ? "Normal" : "Extenso";
@@ -282,8 +288,11 @@ export function GhostToolbar({
               onChange={(e) => handleModel(e.target.value)}
               aria-label="Modelo sugerencias"
             >
+              {selectedModelId === "" && (
+                <option value="" disabled>Selecciona modelo</option>
+              )}
               <option value="auto">Auto</option>
-              {availableModels.map((model) => (
+              {filteredModels.map((model) => (
                 <option key={model.id} value={model.id}>
                   {model.label}
                 </option>

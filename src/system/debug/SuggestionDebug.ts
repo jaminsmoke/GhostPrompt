@@ -68,7 +68,11 @@ export function logSuggestionDebug(
   );
 }
 
-/** Timings OpenCode / ciclo de vida (misma canalización que suggestions cuando debug está activo). */
+/**
+ * Timings OpenCode / ciclo de vida (misma canalización que suggestions cuando debug está activo).
+ * @param stage
+ * @param details
+ */
 export function logOpenCodeDebug(stage: string, details?: string): void {
   if (!isSuggestionDebugEnabled()) {
     return;
@@ -79,7 +83,12 @@ export function logOpenCodeDebug(stage: string, details?: string): void {
   appendDebugLine(`[${timestamp}] [opencode] [${stage}]${suffix}`);
 }
 
-/** Fase I — duraciones por `suggest`; sólo cuando `ghostPrompt.debugSuggestions` está activo. */
+/**
+ * Fase I — duraciones por `suggest`; sólo cuando `ghostPrompt.debugSuggestions` está activo.
+ * @param captureId
+ * @param phase
+ * @param details
+ */
 export function logOpenCodePerfCapture(
   captureId: number | undefined,
   phase: string,

@@ -59,6 +59,8 @@ function normalizeCompletionSources(raw: unknown): CompletionSourceId[] {
 /**
  * Elige motor para esta petición según modelo seleccionado y fuentes habilitadas.
  * Con `auto` y varias fuentes, se prefiere Copilot si está habilitado (orden estable).
+ * @param id
+ * @returns True si el ID corresponde a un modelo Ollama.
  */
 export function looksLikeOllamaModelId(id: string): boolean {
   return id.includes(":") && !id.includes("/");
@@ -101,7 +103,11 @@ export function resolveCompletionSourceForRequest(
   return "ollama";
 }
 
-/** Id OpenCode típico: `providerID/modelID` (una barra). */
+/**
+ * Id OpenCode típico: `providerID/modelID` (una barra).
+ * @param id
+ * @returns True si el ID contiene exactamente una barra.
+ */
 export function looksLikeOpencodeModelId(id: string): boolean {
   const t = id.trim();
   const slash = t.indexOf("/");

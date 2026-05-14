@@ -1,5 +1,5 @@
 /**
- * @fileoverview Extension entry point.
+ * @file Extension entry point.
  *
  * Registers the GhostPromptViewProvider in both the activity bar container
  * and the bottom panel container, so the user can place the view wherever

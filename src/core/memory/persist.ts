@@ -52,7 +52,15 @@ async function probesForStoredBootstrapAtWorkspace(params: {
   });
 }
 
-/** Lee store + bootstrap vivos + validación editor-ingest → líneas LM + ítems persistibles. */
+/**
+ * Lee store + bootstrap vivos + validación editor-ingest → líneas LM + ítems persistibles.
+ * @param params
+ * @param params.store
+ * @param params.workspaceRootUriString
+ * @param params.workspaceFolderUri
+ * @param params.livePieces
+ * @returns Snapshot reconciliada con líneas LM e ítems persistibles.
+ */
 export async function reconcileProjectMemoryForSuggest(params: {
   store: ProjectMemoryStore;
   workspaceRootUriString: string;
@@ -110,7 +118,12 @@ export async function reconcileProjectMemoryForSuggest(params: {
   };
 }
 
-/** @deprecated usar {@link reconcileProjectMemoryForSuggest} */
+/**
+ * Reconciliación legacy de bootstrap. Usar {@link reconcileProjectMemoryForSuggest} en su lugar.
+ * @param params
+ * @deprecated usar {@link reconcileProjectMemoryForSuggest}
+ * @returns Snapshot reconciliada (deprecated).
+ */
 export async function reconcileProjectBootstrapForSuggest(
   params: Parameters<typeof reconcileProjectMemoryForSuggest>[0],
 ): Promise<ProjectMemoryReconcileSnapshot> {

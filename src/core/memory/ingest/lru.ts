@@ -7,6 +7,10 @@ function entryApproxByteSize(e: ProjectMemoryEditorIngestStoredItem): number {
 /**
  * Reduce entradas editor-ingest por **recuento** y **bytes** totales aproximados.
  * Descarta primero por `lastUsedAtMs` ascendente (LRU).
+ * @param entries
+ * @param maxEntries
+ * @param maxTotalBytes
+ * @returns Entradas supervivientes tras evicción LRU.
  */
 export function applyEditorIngestLruEviction(
   entries: readonly ProjectMemoryEditorIngestStoredItem[],

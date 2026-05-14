@@ -1,6 +1,6 @@
 /**
  * Punto de entrada estable para el mensaje webview `suggest`.
- * Implementación: {@link runGhostPromptSuggestPipeline} en `suggestPipeline.ts`.
+ * Implementación en `suggestPipeline.ts`.
  */
 
 export type { GhostPromptSuggestDeps } from "./suggestPipeline";

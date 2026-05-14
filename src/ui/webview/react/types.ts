@@ -107,14 +107,6 @@ export type InboundMessage =
       broadcast?: boolean;
     }
   | {
-      type: "ollama-status";
-      status: "checking-install" | "not-installed" | "listing-models" | "starting-model" | "model-ready" | "model-error";
-      model?: string;
-      message?: string;
-      captureId?: number;
-      broadcast?: boolean;
-    }
-  | {
       type: "providerStatus";
       providers: ProviderStateRecord[];
       captureId?: number;

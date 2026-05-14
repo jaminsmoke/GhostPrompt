@@ -77,7 +77,12 @@ function clampInt(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, Math.floor(v)));
 }
 
-/** Best-effort exclusión sin glob pesado (p. ej. segmentos `node_modules`, `.git`, `.env`). */
+/**
+ * Best-effort exclusión sin glob pesado (p. ej. segmentos `node_modules`, `.git`, `.env`).
+ * @param normalizedRelativePath
+ * @param extraPatterns
+ * @returns True si el path debería excluirse.
+ */
 export function pathLikelyExcludedForEditorIngest(
   normalizedRelativePath: string,
   extraPatterns: readonly string[],

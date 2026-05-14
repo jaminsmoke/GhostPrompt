@@ -114,6 +114,7 @@ vi.mock("../src/api/protocols/webviewProtocols", () => ({
     }
     return undefined;
   },
+  parseWebviewOutboundMessage: () => undefined,
 }));
 
 vi.mock("../src/api/settings/settingsPostMessage", async (importOriginal) => {

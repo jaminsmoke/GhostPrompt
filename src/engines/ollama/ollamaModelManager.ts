@@ -64,6 +64,7 @@ class OllamaModelManager {
   /**
    * Verifica que Ollama esté instalado ejecutando `ollama --version`.
    * Retorna la versión si ok, o lanza error si no está instalado.
+   * @returns Versión de Ollama.
    */
   async checkInstallation(): Promise<string> {
     this.setState("checking");
@@ -80,6 +81,7 @@ class OllamaModelManager {
   /**
    * Lista los modelos instalados vía `ollama list`.
    * Retorna array de nombres de modelo.
+   * @returns Lista de modelos instalados.
    */
   async listInstalledModels(): Promise<string[]> {
     this.setState("listing");
@@ -102,9 +104,18 @@ class OllamaModelManager {
   }
 
   /**
-   * Inicia un modelo vía `ollama run <modelId>`.
-   * El proceso se lanza en background; resuelve cuando el modelo está listo
-   * (detectable por stdout/stderr o por timeout).
+   * Inicia un modelo vía `ollama run <modelId>` con flags:
+   * - `--keepalive 5m`: mantiene el modelo cargado 5 minutos tras el último uso
+   * - `--nowordwrap`: evita saltos de línea en el output
+   *
+   * El proceso se lanza en background con `spawn`. La Promise resuelve cuando
+   * stdout/stderr contiene "success", "loaded", "send a message" o "/bye",
+   * indicando que el modelo está listo para recibir requests.
+   *
+   * @param modelId - Nombre del modelo (ej. "mistral:latest")
+   * @param signal - Señal de cancelación (opcional)
+   * @throws TimeoutError si el modelo no se inicia en 120s
+   * @throws Error si stderr contiene "error" o "failed"
    */
   startModel(modelId: string, signal?: AbortSignal): Promise<void> {
     if (this._ollamaProcess) {
@@ -116,7 +127,7 @@ class OllamaModelManager {
     this.setState("starting", modelId);
 
     return new Promise((resolve, reject) => {
-      const proc = spawn("ollama", ["run", modelId], {
+      const proc = spawn("ollama", ["run", modelId, "--keepalive", "5m", "--nowordwrap"], {
         stdio: ["pipe", "pipe", "pipe"],
       });
       this._ollamaProcess = proc;
@@ -199,6 +210,7 @@ class OllamaModelManager {
   /**
    * Verifica si hay un modelo cargado actualmente vía `ollama ps`.
    * Retorna el nombre del modelo activo o null si no hay ninguno.
+   * @returns Nombre del modelo activo o null.
    */
   async ps(): Promise<string | null> {
     try {
@@ -214,6 +226,7 @@ class OllamaModelManager {
 
   /**
    * Detiene un modelo específico o todos si no se especifica modelo.
+   * @param modelId
    */
   async stopModel(modelId?: string): Promise<void> {
     this.setState("stopping", modelId ?? this._currentModel ?? undefined);

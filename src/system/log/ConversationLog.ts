@@ -1,5 +1,5 @@
 /**
- * @fileoverview Log persistente de prompts enviados al chat de Copilot.
+ * @file Log persistente de prompts enviados al chat de Copilot.
  *
  * Cada prompt se añade a `conversation.md` en el almacenamiento privado de
  * la extensión (`context.storageUri`), invisible para el usuario.

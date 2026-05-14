@@ -19,6 +19,7 @@ import {
 import { providerStatusManager } from "../../system/status";
 import { ollamaModelManager } from "../../engines/ollama";
 import { looksLikeOllamaModelId } from "../../core/sources";
+import { parseWebviewOutboundMessage } from "./webviewProtocols";
 import type { WebviewInboundMessage } from "./webviewProtocols";
 
 export type GhostPromptInboundBroadcastServices = {
@@ -43,10 +44,12 @@ export async function handleGhostPromptInboundInit(
   postSettings: (w: vscode.Webview) => Promise<void>,
 ): Promise<void> {
   await postSettings(webview);
-  webview.postMessage({
-    type: "draftHydrate",
+  const draftPayload = {
+    type: "draftHydrate" as const,
     text: ghostPromptSessionStore.getSnapshot().draftText,
-  });
+  };
+  parseWebviewOutboundMessage(draftPayload);
+  webview.postMessage(draftPayload);
 }
 
 export function handleGhostPromptInboundDraftChanged(
@@ -63,6 +66,17 @@ export function handleGhostPromptInboundDraftChanged(
   services.broadcastDraftSync(message.originViewId, message.text);
 }
 
+/**
+ * Aplica un cambio de configuración originado en el webview y notifica a todas
+ * las vistas. Efectos secundarios:
+ * - Si se selecciona un modelo Ollama (`selectedModelId` con formato Ollama):
+ *   detiene el modelo anterior, inicia el nuevo vía `ollamaModelManager`
+ * - Si se cambia de motor (`completionProvider`) a != Ollama: detiene modelos Ollama
+ *
+ * @param message - Mensaje `updateSetting` del webview
+ * @param broadcastSettingsToAllViews - Callback para re-enviar settings a todas las vistas
+ * @param dispatchServices - Servicios de dispatch (broadcastUi, etc.), opcional
+ */
 export async function handleGhostPromptInboundUpdateSetting(
   message: Extract<WebviewInboundMessage, { type: "updateSetting" }>,
   broadcastSettingsToAllViews: () => Promise<void>,
@@ -81,6 +95,14 @@ export async function handleGhostPromptInboundUpdateSetting(
         const providers = await providerStatusManager.refreshAll();
         dispatchServices!.broadcastUi({ type: "providerStatus", providers });
       });
+    }
+  }
+
+  if (message.key === "completionProvider" && dispatchServices) {
+    if (message.value !== "ollama") {
+      ollamaModelManager.stopAll();
+      const providers = await providerStatusManager.refreshAll();
+      dispatchServices.broadcastUi({ type: "providerStatus", providers });
     }
   }
 }
@@ -196,6 +218,8 @@ async function handleProviderStatusRequest(webview: vscode.Webview, services: Gh
 
 async function postProviderStatus(webview: vscode.Webview, services: GhostPromptInboundDispatchServices): Promise<void> {
   const providers = await providerStatusManager.refreshAll();
-  webview.postMessage({ type: "providerStatus", providers });
-  services.broadcastUi({ type: "providerStatus", providers });
+  const msg = { type: "providerStatus" as const, providers };
+  parseWebviewOutboundMessage(msg);
+  webview.postMessage(msg);
+  services.broadcastUi(msg);
 }

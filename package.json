@@ -354,6 +354,7 @@
     "esbuild": "^0.28.0",
     "eslint": "^8.0.0",
     "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsdoc": "^62.9.0",
     "eslint-plugin-react-hooks": "^4.6.2",
     "madge": "^8.0.0",
     "postcss": "^8.4.37",

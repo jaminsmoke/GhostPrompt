@@ -7,6 +7,10 @@
  * `maxChars`). No sustituye a la instrucción: reduce tokens rotos en la UI y evita
  * depender solo del cumplimiento del modelo.
  *
+ * @param rawSuggestion
+ * @param userText
+ * @param maxChars
+ * @returns Texto normalizado o undefined si no hay sugerencia válida.
  * @see buildCompletionInstruction — directivas de estilo e idioma en el prompt.
  */
 export function normalizeSuggestion(

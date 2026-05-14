@@ -22,6 +22,11 @@ export type OpencodeTierResult = {
 
 /**
  * Orden: `pricing` multiplicador (`0x` / `1x`) → flag `free` → proveedor **opencode** → backends locales por **id de proveedor**.
+ * @param providerID
+ * @param _modelID
+ * @param _modelDisplayName
+ * @param raw
+ * @returns Clasificación del modelo: included, premium o unknown.
  */
 export function classifyOpencodeModelTier(
   providerID: string,

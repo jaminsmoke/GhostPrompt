@@ -2,7 +2,12 @@ import { isProjectMemoryBootstrapStoredItem } from "./bootstrap";
 import { isProjectMemoryEditorIngestStoredItem } from "./editor";
 import { workspaceRelativePathsMatch } from "../io/path";
 
-/** Quita entradas bootstrap/editor cuyo `relativePath` coincide con `targetRel`. */
+/**
+ * Quita entradas bootstrap/editor cuyo `relativePath` coincide con `targetRel`.
+ * @param items
+ * @param targetRel
+ * @returns Items filtrados sin las entradas que coinciden con targetRel.
+ */
 export function removeIndexedEntriesForRelativePath(
   items: readonly unknown[],
   targetRel: string,

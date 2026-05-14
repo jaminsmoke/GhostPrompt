@@ -1,5 +1,5 @@
 /**
- * @fileoverview Log persistente de suggestions de Copilot que el usuario
+ * @file Log persistente de suggestions de Copilot que el usuario
  * aceptó explícitamente con Tab en el Prompt Assistant.
  *
  * Cada entrada se añade a `suggestions.md` en el almacenamiento privado de

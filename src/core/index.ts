@@ -1,5 +1,5 @@
 /**
- * @fileoverview Punto de entrada público del dominio "core" (barrel).
+ * @file Punto de entrada público del dominio "core" (barrel).
  *
  * Lógica pura de suggestions: tipos, instrucción, normalización, streaming,
  * governor, session, catálogo merged, context bootstrap, y resolución de fuentes.

@@ -1,126 +1,124 @@
-import type { SuggestionContext, SuggestionStyle } from "./types";
+import { detectSuggestionLanguageFromInput } from "./language";
+import type { SuggestionContext, SuggestionStyle, SupportedSuggestionLanguage } from "./types";
 
 /**
- * Fragmento de instrucción por estilo de suggestion (GhostPrompt).
- * Incluye prefijos `STYLE_*` estables para tests de regresión.
+ * Prefix used for the partial completion chunk sent to Copilot as a second user message.
+ */
+export const COMPLETION_PARTIAL_LABEL = "Partial text to continue: ";
+
+/**
+ * Devuelve la directiva de estilo adecuada para el prompt del modelo.
+ * @param style Estilo de sugerencia deseado.
+ * @returns Instrucción de estilo para el prompt.
  */
 export function suggestionStyleDirective(style: SuggestionStyle): string {
   switch (style) {
     case "concise":
-      return (
-        "STYLE_CONCISE: Continue with at most 4 words total — essentials only, no comma-separated list, " +
-        "no second sentence, no filler."
-      );
+      return "STYLE_CONCISE: Write a concise continuation in 4 words or fewer.";
     case "detailed":
-      return (
-        "STYLE_DETAILED: Continue with 2-3 fluent sentences and concrete specifics " +
-        "(aim for roughly 25-60 words total when the idea warrants it)."
-      );
+      return "STYLE_DETAILED: Write 2-3 fluent sentences totaling 25-60 words.";
+    case "balanced":
     default:
-      return (
-        "STYLE_BALANCED: Continue with exactly one practical sentence (roughly 8-18 words) " +
-        "that advances the same intent as the partial prompt."
-      );
+      return "STYLE_BALANCED: Write one practical sentence in 8-18 words.";
   }
 }
-
-function truncateInline(value: string, maxChars: number): string {
-  const normalized = value.replace(/\s+/g, " ").trim();
-  if (normalized.length <= maxChars) {
-    return normalized;
-  }
-  return `${normalized.slice(0, Math.max(0, maxChars - 3))}...`;
-}
-
-/** Etiqueta fija antes del texto parcial (tests / contrato LM). */
-export const COMPLETION_PARTIAL_LABEL = "Partial text to continue: ";
 
 /**
- * Separa la instrucción en bloque de directivas + contexto vs texto parcial del usuario.
- * Útil para `vscode.lm` con **dos** `LanguageModelChatMessage.User` (patrón recomendado en la guía LM API).
- * OpenCode sigue usando {@link buildCompletionInstruction} (una sola cadena en el SDK).
+ * Resuelve el idioma de salida para la sugerencia.
+ * @param context Contexto de sugerencia opcional.
+ * @returns El idioma resuelto para el prompt.
+ */
+function resolveOutputLanguage(context?: SuggestionContext): SupportedSuggestionLanguage {
+  if (context?.outputLanguage) {
+    return context.outputLanguage;
+  }
+  if (context?.lastSentPrompt) {
+    return detectSuggestionLanguageFromInput(context.lastSentPrompt);
+  }
+  return "en";
+}
+
+/**
+ * Construye la sección de contexto de proyecto para el prompt.
+ * @param context Contexto de sugerencia con información de workspace y archivo.
+ * @returns El texto de contexto de proyecto o una cadena vacía.
+ */
+function buildProjectContext(context: SuggestionContext): string {
+  const lines: string[] = [];
+  if (context.workspaceName) {
+    lines.push(`Workspace: ${context.workspaceName}`);
+  }
+  if (context.activeFilePath) {
+    lines.push(`Active file: ${context.activeFilePath}`);
+  }
+  if (context.activeLanguageId) {
+    lines.push(`Active language: ${context.activeLanguageId}`);
+  }
+  if (context.projectBootstrapLines?.length) {
+    lines.push(...context.projectBootstrapLines);
+  }
+  if (lines.length === 0) {
+    return "";
+  }
+
+  return [`Relevant project context:`, ...lines].join("\n");
+}
+
+/**
+ * Divide la instrucción completa en el prefijo del prompt y el texto parcial etiquetado.
+ * @param userText Texto que se quiere continuar.
+ * @param style Estilo de sugerencia deseado.
+ * @param context Contexto adicional para el prompt.
+ * @returns Un objeto con el prompt prefijo y el texto parcial etiquetado.
  */
 export function buildCompletionInstructionParts(
   userText: string,
   style: SuggestionStyle = "balanced",
   context?: SuggestionContext,
 ): { prefixInstruction: string; labeledPartial: string } {
-  const styleDirective = suggestionStyleDirective(style);
-  const outputLanguage = context?.outputLanguage ?? "en";
-  const languageDirective =
-    outputLanguage === "es"
-      ? "Write the continuation in Spanish. "
-      : "Write the continuation in English. ";
+  const outputLanguage = resolveOutputLanguage(context);
+  const prefixLines: string[] = [suggestionStyleDirective(style)];
 
-  const recentContext: string[] = [];
-  if (context?.lastSentPrompt?.trim()) {
-    recentContext.push(`Recent prompt sent by user: ${context.lastSentPrompt}`);
+  if (context?.lastSentPrompt) {
+    prefixLines.push(`Recent prompt sent by user: ${context.lastSentPrompt}`);
   }
-  if (context?.lastAcceptedSuggestion?.trim()) {
-    recentContext.push(
-      `Recent accepted suggestion style: ${context.lastAcceptedSuggestion}`,
-    );
+  if (context?.lastAcceptedSuggestion) {
+    prefixLines.push(`Recent accepted suggestion style: ${context.lastAcceptedSuggestion}`);
   }
   if (context?.recentSentPrompts?.length) {
-    const lines = context.recentSentPrompts
-      .map((prompt) => truncateInline(prompt, 220))
-      .filter(Boolean);
-    if (lines.length) {
-      recentContext.push(`Recent prompts (latest first): ${lines.join(" | ")}`);
-    }
+    prefixLines.push("Recent prompts (latest first):");
+    prefixLines.push(...context.recentSentPrompts);
   }
 
-  const projectContext: string[] = [];
-  if (context?.workspaceName?.trim()) {
-    projectContext.push(`Workspace: ${truncateInline(context.workspaceName, 80)}`);
-  }
-  if (context?.activeFilePath?.trim()) {
-    projectContext.push(`Active file: ${truncateInline(context.activeFilePath, 180)}`);
-  }
-  if (context?.activeLanguageId?.trim()) {
-    projectContext.push(`Active language: ${truncateInline(context.activeLanguageId, 40)}`);
-  }
-  if (context?.activeSelection?.trim()) {
-    projectContext.push(
-      `Active selection excerpt: ${truncateInline(context.activeSelection, 320)}`,
-    );
-  }
-  if (context?.projectBootstrapLines?.length) {
-    for (const raw of context.projectBootstrapLines) {
-      const row = raw.trim();
-      if (row) {
-        projectContext.push(truncateInline(row, 1550));
-      }
-    }
+  const projectContext = context ? buildProjectContext(context) : "";
+  if (projectContext) {
+    prefixLines.push(projectContext);
   }
 
-  const prefixInstruction =
-    "You are a prompt completion assistant. " +
-    "The user is typing a prompt for GitHub Copilot Chat. " +
-    "Predict and return ONLY the natural continuation of the following partial text. " +
-    styleDirective +
-    " " +
-    languageDirective +
-    "Never repeat what was already written. " +
-    /* Espaciado: ver también normalizeSuggestion (post-proceso si el LM falla). */
-    "If your continuation starts a new word and the partial text does not end with whitespace, include exactly one leading space. " +
-    "If you are completing the current unfinished word, do not add a leading space. " +
-    "Keep context and intent specific, avoiding generic filler. " +
-    "Do not translate code identifiers, API names, file paths, or quoted text. " +
-    "Do not add explanations, greetings, or any metadata.\n\n" +
-    (projectContext.length
-      ? `Relevant project context:\n- ${projectContext.join("\n- ")}\n\n`
-      : "") +
-    (recentContext.length
-      ? `Relevant recent context:\n- ${recentContext.join("\n- ")}\n\n`
-      : "");
+  prefixLines.push(
+    `Write the continuation in ${outputLanguage === "es" ? "Spanish" : "English"}.`,
+    "If your continuation starts a new word and the partial text does not end with whitespace, include exactly one leading space.",
+    "If you are completing the current unfinished word, do not add a leading space.",
+    "Do not translate code identifiers.",
+    "Do not repeat the prompt text before the partial text.",
+  );
+
+  const prefixInstruction = prefixLines.join("\n") + "\n";
+  const labeledPartial = `${COMPLETION_PARTIAL_LABEL}${userText}`;
 
   return {
     prefixInstruction,
-    labeledPartial: COMPLETION_PARTIAL_LABEL + userText,
+    labeledPartial,
   };
 }
 
+/**
+ * Construye la instrucción completa para el LM a partir del texto del usuario, estilo y contexto.
+ * @param userText Texto que se debe continuar.
+ * @param style Estilo de sugerencia deseado.
+ * @param context Contexto adicional para guiar la generación.
+ * @returns Prompt completo listo para enviar al modelo.
+ */
 export function buildCompletionInstruction(
   userText: string,
   style: SuggestionStyle = "balanced",

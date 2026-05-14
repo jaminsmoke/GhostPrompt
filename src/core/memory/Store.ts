@@ -44,7 +44,11 @@ export class ProjectMemoryStore {
     await this.fs.mkdir(path.join(this.baseDir, STORES_DIR), { recursive: true });
   }
 
-  /** Crea `stores/<key>/` sin tocar registry (persistencia rápida en caliente del suggest). */
+  /**
+   * Crea `stores/<key>/` sin tocar registry (persistencia rápida en caliente del suggest).
+   * @param workspaceRootUriString
+   * @returns void
+   */
   public async ensureStoresDirExistsForWorkspaceRoot(
     workspaceRootUriString: string,
   ): Promise<string> {
@@ -106,6 +110,9 @@ export class ProjectMemoryStore {
 
   /**
    * Crea manifest + entries placeholder y actualiza `lastSeenAt` del registro.
+   * @param workspaceRootUriString
+   * @param nowMs
+   * @returns Ruta del directorio del workspace.
    */
   public async touchWorkspaceRoot(workspaceRootUriString: string, nowMs: number): Promise<string> {
     const workspaceKey = workspaceKeyFromRootUriString(workspaceRootUriString);
@@ -150,6 +157,7 @@ export class ProjectMemoryStore {
 
   /**
    * Borra carpeta del store y quita la fila del registro (si existía).
+   * @param workspaceRootUriString
    * @returns `true` si existía entrada o directorio persistido.
    */
   public async clearWorkspaceRoot(workspaceRootUriString: string): Promise<boolean> {
@@ -172,6 +180,9 @@ export class ProjectMemoryStore {
   /**
    * Elimina árboles antiguos cuyo `lastSeenAt` supera el TTL. Devuelve nº eliminados.
    * Conviene llamar **después** de `touchOpenWorkspaceRoots` para no borrar el repo abierto.
+   * @param ttlMs
+   * @param nowMs
+   * @returns Número de árboles eliminados.
    */
   public async garbageCollectUnusedStores(ttlMs: number, nowMs: number): Promise<number> {
     const registry = await this.loadRegistry();

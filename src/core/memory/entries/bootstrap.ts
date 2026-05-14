@@ -25,7 +25,12 @@ export function isProjectMemoryBootstrapStoredItem(
   );
 }
 
-/** Elimina ítems bootstrap obsoletos (fichero borrado o contenido tocado vs mtime/hash). */
+/**
+ * Elimina ítems bootstrap obsoletos (fichero borrado o contenido tocado vs mtime/hash).
+ * @param items
+ * @param probes
+ * @returns Ítems bootstrap que siguen siendo válidos según probes.
+ */
 export function pruneBootstrapStoredAgainstFileProbes(
   items: ProjectMemoryBootstrapStoredItem[],
   probes: Readonly<
@@ -42,7 +47,13 @@ export function pruneBootstrapStoredAgainstFileProbes(
   });
 }
 
-/** Supervivientes validados contra `probes` + piezas vivas (`live` gana si comparten `relativePath`). */
+/**
+ * Supervivientes validados contra `probes` + piezas vivas (`live` gana si comparten `relativePath`).
+ * @param prevBootstrap
+ * @param probes
+ * @param liveAsStored
+ * @returns Bootstrap mergeado con prioridad de piezas vivas.
+ */
 export function mergeValidatedBootstrapWithLive(
   prevBootstrap: readonly ProjectMemoryBootstrapStoredItem[],
   probes: Readonly<
@@ -75,7 +86,12 @@ function bootstrapRelativePathBucketStable(rel: string): number {
   return base.startsWith("readme") ? 1 : 0;
 }
 
-/** Reemplaza todo el subconjunto `bootstrap` por `nextBootstrap`; conserva otros `items`. */
+/**
+ * Reemplaza todo el subconjunto `bootstrap` por `nextBootstrap`; conserva otros `items`.
+ * @param existingItems
+ * @param nextBootstrap
+ * @returns Items con bootstrap reemplazado.
+ */
 export function mergeEntriesReplacingBootstrapSubset(
   existingItems: readonly unknown[],
   nextBootstrap: readonly ProjectMemoryBootstrapStoredItem[],

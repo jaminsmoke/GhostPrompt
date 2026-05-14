@@ -40,13 +40,6 @@ export const webviewOutboundSettingsEnvelopeSchema = z.object({
   settings: webviewSettingsPayloadSchema,
 });
 
-export const webviewOutboundOllamaStatusSchema = z.object({
-  type: z.literal("ollama-status"),
-  status: z.enum(["checking-install", "not-installed", "listing-models", "starting-model", "model-ready", "model-error"]),
-  model: z.string().optional(),
-  message: z.string().optional(),
-});
-
 const providerStateRecordSchema = z.object({
   id: z.string(),
   kind: z.enum(["engine", "destination"]),
@@ -60,6 +53,87 @@ export const webviewOutboundProviderStatusSchema = z.object({
   type: z.literal("providerStatus"),
   providers: z.array(providerStateRecordSchema),
 });
+
+export const webviewOutboundLoadingSchema = z.object({
+  type: z.literal("loading"),
+  captureId: z.number(),
+  phase: z.string().optional(),
+  statusText: z.string().optional(),
+  broadcast: z.boolean().optional(),
+});
+
+export const webviewOutboundSuggestionSchema = z.object({
+  type: z.literal("suggestion"),
+  suggestion: z.string(),
+  captureId: z.number(),
+  model: suggestionModelDescriptorSchema.optional(),
+  broadcast: z.boolean().optional(),
+});
+
+export const webviewOutboundSuggestionStreamSchema = z.object({
+  type: z.literal("suggestion-stream"),
+  text: z.string(),
+  captureId: z.number(),
+  broadcast: z.boolean().optional(),
+});
+
+export const webviewOutboundEmptySchema = z.object({
+  type: z.literal("empty"),
+  reason: z.string(),
+  captureId: z.number().optional(),
+  broadcast: z.boolean().optional(),
+});
+
+export const webviewOutboundErrorSchema = z.object({
+  type: z.literal("error"),
+  message: z.string(),
+  captureId: z.number().optional(),
+  broadcast: z.boolean().optional(),
+});
+
+export const webviewOutboundClearSchema = z.object({
+  type: z.literal("clear"),
+  captureId: z.number().optional(),
+  broadcast: z.boolean().optional(),
+});
+
+export const webviewOutboundDraftHydrateSchema = z.object({
+  type: z.literal("draftHydrate"),
+  text: z.string(),
+  captureId: z.number().optional(),
+  broadcast: z.boolean().optional(),
+});
+
+export const webviewOutboundDraftSyncSchema = z.object({
+  type: z.literal("draftSync"),
+  text: z.string(),
+  originViewId: z.string(),
+  captureId: z.number().optional(),
+  broadcast: z.boolean().optional(),
+});
+
+export const webviewOutboundLanguageEffectiveSchema = z.object({
+  type: z.literal("languageEffective"),
+  captureId: z.number().optional(),
+  broadcast: z.boolean().optional(),
+});
+
+/** Union discriminada de todos los mensajes host → webview. */
+export const webviewOutboundMessageSchema = z.discriminatedUnion("type", [
+  webviewOutboundSettingsEnvelopeSchema,
+  webviewOutboundProviderStatusSchema,
+  webviewOutboundLoadingSchema,
+  webviewOutboundSuggestionSchema,
+  webviewOutboundSuggestionStreamSchema,
+  webviewOutboundEmptySchema,
+  webviewOutboundErrorSchema,
+  webviewOutboundClearSchema,
+  webviewOutboundDraftHydrateSchema,
+  webviewOutboundDraftSyncSchema,
+  webviewOutboundLanguageEffectiveSchema,
+]);
+
+export type WebviewOutboundMessage = z.infer<typeof webviewOutboundMessageSchema>;
 
 export type WebviewSettingsPayload = z.infer<typeof webviewSettingsPayloadSchema>;
 

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-import { buildCompletionInstructionParts } from '../../core/instruction';
+import { buildCompletionInstruction } from '../../core/instruction';
 import { describeModel, selectModelByPolicy } from "./catalog/modelCatalog";
 import { normalizeSuggestion } from '../../core/normalize';
 import { collectResponseText } from '../../core/streaming';
@@ -13,6 +13,13 @@ import {
 
 let premiumQuotaBlocked = false;
 
+/**
+ * Solicita una sugerencia a Copilot LM y normaliza el resultado para GhostPrompt.
+ * @param userText Texto de usuario actual que debe completarse.
+ * @param options Configuración de la petición, incluyendo modelo, timeout y contexto.
+ * @returns Resultado de la petición de completado, con sugerencia o razón vacía.
+ * @throws cuando la petición se cancela mientras se procesa la respuesta.
+ */
 export async function requestCopilotLmCompletion(
   userText: string,
   options: CompletionRequestOptions,
@@ -42,11 +49,7 @@ export async function requestCopilotLmCompletion(
   }
 
   try {
-    const { prefixInstruction, labeledPartial } = buildCompletionInstructionParts(
-      userText,
-      style,
-      context,
-    );
+    const instruction = buildCompletionInstruction(userText, style, context);
     let requestTokenSource: vscode.CancellationTokenSource | undefined;
     let requestCancellation: vscode.Disposable | undefined;
     let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
@@ -61,10 +64,7 @@ export async function requestCopilotLmCompletion(
       }, requestTimeoutMs);
       onLoadingPhase?.("copilot-generating");
       const response = await model.sendRequest(
-        [
-          vscode.LanguageModelChatMessage.User(prefixInstruction),
-          vscode.LanguageModelChatMessage.User(labeledPartial),
-        ],
+        [vscode.LanguageModelChatMessage.User(instruction)],
         {},
         requestTokenSource.token,
       );
@@ -100,6 +100,11 @@ export async function requestCopilotLmCompletion(
   }
 }
 
+/**
+ * Detecta si el mensaje de error coincide con el bloqueo de cuota premium de Copilot.
+ * @param message Mensaje devuelto por la API de Copilot.
+ * @returns true cuando el error indica que se alcanzó cuota premium.
+ */
 function isPremiumQuotaError(message: string): boolean {
   const normalized = message.toLowerCase();
   return (

@@ -1,6 +1,7 @@
 /**
  * Catálogo unificado cuando hay varias fuentes habilitadas.
  * Ver `Docs/ARCHITECTURE.md` §3 — Catálogo OpenCode y merge.
+ * @returns Lista de descriptores de modelo disponibles según política y fuentes.
  */
 import type { SuggestionModelDescriptor, SuggestionModelPolicy } from "../types";
 import { listSuggestionModels } from "../../engines/copilot/catalog/modelCatalog";
@@ -10,6 +11,9 @@ import type { CompletionSourceId } from "../sources";
 
 /**
  * Concatena modelos Copilot + OpenCode + Ollama; deduplica por `id` (prioriza el primero: Copilot).
+ * @param policy
+ * @param sources
+ * @returns Lista de descriptores de modelo fusionada y deduplicada.
  */
 export async function listMergedSuggestionModels(
   policy: SuggestionModelPolicy,

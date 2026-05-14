@@ -8,7 +8,7 @@
       "jsx": true
     }
   },
-  "plugins": ["@typescript-eslint", "import", "react-hooks"],
+  "plugins": ["@typescript-eslint", "import", "react-hooks", "jsdoc"],
   "settings": {
     "react": {
       "version": "detect"
@@ -54,7 +54,15 @@
           }
         ]
       }
-    ]
+    ],
+    "jsdoc/require-jsdoc": "warn",
+    "jsdoc/require-param": "warn",
+    "jsdoc/require-returns": "warn",
+    "jsdoc/require-description": "warn",
+    "jsdoc/check-alignment": "warn",
+    "jsdoc/check-param-names": "warn",
+    "jsdoc/check-tag-names": "warn",
+    "jsdoc/no-undefined-types": "warn"
   },
   "ignorePatterns": ["out/**"]
 }

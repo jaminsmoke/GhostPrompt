@@ -96,7 +96,10 @@ function hostHintForErrorMessage(message: string): string | null {
   return null;
 }
 
-/** Tras emitir UI al webview: aviso opcional para fallos accionables (con throttle). */
+/**
+ * Tras emitir UI al webview: aviso opcional para fallos accionables (con throttle).
+ * @param result
+ */
 export function maybeNotifySuggestionIssue(result: CompletionResult): void {
   if (!notificationsEnabled()) {
     return;
