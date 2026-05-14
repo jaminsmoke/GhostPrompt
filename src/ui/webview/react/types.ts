@@ -113,7 +113,24 @@ export type InboundMessage =
       message?: string;
       captureId?: number;
       broadcast?: boolean;
+    }
+  | {
+      type: "providerStatus";
+      providers: ProviderStateRecord[];
+      captureId?: number;
+      broadcast?: boolean;
     };
+
+export type ProviderState = "running" | "stopped" | "starting" | "unavailable" | "error";
+
+export interface ProviderStateRecord {
+  id: string;
+  kind: "engine" | "destination";
+  status: ProviderState;
+  label: string;
+  statusText?: string;
+  actions?: ("start" | "stop")[];
+}
 
 export type UpdateSettingMessage =
   | { type: "updateSetting"; key: "suggestionModelPolicy"; value: "nonPremiumOnly" | "anyModel" }
@@ -131,4 +148,7 @@ export type OutboundMessage =
   | { type: "draftChanged"; text: string; originViewId: string }
   | { type: "accept"; context: string; suggestion: string }
   | { type: "send"; text: string }
+  | { type: "requestProviderStatus" }
+  | { type: "startProvider"; provider: string }
+  | { type: "stopProvider"; provider: string }
   | UpdateSettingMessage;

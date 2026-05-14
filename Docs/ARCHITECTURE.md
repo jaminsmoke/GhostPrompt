@@ -77,6 +77,7 @@
 | `src/system/log/ConversationLog.ts` | `conversation.md` bajo `storageUri`. |
 | `src/system/log/SuggestionLog.ts` | `suggestions.md` bajo `storageUri`. |
 | `src/system/debug/SuggestionDebug.ts` | Toggle debug y canal **GhostPrompt Suggestions**. |
+| `src/system/status/` | Sistema de estados de proveedores (ProviderStatusManager + módulos por engine/destination). |
 | `src/system/build/verifyWebviewBundle.ts` | Verificación del bundle webview en CI/dev. |
 | `src/projectMemory/*` | Store JSON por carpeta, reconcile, ingest, watchers opcionales. |
 | `src/ui/webview/react/index.html` | Shell HTML; Vite entry template. CSP, URIs de assets inyectados en runtime por `webviewHtml.ts`. |

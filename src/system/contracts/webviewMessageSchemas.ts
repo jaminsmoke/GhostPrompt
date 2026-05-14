@@ -47,6 +47,20 @@ export const webviewOutboundOllamaStatusSchema = z.object({
   message: z.string().optional(),
 });
 
+const providerStateRecordSchema = z.object({
+  id: z.string(),
+  kind: z.enum(["engine", "destination"]),
+  status: z.enum(["running", "stopped", "starting", "unavailable", "error"]),
+  label: z.string(),
+  statusText: z.string().optional(),
+  actions: z.array(z.enum(["start", "stop"])).optional(),
+});
+
+export const webviewOutboundProviderStatusSchema = z.object({
+  type: z.literal("providerStatus"),
+  providers: z.array(providerStateRecordSchema),
+});
+
 export type WebviewSettingsPayload = z.infer<typeof webviewSettingsPayloadSchema>;
 
 export const webviewUpdateSettingSchema = z.discriminatedUnion("key", [
@@ -115,6 +129,9 @@ export const webviewInboundMessageSchema = z.union([
     text: z.string(),
   }),
   webviewUpdateSettingSchema,
+  z.object({ type: z.literal("requestProviderStatus") }),
+  z.object({ type: z.literal("startProvider"), provider: z.string() }),
+  z.object({ type: z.literal("stopProvider"), provider: z.string() }),
 ]);
 
 export type WebviewInboundMessage = z.infer<typeof webviewInboundMessageSchema>;

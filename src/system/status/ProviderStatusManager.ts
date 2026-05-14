@@ -1,10 +1,34 @@
-import * as vscode from "vscode";
 import type { ProviderStatusModule, ProviderStateRecord } from "./types";
+
+type Listener<T> = (data: T) => void;
+
+class SimpleEventEmitter<T> {
+  private _listeners: Listener<T>[] = [];
+
+  on(listener: Listener<T>): { dispose: () => void } {
+    this._listeners.push(listener);
+    return {
+      dispose: () => {
+        this._listeners = this._listeners.filter((l) => l !== listener);
+      },
+    };
+  }
+
+  fire(data: T): void {
+    for (const listener of this._listeners) {
+      listener(data);
+    }
+  }
+
+  dispose(): void {
+    this._listeners = [];
+  }
+}
 
 export class ProviderStatusManager {
   private _modules = new Map<string, ProviderStatusModule>();
-  private _onDidChange = new vscode.EventEmitter<ProviderStateRecord[]>();
-  readonly onDidChange = this._onDidChange.event;
+  private _onDidChange = new SimpleEventEmitter<ProviderStateRecord[]>();
+  readonly onDidChange = this._onDidChange.on.bind(this._onDidChange);
 
   register(mod: ProviderStatusModule): void {
     this._modules.set(mod.id, mod);

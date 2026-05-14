@@ -6,6 +6,7 @@ import type {
   GhostPromptCapabilities,
   InboundMessage,
   OutboundMessage,
+  ProviderStateRecord,
   SuggestionModel,
   UpdateSettingMessage,
 } from "../types";
@@ -46,6 +47,7 @@ export function useGhostPrompt() {
   const [suggestionLanguageChoice, setSuggestionLanguageChoice] = useState<"auto" | "es" | "en">("auto");
   const [debugSuggestions, setDebugSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [providerStatuses, setProviderStatuses] = useState<ProviderStateRecord[]>([]);
   const currentCaptureId = useRef(0);
   const debounceTimer = useRef<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -222,6 +224,9 @@ export function useGhostPrompt() {
             setStatus(`Error: ${message.message ?? "Error al iniciar el modelo"}`);
           }
           break;
+        case "providerStatus":
+          setProviderStatuses(message.providers);
+          break;
         default:
           break;
       }
@@ -307,6 +312,18 @@ export function useGhostPrompt() {
     sendUpdateSetting({ type: "updateSetting", key: "debugSuggestions", value: next });
   };
 
+  const requestProviderStatus = useCallback(() => {
+    postToHost({ type: "requestProviderStatus" });
+  }, []);
+
+  const startProvider = useCallback((provider: string) => {
+    postToHost({ type: "startProvider", provider });
+  }, []);
+
+  const stopProvider = useCallback((provider: string) => {
+    postToHost({ type: "stopProvider", provider });
+  }, []);
+
   return {
     viewId,
     capabilities,
@@ -326,6 +343,7 @@ export function useGhostPrompt() {
     suggestionLanguageChoice,
     debugSuggestions,
     isLoading,
+    providerStatuses,
     textareaRef,
     canSend,
     isGhostUiAllowed,
@@ -336,6 +354,9 @@ export function useGhostPrompt() {
     handleAgentDestinationChange,
     handleSelectedModelChange,
     handleDebugToggle,
+    requestProviderStatus,
+    startProvider,
+    stopProvider,
     makeToggle,
     setStatus,
     postToHost,

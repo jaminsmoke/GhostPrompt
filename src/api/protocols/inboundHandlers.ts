@@ -16,6 +16,7 @@ import {
   type GhostPromptSuggestDeps,
   handleGhostPromptSuggest,
 } from "../../core/pipeline";
+import { providerStatusManager } from "../../system/status";
 import type { WebviewInboundMessage } from "./webviewProtocols";
 
 export type GhostPromptInboundBroadcastServices = {
@@ -122,39 +123,60 @@ export async function dispatchGhostPromptInboundMessage(
   message: WebviewInboundMessage,
   services: GhostPromptInboundDispatchServices,
 ): Promise<void> {
+  const dispatchServices = services satisfies GhostPromptInboundDispatchServices;
   logDebugInfo(`Dispatching inbound webview message type=${message.type}`);
   switch (message.type) {
     case "init":
-      await handleGhostPromptInboundInit(services.webview, services.postSettings);
+      await handleGhostPromptInboundInit(dispatchServices.webview, dispatchServices.postSettings);
       return;
     case "draftChanged":
-      handleGhostPromptInboundDraftChanged(message, services);
+      handleGhostPromptInboundDraftChanged(message, dispatchServices);
       return;
     case "updateSetting":
       await handleGhostPromptInboundUpdateSetting(
         message,
-        services.broadcastSettingsToAllViews,
+        dispatchServices.broadcastSettingsToAllViews,
       );
       return;
     case "suggest":
       if (getGhostPromptAgentDestination() === "vsOpenCodeX") {
         return;
       }
-      await handleGhostPromptSuggest(message, services.suggestDeps);
+      await handleGhostPromptSuggest(message, dispatchServices.suggestDeps);
       return;
     case "accept":
-      await handleGhostPromptInboundAccept(message, services.dataUri);
+      await handleGhostPromptInboundAccept(message, dispatchServices.dataUri);
       return;
     case "send":
       await handleGhostPromptInboundSend(
         message,
-        services.dataUri,
-        services.broadcastClearAll,
+        dispatchServices.dataUri,
+        dispatchServices.broadcastClearAll,
       );
+      return;
+    case "requestProviderStatus":
+      await handleProviderStatusRequest(dispatchServices.webview);
+      return;
+    case "startProvider":
+      await providerStatusManager.start(message.provider);
+      await postProviderStatus(dispatchServices.webview);
+      return;
+    case "stopProvider":
+      await providerStatusManager.stop(message.provider);
+      await postProviderStatus(dispatchServices.webview);
       return;
     default: {
       const _exhaustiveCheck: never = message;
       void _exhaustiveCheck;
     }
   }
+}
+
+async function handleProviderStatusRequest(webview: vscode.Webview): Promise<void> {
+  await postProviderStatus(webview);
+}
+
+async function postProviderStatus(webview: vscode.Webview): Promise<void> {
+  const providers = await providerStatusManager.refreshAll();
+  webview.postMessage({ type: "providerStatus", providers });
 }
