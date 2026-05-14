@@ -1,5 +1,5 @@
-import * as fs from "node:fs/promises";
-import * as path from "node:path";
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 
 /**
  * Contrato mínimo para poder testear `ProjectMemoryStore` sobre directorio temporal.
@@ -18,10 +18,10 @@ export class NodeProjectMemoryFs implements ProjectMemoryFsAdapter {
 
   public async readFileUtf8(file: string): Promise<string | undefined> {
     try {
-      return await fs.readFile(file, "utf8");
+      return await fs.readFile(file, 'utf8');
     } catch (e) {
       const code = (e as NodeJS.ErrnoException).code;
-      if (code === "ENOENT") {
+      if (code === 'ENOENT') {
         return undefined;
       }
       throw e;
@@ -30,7 +30,7 @@ export class NodeProjectMemoryFs implements ProjectMemoryFsAdapter {
 
   public async writeFileUtf8(file: string, data: string): Promise<void> {
     await fs.mkdir(path.dirname(file), { recursive: true });
-    await fs.writeFile(file, data, "utf8");
+    await fs.writeFile(file, data, 'utf8');
   }
 
   public async rmDirRecursive(dir: string): Promise<void> {

@@ -12,45 +12,23 @@
 
  */
 
-import { createHash } from "node:crypto";
+import { createHash } from 'node:crypto';
 
-
-
-import * as vscode from "vscode";
-
-
+import * as vscode from 'vscode';
 
 /** Unidades UTF-16 máximas del excerpt de README tras compactar whitespace. */
 
 export const PROJECT_README_CARD_MAX_CHARS = 1400;
 
-
-
 /** Unidades UTF-16 máximas del resumen derivado de package.json. */
 
 export const PROJECT_PACKAGE_JSON_SUMMARY_MAX_CHARS = 560;
-
-
 
 /** Nombres de script listados como máximo en el resumen de package.json. */
 
 export const PROJECT_PACKAGE_JSON_MAX_SCRIPT_NAMES = 12;
 
-
-
-const README_CANDIDATES = [
-
-  "README.md",
-
-  "readme.md",
-
-  "Readme.md",
-
-  "README.TXT",
-
-] as const;
-
-
+const README_CANDIDATES = ['README.md', 'readme.md', 'Readme.md', 'README.TXT'] as const;
 
 /**
  * Calcula el hash SHA-256 en hexadecimal de un buffer de bytes.
@@ -58,12 +36,8 @@ const README_CANDIDATES = [
  * @returns {string} Hash hexadecimal en minúsculas.
  */
 export function sha256HexBytes(data: Uint8Array): string {
-
-  return createHash("sha256").update(data).digest("hex");
-
+  return createHash('sha256').update(data).digest('hex');
 }
-
-
 
 /**
  * Recorta texto de tarjeta de proyecto a un máximo de caracteres con truncado amigable.
@@ -72,26 +46,20 @@ export function sha256HexBytes(data: Uint8Array): string {
  * @returns {string} Texto recortado con "..." si se excede el límite.
  */
 export function truncateProjectCardText(text: string, maxChars: number): string {
-
-  const trimmed = text.replace(/\r\n/g, "\n").trim();
+  const trimmed = text.replace(/\r\n/g, '\n').trim();
 
   if (trimmed.length <= maxChars) {
-
     return trimmed;
-
   }
 
   const slice = trimmed.slice(0, Math.max(0, maxChars - 3));
 
-  const lastSpace = slice.lastIndexOf(" ");
+  const lastSpace = slice.lastIndexOf(' ');
 
   const cut = lastSpace > Math.floor(maxChars * 0.82) ? slice.slice(0, lastSpace) : slice;
 
   return `${cut}...`;
-
 }
-
-
 
 /**
  * Resume campos relevantes de package.json para un card de proyecto.
@@ -99,70 +67,50 @@ export function truncateProjectCardText(text: string, maxChars: number): string 
  * @returns {string} Resumen compacto o cadena vacía si el JSON no es válido.
  */
 export function summarizePackageJsonForProjectCard(jsonText: string): string {
-
   let parsed: unknown;
 
   try {
-
     parsed = JSON.parse(jsonText);
-
   } catch {
-
-    return "";
-
+    return '';
   }
 
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-
-    return "";
-
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return '';
   }
 
   const o = parsed as Record<string, unknown>;
 
   const parts: string[] = [];
 
-
-
   const addString = (key: string, maxInner: number) => {
-
     const v = o[key];
 
-    if (typeof v !== "string" || !v.trim()) {
-
+    if (typeof v !== 'string' || !v.trim()) {
       return;
-
     }
 
     parts.push(`${key}=${truncateProjectCardText(v.trim(), maxInner)}`);
-
   };
 
+  addString('name', 160);
 
+  addString('version', 40);
 
-  addString("name", 160);
+  addString('description', 220);
 
-  addString("version", 40);
-
-  addString("description", 220);
-
-  if (typeof o.private === "boolean") {
-
+  if (typeof o.private === 'boolean') {
     parts.push(`private=${String(o.private)}`);
-
   }
 
-  if (typeof o.type === "string" && o.type.trim()) {
-
+  if (typeof o.type === 'string' && o.type.trim()) {
     parts.push(`type=${o.type.trim()}`);
-
   }
 
   if (Array.isArray(o.keywords)) {
-
     const kw = o.keywords
 
-      .filter((k): k is string => typeof k === "string")
+      .filter((k): k is string => typeof k === 'string')
 
       .map((k) => k.trim())
 
@@ -171,17 +119,13 @@ export function summarizePackageJsonForProjectCard(jsonText: string): string {
       .slice(0, 8);
 
     if (kw.length) {
-
-      parts.push(`keywords=${kw.join(",")}`);
-
+      parts.push(`keywords=${kw.join(',')}`);
     }
-
   }
 
   const scripts = o.scripts;
 
-  if (scripts && typeof scripts === "object" && !Array.isArray(scripts)) {
-
+  if (scripts && typeof scripts === 'object' && !Array.isArray(scripts)) {
     const names = Object.keys(scripts as Record<string, unknown>)
 
       .filter((k) => k.trim())
@@ -191,22 +135,14 @@ export function summarizePackageJsonForProjectCard(jsonText: string): string {
       .slice(0, PROJECT_PACKAGE_JSON_MAX_SCRIPT_NAMES);
 
     if (names.length) {
-
-      parts.push(`scripts: ${names.join(",")}`);
-
+      parts.push(`scripts: ${names.join(',')}`);
     }
-
   }
 
+  const joined = parts.join('; ');
 
-
-  const joined = parts.join("; ");
-
-  return joined ? truncateProjectCardText(joined, PROJECT_PACKAGE_JSON_SUMMARY_MAX_CHARS) : "";
-
+  return joined ? truncateProjectCardText(joined, PROJECT_PACKAGE_JSON_SUMMARY_MAX_CHARS) : '';
 }
-
-
 
 /**
  * Calcula una huella digital corta para líneas de bootstrap de proyecto.
@@ -214,21 +150,14 @@ export function summarizePackageJsonForProjectCard(jsonText: string): string {
  * @returns {string} Hash de 16 caracteres que identifica la versión de las líneas.
  */
 export function fingerprintProjectBootstrapLines(lines: readonly string[]): string {
-
   if (!lines.length) {
-
-    return "";
-
+    return '';
   }
 
-  return createHash("sha256").update(lines.join("\u0001")).digest("hex").slice(0, 16);
-
+  return createHash('sha256').update(lines.join('\u0001')).digest('hex').slice(0, 16);
 }
 
-
-
 export interface ProjectBootstrapPiece {
-
   /** Ruta relativa al workspace (nombre real del README si difiere en mayúsculas). */
 
   relativePath: string;
@@ -244,10 +173,7 @@ export interface ProjectBootstrapPiece {
   /** SHA-256 hex del contenido binario leído del workspace. */
 
   sourceSha256: string;
-
 }
-
-
 
 /** Raíz del workspace para bootstrap (editor activo o primera carpeta). */
 
@@ -257,20 +183,12 @@ export interface ProjectBootstrapPiece {
  * @returns URI de la carpeta de raíz del workspace, o undefined si no hay workspace.
  */
 export function resolveGhostPromptWorkspaceFolderUri(): vscode.Uri | undefined {
-
   const editor = vscode.window.activeTextEditor;
 
-  const folder = editor
-
-    ? vscode.workspace.getWorkspaceFolder(editor.document.uri)
-
-    : undefined;
+  const folder = editor ? vscode.workspace.getWorkspaceFolder(editor.document.uri) : undefined;
 
   return folder?.uri ?? vscode.workspace.workspaceFolders?.[0]?.uri;
-
 }
-
-
 
 /**
  * Ordena de forma estable los fragmentos bootstrap del proyecto.
@@ -279,30 +197,19 @@ export function resolveGhostPromptWorkspaceFolderUri(): vscode.Uri | undefined {
  * @returns Nuevos fragmentos ordenados.
  */
 export function sortProjectBootstrapPieces(
-
   pieces: readonly ProjectBootstrapPiece[],
-
 ): ProjectBootstrapPiece[] {
-
   return [...pieces].sort((a, b) => {
-
-    const rp = bootstrapRelativePathBucket(a.relativePath) -
-
-      bootstrapRelativePathBucket(b.relativePath);
+    const rp =
+      bootstrapRelativePathBucket(a.relativePath) - bootstrapRelativePathBucket(b.relativePath);
 
     if (rp !== 0) {
-
       return rp;
-
     }
 
-    return a.relativePath.localeCompare(b.relativePath, "en", { sensitivity: "base" });
-
+    return a.relativePath.localeCompare(b.relativePath, 'en', { sensitivity: 'base' });
   });
-
 }
-
-
 
 /**
  * Clasifica rutas bootstrap en cubetas de orden.
@@ -311,22 +218,16 @@ export function sortProjectBootstrapPieces(
  * @returns {number} Número de cubeta para ordenar el fragmento.
  */
 function bootstrapRelativePathBucket(rel: string): number {
-
   const lower = rel.toLowerCase();
 
-  if (lower === "package.json") {
-
+  if (lower === 'package.json') {
     return 2;
-
   }
 
-  const base = lower.replace(/^.*[/\\]/, "");
+  const base = lower.replace(/^.*[/\\]/, '');
 
-  return base.startsWith("readme") ? 1 : 0;
-
+  return base.startsWith('readme') ? 1 : 0;
 }
-
-
 
 /**
  * Lee README y package.json bajo la raíz del workspace para construir el bootstrap card.
@@ -335,47 +236,35 @@ function bootstrapRelativePathBucket(rel: string): number {
  * @returns {Promise<ProjectBootstrapPiece[]>} Fragmentos de bootstrap encontrados y resumidos.
  */
 export async function collectProjectBootstrapPieces(
-
   root?: vscode.Uri,
-
 ): Promise<ProjectBootstrapPiece[]> {
-
   const wsRoot = root ?? resolveGhostPromptWorkspaceFolderUri();
 
   if (!wsRoot) {
-
     return [];
-
   }
 
   const out: ProjectBootstrapPiece[] = [];
 
-
-
   for (const name of README_CANDIDATES) {
-
     const uri = vscode.Uri.joinPath(wsRoot, name);
 
     try {
-
       const stat = await vscode.workspace.fs.stat(uri);
 
       const bytes = await vscode.workspace.fs.readFile(uri);
 
-      const text = new TextDecoder("utf-8").decode(bytes);
+      const text = new TextDecoder('utf-8').decode(bytes);
 
-      const compact = text.replace(/\s+/g, " ").trim();
+      const compact = text.replace(/\s+/g, ' ').trim();
 
       if (!compact) {
-
         continue;
-
       }
 
       const excerpt = truncateProjectCardText(compact, PROJECT_README_CARD_MAX_CHARS);
 
       out.push({
-
         relativePath: name,
 
         promptLine: `README excerpt (${name}): ${excerpt}`,
@@ -383,62 +272,42 @@ export async function collectProjectBootstrapPieces(
         sourceMtimeMs: stat.mtime,
 
         sourceSha256: sha256HexBytes(bytes),
-
       });
 
       break;
-
     } catch {
-
       // omitido
-
     }
-
   }
 
-
-
   try {
-
-    const pkgUri = vscode.Uri.joinPath(wsRoot, "package.json");
+    const pkgUri = vscode.Uri.joinPath(wsRoot, 'package.json');
 
     const stat = await vscode.workspace.fs.stat(pkgUri);
 
     const bytes = await vscode.workspace.fs.readFile(pkgUri);
 
-    const text = new TextDecoder("utf-8").decode(bytes);
+    const text = new TextDecoder('utf-8').decode(bytes);
 
     const summary = summarizePackageJsonForProjectCard(text);
 
     if (summary.trim()) {
-
       out.push({
-
-        relativePath: "package.json",
+        relativePath: 'package.json',
 
         promptLine: `package.json: ${summary}`,
 
         sourceMtimeMs: stat.mtime,
 
         sourceSha256: sha256HexBytes(bytes),
-
       });
-
     }
-
   } catch {
-
     // omitido
-
   }
 
-
-
   return sortProjectBootstrapPieces(out);
-
 }
-
-
 
 /**
 
@@ -446,10 +315,7 @@ export async function collectProjectBootstrapPieces(
  * @returns {Promise<readonly string[]>} Líneas de texto del card en orden estable.
  */
 export async function buildProjectBootstrapCardLines(): Promise<readonly string[]> {
-
   const pieces = await collectProjectBootstrapPieces();
 
   return pieces.map((p) => p.promptLine);
-
 }
-

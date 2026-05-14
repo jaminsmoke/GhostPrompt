@@ -9,6 +9,7 @@
 `engines/` implementa el patrón **`CompletionProvider`**. Cada motor expone una interfaz común (`id` + `requestCompletion`) y se registra en el `engineRegistry`. El routing se resuelve por el modelo seleccionado: `model:tag` → Ollama, `providerID/modelID` → OpenCode, id de chat Copilot → LM.
 
 **No debe contener:**
+
 - Lógica de orquestación del pipeline (eso es `core/pipeline/`)
 - Gestión de vistas VS Code (eso es `vscode/`)
 - Protocolos de mensajes webview (eso es `api/`)
@@ -62,20 +63,20 @@ registerCompletionProvider("ollamaLm", { id: "ollamaLm", requestCompletion: ... 
 ### Resolución
 
 ```ts
-getCompletionProviderForSource("copilot");  // → copilotLm provider
-getCompletionProviderForSource("opencode"); // → opencodeLm provider
-getCompletionProviderForSource("ollama");   // → ollamaLm provider
+getCompletionProviderForSource('copilot'); // → copilotLm provider
+getCompletionProviderForSource('opencode'); // → opencodeLm provider
+getCompletionProviderForSource('ollama'); // → ollamaLm provider
 ```
 
 ---
 
 ## Routing por modelo
 
-| Patrón de modelo | Motor | Ejemplo |
-|------------------|-------|---------|
-| Id de chat Copilot | `copilotLm` | `gpt-4o-mini` |
-| `providerID/modelID` | `opencodeLm` | `openai/gpt-4` |
-| `model:tag` | `ollamaLm` | `mistral:latest`, `llama3:7b` |
+| Patrón de modelo     | Motor        | Ejemplo                       |
+| -------------------- | ------------ | ----------------------------- |
+| Id de chat Copilot   | `copilotLm`  | `gpt-4o-mini`                 |
+| `providerID/modelID` | `opencodeLm` | `openai/gpt-4`                |
+| `model:tag`          | `ollamaLm`   | `mistral:latest`, `llama3:7b` |
 
 Función clave: `resolveCompletionSourceForRequest(selectedModelId, enabledSources)` en `core/sources.ts`.
 
@@ -113,27 +114,27 @@ Función clave: `resolveCompletionSourceForRequest(selectedModelId, enabledSourc
 
 ## Dependencias
 
-| Importa de | Por qué |
-|------------|---------|
-| `core/types` | `SuggestionModelDescriptor`, `CompletionResult`, etc. |
-| `core/instruction` | `buildCompletionInstruction` para el prompt del LM |
-| `core/normalize` | `normalizeSuggestion` para post-proceso |
-| `core/streaming` | `consumeTextStream` para streaming |
-| `core/loading` | `SuggestionLoadingPhase` para feedback UI |
-| `system/debug/SuggestionDebug` | Logging de debug y perf capture |
+| Importa de                     | Por qué                                               |
+| ------------------------------ | ----------------------------------------------------- |
+| `core/types`                   | `SuggestionModelDescriptor`, `CompletionResult`, etc. |
+| `core/instruction`             | `buildCompletionInstruction` para el prompt del LM    |
+| `core/normalize`               | `normalizeSuggestion` para post-proceso               |
+| `core/streaming`               | `consumeTextStream` para streaming                    |
+| `core/loading`                 | `SuggestionLoadingPhase` para feedback UI             |
+| `system/debug/SuggestionDebug` | Logging de debug y perf capture                       |
 
 ---
 
 ## Tests relevantes
 
-| Test | Qué cubre |
-|------|-----------|
-| `engineRegistry.test.ts` | Registro y resolución de proveedores |
-| `ollamaApiClient.test.ts` | Mock fetch, listModels, generate (éxito, error, custom baseUrl) |
-| `ollamaLmEngine.test.ts` | Modelo explícito, auto-resolve, exclusión, errores, loading phases |
-| `opencodeApiClient.test.ts` | Session pool, health check, prompt, promptStream |
-| `opencodeLmCompletion.test.ts` | Request completion con OpenCode, streaming preview |
-| `opencodeModelCatalog.test.ts` | Lista modelos, snapshot cache, exclusión |
-| `opencodeModelTier.test.ts` | Clasificación de tiers por pricing metadata |
-| `normalizeOpencodeProviderModels.test.ts` | Normalización array vs mapa de modelos |
-| `mergedModelCatalog.test.ts` | Merge + dedup de catálogos multi-fuente |
+| Test                                      | Qué cubre                                                          |
+| ----------------------------------------- | ------------------------------------------------------------------ |
+| `engineRegistry.test.ts`                  | Registro y resolución de proveedores                               |
+| `ollamaApiClient.test.ts`                 | Mock fetch, listModels, generate (éxito, error, custom baseUrl)    |
+| `ollamaLmEngine.test.ts`                  | Modelo explícito, auto-resolve, exclusión, errores, loading phases |
+| `opencodeApiClient.test.ts`               | Session pool, health check, prompt, promptStream                   |
+| `opencodeLmCompletion.test.ts`            | Request completion con OpenCode, streaming preview                 |
+| `opencodeModelCatalog.test.ts`            | Lista modelos, snapshot cache, exclusión                           |
+| `opencodeModelTier.test.ts`               | Clasificación de tiers por pricing metadata                        |
+| `normalizeOpencodeProviderModels.test.ts` | Normalización array vs mapa de modelos                             |
+| `mergedModelCatalog.test.ts`              | Merge + dedup de catálogos multi-fuente                            |

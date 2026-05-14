@@ -1,17 +1,17 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import tailwind from "@tailwindcss/vite";
-import path from "path";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwind from '@tailwindcss/vite';
+import path from 'path';
 
 export default defineConfig({
-  root: path.resolve(__dirname, "src/ui/webview/react"),
-  base: "./",
+  root: path.resolve(__dirname, 'src/ui/webview/react'),
+  base: './',
   plugins: [react(), tailwind()],
   build: {
-    outDir: path.resolve(__dirname, "src/ui/webview/dist/react"),
+    outDir: path.resolve(__dirname, 'src/ui/webview/dist/react'),
     emptyOutDir: true,
     rollupOptions: {
-      input: path.resolve(__dirname, "src/ui/webview/react/index.html"),
+      input: path.resolve(__dirname, 'src/ui/webview/react/index.html'),
     },
   },
 });

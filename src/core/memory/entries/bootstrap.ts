@@ -1,7 +1,4 @@
-import {
-  PROJECT_BOOTSTRAP_ENTRY_KIND,
-  type ProjectMemoryBootstrapStoredItem,
-} from "../types";
+import { PROJECT_BOOTSTRAP_ENTRY_KIND, type ProjectMemoryBootstrapStoredItem } from '../types';
 
 /**
  * Comprueba si un valor coincide con el contrato de item bootstrap de project memory.
@@ -13,19 +10,19 @@ export function isProjectMemoryBootstrapStoredItem(
 ): x is ProjectMemoryBootstrapStoredItem {
   if (
     x === null ||
-    typeof x !== "object" ||
+    typeof x !== 'object' ||
     (x as { kind?: unknown }).kind !== PROJECT_BOOTSTRAP_ENTRY_KIND
   ) {
     return false;
   }
   const o = x as Record<string, unknown>;
   return (
-    typeof o.relativePath === "string" &&
+    typeof o.relativePath === 'string' &&
     o.relativePath.trim().length > 0 &&
-    typeof o.promptLine === "string" &&
-    typeof o.sourceMtimeMs === "number" &&
+    typeof o.promptLine === 'string' &&
+    typeof o.sourceMtimeMs === 'number' &&
     Number.isFinite(o.sourceMtimeMs) &&
-    typeof o.sourceSha256 === "string" &&
+    typeof o.sourceSha256 === 'string' &&
     /^[a-f0-9]{64}$/.test(o.sourceSha256)
   );
 }
@@ -38,9 +35,7 @@ export function isProjectMemoryBootstrapStoredItem(
  */
 export function pruneBootstrapStoredAgainstFileProbes(
   items: ProjectMemoryBootstrapStoredItem[],
-  probes: Readonly<
-    Partial<Record<string, { readonly mtimeMs: number; readonly sha256: string }>>
-  >,
+  probes: Readonly<Partial<Record<string, { readonly mtimeMs: number; readonly sha256: string }>>>,
 ): ProjectMemoryBootstrapStoredItem[] {
   return items.filter((item) => {
     const probe = probes[item.relativePath];
@@ -61,9 +56,7 @@ export function pruneBootstrapStoredAgainstFileProbes(
  */
 export function mergeValidatedBootstrapWithLive(
   prevBootstrap: readonly ProjectMemoryBootstrapStoredItem[],
-  probes: Readonly<
-    Partial<Record<string, { readonly mtimeMs: number; readonly sha256: string }>>
-  >,
+  probes: Readonly<Partial<Record<string, { readonly mtimeMs: number; readonly sha256: string }>>>,
   liveAsStored: readonly ProjectMemoryBootstrapStoredItem[],
 ): ProjectMemoryBootstrapStoredItem[] {
   const validatedPrev = pruneBootstrapStoredAgainstFileProbes([...prevBootstrap], probes);
@@ -80,12 +73,11 @@ export function mergeValidatedBootstrapWithLive(
  * @returns Valor de comparación para ordenar las rutas.
  */
 function bootstrapStoredSortComparison(a: string, b: string): number {
-  const d =
-    bootstrapRelativePathBucketStable(a) - bootstrapRelativePathBucketStable(b);
+  const d = bootstrapRelativePathBucketStable(a) - bootstrapRelativePathBucketStable(b);
   if (d !== 0) {
     return d;
   }
-  return a.localeCompare(b, "en", { sensitivity: "base" });
+  return a.localeCompare(b, 'en', { sensitivity: 'base' });
 }
 
 /**
@@ -95,11 +87,11 @@ function bootstrapStoredSortComparison(a: string, b: string): number {
  */
 function bootstrapRelativePathBucketStable(rel: string): number {
   const lower = rel.toLowerCase();
-  if (lower === "package.json") {
+  if (lower === 'package.json') {
     return 2;
   }
-  const base = lower.replace(/^.*[/\\]/, "");
-  return base.startsWith("readme") ? 1 : 0;
+  const base = lower.replace(/^.*[/\\]/, '');
+  return base.startsWith('readme') ? 1 : 0;
 }
 
 /**

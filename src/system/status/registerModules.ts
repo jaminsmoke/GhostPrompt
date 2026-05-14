@@ -1,9 +1,9 @@
-import { providerStatusManager } from "./ProviderStatusManager";
-import { copilotStatusModule } from "../../engines/copilot/copilotStatus";
-import { opencodeStatusModule } from "../../engines/opencode/opencodeStatus";
-import { ollamaStatusModule } from "../../engines/ollama/ollamaStatus";
-import { copilotChatStatusModule } from "../../destinations/copilotChat/copilotChatStatus";
-import { vsOpenCodeXStatusModule } from "../../destinations/vsOpenCodeX/vsOpenCodeXStatus";
+import { providerStatusManager } from './ProviderStatusManager';
+import { copilotStatusModule } from '../../engines/copilot/copilotStatus';
+import { opencodeStatusModule } from '../../engines/opencode/opencodeStatus';
+import { ollamaStatusModule } from '../../engines/ollama/ollamaStatus';
+import { copilotChatStatusModule } from '../../destinations/copilotChat/copilotChatStatus';
+import { vsOpenCodeXStatusModule } from '../../destinations/vsOpenCodeX/vsOpenCodeXStatus';
 
 /**
  * Registra todos los módulos de estado de proveedores disponibles.

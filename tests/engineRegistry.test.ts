@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from 'vitest';
 
-vi.mock("vscode", () => ({
+vi.mock('vscode', () => ({
   workspace: {
     getConfiguration: () => ({
       get: vi.fn(() => undefined),
@@ -16,32 +16,32 @@ vi.mock("vscode", () => ({
 import {
   getActiveCompletionProvider,
   getCompletionProviderForSource,
-} from "../src/engines/engineRegistry";
+} from '../src/engines/engineRegistry';
 
-describe("engineRegistry", () => {
-  it("getCompletionProviderForSource returns ollama provider with id ollama", () => {
-    const provider = getCompletionProviderForSource("ollama");
-    expect(provider.id).toBe("ollama");
+describe('engineRegistry', () => {
+  it('getCompletionProviderForSource returns ollama provider with id ollama', () => {
+    const provider = getCompletionProviderForSource('ollama');
+    expect(provider.id).toBe('ollama');
     expect(provider.requestCompletion).toBeDefined();
   });
 
-  it("getCompletionProviderForSource returns copilotLm for copilot", () => {
-    const provider = getCompletionProviderForSource("copilot");
-    expect(provider.id).toBe("copilotLm");
+  it('getCompletionProviderForSource returns copilotLm for copilot', () => {
+    const provider = getCompletionProviderForSource('copilot');
+    expect(provider.id).toBe('copilotLm');
   });
 
-  it("getCompletionProviderForSource returns opencode for opencode", () => {
-    const provider = getCompletionProviderForSource("opencode");
-    expect(provider.id).toBe("opencode");
+  it('getCompletionProviderForSource returns opencode for opencode', () => {
+    const provider = getCompletionProviderForSource('opencode');
+    expect(provider.id).toBe('opencode');
   });
 
-  it("getCompletionProviderForSource defaults to copilotLm for unknown source", () => {
-    const provider = getCompletionProviderForSource("unknown" as any);
-    expect(provider.id).toBe("copilotLm");
+  it('getCompletionProviderForSource defaults to copilotLm for unknown source', () => {
+    const provider = getCompletionProviderForSource('unknown' as any);
+    expect(provider.id).toBe('copilotLm');
   });
 
-  it("getActiveCompletionProvider returns copilotLm when no sources configured", () => {
+  it('getActiveCompletionProvider returns copilotLm when no sources configured', () => {
     const provider = getActiveCompletionProvider();
-    expect(provider.id).toBe("copilotLm");
+    expect(provider.id).toBe('copilotLm');
   });
 });

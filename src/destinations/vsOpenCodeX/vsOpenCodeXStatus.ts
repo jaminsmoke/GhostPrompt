@@ -1,36 +1,36 @@
-import * as vscode from "vscode";
-import type { ProviderStatusModule, ProviderStateRecord } from "../../system/status/types";
+import * as vscode from 'vscode';
+import type { ProviderStatusModule, ProviderStateRecord } from '../../system/status/types';
 
 /**
  * Comprueba si la extensión VSOpenCodeX está instalada.
  * @returns True si la extensión está disponible en el editor.
  */
 function isVsOpenCodeXExtensionInstalled(): boolean {
-  return vscode.extensions.getExtension("jaminsmoke.vsopencodex") !== undefined;
+  return vscode.extensions.getExtension('jaminsmoke.vsopencodex') !== undefined;
 }
 
 export const vsOpenCodeXStatusModule: ProviderStatusModule = {
-  id: "vsOpenCodeX",
-  kind: "destination",
-  label: "VSOpenCodeX",
+  id: 'vsOpenCodeX',
+  kind: 'destination',
+  label: 'VSOpenCodeX',
 
   async check(): Promise<ProviderStateRecord> {
     if (isVsOpenCodeXExtensionInstalled()) {
       return {
-        id: "vsOpenCodeX",
-        kind: "destination",
-        status: "running",
-        label: "VSOpenCodeX",
-        statusText: "Extensión instalada",
+        id: 'vsOpenCodeX',
+        kind: 'destination',
+        status: 'running',
+        label: 'VSOpenCodeX',
+        statusText: 'Extensión instalada',
       };
     }
 
     return {
-      id: "vsOpenCodeX",
-      kind: "destination",
-      status: "unavailable",
-      label: "VSOpenCodeX",
-      statusText: "Extensión no instalada",
+      id: 'vsOpenCodeX',
+      kind: 'destination',
+      status: 'unavailable',
+      label: 'VSOpenCodeX',
+      statusText: 'Extensión no instalada',
     };
   },
 };

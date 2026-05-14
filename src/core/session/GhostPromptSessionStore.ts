@@ -2,19 +2,11 @@
  * @file Estado de sesión único para todas las vistas GhostPrompt (Sidebar + Panel).
  * Sprint v0.2.4b: fuente de verdad en host para draft/suggestions efectivas y settings runtime.
  */
-import * as vscode from "vscode";
-import type {
-  SuggestionModelDescriptor,
-  SupportedSuggestionLanguage,
-} from "../types";
+import * as vscode from 'vscode';
+import type { SuggestionModelDescriptor, SupportedSuggestionLanguage } from '../types';
 
 /** Estado del último intento de suggestion (UI/host). */
-export type GhostPromptSuggestionFlowStatus =
-  | "idle"
-  | "loading"
-  | "success"
-  | "empty"
-  | "error";
+export type GhostPromptSuggestionFlowStatus = 'idle' | 'loading' | 'success' | 'empty' | 'error';
 
 export interface GhostPromptSessionState {
   /** Texto en curso del usuario (Sprint 2: sincronizado desde webviews). */
@@ -39,21 +31,19 @@ export interface GhostPromptSessionState {
  */
 function createInitialSessionState(): GhostPromptSessionState {
   return {
-    draftText: "",
-    pendingSuggestion: "",
-    suggestionFlowStatus: "idle",
-    lastAcceptedSuggestion: "",
-    lastSentPrompt: "",
+    draftText: '',
+    pendingSuggestion: '',
+    suggestionFlowStatus: 'idle',
+    lastAcceptedSuggestion: '',
+    lastSentPrompt: '',
     recentSentPrompts: [],
-    lastEffectiveSuggestionLanguage: "en",
+    lastEffectiveSuggestionLanguage: 'en',
     lastEffectiveModel: undefined,
     activeCaptureId: 0,
   };
 }
 
-export type GhostPromptSessionListener = (
-  state: Readonly<GhostPromptSessionState>,
-) => void;
+export type GhostPromptSessionListener = (state: Readonly<GhostPromptSessionState>) => void;
 
 /**
  * Store singleton compartido por todas las instancias de MiniInputViewProvider.
@@ -117,7 +107,7 @@ export class GhostPromptSessionStore {
     this._activeSuggestionToken = tokenSource;
     this.patchState({
       activeCaptureId: captureId,
-      suggestionFlowStatus: "loading",
+      suggestionFlowStatus: 'loading',
       lastSuggestionError: undefined,
     });
     return tokenSource;

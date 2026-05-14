@@ -2,14 +2,14 @@
  * Fase E: invalidación proactiva cuando cambian o desaparecen ficheros ya indexados.
  * Un watcher por ruta relativa indexada (no barrido del repo).
  */
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
-import { isProjectMemoryBootstrapStoredItem } from "../entries/bootstrap";
-import { normalizeWorkspaceRelativePath } from "../io/path";
-import { isProjectMemoryEditorIngestStoredItem } from "../entries/editor";
-import { removeIndexedEntriesForRelativePath } from "../entries/mutation";
-import type { ProjectMemoryStore } from "../Store";
-import { workspaceKeyFromRootUriString } from "../io/key";
+import { isProjectMemoryBootstrapStoredItem } from '../entries/bootstrap';
+import { normalizeWorkspaceRelativePath } from '../io/path';
+import { isProjectMemoryEditorIngestStoredItem } from '../entries/editor';
+import { removeIndexedEntriesForRelativePath } from '../entries/mutation';
+import type { ProjectMemoryStore } from '../Store';
+import { workspaceKeyFromRootUriString } from '../io/key';
 
 /**
  * Lee la configuración de los watchers de archivos de project memory.
@@ -19,13 +19,11 @@ export function readProjectMemoryFileWatcherConfig(): {
   enabled: boolean;
   throttleMs: number;
 } {
-  const cfg = vscode.workspace.getConfiguration("ghostPrompt");
-  const memory = cfg.get<boolean>("projectMemoryEnabled", true);
-  const watcherOn = cfg.get<boolean>("projectMemoryFileWatcherEnabled", true);
-  const raw = cfg.get<number>("projectMemoryFileWatcherThrottleMs", 400);
-  const throttleMs = Number.isFinite(raw)
-    ? Math.max(50, Math.min(5000, Math.floor(raw)))
-    : 400;
+  const cfg = vscode.workspace.getConfiguration('ghostPrompt');
+  const memory = cfg.get<boolean>('projectMemoryEnabled', true);
+  const watcherOn = cfg.get<boolean>('projectMemoryFileWatcherEnabled', true);
+  const raw = cfg.get<number>('projectMemoryFileWatcherThrottleMs', 400);
+  const throttleMs = Number.isFinite(raw) ? Math.max(50, Math.min(5000, Math.floor(raw))) : 400;
   return {
     enabled: memory && watcherOn,
     throttleMs,
@@ -119,11 +117,11 @@ async function persistEntriesAfterStrip(
  */
 async function invalidateIndexedUri(store: ProjectMemoryStore, uri: vscode.Uri): Promise<void> {
   const folder = vscode.workspace.getWorkspaceFolder(uri);
-  if (!folder || uri.scheme !== "file") {
+  if (!folder || uri.scheme !== 'file') {
     return;
   }
   const relRaw = vscode.workspace.asRelativePath(uri, false);
-  if (relRaw.startsWith("..")) {
+  if (relRaw.startsWith('..')) {
     return;
   }
   const targetRel = normalizeWorkspaceRelativePath(relRaw);

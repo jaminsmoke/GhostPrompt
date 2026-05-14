@@ -23,7 +23,7 @@ let sessionPool: PoolEntry[] = [];
  * @returns URL base HTTP.
  */
 function buildBaseUrl(options: OpenCodeClientOptions): string {
-  const hostname = options.hostname ?? "127.0.0.1";
+  const hostname = options.hostname ?? '127.0.0.1';
   const port = options.port ?? OPENCODE_DEFAULT_PORT;
   return `http://${hostname}:${port}`;
 }
@@ -46,12 +46,10 @@ function buildHeaders(options: OpenCodeClientOptions): Record<string, string> {
  * @param options Opciones de configuración de cliente.
  * @returns Instancia de cliente OpenCode.
  */
-export async function createOpenCodeClient(
-  options: OpenCodeClientOptions,
-): Promise<unknown> {
+export async function createOpenCodeClient(options: OpenCodeClientOptions): Promise<unknown> {
   const baseUrl = buildBaseUrl(options);
   const headers = buildHeaders(options);
-  const { createOpencodeClient: factory } = await import("@opencode-ai/sdk");
+  const { createOpencodeClient: factory } = await import('@opencode-ai/sdk');
   globalClient = factory({ baseUrl, headers });
   return globalClient;
 }
@@ -63,9 +61,7 @@ export async function createOpenCodeClient(
  */
 export function getGlobalClient(): unknown {
   if (!globalClient) {
-    throw new Error(
-      "OpenCode client no inicializado. Llama a createOpenCodeClient primero.",
-    );
+    throw new Error('OpenCode client no inicializado. Llama a createOpenCodeClient primero.');
   }
   return globalClient;
 }
@@ -91,7 +87,9 @@ export async function healthCheck(client?: unknown): Promise<boolean> {
  * @returns ID de sesión creado.
  */
 async function createSessionInternal(client: unknown): Promise<string> {
-  const result = await (client as { session: { create: (opts?: unknown) => Promise<unknown> } }).session.create();
+  const result = await (
+    client as { session: { create: (opts?: unknown) => Promise<unknown> } }
+  ).session.create();
   return extractSessionId(result);
 }
 
@@ -101,7 +99,9 @@ async function createSessionInternal(client: unknown): Promise<string> {
  * @param client Cliente OpenCode.
  */
 async function deleteSessionInternal(sessionId: string, client: unknown): Promise<void> {
-  await (client as { session: { delete: (opts: unknown) => Promise<unknown> } }).session.delete({ path: { id: sessionId } });
+  await (client as { session: { delete: (opts: unknown) => Promise<unknown> } }).session.delete({
+    path: { id: sessionId },
+  });
 }
 
 /**
@@ -121,7 +121,9 @@ export async function promptOpenCode(
   client?: unknown,
 ): Promise<string> {
   const c = client ?? getGlobalClient();
-  const result = await (c as { session: { prompt: (opts: unknown) => Promise<unknown> } }).session.prompt({
+  const result = await (
+    c as { session: { prompt: (opts: unknown) => Promise<unknown> } }
+  ).session.prompt({
     path: { id: sessionId },
     body: { model, parts },
   });
@@ -141,11 +143,13 @@ export async function* promptStreamOpenCode(
   client?: unknown,
 ): AsyncGenerator<string> {
   const c = client ?? getGlobalClient();
-  const { stream } = await (c as {
-    event: {
-      subscribe: (opts: { signal: AbortSignal }) => Promise<{ stream: AsyncIterable<unknown> }>;
-    };
-  }).event.subscribe({ signal });
+  const { stream } = await (
+    c as {
+      event: {
+        subscribe: (opts: { signal: AbortSignal }) => Promise<{ stream: AsyncIterable<unknown> }>;
+      };
+    }
+  ).event.subscribe({ signal });
   for await (const data of stream) {
     const text = extractDeltaText(data);
     if (text) {
@@ -168,9 +172,7 @@ export async function getSession(client?: unknown): Promise<string> {
     return pooled.sessionId;
   }
   if (sessionPool.length >= POOL_MAX_SIZE) {
-    const oldest = sessionPool.reduce((a, b) =>
-      a.lastUsed < b.lastUsed ? a : b,
-    );
+    const oldest = sessionPool.reduce((a, b) => (a.lastUsed < b.lastUsed ? a : b));
     await deleteSessionInternal(oldest.sessionId, c);
     sessionPool = sessionPool.filter((e) => e !== oldest);
   }
@@ -185,9 +187,7 @@ export async function getSession(client?: unknown): Promise<string> {
  */
 export async function closeAllSessions(client?: unknown): Promise<void> {
   const c = client ?? getGlobalClient();
-  await Promise.all(
-    sessionPool.map((e) => deleteSessionInternal(e.sessionId, c)),
-  );
+  await Promise.all(sessionPool.map((e) => deleteSessionInternal(e.sessionId, c)));
   sessionPool = [];
 }
 
@@ -228,11 +228,11 @@ function evictStaleSessions(): void {
  * @returns ID de sesión o cadena vacía si no se encuentra.
  */
 function extractSessionId(result: unknown): string {
-  if (!result || typeof result !== "object") {
-    return "";
+  if (!result || typeof result !== 'object') {
+    return '';
   }
   const r = result as { data?: { id?: string } };
-  return r.data?.id ?? "";
+  return r.data?.id ?? '';
 }
 
 /**
@@ -241,14 +241,14 @@ function extractSessionId(result: unknown): string {
  * @returns Texto concatenado del prompt.
  */
 function extractPromptText(result: unknown): string {
-  if (!result || typeof result !== "object") {
-    return "";
+  if (!result || typeof result !== 'object') {
+    return '';
   }
   const r = result as { data?: { parts?: Array<{ type?: string; text?: string }> } };
   const parts = r.data?.parts ?? [];
-  let text = "";
+  let text = '';
   for (const p of parts) {
-    if (p.type === "text" && typeof p.text === "string") {
+    if (p.type === 'text' && typeof p.text === 'string') {
       text += p.text;
     }
   }
@@ -261,18 +261,18 @@ function extractPromptText(result: unknown): string {
  * @returns Texto delta o undefined si no hay texto.
  */
 function extractDeltaText(data: unknown): string | undefined {
-  if (!data || typeof data !== "object") {
+  if (!data || typeof data !== 'object') {
     return undefined;
   }
   const d = data as Record<string, unknown>;
-  if (d.type !== "message") {
+  if (d.type !== 'message') {
     return undefined;
   }
   const part = d.part as Record<string, unknown> | undefined;
   if (!part) {
     return undefined;
   }
-  if (part.field !== "text" || typeof part.delta !== "string") {
+  if (part.field !== 'text' || typeof part.delta !== 'string') {
     return undefined;
   }
   return part.delta;

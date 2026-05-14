@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash } from 'node:crypto';
 
 /**
  * Clave estable por raíz de workspace (`WorkspaceFolder.uri.toString()` canónico de VS Code).
@@ -6,5 +6,5 @@ import { createHash } from "node:crypto";
  * @returns Hash SHA-256 en hexadecimal del URI canónico.
  */
 export function workspaceKeyFromRootUriString(rootUriCanonical: string): string {
-  return createHash("sha256").update(rootUriCanonical, "utf8").digest("hex");
+  return createHash('sha256').update(rootUriCanonical, 'utf8').digest('hex');
 }

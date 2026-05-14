@@ -1,1 +1,4 @@
-export { maybeNotifySuggestionIssue, resetSuggestionHostNotificationThrottleForTests } from "./suggestionNotification";
+export {
+  maybeNotifySuggestionIssue,
+  resetSuggestionHostNotificationThrottleForTests,
+} from './suggestionNotification';

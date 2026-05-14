@@ -1,4 +1,4 @@
-import type { ProjectMemoryEditorIngestStoredItem } from "../types";
+import type { ProjectMemoryEditorIngestStoredItem } from '../types';
 
 /**
  * Calcula el tamaño aproximado en bytes de una entrada editor-ingest.
@@ -6,7 +6,7 @@ import type { ProjectMemoryEditorIngestStoredItem } from "../types";
  * @returns Tamaño aproximado en bytes de la entrada.
  */
 function entryApproxByteSize(e: ProjectMemoryEditorIngestStoredItem): number {
-  return Buffer.byteLength(JSON.stringify(e), "utf8");
+  return Buffer.byteLength(JSON.stringify(e), 'utf8');
 }
 
 /**
@@ -30,7 +30,7 @@ export function applyEditorIngestLruEviction(
     if (d !== 0) {
       return d;
     }
-    return a.relativePath.localeCompare(b.relativePath, "en", { sensitivity: "base" });
+    return a.relativePath.localeCompare(b.relativePath, 'en', { sensitivity: 'base' });
   });
 
   while (candidate.length > maxEntries) {
@@ -44,6 +44,6 @@ export function applyEditorIngestLruEviction(
   }
 
   return [...candidate].sort((a, b) =>
-    a.relativePath.localeCompare(b.relativePath, "en", { sensitivity: "base" }),
+    a.relativePath.localeCompare(b.relativePath, 'en', { sensitivity: 'base' }),
   );
 }

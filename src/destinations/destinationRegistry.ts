@@ -1,8 +1,8 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
-export const VS_OPEN_CODE_X_EXTENSION_ID = "jaminsmoke.vsopencodex";
+export const VS_OPEN_CODE_X_EXTENSION_ID = 'jaminsmoke.vsopencodex';
 
-export type DestinationId = "copilotChat" | "vsOpenCodeX";
+export type DestinationId = 'copilotChat' | 'vsOpenCodeX';
 
 export interface DestinationProvider {
   readonly id: DestinationId;
@@ -26,9 +26,7 @@ export function registerDestination(provider: DestinationProvider): void {
  * @param id Identificador del destino deseado.
  * @returns Proveedor de destino o undefined si no está registrado.
  */
-export function getDestinationProviderForId(
-  id: DestinationId,
-): DestinationProvider | undefined {
+export function getDestinationProviderForId(id: DestinationId): DestinationProvider | undefined {
   return registry.get(id);
 }
 
@@ -56,11 +54,11 @@ export type GhostPromptAgentDestination = DestinationId;
  */
 function isAgentDestinationExplicitlyConfigured(): boolean {
   try {
-    const cfg = vscode.workspace.getConfiguration("ghostPrompt");
-    if (typeof cfg.inspect !== "function") {
+    const cfg = vscode.workspace.getConfiguration('ghostPrompt');
+    if (typeof cfg.inspect !== 'function') {
       return true;
     }
-    const inspected = cfg.inspect<unknown>("agentDestination");
+    const inspected = cfg.inspect<unknown>('agentDestination');
     if (!inspected) {
       return true;
     }
@@ -91,15 +89,12 @@ export function isVsOpenCodeXExtensionInstalled(): boolean {
  * @returns Destino seleccionado o inferido según configuración y disponibilidad.
  */
 export function getGhostPromptAgentDestination(): GhostPromptAgentDestination {
-  const cfg = vscode.workspace.getConfiguration("ghostPrompt");
-  const v = cfg.get<string>("agentDestination", "copilotChat");
-  if (
-    !isAgentDestinationExplicitlyConfigured() &&
-    isVsOpenCodeXExtensionInstalled()
-  ) {
-    return "vsOpenCodeX";
+  const cfg = vscode.workspace.getConfiguration('ghostPrompt');
+  const v = cfg.get<string>('agentDestination', 'copilotChat');
+  if (!isAgentDestinationExplicitlyConfigured() && isVsOpenCodeXExtensionInstalled()) {
+    return 'vsOpenCodeX';
   }
-  return v === "vsOpenCodeX" ? "vsOpenCodeX" : "copilotChat";
+  return v === 'vsOpenCodeX' ? 'vsOpenCodeX' : 'copilotChat';
 }
 
 /**

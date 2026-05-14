@@ -1,4 +1,4 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
 import { sha256HexBytes } from '../../context/projectBootstrapContext';
 
@@ -12,16 +12,14 @@ import { sha256HexBytes } from '../../context/projectBootstrapContext';
 export async function probeWorkspaceRelativePaths(params: {
   workspaceRootUri: vscode.Uri;
   relativePaths: readonly string[];
-}): Promise<
-  Partial<Record<string, { mtimeMs: number; sha256: string }>>
-> {
+}): Promise<Partial<Record<string, { mtimeMs: number; sha256: string }>>> {
   const { workspaceRootUri, relativePaths } = params;
   const out: Partial<Record<string, { mtimeMs: number; sha256: string }>> = {};
   for (const rel of relativePaths) {
     try {
       const uri = vscode.Uri.joinPath(
         workspaceRootUri,
-        ...rel.split("/").filter((s) => s.length > 0),
+        ...rel.split('/').filter((s) => s.length > 0),
       );
       const fileStat = await vscode.workspace.fs.stat(uri);
       const bytes = await vscode.workspace.fs.readFile(uri);

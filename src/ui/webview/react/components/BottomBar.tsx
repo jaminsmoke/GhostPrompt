@@ -15,9 +15,15 @@ const successPatterns = /Modelo listo|Suggestion aceptada|Sugerencia recibida/i;
  * @returns Icono de estado o `null` si no hay icono.
  */
 function statusIcon(status: string, isLoading: boolean): string | null {
-  if (isLoading) { return "\u25CB"; }
-  if (errorPatterns.test(status)) { return "\u26A0"; }
-  if (successPatterns.test(status)) { return "\u2713"; }
+  if (isLoading) {
+    return '\u25CB';
+  }
+  if (errorPatterns.test(status)) {
+    return '\u26A0';
+  }
+  if (successPatterns.test(status)) {
+    return '\u2713';
+  }
   return null;
 }
 
@@ -32,17 +38,17 @@ export function BottomBar(props: BottomBarProps) {
   const isError = errorPatterns.test(status);
   const isSuccess = successPatterns.test(status);
   const colorClass = isError
-    ? "text-[var(--vscode-errorForeground)]"
+    ? 'text-[var(--vscode-errorForeground)]'
     : isSuccess
-      ? "text-[var(--vscode-testing-iconPassed)]"
-      : "text-[var(--vscode-descriptionForeground)]";
+      ? 'text-[var(--vscode-testing-iconPassed)]'
+      : 'text-[var(--vscode-descriptionForeground)]';
 
   return (
     <div className="flex flex-col gap-1 mt-2 pt-2 border-t border-[var(--vscode-widget-border)]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 min-h-[20px]">
           {icon !== null && (
-            <span className={`text-xs ${isLoading ? "animate-spin" : ""}`} aria-hidden="true">
+            <span className={`text-xs ${isLoading ? 'animate-spin' : ''}`} aria-hidden="true">
               {icon}
             </span>
           )}

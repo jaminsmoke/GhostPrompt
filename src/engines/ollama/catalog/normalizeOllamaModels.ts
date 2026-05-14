@@ -13,8 +13,8 @@ export type OllamaApiModelRecord = {
 function isValidOllamaModel(v: unknown): v is OllamaApiModelRecord {
   return (
     v !== null &&
-    typeof v === "object" &&
-    typeof (v as { name?: unknown }).name === "string" &&
+    typeof v === 'object' &&
+    typeof (v as { name?: unknown }).name === 'string' &&
     (v as { name: string }).name.trim().length > 0
   );
 }
@@ -39,14 +39,12 @@ export function normalizeOllamaModels(models: unknown): OllamaApiModelRecord[] {
  * @param model Registro de modelo Ollama válido.
  * @returns Descriptor de modelo para el pipeline de sugerencias.
  */
-export function ollamaModelToDescriptor(
-  model: OllamaApiModelRecord,
-): SuggestionModelDescriptor {
+export function ollamaModelToDescriptor(model: OllamaApiModelRecord): SuggestionModelDescriptor {
   return {
     id: model.name,
     label: model.name,
-    tier: "included",
-    provider: "ollama",
-    completionSource: "ollama",
+    tier: 'included',
+    provider: 'ollama',
+    completionSource: 'ollama',
   };
 }

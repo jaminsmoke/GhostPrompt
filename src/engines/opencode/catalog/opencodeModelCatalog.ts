@@ -2,12 +2,12 @@
  * Catálogo de modelos OpenCode para el selector webview (`config.providers()` vía API client).
  * Ver `Docs/ARCHITECTURE.md` §3 — Catálogo OpenCode y merge.
  */
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
-import { normalizeOpencodeProviderModels } from "./normalizeOpencodeProviderModels";
-import { classifyOpencodeModelTier } from "./opencodeModelTier";
+import { normalizeOpencodeProviderModels } from './normalizeOpencodeProviderModels';
+import { classifyOpencodeModelTier } from './opencodeModelTier';
 import type { SuggestionModelDescriptor, SuggestionModelPolicy } from '../../../core/types';
-import { createOpenCodeClient } from "../opencodeApiClient";
+import { createOpenCodeClient } from '../opencodeApiClient';
 
 type OpencodeProvidersBundle = {
   providers?: Array<{
@@ -29,14 +29,14 @@ export async function listOpencodeSuggestionModels(
 ): Promise<SuggestionModelDescriptor[]> {
   const excluded = new Set(
     vscode.workspace
-      .getConfiguration("ghostPrompt")
-      .get<string[]>("opencodeExcludedModelIds", [])
-      .filter((id): id is string => typeof id === "string" && id.trim().length > 0),
+      .getConfiguration('ghostPrompt')
+      .get<string[]>('opencodeExcludedModelIds', [])
+      .filter((id): id is string => typeof id === 'string' && id.trim().length > 0),
   );
 
-  const cfg = vscode.workspace.getConfiguration("ghostPrompt");
-  const port = cfg.get<number>("opencodePort");
-  const authToken = cfg.get<string>("opencodeAuthToken");
+  const cfg = vscode.workspace.getConfiguration('ghostPrompt');
+  const port = cfg.get<number>('opencodePort');
+  const authToken = cfg.get<string>('opencodeAuthToken');
 
   let client: unknown;
   try {
@@ -52,7 +52,7 @@ export async function listOpencodeSuggestionModels(
   try {
     const raw = await sdkClient.config.providers();
     const data =
-      raw && typeof raw === "object" && "data" in raw
+      raw && typeof raw === 'object' && 'data' in raw
         ? (raw as { data?: OpencodeProvidersBundle }).data
         : undefined;
     const providers = data?.providers ?? [];
@@ -72,17 +72,11 @@ export async function listOpencodeSuggestionModels(
           continue;
         }
 
-        const labelSource =
-          typeof model.name === "string" ? model.name.trim() : model.id;
+        const labelSource = typeof model.name === 'string' ? model.name.trim() : model.id;
         const rawRecord = model as Record<string, unknown>;
-        const { tier, pricing } = classifyOpencodeModelTier(
-          p.id,
-          model.id,
-          labelSource,
-          rawRecord,
-        );
+        const { tier, pricing } = classifyOpencodeModelTier(p.id, model.id, labelSource, rawRecord);
 
-        if (policy === "nonPremiumOnly" && tier === "premium") {
+        if (policy === 'nonPremiumOnly' && tier === 'premium') {
           continue;
         }
 
@@ -91,18 +85,13 @@ export async function listOpencodeSuggestionModels(
           label: labelSource || model.id,
           tier,
           ...(pricing ? { pricing } : {}),
-          provider:
-            typeof p.name === "string" && p.name.trim()
-              ? p.name.trim()
-              : p.id,
-          completionSource: "opencode",
+          provider: typeof p.name === 'string' && p.name.trim() ? p.name.trim() : p.id,
+          completionSource: 'opencode',
         });
       }
     }
 
-    descriptors.sort((a, b) =>
-      a.label.localeCompare(b.label, undefined, { sensitivity: "base" }),
-    );
+    descriptors.sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
 
     return descriptors;
   } catch {

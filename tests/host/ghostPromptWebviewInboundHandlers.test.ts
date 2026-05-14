@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   appendSuggestionMock,
@@ -18,7 +18,7 @@ const {
   workspaceConfigGetMock: vi.fn((key: string, fallback: unknown) => fallback),
   handleGhostPromptSuggestMock: vi.fn().mockResolvedValue(undefined),
   getActiveDestinationProviderMock: vi.fn(() => ({
-    id: "copilotChat" as const,
+    id: 'copilotChat' as const,
     sendPrompt: sendToChatMock,
   })),
   windowShowErrorMessageMock: vi.fn(),
@@ -31,7 +31,7 @@ const {
   },
 }));
 
-vi.mock("vscode", () => ({
+vi.mock('vscode', () => ({
   workspace: {
     getConfiguration: () => ({
       get: workspaceConfigGetMock,
@@ -57,103 +57,102 @@ vi.mock("vscode", () => ({
   },
   Uri: {
     joinPath: (...parts: Array<{ fsPath?: string } | string>) => ({
-      fsPath: parts.map((p) => (typeof p === "string" ? p : p.fsPath ?? "")).join("/"),
+      fsPath: parts.map((p) => (typeof p === 'string' ? p : (p.fsPath ?? ''))).join('/'),
     }),
   },
 }));
 
-vi.mock("../../src/system/log/SuggestionLog", () => ({
+vi.mock('../../src/system/log/SuggestionLog', () => ({
   appendSuggestion: appendSuggestionMock,
 }));
 
-vi.mock("../../src/system/log/ConversationLog", () => ({
+vi.mock('../../src/system/log/ConversationLog', () => ({
   append: appendLogMock,
 }));
 
-vi.mock("../../src/destinations/destinationRegistry", () => ({
+vi.mock('../../src/destinations/destinationRegistry', () => ({
   getGhostPromptAgentDestination: () =>
-    workspaceConfigGetMock("agentDestination", "copilotChat") as string,
+    workspaceConfigGetMock('agentDestination', 'copilotChat') as string,
   getActiveDestinationProvider: () => getActiveDestinationProviderMock(),
 }));
 
-vi.mock("../../src/api/settings/applyWebviewUpdate", () => ({
+vi.mock('../../src/api/settings/applyWebviewUpdate', () => ({
   applyWebviewUpdateSetting: applyWebviewUpdateSettingMock,
 }));
 
-vi.mock("../../src/core/pipeline", () => ({
-  handleGhostPromptSuggest: (...args: unknown[]) =>
-    handleGhostPromptSuggestMock(...args),
+vi.mock('../../src/core/pipeline', () => ({
+  handleGhostPromptSuggest: (...args: unknown[]) => handleGhostPromptSuggestMock(...args),
 }));
 
-import type { Uri, Webview } from "vscode";
-import { ghostPromptSessionStore } from "../../src/core/session/GhostPromptSessionStore";
+import type { Uri, Webview } from 'vscode';
+import { ghostPromptSessionStore } from '../../src/core/session/GhostPromptSessionStore';
 import {
   dispatchGhostPromptInboundMessage,
   handleGhostPromptInboundDraftChanged,
   handleGhostPromptInboundInit,
   handleGhostPromptInboundSend,
   type GhostPromptInboundDispatchServices,
-} from "../../src/api/protocols/inboundHandlers";
-import type { GhostPromptSuggestDeps } from "../../src/core/pipeline";
+} from '../../src/api/protocols/inboundHandlers';
+import type { GhostPromptSuggestDeps } from '../../src/core/pipeline';
 
 function minimalSuggestDeps(): GhostPromptSuggestDeps {
   return {
     broadcastUi: vi.fn(),
-    getSuggestionModelPolicy: () => "nonPremiumOnly",
-    getSelectedModelId: () => "auto",
-    getSuggestionStyle: () => "balanced",
+    getSuggestionModelPolicy: () => 'nonPremiumOnly',
+    getSelectedModelId: () => 'auto',
+    getSuggestionStyle: () => 'balanced',
     getMaxSuggestionChars: () => 180,
   };
 }
 
-describe("ghostPromptWebviewInboundHandlers", () => {
+describe('ghostPromptWebviewInboundHandlers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) =>
-      key === "agentDestination" ? "copilotChat" : fallback,
+      key === 'agentDestination' ? 'copilotChat' : fallback,
     );
     ghostPromptSessionStore.resetSessionState();
   });
 
-  describe("handleGhostPromptInboundDraftChanged", () => {
-    it("no actualiza el store si originViewId no coincide con la vista", () => {
+  describe('handleGhostPromptInboundDraftChanged', () => {
+    it('no actualiza el store si originViewId no coincide con la vista', () => {
       const broadcast = vi.fn();
       handleGhostPromptInboundDraftChanged(
         {
-          type: "draftChanged",
-          text: "hola",
-          originViewId: "ghostPrompt.inputPanel",
+          type: 'draftChanged',
+          text: 'hola',
+          originViewId: 'ghostPrompt.inputPanel',
         },
         {
-          viewContributionId: "ghostPrompt.input",
+          viewContributionId: 'ghostPrompt.input',
           broadcastDraftSync: broadcast,
         },
       );
-      expect(ghostPromptSessionStore.getSnapshot().draftText).toBe("");
+      expect(ghostPromptSessionStore.getSnapshot().draftText).toBe('');
       expect(broadcast).not.toHaveBeenCalled();
     });
 
-    it("persiste el borrador y notifica a la otra vista", () => {
+    it('persiste el borrador y notifica a la otra vista', () => {
       const broadcast = vi.fn();
       handleGhostPromptInboundDraftChanged(
         {
-          type: "draftChanged",
-          text: "texto",
-          originViewId: "ghostPrompt.input",
+          type: 'draftChanged',
+          text: 'texto',
+          originViewId: 'ghostPrompt.input',
         },
         {
-          viewContributionId: "ghostPrompt.input",
+          viewContributionId: 'ghostPrompt.input',
           broadcastDraftSync: broadcast,
         },
       );
-      expect(ghostPromptSessionStore.getSnapshot().draftText).toBe("texto");
-      expect(broadcast).toHaveBeenCalledWith("ghostPrompt.input", "texto");
+      expect(ghostPromptSessionStore.getSnapshot().draftText).toBe('texto');
+      expect(broadcast).toHaveBeenCalledWith('ghostPrompt.input', 'texto');
     });
   });
 
-  describe("handleGhostPromptInboundInit", () => {
-    it("publica settings y rehidrata el borrador del store", async () => {
-      ghostPromptSessionStore.patchState({ draftText: "persistido" });
+  describe('handleGhostPromptInboundInit', () => {
+    it('publica settings y rehidrata el borrador del store', async () => {
+      ghostPromptSessionStore.patchState({ draftText: 'persistido' });
       const postSettings = vi.fn().mockResolvedValue(undefined);
       const postMessage = vi.fn();
       const webview = { postMessage } as unknown as Webview;
@@ -162,50 +161,44 @@ describe("ghostPromptWebviewInboundHandlers", () => {
 
       expect(postSettings).toHaveBeenCalledWith(webview);
       expect(postMessage).toHaveBeenCalledWith({
-        type: "draftHydrate",
-        text: "persistido",
+        type: 'draftHydrate',
+        text: 'persistido',
       });
     });
   });
 
-  describe("handleGhostPromptInboundSend", () => {
-    it("registra el envío, envía al chat y limpia vistas", async () => {
+  describe('handleGhostPromptInboundSend', () => {
+    it('registra el envío, envía al chat y limpia vistas', async () => {
       const clearAll = vi.fn();
-      const dataUri = { fsPath: "/global-store" } as Uri;
+      const dataUri = { fsPath: '/global-store' } as Uri;
 
-      await handleGhostPromptInboundSend(
-        { type: "send", text: "prompt final" },
-        dataUri,
-        clearAll,
-      );
+      await handleGhostPromptInboundSend({ type: 'send', text: 'prompt final' }, dataUri, clearAll);
 
-      expect(ghostPromptSessionStore.getSnapshot().lastSentPrompt).toBe(
-        "prompt final",
-      );
-      expect(appendLogMock).toHaveBeenCalledWith(dataUri, "prompt final");
-      expect(sendToChatMock).toHaveBeenCalledWith("prompt final");
+      expect(ghostPromptSessionStore.getSnapshot().lastSentPrompt).toBe('prompt final');
+      expect(appendLogMock).toHaveBeenCalledWith(dataUri, 'prompt final');
+      expect(sendToChatMock).toHaveBeenCalledWith('prompt final');
       expect(clearAll).toHaveBeenCalled();
     });
 
-    it("no hace nada si text está vacío", async () => {
+    it('no hace nada si text está vacío', async () => {
       await handleGhostPromptInboundSend(
-        { type: "send", text: "" },
-        { fsPath: "/g" } as Uri,
+        { type: 'send', text: '' },
+        { fsPath: '/g' } as Uri,
         vi.fn(),
       );
       expect(appendLogMock).not.toHaveBeenCalled();
       expect(sendToChatMock).not.toHaveBeenCalled();
     });
 
-    it("muestra error si el provider no tiene sendPrompt registrado", async () => {
+    it('muestra error si el provider no tiene sendPrompt registrado', async () => {
       getActiveDestinationProviderMock.mockReturnValue({
-        id: "copilotChat" as const,
+        id: 'copilotChat' as const,
         sendPrompt: undefined as any,
       });
       const clearAll = vi.fn();
       await handleGhostPromptInboundSend(
-        { type: "send", text: "prompt final" },
-        { fsPath: "/global-store" } as Uri,
+        { type: 'send', text: 'prompt final' },
+        { fsPath: '/global-store' } as Uri,
         clearAll,
       );
       expect(appendLogMock).not.toHaveBeenCalled();
@@ -216,15 +209,15 @@ describe("ghostPromptWebviewInboundHandlers", () => {
       expect(clearAll).not.toHaveBeenCalled();
     });
 
-    it("no envía si agentDestination es vsOpenCodeX", async () => {
+    it('no envía si agentDestination es vsOpenCodeX', async () => {
       workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) =>
-        key === "agentDestination" ? "vsOpenCodeX" : fallback,
+        key === 'agentDestination' ? 'vsOpenCodeX' : fallback,
       );
       const clearAll = vi.fn();
 
       await handleGhostPromptInboundSend(
-        { type: "send", text: "prompt final" },
-        { fsPath: "/global-store" } as Uri,
+        { type: 'send', text: 'prompt final' },
+        { fsPath: '/global-store' } as Uri,
         clearAll,
       );
 
@@ -234,16 +227,16 @@ describe("ghostPromptWebviewInboundHandlers", () => {
     });
   });
 
-  describe("dispatchGhostPromptInboundMessage", () => {
-    it("enruta updateSetting a apply + refresh de settings", async () => {
+  describe('dispatchGhostPromptInboundMessage', () => {
+    it('enruta updateSetting a apply + refresh de settings', async () => {
       applyWebviewUpdateSettingMock.mockResolvedValue(undefined);
       const broadcastSettings = vi.fn().mockResolvedValue(undefined);
       const webview = {} as Webview;
 
       const services: GhostPromptInboundDispatchServices = {
-        viewContributionId: "ghostPrompt.input",
+        viewContributionId: 'ghostPrompt.input',
         webview,
-        dataUri: { fsPath: "/g" } as Uri,
+        dataUri: { fsPath: '/g' } as Uri,
         postSettings: vi.fn(),
         broadcastDraftSync: vi.fn(),
         broadcastSettingsToAllViews: broadcastSettings,
@@ -253,32 +246,32 @@ describe("ghostPromptWebviewInboundHandlers", () => {
 
       await dispatchGhostPromptInboundMessage(
         {
-          type: "updateSetting",
-          key: "suggestionStyle",
-          value: "concise",
+          type: 'updateSetting',
+          key: 'suggestionStyle',
+          value: 'concise',
         },
         services,
       );
 
       expect(applyWebviewUpdateSettingMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: "updateSetting",
-          key: "suggestionStyle",
-          value: "concise",
+          type: 'updateSetting',
+          key: 'suggestionStyle',
+          value: 'concise',
         }),
       );
       expect(broadcastSettings).toHaveBeenCalled();
     });
 
-    it("ignora suggest si agentDestination es vsOpenCodeX", async () => {
+    it('ignora suggest si agentDestination es vsOpenCodeX', async () => {
       workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) =>
-        key === "agentDestination" ? "vsOpenCodeX" : fallback,
+        key === 'agentDestination' ? 'vsOpenCodeX' : fallback,
       );
       const broadcastUi = vi.fn();
       const services: GhostPromptInboundDispatchServices = {
-        viewContributionId: "ghostPrompt.input",
+        viewContributionId: 'ghostPrompt.input',
         webview: {} as Webview,
-        dataUri: { fsPath: "/g" } as Uri,
+        dataUri: { fsPath: '/g' } as Uri,
         postSettings: vi.fn(),
         broadcastDraftSync: vi.fn(),
         broadcastSettingsToAllViews: vi.fn(),
@@ -290,7 +283,7 @@ describe("ghostPromptWebviewInboundHandlers", () => {
       };
 
       await dispatchGhostPromptInboundMessage(
-        { type: "suggest", text: "abc", captureId: 99 },
+        { type: 'suggest', text: 'abc', captureId: 99 },
         services,
       );
 

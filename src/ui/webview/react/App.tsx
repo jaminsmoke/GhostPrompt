@@ -1,11 +1,11 @@
-import "./index.css";
-import { useGhostPrompt } from "./hooks/useGhostPrompt";
-import { GhostToolbar } from "./components/GhostToolbar";
-import { PromptInput } from "./components/PromptInput";
-import { BottomBar } from "./components/BottomBar";
-import { ErrorBoundary } from "./components/ErrorBoundary";
+import './index.css';
+import { useGhostPrompt } from './hooks/useGhostPrompt';
+import { GhostToolbar } from './components/GhostToolbar';
+import { PromptInput } from './components/PromptInput';
+import { BottomBar } from './components/BottomBar';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
-export { postToHost } from "./hooks/useGhostPrompt";
+export { postToHost } from './hooks/useGhostPrompt';
 
 /**
  * Componente raíz del webview React de GhostPrompt.
@@ -78,7 +78,9 @@ export function App(): JSX.Element {
           className="rounded-md border border-[var(--vscode-widget-border)] bg-[var(--vscode-textBlockQuote-background)] px-3 py-2 mb-2 text-sm text-[var(--vscode-sideBar-foreground)]"
           role="status"
         >
-          El chat inline está desactivado: el destino del agente es VSOpenCodeX. Usa el chat de VSOpenCodeX para redactar y enviar; las sugerencias siguen el modelo y chips configurados aquí.
+          El chat inline está desactivado: el destino del agente es VSOpenCodeX. Usa el chat de
+          VSOpenCodeX para redactar y enviar; las sugerencias siguen el modelo y chips configurados
+          aquí.
         </p>
       ) : null}
 

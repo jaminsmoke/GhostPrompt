@@ -9,14 +9,14 @@ declare global {
   }
 }
 
-export type AgentDestination = "copilotChat" | "vsOpenCodeX";
+export type AgentDestination = 'copilotChat' | 'vsOpenCodeX';
 
-export type CompletionProvider = "copilot" | "opencode" | "ollama";
+export type CompletionProvider = 'copilot' | 'opencode' | 'ollama';
 
 export type SuggestionModel = {
   id: string;
   label: string;
-  tier: "included" | "premium" | "unknown";
+  tier: 'included' | 'premium' | 'unknown';
   pricing?: string;
   provider?: string;
   completionSource?: CompletionProvider;
@@ -24,14 +24,14 @@ export type SuggestionModel = {
 
 export type SettingsPayload = {
   completionProvider: CompletionProvider;
-  completionUiKind: "copilot" | "opencode" | "ollama" | "multi";
+  completionUiKind: 'copilot' | 'opencode' | 'ollama' | 'multi';
   enabledCompletionSources: CompletionProvider[];
-  suggestionModelPolicy: "nonPremiumOnly" | "anyModel";
+  suggestionModelPolicy: 'nonPremiumOnly' | 'anyModel';
   selectedModelId: string;
   availableModels: SuggestionModel[];
-  suggestionStyle: "concise" | "balanced" | "detailed";
-  suggestionLanguageChoice: "auto" | "es" | "en";
-  effectiveSuggestionLanguage: "es" | "en";
+  suggestionStyle: 'concise' | 'balanced' | 'detailed';
+  suggestionLanguageChoice: 'auto' | 'es' | 'en';
+  effectiveSuggestionLanguage: 'es' | 'en';
   effectiveModel?: SuggestionModel;
   debugSuggestions: boolean;
   suggestionDebounceMs: number;
@@ -41,111 +41,111 @@ export type SettingsPayload = {
 
 export type InboundMessage =
   | {
-      type: "loading";
+      type: 'loading';
       captureId: number;
       broadcast?: boolean;
       phase?: string;
       statusText?: string;
     }
   | {
-      type: "suggestion-stream";
+      type: 'suggestion-stream';
       text: string;
       captureId: number;
       broadcast?: boolean;
     }
   | {
-      type: "suggestion";
+      type: 'suggestion';
       suggestion: string;
       captureId: number;
       model?: SuggestionModel;
       broadcast?: boolean;
     }
   | {
-      type: "empty";
+      type: 'empty';
       reason:
-        | "no-model"
-        | "no-included-model"
-        | "premium-quota-blocked"
-        | "empty-response"
-        | "request-timeout"
-        | "too-short"
-        | "duplicate-input"
-        | "rate-limited"
-        | "session-budget-exhausted"
-        | "content-blocked";
+        | 'no-model'
+        | 'no-included-model'
+        | 'premium-quota-blocked'
+        | 'empty-response'
+        | 'request-timeout'
+        | 'too-short'
+        | 'duplicate-input'
+        | 'rate-limited'
+        | 'session-budget-exhausted'
+        | 'content-blocked';
       captureId?: number;
       broadcast?: boolean;
     }
   | {
-      type: "error";
+      type: 'error';
       message: string;
       captureId?: number;
       broadcast?: boolean;
     }
   | {
-      type: "clear";
+      type: 'clear';
       captureId?: number;
       broadcast?: boolean;
     }
   | {
-      type: "languageEffective";
-      language: "es" | "en";
+      type: 'languageEffective';
+      language: 'es' | 'en';
       captureId?: number;
       broadcast?: boolean;
     }
   | {
-      type: "draftSync";
+      type: 'draftSync';
       text: string;
       originViewId: string;
       captureId?: number;
       broadcast?: boolean;
     }
   | {
-      type: "draftHydrate";
+      type: 'draftHydrate';
       text: string;
       captureId?: number;
       broadcast?: boolean;
     }
   | {
-      type: "settings";
+      type: 'settings';
       settings: SettingsPayload;
       captureId?: number;
       broadcast?: boolean;
     }
   | {
-      type: "providerStatus";
+      type: 'providerStatus';
       providers: ProviderStateRecord[];
       captureId?: number;
       broadcast?: boolean;
     };
 
-export type ProviderState = "running" | "stopped" | "starting" | "unavailable" | "error";
+export type ProviderState = 'running' | 'stopped' | 'starting' | 'unavailable' | 'error';
 
 export interface ProviderStateRecord {
   id: string;
-  kind: "engine" | "destination";
+  kind: 'engine' | 'destination';
   status: ProviderState;
   label: string;
   statusText?: string;
-  actions?: ("start" | "stop")[];
+  actions?: ('start' | 'stop')[];
 }
 
 export type UpdateSettingMessage =
-  | { type: "updateSetting"; key: "suggestionModelPolicy"; value: "nonPremiumOnly" | "anyModel" }
-  | { type: "updateSetting"; key: "selectedModelId"; value: string }
-  | { type: "updateSetting"; key: "suggestionStyle"; value: "concise" | "balanced" | "detailed" }
-  | { type: "updateSetting"; key: "suggestionLanguageChoice"; value: "auto" | "es" | "en" }
-  | { type: "updateSetting"; key: "debugSuggestions"; value: boolean }
-  | { type: "updateSetting"; key: "completionProvider"; value: CompletionProvider }
-  | { type: "updateSetting"; key: "agentDestination"; value: AgentDestination };
+  | { type: 'updateSetting'; key: 'suggestionModelPolicy'; value: 'nonPremiumOnly' | 'anyModel' }
+  | { type: 'updateSetting'; key: 'selectedModelId'; value: string }
+  | { type: 'updateSetting'; key: 'suggestionStyle'; value: 'concise' | 'balanced' | 'detailed' }
+  | { type: 'updateSetting'; key: 'suggestionLanguageChoice'; value: 'auto' | 'es' | 'en' }
+  | { type: 'updateSetting'; key: 'debugSuggestions'; value: boolean }
+  | { type: 'updateSetting'; key: 'completionProvider'; value: CompletionProvider }
+  | { type: 'updateSetting'; key: 'agentDestination'; value: AgentDestination };
 
 export type OutboundMessage =
-  | { type: "init" }
-  | { type: "suggest"; text: string; captureId: number }
-  | { type: "draftChanged"; text: string; originViewId: string }
-  | { type: "accept"; context: string; suggestion: string }
-  | { type: "send"; text: string }
-  | { type: "requestProviderStatus" }
-  | { type: "startProvider"; provider: string }
-  | { type: "stopProvider"; provider: string }
+  | { type: 'init' }
+  | { type: 'suggest'; text: string; captureId: number }
+  | { type: 'draftChanged'; text: string; originViewId: string }
+  | { type: 'accept'; context: string; suggestion: string }
+  | { type: 'send'; text: string }
+  | { type: 'requestProviderStatus' }
+  | { type: 'startProvider'; provider: string }
+  | { type: 'stopProvider'; provider: string }
   | UpdateSettingMessage;

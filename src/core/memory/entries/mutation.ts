@@ -1,6 +1,6 @@
-import { isProjectMemoryBootstrapStoredItem } from "./bootstrap";
-import { isProjectMemoryEditorIngestStoredItem } from "./editor";
-import { workspaceRelativePathsMatch } from "../io/path";
+import { isProjectMemoryBootstrapStoredItem } from './bootstrap';
+import { isProjectMemoryEditorIngestStoredItem } from './editor';
+import { workspaceRelativePathsMatch } from '../io/path';
 
 /**
  * Quita entradas bootstrap/editor cuyo `relativePath` coincide con `targetRel`.

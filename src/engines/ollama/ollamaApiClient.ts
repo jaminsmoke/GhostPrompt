@@ -3,9 +3,9 @@ import {
   type OllamaGenerateResponse,
   type OllamaModel,
   type OllamaTagsResponse,
-} from "./ollamaTypes";
+} from './ollamaTypes';
 
-const DEFAULT_OLLAMA_BASE_URL = "http://localhost:11434";
+const DEFAULT_OLLAMA_BASE_URL = 'http://localhost:11434';
 const DEFAULT_REQUEST_TIMEOUT_MS = 30000;
 
 /**
@@ -14,11 +14,8 @@ const DEFAULT_REQUEST_TIMEOUT_MS = 30000;
  * @param baseUrl URL base opcional de Ollama.
  * @returns URL completa sin barras finales duplicadas.
  */
-function resolveUrl(
-  path: string,
-  baseUrl?: string,
-): string {
-  const base = (baseUrl || DEFAULT_OLLAMA_BASE_URL).replace(/\/+$/, "");
+function resolveUrl(path: string, baseUrl?: string): string {
+  const base = (baseUrl || DEFAULT_OLLAMA_BASE_URL).replace(/\/+$/, '');
   return `${base}${path}`;
 }
 
@@ -27,11 +24,12 @@ function resolveUrl(
  * @param opts Opciones de cliente que pueden incluir señal de cancelación.
  * @returns Objeto con cabeceras y señal para fetch.
  */
-function buildOptions(
-  opts: OllamaClientOptions,
-): { headers: Record<string, string>; signal?: AbortSignal } {
+function buildOptions(opts: OllamaClientOptions): {
+  headers: Record<string, string>;
+  signal?: AbortSignal;
+} {
   const headers: Record<string, string> = {};
-  headers["Content-Type"] = "application/json";
+  headers['Content-Type'] = 'application/json';
   return {
     headers,
     ...(opts.signal ? { signal: opts.signal } : {}),
@@ -45,11 +43,7 @@ function buildOptions(
  * @param timeoutMs Tiempo máximo en milisegundos antes de abortar.
  * @returns Respuesta parseada como JSON genérico.
  */
-async function fetchJson<T>(
-  url: string,
-  init: RequestInit,
-  timeoutMs: number,
-): Promise<T> {
+async function fetchJson<T>(url: string, init: RequestInit, timeoutMs: number): Promise<T> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -66,8 +60,8 @@ async function fetchJson<T>(
     return (await res.json()) as T;
   } catch (err) {
     clearTimeout(timeoutId);
-    if (err instanceof Error && err.name === "AbortError") {
-      throw new Error("Ollama request timed out or was cancelled");
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error('Ollama request timed out or was cancelled');
     }
     throw err;
   }
@@ -85,7 +79,7 @@ function anySignal(signals: AbortSignal[]): AbortSignal {
       controller.abort(signal.reason);
       return controller.signal;
     }
-    signal.addEventListener("abort", () => controller.abort(signal.reason), {
+    signal.addEventListener('abort', () => controller.abort(signal.reason), {
       once: true,
     });
   }
@@ -97,14 +91,12 @@ function anySignal(signals: AbortSignal[]): AbortSignal {
  * @param opts Opciones de cliente para la petición.
  * @returns Array de modelos disponibles.
  */
-export async function listModels(
-  opts: OllamaClientOptions = {},
-): Promise<OllamaModel[]> {
-  const url = resolveUrl("/api/tags", opts.baseUrl);
+export async function listModels(opts: OllamaClientOptions = {}): Promise<OllamaModel[]> {
+  const url = resolveUrl('/api/tags', opts.baseUrl);
   const { headers, signal } = buildOptions(opts);
   const data = await fetchJson<OllamaTagsResponse>(
     url,
-    { method: "GET", headers, signal },
+    { method: 'GET', headers, signal },
     opts.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
   );
   return data.models ?? [];
@@ -126,7 +118,7 @@ export async function generate(
     options?: Record<string, unknown>;
   } = {},
 ): Promise<string> {
-  const url = resolveUrl("/api/generate", opts.baseUrl);
+  const url = resolveUrl('/api/generate', opts.baseUrl);
   const timeoutMs = opts.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
 
   if (opts.onStreamPreview) {
@@ -149,7 +141,7 @@ export async function generate(
   const res = await fetchJson<OllamaGenerateResponse>(
     url,
     {
-      method: "POST",
+      method: 'POST',
       headers,
       signal,
       body: JSON.stringify(body),
@@ -157,7 +149,7 @@ export async function generate(
     timeoutMs,
   );
 
-  return res.response ?? "";
+  return res.response ?? '';
 }
 
 /**
@@ -182,9 +174,7 @@ async function streamGenerate(
 ): Promise<string> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  const signal = opts.signal
-    ? anySignal([opts.signal, controller.signal])
-    : controller.signal;
+  const signal = opts.signal ? anySignal([opts.signal, controller.signal]) : controller.signal;
 
   const body: Record<string, unknown> = {
     model,
@@ -200,10 +190,10 @@ async function streamGenerate(
 
   try {
     const headers: Record<string, string> = {};
-    headers["Content-Type"] = "application/json";
+    headers['Content-Type'] = 'application/json';
 
     const res = await fetch(url, {
-      method: "POST",
+      method: 'POST',
       headers,
       signal,
       body: JSON.stringify(body),
@@ -217,19 +207,19 @@ async function streamGenerate(
 
     const reader = res.body?.getReader();
     if (!reader) {
-      throw new Error("Ollama stream response body is null");
+      throw new Error('Ollama stream response body is null');
     }
 
-    let fullText = "";
-    let buffer = "";
+    let fullText = '';
+    let buffer = '';
 
     while (true) {
       const { done, value: _value } = await reader.read();
       if (done) {
         break;
       }
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
 
       for (const line of lines) {
         if (!line.trim()) {
@@ -250,8 +240,8 @@ async function streamGenerate(
     return fullText;
   } catch (err) {
     clearTimeout(timeoutId);
-    if (err instanceof Error && err.name === "AbortError") {
-      throw new Error("Ollama request timed out or was cancelled");
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error('Ollama request timed out or was cancelled');
     }
     throw err;
   }

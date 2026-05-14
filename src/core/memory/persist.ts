@@ -1,24 +1,24 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
 import { type ProjectBootstrapPiece } from '../context/projectBootstrapContext';
-import { readEditorIngestConfig } from "./ingest/settings";
-import { applyEditorIngestLruEviction } from "./ingest/lru";
+import { readEditorIngestConfig } from './ingest/settings';
+import { applyEditorIngestLruEviction } from './ingest/lru';
 import {
   isProjectMemoryBootstrapStoredItem,
   mergeEntriesReplacingBootstrapSubset,
   mergeValidatedBootstrapWithLive,
-} from "./entries/bootstrap";
+} from './entries/bootstrap';
 import {
   isProjectMemoryEditorIngestStoredItem,
   mergeEntriesReplacingEditorSubset,
   pruneEditorIngestAgainstFileProbes,
-} from "./entries/editor";
-import type { ProjectMemoryBootstrapStoredItem } from "./types";
-import { PROJECT_BOOTSTRAP_ENTRY_KIND } from "./types";
-import type { ProjectMemoryStore } from "./Store";
-import { scheduleIndexedPathWatcherRefresh } from "./probes/watchers";
-import { workspaceKeyFromRootUriString } from "./io/key";
-import { probeWorkspaceRelativePaths } from "./probes/workspace";
+} from './entries/editor';
+import type { ProjectMemoryBootstrapStoredItem } from './types';
+import { PROJECT_BOOTSTRAP_ENTRY_KIND } from './types';
+import type { ProjectMemoryStore } from './Store';
+import { scheduleIndexedPathWatcherRefresh } from './probes/watchers';
+import { workspaceKeyFromRootUriString } from './io/key';
+import { probeWorkspaceRelativePaths } from './probes/workspace';
 
 /** @deprecated Usar {@link ProjectMemoryReconcileSnapshot} */
 export type ProjectBootstrapReconcileSnapshot = ProjectMemoryReconcileSnapshot;
@@ -115,9 +115,7 @@ export async function reconcileProjectMemoryForSuggest(params: {
   const bootstrapPromptLines = nextBootstrap.map((x) => x.promptLine);
   const editorPromptLines = cfg.includeEditorIngest
     ? [...persistedEditor]
-        .sort((a, b) =>
-          a.relativePath.localeCompare(b.relativePath, "en", { sensitivity: "base" }),
-        )
+        .sort((a, b) => a.relativePath.localeCompare(b.relativePath, 'en', { sensitivity: 'base' }))
         .map((e) => e.promptLine)
     : [];
 

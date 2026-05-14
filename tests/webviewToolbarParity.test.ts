@@ -3,36 +3,36 @@
  * @see Docs/Plans/Roadmaps/Roadmap-v0.3.1-webview-parity-contracts-ux.md Fase A
  * @see Docs/Plans/Roadmaps/Roadmap-v0.4.3-quality-resilience.md Fase 5 (gobernanza dual webview)
  */
-import { readFileSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { describe, expect, it } from 'vitest';
 
-const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
+const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 function read(rel: string): string {
-  return readFileSync(join(repoRoot, rel), "utf8");
+  return readFileSync(join(repoRoot, rel), 'utf8');
 }
 
-describe("React webview toolbar parity", () => {
-  it("GhostToolbar defines exactly five setting groups with stable data-keys", () => {
-    const source = read("src/ui/webview/react/components/GhostToolbar.tsx");
+describe('React webview toolbar parity', () => {
+  it('GhostToolbar defines exactly five setting groups with stable data-keys', () => {
+    const source = read('src/ui/webview/react/components/GhostToolbar.tsx');
     expect(source.match(/data-key="/g)?.length).toBe(5);
     for (const key of [
-      "completionProvider",
-      "agentDestination",
-      "suggestionModelPolicy",
-      "suggestionStyle",
-      "suggestionLanguageChoice",
+      'completionProvider',
+      'agentDestination',
+      'suggestionModelPolicy',
+      'suggestionStyle',
+      'suggestionLanguageChoice',
     ]) {
       expect(source).toContain(`data-key="${key}"`);
     }
   });
 
-  it("component files expose stable toolbar chip ids shared by both webviews", () => {
-    const toolbar = read("src/ui/webview/react/components/GhostToolbar.tsx");
-    const input = read("src/ui/webview/react/components/PromptInput.tsx");
-    const app = read("src/ui/webview/react/App.tsx");
+  it('component files expose stable toolbar chip ids shared by both webviews', () => {
+    const toolbar = read('src/ui/webview/react/components/GhostToolbar.tsx');
+    const input = read('src/ui/webview/react/components/PromptInput.tsx');
+    const app = read('src/ui/webview/react/App.tsx');
 
     // Chip IDs in GhostToolbar
     expect(toolbar).toContain('id="motor-chip"');
@@ -47,21 +47,21 @@ describe("React webview toolbar parity", () => {
     expect(input).toContain('id="prompt-input"');
     expect(app).toContain('id="gp-vsx-surface-note"');
     // send-btn ahora en BottomBar
-    const bbar = read("src/ui/webview/react/components/BottomBar.tsx");
+    const bbar = read('src/ui/webview/react/components/BottomBar.tsx');
     expect(bbar).toContain('id="send-btn"');
   });
 
-  it("webviewHtml loads the React built index document", () => {
-    const src = read("src/ui/provider/webviewHtml.ts");
-    expect(src).toContain("\"dist\",");
-    expect(src).toContain("\"react\",");
-    expect(src).toContain("\"index.html\"");
+  it('webviewHtml loads the React built index document', () => {
+    const src = read('src/ui/provider/webviewHtml.ts');
+    expect(src).toContain('"dist",');
+    expect(src).toContain('"react",');
+    expect(src).toContain('"index.html"');
   });
 
-  it("MiniInputViewProvider usa el builder de HTML compartido", () => {
-    const src = read("src/ui/provider/MiniInputViewProvider.ts");
-    expect(src).toContain("buildGhostPromptWebviewHtml");
-    expect(src).toContain("ghostPrompt.input");
-    expect(src).toContain("ghostPrompt.inputPanel");
+  it('MiniInputViewProvider usa el builder de HTML compartido', () => {
+    const src = read('src/ui/provider/MiniInputViewProvider.ts');
+    expect(src).toContain('buildGhostPromptWebviewHtml');
+    expect(src).toContain('ghostPrompt.input');
+    expect(src).toContain('ghostPrompt.inputPanel');
   });
 });

@@ -10,13 +10,13 @@
 
 ## Resumen
 
-| Fase | Alcance | Resultado | Estado |
-|------|---------|-----------|--------|
-| Fase 1 | Schema Zod unificado para mensajes salientes + `parseWebviewOutboundMessage` | Todo mensaje host→webview validado | 🟢 Completado |
-| Fase 2 | Filtro de `availableModels` por provider activo en `<select>` | No aparecen modelos de Copilot cuando Ollama está activo | 🟢 Completado |
-| Fase 3 | Tests de integración del flujo providerStatus | 5 tests nuevos, 243 total | 🟢 Completado |
-| Fase 4 | JSDoc en funciones críticas | `_broadcastUi`, `startModel`, `handleGhostPromptInboundUpdateSetting` documentados | 🟢 Completado |
-| Fase 5 | **Integración de `parseWebviewOutboundMessage` en puntos de envío** | Validación Zod en `_broadcastUi`, `handleGhostPromptInboundInit`, `postProviderStatus` | 🟢 Completado |
+| Fase   | Alcance                                                                      | Resultado                                                                              | Estado        |
+| ------ | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------- |
+| Fase 1 | Schema Zod unificado para mensajes salientes + `parseWebviewOutboundMessage` | Todo mensaje host→webview validado                                                     | 🟢 Completado |
+| Fase 2 | Filtro de `availableModels` por provider activo en `<select>`                | No aparecen modelos de Copilot cuando Ollama está activo                               | 🟢 Completado |
+| Fase 3 | Tests de integración del flujo providerStatus                                | 5 tests nuevos, 243 total                                                              | 🟢 Completado |
+| Fase 4 | JSDoc en funciones críticas                                                  | `_broadcastUi`, `startModel`, `handleGhostPromptInboundUpdateSetting` documentados     | 🟢 Completado |
+| Fase 5 | **Integración de `parseWebviewOutboundMessage` en puntos de envío**          | Validación Zod en `_broadcastUi`, `handleGhostPromptInboundInit`, `postProviderStatus` | 🟢 Completado |
 
 ---
 
@@ -62,8 +62,10 @@ export const webviewOutboundMessageSchema = z.discriminatedUnion("type", [
 
 ```tsx
 const filteredModels = useMemo(() => {
-  if (completionProvider === "ollama") return availableModels.filter(m => m.completionSource === "ollama");
-  if (completionProvider === "opencode") return availableModels.filter(m => m.completionSource === "opencode");
+  if (completionProvider === 'ollama')
+    return availableModels.filter((m) => m.completionSource === 'ollama');
+  if (completionProvider === 'opencode')
+    return availableModels.filter((m) => m.completionSource === 'opencode');
   return availableModels;
 }, [completionProvider, availableModels]);
 ```
@@ -141,10 +143,10 @@ Agregar JSDoc a:
 
 ## Hitos clave
 
-| Hito | Objetivo | Criterio de éxito | Estado |
-|------|----------|-------------------|--------|
-| Hito 1 | Zod outbound | Mensajes salientes validados | 🟢 Completado |
-| Hito 2 | Filtro modelos | Select solo muestra modelos del provider activo | 🟢 Completado |
-| Hito 3 | Tests integración | 5 tests nuevos, deterministas | 🟢 Completado |
-| Hito 4 | JSDoc crítico | 3+ funciones documentadas | 🟢 Completado |
+| Hito   | Objetivo                 | Criterio de éxito                                              | Estado        |
+| ------ | ------------------------ | -------------------------------------------------------------- | ------------- |
+| Hito 1 | Zod outbound             | Mensajes salientes validados                                   | 🟢 Completado |
+| Hito 2 | Filtro modelos           | Select solo muestra modelos del provider activo                | 🟢 Completado |
+| Hito 3 | Tests integración        | 5 tests nuevos, deterministas                                  | 🟢 Completado |
+| Hito 4 | JSDoc crítico            | 3+ funciones documentadas                                      | 🟢 Completado |
 | Hito 5 | Integración Zod en envío | `parseWebviewOutboundMessage` llamado en los 3 puntos de envío | 🟢 Completado |

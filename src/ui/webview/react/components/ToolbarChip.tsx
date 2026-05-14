@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from 'react';
 
 interface ToolbarChipProps {
   label: string;
@@ -15,7 +15,7 @@ interface ToolbarChipProps {
 
 const getChipLabelClass = (chipLabel: string | undefined, compact?: boolean) =>
   `text-[10px] font-semibold uppercase tracking-[0.15em] leading-tight mb-0.5 ${
-    chipLabel && !compact ? "text-[var(--vscode-descriptionForeground)]" : "invisible"
+    chipLabel && !compact ? 'text-[var(--vscode-descriptionForeground)]' : 'invisible'
   }`;
 
 const renderChipLabel = (chipLabel: string | undefined, compact?: boolean) => {
@@ -45,13 +45,13 @@ const renderToggleButton = (
   label: string,
 ) => {
   const buttonClass = `inline-flex items-center gap-1 rounded-md border px-2 py-1 text-sm transition
-            ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
+            ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
             ${
               isOpen
-                ? "border-[var(--vscode-badge-background)] bg-[var(--vscode-badge-background)] text-[var(--vscode-badge-foreground)]"
-                : "border-[var(--vscode-widget-border)] bg-[var(--vscode-sideBar-background)] text-[var(--vscode-sideBar-foreground)] hover:bg-[var(--vscode-list-hoverBackground)]"
+                ? 'border-[var(--vscode-badge-background)] bg-[var(--vscode-badge-background)] text-[var(--vscode-badge-foreground)]'
+                : 'border-[var(--vscode-widget-border)] bg-[var(--vscode-sideBar-background)] text-[var(--vscode-sideBar-foreground)] hover:bg-[var(--vscode-list-hoverBackground)]'
             }
-            ${compact ? "text-xs px-1.5 py-0.5" : ""}`;
+            ${compact ? 'text-xs px-1.5 py-0.5' : ''}`;
 
   if (isOpen) {
     return (
@@ -64,8 +64,8 @@ const renderToggleButton = (
         disabled={disabled}
         aria-expanded="true"
       >
-        <span className={`truncate ${compact ? "max-w-[80px]" : "max-w-[140px]"}`}>{label}</span>
-        <span className={`transition-transform text-[10px] ${isOpen ? "rotate-180" : ""}`}>▾</span>
+        <span className={`truncate ${compact ? 'max-w-[80px]' : 'max-w-[140px]'}`}>{label}</span>
+        <span className={`transition-transform text-[10px] ${isOpen ? 'rotate-180' : ''}`}>▾</span>
       </button>
     );
   }
@@ -80,8 +80,8 @@ const renderToggleButton = (
       disabled={disabled}
       aria-expanded="false"
     >
-      <span className={`truncate ${compact ? "max-w-[80px]" : "max-w-[140px]"}`}>{label}</span>
-      <span className={`transition-transform text-[10px] ${isOpen ? "rotate-180" : ""}`}>▾</span>
+      <span className={`truncate ${compact ? 'max-w-[80px]' : 'max-w-[140px]'}`}>{label}</span>
+      <span className={`transition-transform text-[10px] ${isOpen ? 'rotate-180' : ''}`}>▾</span>
     </button>
   );
 };
@@ -92,22 +92,14 @@ const renderToggleButton = (
  * @returns Elemento JSX para el chip de la barra superior.
  */
 export function ToolbarChip(props: ToolbarChipProps) {
-  const {
-    label,
-    chipLabel,
-    tooltip,
-    isOpen,
-    onToggle,
-    onClose,
-    children,
-    id,
-    compact,
-    disabled,
-  } = props;
+  const { label, chipLabel, tooltip, isOpen, onToggle, onClose, children, id, compact, disabled } =
+    props;
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isOpen) { return; }
+    if (!isOpen) {
+      return;
+    }
 
     const handleClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
@@ -116,18 +108,20 @@ export function ToolbarChip(props: ToolbarChipProps) {
     };
 
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") { onClose(); }
+      if (e.key === 'Escape') {
+        onClose();
+      }
     };
 
     const timer = setTimeout(() => {
-      document.addEventListener("click", handleClick);
-      document.addEventListener("keydown", handleKey);
+      document.addEventListener('click', handleClick);
+      document.addEventListener('keydown', handleKey);
     }, 0);
 
     return () => {
       clearTimeout(timer);
-      document.removeEventListener("click", handleClick);
-      document.removeEventListener("keydown", handleKey);
+      document.removeEventListener('click', handleClick);
+      document.removeEventListener('keydown', handleKey);
     };
   }, [isOpen, onClose]);
 
@@ -138,9 +132,7 @@ export function ToolbarChip(props: ToolbarChipProps) {
         {renderToggleButton(isOpen, id, tooltip, disabled, compact, onToggle, label)}
 
         {isOpen && (
-          <div
-            className="absolute top-full left-0 z-50 mt-0.5 min-w-[180px] rounded-md border border-[var(--vscode-dropdown-border)] bg-[var(--vscode-dropdown-background)] shadow-lg"
-          >
+          <div className="absolute top-full left-0 z-50 mt-0.5 min-w-[180px] rounded-md border border-[var(--vscode-dropdown-border)] bg-[var(--vscode-dropdown-background)] shadow-lg">
             {children}
           </div>
         )}

@@ -39,30 +39,29 @@ export function classifyOpencodeModelTier(
   _modelDisplayName: string,
   raw: Record<string, unknown>,
 ): OpencodeTierResult {
-  const pricingRaw =
-    typeof raw.pricing === "string" ? raw.pricing.trim() : "";
+  const pricingRaw = typeof raw.pricing === 'string' ? raw.pricing.trim() : '';
   if (pricingRaw) {
     const mult = parsePricingMultiplier(pricingRaw);
     if (mult !== undefined) {
       return {
-        tier: mult === 0 ? "included" : "premium",
+        tier: mult === 0 ? 'included' : 'premium',
         pricing: pricingRaw,
       };
     }
   }
 
   if (raw.free === true) {
-    return { tier: "included", pricing: pricingRaw || undefined };
+    return { tier: 'included', pricing: pricingRaw || undefined };
   }
 
-  if (providerID === "opencode") {
-    return { tier: "included", pricing: pricingRaw || undefined };
+  if (providerID === 'opencode') {
+    return { tier: 'included', pricing: pricingRaw || undefined };
   }
 
-  const localish = ["ollama", "lmstudio", "jan", "local", "llamacpp"];
+  const localish = ['ollama', 'lmstudio', 'jan', 'local', 'llamacpp'];
   if (localish.some((k) => providerID.toLowerCase().includes(k))) {
-    return { tier: "included" };
+    return { tier: 'included' };
   }
 
-  return { tier: "unknown", pricing: pricingRaw || undefined };
+  return { tier: 'unknown', pricing: pricingRaw || undefined };
 }

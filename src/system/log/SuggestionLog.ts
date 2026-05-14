@@ -5,7 +5,7 @@
  * Cada entrada se añade a `suggestions.md` en el almacenamiento privado de
  * la extensión (`context.storageUri`), invisible para el usuario.
  */
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
 /**
  * Registra en `suggestions.md` una suggestion que el usuario aceptó.
@@ -19,14 +19,14 @@ export async function appendSuggestion(
   context: string,
   suggestion: string,
 ): Promise<void> {
-  const logUri = vscode.Uri.joinPath(storageUri, "suggestions.md");
+  const logUri = vscode.Uri.joinPath(storageUri, 'suggestions.md');
   const timestamp = new Date().toISOString();
   const entry = `\n## ${timestamp}\n\n**Contexto:** ${context}\n\n**Suggestion aceptada:** ${suggestion}\n`;
 
-  let existing = "";
+  let existing = '';
   try {
     const bytes = await vscode.workspace.fs.readFile(logUri);
-    existing = Buffer.from(bytes).toString("utf-8");
+    existing = Buffer.from(bytes).toString('utf-8');
   } catch {
     // El archivo no existe aún — se crea en el primer registro.
   }
@@ -34,5 +34,5 @@ export async function appendSuggestion(
   const updated = existing + entry;
   // Asegurar que el directorio de almacenamiento existe antes de escribir.
   await vscode.workspace.fs.createDirectory(storageUri);
-  await vscode.workspace.fs.writeFile(logUri, Buffer.from(updated, "utf-8"));
+  await vscode.workspace.fs.writeFile(logUri, Buffer.from(updated, 'utf-8'));
 }

@@ -1,4 +1,4 @@
-import * as path from "node:path";
+import * as path from 'node:path';
 
 import {
   defaultManifest,
@@ -6,20 +6,17 @@ import {
   parseEntriesJson,
   parseManifestJson,
   parseRegistryJson,
-} from "./io/json";
-import type {
-  ProjectMemoryManifestFile,
-  ProjectMemoryRegistryFile,
-} from "./types";
+} from './io/json';
+import type { ProjectMemoryManifestFile, ProjectMemoryRegistryFile } from './types';
 import {
   ENTRIES_FILE,
   MANIFEST_FILE,
   PROJECT_MEMORY_SCHEMA_VERSION,
   REGISTRY_FILE,
   STORES_DIR,
-} from "./types";
-import type { ProjectMemoryFsAdapter } from "./io/fs";
-import { workspaceKeyFromRootUriString } from "./io/key";
+} from './types';
+import type { ProjectMemoryFsAdapter } from './io/fs';
+import { workspaceKeyFromRootUriString } from './io/key';
 
 export class ProjectMemoryStore {
   public constructor(
@@ -33,7 +30,7 @@ export class ProjectMemoryStore {
 
   public storeAbsoluteDir(workspaceKey: string): string {
     if (!ProjectMemoryStore.isValidWorkspaceKey(workspaceKey)) {
-      throw new Error("invalid workspaceKey");
+      throw new Error('invalid workspaceKey');
     }
     return path.join(this.baseDir, STORES_DIR, workspaceKey);
   }

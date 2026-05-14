@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const updateMock = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 
-vi.mock("vscode", () => ({
+vi.mock('vscode', () => ({
   workspace: {
     getConfiguration: () => ({
       update: (...args: unknown[]) => updateMock(...args),
@@ -11,37 +11,37 @@ vi.mock("vscode", () => ({
   ConfigurationTarget: { Global: 1 },
 }));
 
-import { applyWebviewUpdateSetting } from "../../src/api/settings/applyWebviewUpdate";
+import { applyWebviewUpdateSetting } from '../../src/api/settings/applyWebviewUpdate';
 
-describe("applyWebviewUpdateSetting", () => {
+describe('applyWebviewUpdateSetting', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("persiste agentDestination en configuración global", async () => {
-    const vscode = await import("vscode");
+  it('persiste agentDestination en configuración global', async () => {
+    const vscode = await import('vscode');
     await applyWebviewUpdateSetting({
-      type: "updateSetting",
-      key: "agentDestination",
-      value: "vsOpenCodeX",
+      type: 'updateSetting',
+      key: 'agentDestination',
+      value: 'vsOpenCodeX',
     });
     expect(updateMock).toHaveBeenCalledWith(
-      "agentDestination",
-      "vsOpenCodeX",
+      'agentDestination',
+      'vsOpenCodeX',
       vscode.ConfigurationTarget.Global,
     );
   });
 
-  it("normaliza agentDestination a copilotChat", async () => {
-    const vscode = await import("vscode");
+  it('normaliza agentDestination a copilotChat', async () => {
+    const vscode = await import('vscode');
     await applyWebviewUpdateSetting({
-      type: "updateSetting",
-      key: "agentDestination",
-      value: "copilotChat",
+      type: 'updateSetting',
+      key: 'agentDestination',
+      value: 'copilotChat',
     });
     expect(updateMock).toHaveBeenCalledWith(
-      "agentDestination",
-      "copilotChat",
+      'agentDestination',
+      'copilotChat',
       vscode.ConfigurationTarget.Global,
     );
   });

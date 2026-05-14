@@ -1,7 +1,7 @@
-import * as vscode from "vscode";
-import type { CompletionResult } from "../types";
+import * as vscode from 'vscode';
+import type { CompletionResult } from '../types';
 
-type EmptyReason = Extract<CompletionResult, { kind: "empty" }>["reason"];
+type EmptyReason = Extract<CompletionResult, { kind: 'empty' }>['reason'];
 
 export interface GovernorConfig {
   minChars: number;
@@ -39,9 +39,9 @@ export interface GovernorRequestScope {
 }
 
 type GovernorDecision =
-  | { kind: "request"; key: string }
-  | { kind: "serve-cache"; key: string; result: CompletionResult }
-  | { kind: "block"; reason: EmptyReason };
+  | { kind: 'request'; key: string }
+  | { kind: 'serve-cache'; key: string; result: CompletionResult }
+  | { kind: 'block'; reason: EmptyReason };
 
 interface CacheEntry {
   result: CompletionResult;
@@ -63,7 +63,7 @@ const DEFAULT_CONFIG: GovernorConfig = {
  */
 export class SuggestionRequestGovernor {
   private readonly _cache = new Map<string, CacheEntry>();
-  private _lastKey = "";
+  private _lastKey = '';
   private _lastAt = 0;
   private _requestTimestamps: number[] = [];
   private _sessionUsed = 0;
@@ -78,38 +78,35 @@ export class SuggestionRequestGovernor {
   public static readonly shared = new SuggestionRequestGovernor();
 
   public static fromWorkspace(): GovernorConfig {
-    const cfg = vscode.workspace.getConfiguration("ghostPrompt");
+    const cfg = vscode.workspace.getConfiguration('ghostPrompt');
     return {
       minChars: clampNumber(
-        cfg.get<number>("minCharsForSuggestion", DEFAULT_CONFIG.minChars),
+        cfg.get<number>('minCharsForSuggestion', DEFAULT_CONFIG.minChars),
         1,
         100,
       ),
       cooldownMs: clampNumber(
-        cfg.get<number>("requestCooldownMs", DEFAULT_CONFIG.cooldownMs),
+        cfg.get<number>('requestCooldownMs', DEFAULT_CONFIG.cooldownMs),
         100,
         5000,
       ),
       cacheTtlMs: clampNumber(
-        cfg.get<number>("cacheTtlMs", DEFAULT_CONFIG.cacheTtlMs),
+        cfg.get<number>('cacheTtlMs', DEFAULT_CONFIG.cacheTtlMs),
         1000,
         300_000,
       ),
       rateLimitMaxRequests: clampNumber(
-        cfg.get<number>(
-          "rateLimitMaxRequests",
-          DEFAULT_CONFIG.rateLimitMaxRequests,
-        ),
+        cfg.get<number>('rateLimitMaxRequests', DEFAULT_CONFIG.rateLimitMaxRequests),
         1,
         500,
       ),
       rateLimitWindowMs: clampNumber(
-        cfg.get<number>("rateLimitWindowMs", DEFAULT_CONFIG.rateLimitWindowMs),
+        cfg.get<number>('rateLimitWindowMs', DEFAULT_CONFIG.rateLimitWindowMs),
         10_000,
         60 * 60_000,
       ),
       sessionBudget: clampNumber(
-        cfg.get<number>("sessionRequestBudget", DEFAULT_CONFIG.sessionBudget),
+        cfg.get<number>('sessionRequestBudget', DEFAULT_CONFIG.sessionBudget),
         1,
         2000,
       ),
@@ -126,30 +123,30 @@ export class SuggestionRequestGovernor {
     const key = buildScopedKey(normalizedInput, scope);
 
     if (normalizedInput.length < config.minChars) {
-      return { kind: "block", reason: "too-short" };
+      return { kind: 'block', reason: 'too-short' };
     }
 
     this.cleanupCache(now);
     const cached = this._cache.get(key);
     if (cached) {
       this._metrics.servedFromCache += 1;
-      return { kind: "serve-cache", key, result: cached.result };
+      return { kind: 'serve-cache', key, result: cached.result };
     }
 
     if (this._lastKey === key && now - this._lastAt < config.cooldownMs) {
       this._metrics.deduped += 1;
-      return { kind: "block", reason: "duplicate-input" };
+      return { kind: 'block', reason: 'duplicate-input' };
     }
 
     if (this._sessionUsed >= config.sessionBudget) {
       this._metrics.sessionBlocked += 1;
-      return { kind: "block", reason: "session-budget-exhausted" };
+      return { kind: 'block', reason: 'session-budget-exhausted' };
     }
 
     this.pruneRequestTimestamps(now, config.rateLimitWindowMs);
     if (this._requestTimestamps.length >= config.rateLimitMaxRequests) {
       this._metrics.rateLimited += 1;
-      return { kind: "block", reason: "rate-limited" };
+      return { kind: 'block', reason: 'rate-limited' };
     }
 
     this._lastKey = key;
@@ -157,15 +154,11 @@ export class SuggestionRequestGovernor {
     this._sessionUsed += 1;
     this._requestTimestamps.push(now);
     this._metrics.requested += 1;
-    return { kind: "request", key };
+    return { kind: 'request', key };
   }
 
-  public saveResult(
-    key: string,
-    result: CompletionResult,
-    config: GovernorConfig,
-  ): void {
-    if (result.kind === "error") {
+  public saveResult(key: string, result: CompletionResult, config: GovernorConfig): void {
+    if (result.kind === 'error') {
       return;
     }
     this._cache.set(key, {
@@ -182,10 +175,7 @@ export class SuggestionRequestGovernor {
     const now = Date.now();
     this.pruneRequestTimestamps(now, config.rateLimitWindowMs);
     const requestsInWindow = this._requestTimestamps.length;
-    const remainingInWindow = Math.max(
-      0,
-      config.rateLimitMaxRequests - requestsInWindow,
-    );
+    const remainingInWindow = Math.max(0, config.rateLimitMaxRequests - requestsInWindow);
     const sessionRemaining = Math.max(0, config.sessionBudget - this._sessionUsed);
     const oldestInWindow = this._requestTimestamps[0];
     const msUntilWindowReset = oldestInWindow
@@ -209,9 +199,7 @@ export class SuggestionRequestGovernor {
   }
 
   private pruneRequestTimestamps(now: number, windowMs: number): void {
-    this._requestTimestamps = this._requestTimestamps.filter(
-      (t) => now - t <= windowMs,
-    );
+    this._requestTimestamps = this._requestTimestamps.filter((t) => now - t <= windowMs);
   }
 }
 
@@ -221,7 +209,7 @@ export class SuggestionRequestGovernor {
  * @returns Cadena trimmed, con espacios colapsados y en minúsculas.
  */
 function normalizeInput(text: string): string {
-  return text.trim().replace(/\s+/g, " ").toLowerCase();
+  return text.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
 /**
@@ -243,7 +231,7 @@ function buildScopedKey(normalizedInput: string, scope?: GovernorRequestScope): 
     normalizeScopeValue(scope.selectedModelId),
     normalizeScopeValue(scope.projectBootstrapFingerprint),
   ];
-  return parts.join("||");
+  return parts.join('||');
 }
 
 /**
@@ -252,7 +240,7 @@ function buildScopedKey(normalizedInput: string, scope?: GovernorRequestScope): 
  * @returns Cadena limpia en minúsculas o vacía si no existe valor.
  */
 function normalizeScopeValue(value: string | undefined): string {
-  return (value ?? "").trim().toLowerCase();
+  return (value ?? '').trim().toLowerCase();
 }
 
 /**

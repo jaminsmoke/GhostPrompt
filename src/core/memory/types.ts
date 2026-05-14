@@ -1,16 +1,12 @@
 export const PROJECT_MEMORY_SCHEMA_VERSION = 1 as const;
 
-export const REGISTRY_FILE = "registry.json";
-export const STORES_DIR = "stores";
-export const MANIFEST_FILE = "manifest.json";
-export const ENTRIES_FILE = "entries.json";
+export const REGISTRY_FILE = 'registry.json';
+export const STORES_DIR = 'stores';
+export const MANIFEST_FILE = 'manifest.json';
+export const ENTRIES_FILE = 'entries.json';
 
 /** Subcarpeta versionada bajo `globalStorageUri`. */
-export const PROJECT_MEMORY_REL_SEGMENTS = [
-  "ghostPrompt",
-  "projectMemory",
-  "v1",
-] as const;
+export const PROJECT_MEMORY_REL_SEGMENTS = ['ghostPrompt', 'projectMemory', 'v1'] as const;
 
 export interface ProjectMemoryRegistryEntry {
   workspaceKey: string;
@@ -37,7 +33,7 @@ export interface ProjectMemoryManifestFile {
   };
 }
 
-export const PROJECT_BOOTSTRAP_ENTRY_KIND = "bootstrap" as const;
+export const PROJECT_BOOTSTRAP_ENTRY_KIND = 'bootstrap' as const;
 
 /** Entrada tipo bootstrap persistida en `entries.json` (fase C+). */
 export interface ProjectMemoryBootstrapStoredItem {
@@ -52,7 +48,7 @@ export interface ProjectMemoryBootstrapStoredItem {
   sourceSha256: string;
 }
 
-export const PROJECT_EDITOR_INGEST_ENTRY_KIND = "editor-ingest" as const;
+export const PROJECT_EDITOR_INGEST_ENTRY_KIND = 'editor-ingest' as const;
 
 /** Extracto indexado al enfocar documentos del workspace (fase D). */
 export interface ProjectMemoryEditorIngestStoredItem {

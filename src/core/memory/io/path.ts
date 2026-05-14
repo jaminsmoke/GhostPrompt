@@ -6,7 +6,7 @@
  * @returns Ruta con barras `/` y sin espacios en los extremos.
  */
 export function normalizeWorkspaceRelativePath(rel: string): string {
-  return rel.replace(/\\/g, "/").trim();
+  return rel.replace(/\\/g, '/').trim();
 }
 
 /**
@@ -18,7 +18,7 @@ export function normalizeWorkspaceRelativePath(rel: string): string {
 export function workspaceRelativePathsMatch(a: string, b: string): boolean {
   const na = normalizeWorkspaceRelativePath(a);
   const nb = normalizeWorkspaceRelativePath(b);
-  if (process.platform === "win32") {
+  if (process.platform === 'win32') {
     return na.toLowerCase() === nb.toLowerCase();
   }
   return na === nb;

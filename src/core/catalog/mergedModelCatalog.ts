@@ -3,11 +3,11 @@
  * Ver `Docs/ARCHITECTURE.md` §3 — Catálogo OpenCode y merge.
  * @returns Lista de descriptores de modelo disponibles según política y fuentes.
  */
-import type { SuggestionModelDescriptor, SuggestionModelPolicy } from "../types";
-import { listSuggestionModels } from "../../engines/copilot/catalog/modelCatalog";
-import { listOpencodeSuggestionModels } from "../../engines/opencode/catalog/opencodeModelCatalog";
-import { listOllamaSuggestionModels } from "../../engines/ollama/catalog/ollamaModelCatalog";
-import type { CompletionSourceId } from "../sources";
+import type { SuggestionModelDescriptor, SuggestionModelPolicy } from '../types';
+import { listSuggestionModels } from '../../engines/copilot/catalog/modelCatalog';
+import { listOpencodeSuggestionModels } from '../../engines/opencode/catalog/opencodeModelCatalog';
+import { listOllamaSuggestionModels } from '../../engines/ollama/catalog/ollamaModelCatalog';
+import type { CompletionSourceId } from '../sources';
 
 /**
  * Concatena modelos Copilot + OpenCode + Ollama; deduplica por `id` (prioriza el primero: Copilot).
@@ -20,13 +20,13 @@ export async function listMergedSuggestionModels(
   sources: readonly CompletionSourceId[],
 ): Promise<SuggestionModelDescriptor[]> {
   const merged: SuggestionModelDescriptor[] = [];
-  if (sources.includes("copilot")) {
+  if (sources.includes('copilot')) {
     merged.push(...(await listSuggestionModels(policy)));
   }
-  if (sources.includes("opencode")) {
+  if (sources.includes('opencode')) {
     merged.push(...(await listOpencodeSuggestionModels(policy)));
   }
-  if (sources.includes("ollama")) {
+  if (sources.includes('ollama')) {
     merged.push(...(await listOllamaSuggestionModels(policy)));
   }
 

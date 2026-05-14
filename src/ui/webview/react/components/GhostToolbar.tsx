@@ -1,14 +1,20 @@
-import { type ReactNode, useMemo, useState } from "react";
-import type { AgentDestination, CompletionProvider, ProviderState, ProviderStateRecord, SuggestionModel } from "../types";
-import { ToolbarChip } from "./ToolbarChip";
+import { type ReactNode, useMemo, useState } from 'react';
+import type {
+  AgentDestination,
+  CompletionProvider,
+  ProviderState,
+  ProviderStateRecord,
+  SuggestionModel,
+} from '../types';
+import { ToolbarChip } from './ToolbarChip';
 
 interface GhostToolbarProps {
   completionProvider: CompletionProvider;
   selectedModelId: string;
   availableModels: SuggestionModel[];
-  suggestionModelPolicy: "nonPremiumOnly" | "anyModel";
-  suggestionStyle: "concise" | "balanced" | "detailed";
-  suggestionLanguageChoice: "auto" | "es" | "en";
+  suggestionModelPolicy: 'nonPremiumOnly' | 'anyModel';
+  suggestionStyle: 'concise' | 'balanced' | 'detailed';
+  suggestionLanguageChoice: 'auto' | 'es' | 'en';
   debugSuggestions: boolean;
   agentDestination: AgentDestination;
   vsOpenCodeXExtensionInstalled: boolean;
@@ -25,74 +31,69 @@ interface GhostToolbarProps {
 }
 
 const itemClass =
-  "flex w-full items-center justify-between px-3 py-1.5 text-sm text-[var(--vscode-sideBar-foreground)] hover:bg-[var(--vscode-list-hoverBackground)] transition";
+  'flex w-full items-center justify-between px-3 py-1.5 text-sm text-[var(--vscode-sideBar-foreground)] hover:bg-[var(--vscode-list-hoverBackground)] transition';
 
 const actionBtnClass =
-  "rounded px-2 py-0.5 text-xs font-medium transition border " +
-  "border-[var(--vscode-widget-border)] " +
-  "hover:bg-[var(--vscode-list-hoverBackground)]";
+  'rounded px-2 py-0.5 text-xs font-medium transition border ' +
+  'border-[var(--vscode-widget-border)] ' +
+  'hover:bg-[var(--vscode-list-hoverBackground)]';
 
 const statusIcon = (s: ProviderState): string => {
   switch (s) {
-    case "running": return "\u25CF";
-    case "stopped": return "\u25CB";
-    case "starting": return "\u25CB";
-    case "unavailable": return "\u2014";
-    case "error": return "\u26A0";
+    case 'running':
+      return '\u25CF';
+    case 'stopped':
+      return '\u25CB';
+    case 'starting':
+      return '\u25CB';
+    case 'unavailable':
+      return '\u2014';
+    case 'error':
+      return '\u26A0';
   }
 };
 
 const statusColor = (s: ProviderState): string => {
   switch (s) {
-    case "running": return "text-green-500";
-    case "stopped": return "text-gray-400";
-    case "starting": return "text-yellow-400";
-    case "unavailable": return "text-gray-500";
-    case "error": return "text-red-500";
+    case 'running':
+      return 'text-green-500';
+    case 'stopped':
+      return 'text-gray-400';
+    case 'starting':
+      return 'text-yellow-400';
+    case 'unavailable':
+      return 'text-gray-500';
+    case 'error':
+      return 'text-red-500';
   }
 };
 
 const toggleBtn = (active: boolean) =>
   `inline-flex items-center justify-center rounded-md border px-2 py-1 text-xs transition ${
     active
-      ? "border-[var(--vscode-badge-background)] bg-[var(--vscode-badge-background)] text-[var(--vscode-badge-foreground)]"
-      : "border-[var(--vscode-widget-border)] text-[var(--vscode-sideBar-foreground)] hover:bg-[var(--vscode-list-hoverBackground)]"
+      ? 'border-[var(--vscode-badge-background)] bg-[var(--vscode-badge-background)] text-[var(--vscode-badge-foreground)]'
+      : 'border-[var(--vscode-widget-border)] text-[var(--vscode-sideBar-foreground)] hover:bg-[var(--vscode-list-hoverBackground)]'
   }`;
 
-const renderToggleOption = (
-  active: boolean,
-  onClick: () => void,
-  children: ReactNode,
-) => {
+const renderToggleOption = (active: boolean, onClick: () => void, children: ReactNode) => {
   if (active) {
     return (
-      <button
-        type="button"
-        className={toggleBtn(active)}
-        onClick={onClick}
-        aria-pressed="true"
-      >
+      <button type="button" className={toggleBtn(active)} onClick={onClick} aria-pressed="true">
         {children}
       </button>
     );
   }
 
   return (
-    <button
-      type="button"
-      className={toggleBtn(active)}
-      onClick={onClick}
-      aria-pressed="false"
-    >
+    <button type="button" className={toggleBtn(active)} onClick={onClick} aria-pressed="false">
       {children}
     </button>
   );
 };
 
-const separatorClass = "my-1 border-t border-[var(--vscode-widget-border)]";
+const separatorClass = 'my-1 border-t border-[var(--vscode-widget-border)]';
 
-const chipLabelClass = (compact: boolean) =>
-  compact ? "text-[10px]" : "text-xs";
+const chipLabelClass = (compact: boolean) => (compact ? 'text-[10px]' : 'text-xs');
 
 /**
  * Toolbar de GhostPrompt con controles de modelo, sugerencia y proveedor.
@@ -126,31 +127,42 @@ export function GhostToolbar(props: GhostToolbarProps) {
   const toggleChip = (id: string) => setOpenChip((p) => (p === id ? null : id));
   const closeChips = () => setOpenChip(null);
 
-  const providerLabel = completionProvider === "copilot"
-    ? "Copilot LM"
-    : completionProvider === "opencode"
-      ? "OpenCode"
-      : "Ollama";
+  const providerLabel =
+    completionProvider === 'copilot'
+      ? 'Copilot LM'
+      : completionProvider === 'opencode'
+        ? 'OpenCode'
+        : 'Ollama';
 
   const currentProviderStatus = providerStatuses.find((s) =>
-    completionProvider === "copilot" ? s.id === "copilot" :
-    completionProvider === "opencode" ? s.id === "opencode" : s.id === "ollama",
+    completionProvider === 'copilot'
+      ? s.id === 'copilot'
+      : completionProvider === 'opencode'
+        ? s.id === 'opencode'
+        : s.id === 'ollama',
   );
   const providerLabelWithStatus = currentProviderStatus
     ? `${statusIcon(currentProviderStatus.status)} ${providerLabel}`
     : providerLabel;
 
   const filteredModels = useMemo(() => {
-    if (completionProvider === "ollama") { return availableModels.filter((m) => m.completionSource === "ollama"); }
-    if (completionProvider === "opencode") { return availableModels.filter((m) => m.completionSource === "opencode"); }
+    if (completionProvider === 'ollama') {
+      return availableModels.filter((m) => m.completionSource === 'ollama');
+    }
+    if (completionProvider === 'opencode') {
+      return availableModels.filter((m) => m.completionSource === 'opencode');
+    }
     return availableModels;
   }, [completionProvider, availableModels]);
 
   const currentModel = filteredModels.find((m) => m.id === selectedModelId);
-  const modeloLabel = currentModel?.label ?? (selectedModelId === "auto" ? "Auto" : selectedModelId);
+  const modeloLabel =
+    currentModel?.label ?? (selectedModelId === 'auto' ? 'Auto' : selectedModelId);
 
-  const styleLabel = suggestionStyle === "concise" ? "Breve" : suggestionStyle === "balanced" ? "Normal" : "Extenso";
-  const langLabel = suggestionLanguageChoice === "auto" ? "Auto" : suggestionLanguageChoice === "es" ? "ES" : "EN";
+  const styleLabel =
+    suggestionStyle === 'concise' ? 'Breve' : suggestionStyle === 'balanced' ? 'Normal' : 'Extenso';
+  const langLabel =
+    suggestionLanguageChoice === 'auto' ? 'Auto' : suggestionLanguageChoice === 'es' ? 'ES' : 'EN';
   const compLabel = `${styleLabel} · ${langLabel}`;
 
   const handleProvider = (v: CompletionProvider) => {
@@ -180,8 +192,8 @@ export function GhostToolbar(props: GhostToolbarProps) {
         label={providerLabelWithStatus}
         chipLabel="Motor"
         tooltip="Motor de sugerencias: Copilot LM, OpenCode u Ollama"
-        isOpen={openChip === "motor"}
-        onToggle={() => toggleChip("motor")}
+        isOpen={openChip === 'motor'}
+        onToggle={() => toggleChip('motor')}
         onClose={closeChips}
         compact={compact}
       >
@@ -191,20 +203,26 @@ export function GhostToolbar(props: GhostToolbarProps) {
               ◌ Comprobando estados...
             </div>
           ) : (
-            (["copilot", "opencode", "ollama"] as const).map((p) => {
+            (['copilot', 'opencode', 'ollama'] as const).map((p) => {
               const pStatus = providerStatuses.find((s) =>
-                p === "copilot" ? s.id === "copilot" :
-                p === "opencode" ? s.id === "opencode" : s.id === "ollama",
+                p === 'copilot'
+                  ? s.id === 'copilot'
+                  : p === 'opencode'
+                    ? s.id === 'opencode'
+                    : s.id === 'ollama',
               );
               const isActive = completionProvider === p;
               return (
-                <div key={p} className={`${itemClass} flex-col items-stretch gap-1 ${isActive ? "bg-[var(--vscode-list-hoverBackground)]" : ""}`}>
+                <div
+                  key={p}
+                  className={`${itemClass} flex-col items-stretch gap-1 ${isActive ? 'bg-[var(--vscode-list-hoverBackground)]' : ''}`}
+                >
                   <button
                     type="button"
                     className="flex w-full items-center justify-between"
                     onClick={() => {
                       handleProvider(p);
-                      if (pStatus?.actions?.includes("start")) {
+                      if (pStatus?.actions?.includes('start')) {
                         onStartProvider(p);
                       }
                       closeChips();
@@ -216,22 +234,27 @@ export function GhostToolbar(props: GhostToolbarProps) {
                           {statusIcon(pStatus.status)}
                         </span>
                       )}
-                      <span>{p === "copilot" ? "Copilot LM" : p === "opencode" ? "OpenCode" : "Ollama"}</span>
+                      <span>
+                        {p === 'copilot' ? 'Copilot LM' : p === 'opencode' ? 'OpenCode' : 'Ollama'}
+                      </span>
                     </span>
                     <span className="flex items-center gap-2">
                       {pStatus?.statusText && (
-                        <span className="text-[10px] text-[var(--vscode-descriptionForeground)]">{pStatus.statusText}</span>
+                        <span className="text-[10px] text-[var(--vscode-descriptionForeground)]">
+                          {pStatus.statusText}
+                        </span>
                       )}
-                      {isActive && (
-                        <span className="text-[var(--vscode-badge-background)]">✓</span>
-                      )}
+                      {isActive && <span className="text-[var(--vscode-badge-background)]">✓</span>}
                     </span>
                   </button>
-                  {pStatus?.actions?.includes("stop") && isActive && p !== "copilot" && (
+                  {pStatus?.actions?.includes('stop') && isActive && p !== 'copilot' && (
                     <button
                       type="button"
                       className={actionBtnClass}
-                      onClick={() => { onStopProvider(p); closeChips(); }}
+                      onClick={() => {
+                        onStopProvider(p);
+                        closeChips();
+                      }}
                     >
                       ■ Detener
                     </button>
@@ -246,11 +269,11 @@ export function GhostToolbar(props: GhostToolbarProps) {
       {vsOpenCodeXExtensionInstalled && (
         <ToolbarChip
           id="destino-chip"
-          label={agentDestination === "copilotChat" ? "Copilot Chat" : "VSOpenCodeX"}
+          label={agentDestination === 'copilotChat' ? 'Copilot Chat' : 'VSOpenCodeX'}
           chipLabel="Destino"
           tooltip="Destino del prompt: Copilot Chat o VSOpenCodeX"
-          isOpen={openChip === "destino"}
-          onToggle={() => toggleChip("destino")}
+          isOpen={openChip === 'destino'}
+          onToggle={() => toggleChip('destino')}
           onClose={closeChips}
           compact={compact}
         >
@@ -258,20 +281,20 @@ export function GhostToolbar(props: GhostToolbarProps) {
             <button
               type="button"
               className={itemClass}
-              onClick={() => handleDestino("copilotChat")}
+              onClick={() => handleDestino('copilotChat')}
             >
               <span>Copilot Chat</span>
-              {agentDestination === "copilotChat" && (
+              {agentDestination === 'copilotChat' && (
                 <span className="text-[var(--vscode-badge-background)]">✓</span>
               )}
             </button>
             <button
               type="button"
               className={itemClass}
-              onClick={() => handleDestino("vsOpenCodeX")}
+              onClick={() => handleDestino('vsOpenCodeX')}
             >
               <span>VSOpenCodeX</span>
-              {agentDestination === "vsOpenCodeX" && (
+              {agentDestination === 'vsOpenCodeX' && (
                 <span className="text-[var(--vscode-badge-background)]">✓</span>
               )}
             </button>
@@ -284,8 +307,8 @@ export function GhostToolbar(props: GhostToolbarProps) {
         label={modeloLabel}
         chipLabel="Modelo"
         tooltip="Modelo de IA y política de suscripción"
-        isOpen={openChip === "modelo"}
-        onToggle={() => toggleChip("modelo")}
+        isOpen={openChip === 'modelo'}
+        onToggle={() => toggleChip('modelo')}
         onClose={closeChips}
         compact={compact}
       >
@@ -294,14 +317,14 @@ export function GhostToolbar(props: GhostToolbarProps) {
             <span className={chipLabelClass(compact)}>Política de modelo</span>
             <div className="flex gap-1">
               {renderToggleOption(
-                suggestionModelPolicy === "nonPremiumOnly",
-                () => handleToggle("suggestionModelPolicy", "nonPremiumOnly"),
-                "No premium",
+                suggestionModelPolicy === 'nonPremiumOnly',
+                () => handleToggle('suggestionModelPolicy', 'nonPremiumOnly'),
+                'No premium',
               )}
               {renderToggleOption(
-                suggestionModelPolicy === "anyModel",
-                () => handleToggle("suggestionModelPolicy", "anyModel"),
-                "Cualquiera",
+                suggestionModelPolicy === 'anyModel',
+                () => handleToggle('suggestionModelPolicy', 'anyModel'),
+                'Cualquiera',
               )}
             </div>
           </div>
@@ -315,8 +338,10 @@ export function GhostToolbar(props: GhostToolbarProps) {
               onChange={(e) => handleModel(e.target.value)}
               aria-label="Modelo sugerencias"
             >
-              {selectedModelId === "" && (
-                <option value="" disabled>Selecciona modelo</option>
+              {selectedModelId === '' && (
+                <option value="" disabled>
+                  Selecciona modelo
+                </option>
               )}
               <option value="auto">Auto</option>
               {filteredModels.map((model) => (
@@ -330,7 +355,7 @@ export function GhostToolbar(props: GhostToolbarProps) {
               className="text-xs text-[var(--vscode-descriptionForeground)]"
               aria-live="polite"
             >
-              {currentModel?.label ?? "--"}
+              {currentModel?.label ?? '--'}
             </span>
           </div>
         </div>
@@ -341,8 +366,8 @@ export function GhostToolbar(props: GhostToolbarProps) {
         label={compLabel}
         chipLabel="Composición"
         tooltip="Estilo e idioma de las sugerencias"
-        isOpen={openChip === "composicion"}
-        onToggle={() => toggleChip("composicion")}
+        isOpen={openChip === 'composicion'}
+        onToggle={() => toggleChip('composicion')}
         onClose={closeChips}
         compact={compact}
       >
@@ -351,19 +376,19 @@ export function GhostToolbar(props: GhostToolbarProps) {
             <span className={chipLabelClass(compact)}>Estilo</span>
             <div className="flex gap-1">
               {renderToggleOption(
-                suggestionStyle === "concise",
-                () => handleToggle("suggestionStyle", "concise"),
-                "Breve",
+                suggestionStyle === 'concise',
+                () => handleToggle('suggestionStyle', 'concise'),
+                'Breve',
               )}
               {renderToggleOption(
-                suggestionStyle === "balanced",
-                () => handleToggle("suggestionStyle", "balanced"),
-                "Normal",
+                suggestionStyle === 'balanced',
+                () => handleToggle('suggestionStyle', 'balanced'),
+                'Normal',
               )}
               {renderToggleOption(
-                suggestionStyle === "detailed",
-                () => handleToggle("suggestionStyle", "detailed"),
-                "Extenso",
+                suggestionStyle === 'detailed',
+                () => handleToggle('suggestionStyle', 'detailed'),
+                'Extenso',
               )}
             </div>
           </div>
@@ -371,19 +396,19 @@ export function GhostToolbar(props: GhostToolbarProps) {
             <span className={chipLabelClass(compact)}>Idioma</span>
             <div className="flex gap-1">
               {renderToggleOption(
-                suggestionLanguageChoice === "auto",
-                () => handleToggle("suggestionLanguageChoice", "auto"),
-                "Auto",
+                suggestionLanguageChoice === 'auto',
+                () => handleToggle('suggestionLanguageChoice', 'auto'),
+                'Auto',
               )}
               {renderToggleOption(
-                suggestionLanguageChoice === "es",
-                () => handleToggle("suggestionLanguageChoice", "es"),
-                "ES",
+                suggestionLanguageChoice === 'es',
+                () => handleToggle('suggestionLanguageChoice', 'es'),
+                'ES',
               )}
               {renderToggleOption(
-                suggestionLanguageChoice === "en",
-                () => handleToggle("suggestionLanguageChoice", "en"),
-                "EN",
+                suggestionLanguageChoice === 'en',
+                () => handleToggle('suggestionLanguageChoice', 'en'),
+                'EN',
               )}
             </div>
           </div>
@@ -394,8 +419,8 @@ export function GhostToolbar(props: GhostToolbarProps) {
         id="gear-chip"
         label="⚙"
         tooltip="Ajustes adicionales (debug)"
-        isOpen={openChip === "gear"}
-        onToggle={() => toggleChip("gear")}
+        isOpen={openChip === 'gear'}
+        onToggle={() => toggleChip('gear')}
         onClose={closeChips}
         compact={compact}
       >
@@ -403,14 +428,14 @@ export function GhostToolbar(props: GhostToolbarProps) {
           <button
             id="debug-btn"
             type="button"
-            className={`${itemClass} ${debugSuggestions ? "text-[var(--vscode-badge-foreground)]" : ""}`}
+            className={`${itemClass} ${debugSuggestions ? 'text-[var(--vscode-badge-foreground)]' : ''}`}
             onClick={() => {
               onDebugToggle();
               closeChips();
             }}
           >
             <span>Debug</span>
-            <span className="text-xs opacity-70">{debugSuggestions ? "on" : "off"}</span>
+            <span className="text-xs opacity-70">{debugSuggestions ? 'on' : 'off'}</span>
           </button>
         </div>
       </ToolbarChip>

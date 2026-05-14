@@ -12,11 +12,8 @@
  * **Alias:** `requestCompletion` reexporta solo `requestCopilotLmCompletion` por
  * compatibilidad histórica; el flujo webview usa los proveedores registrados en engines.
  */
-export * from "./types";
-export {
-  suggestionLoadingStatusText,
-  type SuggestionLoadingPhase,
-} from "./loading";
+export * from './types';
+export { suggestionLoadingStatusText, type SuggestionLoadingPhase } from './loading';
 export {
   buildProjectBootstrapCardLines,
   collectProjectBootstrapPieces,
@@ -30,21 +27,21 @@ export {
   summarizePackageJsonForProjectCard,
   truncateProjectCardText,
   type ProjectBootstrapPiece,
-} from "./context/projectBootstrapContext";
-export * from "./instruction";
-export * from "./normalize";
-export * from "./language";
-export * from "./streaming";
-export * from "../engines/copilot/catalog/modelCatalog";
+} from './context/projectBootstrapContext';
+export * from './instruction';
+export * from './normalize';
+export * from './language';
+export * from './streaming';
+export * from '../engines/copilot/catalog/modelCatalog';
 
-export { requestCopilotLmCompletion as requestCompletion } from "../engines/copilot/copilotLmEngine";
+export { requestCopilotLmCompletion as requestCompletion } from '../engines/copilot/copilotLmEngine';
 
-export type { CompletionProvider } from "../engines/engineRegistry";
+export type { CompletionProvider } from '../engines/engineRegistry';
 export {
   getActiveCompletionProvider,
   getCompletionProviderForSource,
   getCompletionProviderKind,
-} from "../engines/engineRegistry";
+} from '../engines/engineRegistry';
 export {
   getCompletionUiKind,
   getEnabledCompletionSources,
@@ -52,11 +49,11 @@ export {
   looksLikeOllamaModelId,
   resolveCompletionSourceForRequest,
   type CompletionSourceId,
-} from "./sources";
-export { listMergedSuggestionModels } from "./catalog/mergedModelCatalog";
-export { listOpencodeSuggestionModels } from "../engines/opencode/catalog/opencodeModelCatalog";
-export { listOllamaSuggestionModels } from "../engines/ollama/catalog/ollamaModelCatalog";
-export { SuggestionRequestGovernor } from "./governor/SuggestionRequestGovernor";
-export { GhostPromptSessionStore } from "./session/GhostPromptSessionStore";
-export type { GhostPromptSuggestDeps } from "./pipeline";
-export { runGhostPromptSuggestPipeline, handleGhostPromptSuggest } from "./pipeline";
+} from './sources';
+export { listMergedSuggestionModels } from './catalog/mergedModelCatalog';
+export { listOpencodeSuggestionModels } from '../engines/opencode/catalog/opencodeModelCatalog';
+export { listOllamaSuggestionModels } from '../engines/ollama/catalog/ollamaModelCatalog';
+export { SuggestionRequestGovernor } from './governor/SuggestionRequestGovernor';
+export { GhostPromptSessionStore } from './session/GhostPromptSessionStore';
+export type { GhostPromptSuggestDeps } from './pipeline';
+export { runGhostPromptSuggestPipeline, handleGhostPromptSuggest } from './pipeline';

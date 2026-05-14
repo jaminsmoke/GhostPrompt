@@ -16,14 +16,14 @@
 
 ## 2. Métricas rápidas
 
-| Activo | LOC (aprox.) | Nota |
-|--------|----------------|------|
-| `src/host/MiniInputViewProvider.ts` | ~691 | Mayor archivo del host; orquesta webview, completion, governor, sesión, HTML. |
-| `src/completion/providers/opencodeLmCompletion.ts` | ~395 | Sesión OpenCode, SSE paralelo, prompt, streaming. |
-| `src/governor/SuggestionRequestGovernor.ts` | ~213+ | Políticas de requests / caché / límites. |
-| `src/opencode/OpenCodeRuntime.ts` | ~191+ | Proceso embebido, cliente SDK, ciclo de vida. |
-| `webview/main.js` | ~706 | Cliente webview monolítico; sin TypeScript ni bundler. |
-| `src/extension/extension.ts` | ~76 | Entrada limpia: registra vistas y comandos. |
+| Activo                                             | LOC (aprox.) | Nota                                                                          |
+| -------------------------------------------------- | ------------ | ----------------------------------------------------------------------------- |
+| `src/host/MiniInputViewProvider.ts`                | ~691         | Mayor archivo del host; orquesta webview, completion, governor, sesión, HTML. |
+| `src/completion/providers/opencodeLmCompletion.ts` | ~395         | Sesión OpenCode, SSE paralelo, prompt, streaming.                             |
+| `src/governor/SuggestionRequestGovernor.ts`        | ~213+        | Políticas de requests / caché / límites.                                      |
+| `src/opencode/OpenCodeRuntime.ts`                  | ~191+        | Proceso embebido, cliente SDK, ciclo de vida.                                 |
+| `webview/main.js`                                  | ~706         | Cliente webview monolítico; sin TypeScript ni bundler.                        |
+| `src/extension/extension.ts`                       | ~76          | Entrada limpia: registra vistas y comandos.                                   |
 
 El resto de archivos en `src/` ronda entre ~15 y ~130 líneas salvo los citados arriba.
 
@@ -36,24 +36,24 @@ El resto de archivos en `src/` ronda entre ~15 y ~130 líneas salvo los citados 
 
 ### 3.1 Fortalezas
 
-| Área | Por qué está bien encaminado |
-|------|-------------------------------|
-| **`completion/`** | Dominio claro: `types`, `instruction`, `normalize`, catálogos, `providers/` por motor; barrel `completion/index.ts` documentado. |
-| **`completion/completionProvider.ts`** | Abstracción `CompletionProvider` + enrutado Copilot vs OpenCode sin ramificar el host por nombre de archivo legacy. |
-| **`completionSources.ts`** | Fuente única para multi‑fuente y compatibilidad `completionProvider` legacy. |
-| **`session/GhostPromptSessionStore.ts`** | Estado compartido Sidebar + Panel explícito y acotado. |
-| **`host/webviewProtocols.ts`** | Contratos Zod separados del gigante del provider (post 0.3.1). |
-| **`opencode/`** | Submódulos por responsabilidad (runtime, CLI, SSE, streaming, warm-up). |
-| **`extension/extension.ts`** | Delgado; no mezcla lógica de negocio pesada. |
+| Área                                     | Por qué está bien encaminado                                                                                                     |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| **`completion/`**                        | Dominio claro: `types`, `instruction`, `normalize`, catálogos, `providers/` por motor; barrel `completion/index.ts` documentado. |
+| **`completion/completionProvider.ts`**   | Abstracción `CompletionProvider` + enrutado Copilot vs OpenCode sin ramificar el host por nombre de archivo legacy.              |
+| **`completionSources.ts`**               | Fuente única para multi‑fuente y compatibilidad `completionProvider` legacy.                                                     |
+| **`session/GhostPromptSessionStore.ts`** | Estado compartido Sidebar + Panel explícito y acotado.                                                                           |
+| **`host/webviewProtocols.ts`**           | Contratos Zod separados del gigante del provider (post 0.3.1).                                                                   |
+| **`opencode/`**                          | Submódulos por responsabilidad (runtime, CLI, SSE, streaming, warm-up).                                                          |
+| **`extension/extension.ts`**             | Delgado; no mezcla lógica de negocio pesada.                                                                                     |
 
 ### 3.2 Debilidades estructurales
 
-| Punto | Evidencia | Por qué importa |
-|-------|-----------|-----------------|
-| **“God object” del host** | `MiniInputViewProvider.ts` concentra protocolo completo webview↔host, `_updateSetting`, `_postSettings`, flujo `suggest`, logs, HTML, broadcast multi‑vista. | Cada feature nueva (UI, idioma, otro mensaje) tiende a **crecer el mismo archivo**; tests requieren mocks amplios. |
-| **Host ↔ completion acoplado por imports masivos** | El provider importa muchos símbolos desde `../completion`. | No es incorrecto, pero **oculta fronteras** entre “presentación/host” y “dominio completion”. |
-| **Dos velocidades de cliente** | Host en TS + Zod; webview en JS único ~706 líneas. | Los contratos están validados **solo al entrar al host**; el cliente puede desincronizarse si cambia el HTML/JS sin actualizar `webviewProtocols`. |
-| **OpenCode como subárbol grande** | Varios archivos con SSE, duplex, streaming fold. | Correcto por dominio, pero **superficie de fallos** (SDK, Node undici, cancelación) concentrada en pocos archivos grandes. |
+| Punto                                              | Evidencia                                                                                                                                                    | Por qué importa                                                                                                                                    |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **“God object” del host**                          | `MiniInputViewProvider.ts` concentra protocolo completo webview↔host, `_updateSetting`, `_postSettings`, flujo `suggest`, logs, HTML, broadcast multi‑vista. | Cada feature nueva (UI, idioma, otro mensaje) tiende a **crecer el mismo archivo**; tests requieren mocks amplios.                                 |
+| **Host ↔ completion acoplado por imports masivos** | El provider importa muchos símbolos desde `../completion`.                                                                                                   | No es incorrecto, pero **oculta fronteras** entre “presentación/host” y “dominio completion”.                                                      |
+| **Dos velocidades de cliente**                     | Host en TS + Zod; webview en JS único ~706 líneas.                                                                                                           | Los contratos están validados **solo al entrar al host**; el cliente puede desincronizarse si cambia el HTML/JS sin actualizar `webviewProtocols`. |
+| **OpenCode como subárbol grande**                  | Varios archivos con SSE, duplex, streaming fold.                                                                                                             | Correcto por dominio, pero **superficie de fallos** (SDK, Node undici, cancelación) concentrada en pocos archivos grandes.                         |
 
 ### 3.3 Limpieza de código (observación cualitativa)
 
@@ -80,32 +80,32 @@ Hay **19** archivos `tests/*.ts` (Vitest), incluyendo:
 
 Orden sugerido por **impacto / frecuencia de cambio**:
 
-1. **Reducir o particionar `MiniInputViewProvider`**  
-   - Extraer: manejadores por tipo de mensaje (`handleSuggest`, `handleSend`, …), o capa “WebviewMessageRouter”.  
+1. **Reducir o particionar `MiniInputViewProvider`**
+   - Extraer: manejadores por tipo de mensaje (`handleSuggest`, `handleSend`, …), o capa “WebviewMessageRouter”.
    - Objetivo: cambios de UX sin tocar 600+ líneas.
 
-2. **Alinear webview con contratos**  
-   - Opciones: bundler + TS que importe tipos/schemas desde un paquete compartido; o generar tipos desde los mismos Zod (build step).  
+2. **Alinear webview con contratos**
+   - Opciones: bundler + TS que importe tipos/schemas desde un paquete compartido; o generar tipos desde los mismos Zod (build step).
    - Objetivo: que un cambio de payload **rompa compile** en el cliente, no solo en el host.
 
-3. **Documentar / aislar frontera OpenCode**  
-   - Reglas explícitas: qué es “runtime”, qué es “completion”, qué es “debug SSE”.  
+3. **Documentar / aislar frontera OpenCode**
+   - Reglas explícitas: qué es “runtime”, qué es “completion”, qué es “debug SSE”.
    - Objetivo: bumps de `@opencode-ai/sdk` con superficie de cambio acotada.
 
-4. **Gobernanza opcional de dependencias entre carpetas**  
+4. **Gobernanza opcional de dependencias entre carpetas**
    - ESLint `import/no-restricted-paths` o similar para impedir `opencode` → `host` inverso si algún día aparece.
 
 ---
 
 ## 6. Librerías y tooling — candidatos (sin compromiso)
 
-| Candidato | Para qué | Pros | Contras |
-|-----------|-----------|------|---------|
-| **esbuild / vite (lib)** | Empaquetar `webview/` en TS, imports, quizá `zod` compartido | DX, errores en compile, tree‑shake | Pipeline extra, fuente de VSIX a definir |
-| **Tipos compartidos** | `packages/shared` o carpeta `shared/` con schemas Zod | Una fuente de verdad host + webview | Duplicar disciplina de release |
-| **mitt / nanostores** | Estado mínimo en webview si crece la UI | Ligero | No sustituye bundler si el archivo sigue siendo enorme |
-| **madge** (dev) | Detectar ciclos `src/` | Visibilidad | Solo informa; no “limpia” solo |
-| **@vscode/test-electron** | Pruebas más cercanas al webview real | Confianza | Lento, más frágil en CI |
+| Candidato                 | Para qué                                                     | Pros                                | Contras                                                |
+| ------------------------- | ------------------------------------------------------------ | ----------------------------------- | ------------------------------------------------------ |
+| **esbuild / vite (lib)**  | Empaquetar `webview/` en TS, imports, quizá `zod` compartido | DX, errores en compile, tree‑shake  | Pipeline extra, fuente de VSIX a definir               |
+| **Tipos compartidos**     | `packages/shared` o carpeta `shared/` con schemas Zod        | Una fuente de verdad host + webview | Duplicar disciplina de release                         |
+| **mitt / nanostores**     | Estado mínimo en webview si crece la UI                      | Ligero                              | No sustituye bundler si el archivo sigue siendo enorme |
+| **madge** (dev)           | Detectar ciclos `src/`                                       | Visibilidad                         | Solo informa; no “limpia” solo                         |
+| **@vscode/test-electron** | Pruebas más cercanas al webview real                         | Confianza                           | Lento, más frágil en CI                                |
 
 **Fuera de foco típico:** Express, Nest, Next para el núcleo de la extensión (capa distinta).
 

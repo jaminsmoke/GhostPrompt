@@ -2,7 +2,7 @@
  * Lectura de configuración GhostPrompt desde `vscode.workspace` y contexto del editor activo.
  * Extraído de `MiniInputViewProvider` (roadmap v0.3.2 fase A).
  */
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 import type {
   SuggestionLanguageMode,
   SuggestionModelPolicy,
@@ -14,7 +14,7 @@ export {
   type GhostPromptAgentDestination,
   getGhostPromptAgentDestination,
   isVsOpenCodeXExtensionInstalled,
-} from "../../destinations/destinationRegistry";
+} from '../../destinations/destinationRegistry';
 
 /**
  * Normaliza y recorta un campo de contexto para el prompt.
@@ -23,7 +23,7 @@ export {
  * @return {string} Texto limpio y recortado con elípsis si excede el límite.
  */
 function trimContextField(value: string, maxChars: number): string {
-  const normalized = value.replace(/\s+/g, " ").trim();
+  const normalized = value.replace(/\s+/g, ' ').trim();
   if (normalized.length <= maxChars) {
     return normalized;
   }
@@ -36,9 +36,9 @@ function trimContextField(value: string, maxChars: number): string {
  */
 export function getGhostPromptSuggestionModelPolicy(): SuggestionModelPolicy {
   const value = vscode.workspace
-    .getConfiguration("ghostPrompt")
-    .get<string>("suggestionModelPolicy", "nonPremiumOnly");
-  return value === "anyModel" ? "anyModel" : "nonPremiumOnly";
+    .getConfiguration('ghostPrompt')
+    .get<string>('suggestionModelPolicy', 'nonPremiumOnly');
+  return value === 'anyModel' ? 'anyModel' : 'nonPremiumOnly';
 }
 
 /**
@@ -47,9 +47,9 @@ export function getGhostPromptSuggestionModelPolicy(): SuggestionModelPolicy {
  */
 export function getGhostPromptSelectedModelId(): string {
   const value = vscode.workspace
-    .getConfiguration("ghostPrompt")
-    .get<string>("selectedModelId", "auto");
-  return value?.trim() || "auto";
+    .getConfiguration('ghostPrompt')
+    .get<string>('selectedModelId', 'auto');
+  return value?.trim() || 'auto';
 }
 
 /**
@@ -58,8 +58,8 @@ export function getGhostPromptSelectedModelId(): string {
  */
 export function getGhostPromptMaxSuggestionChars(): number {
   const rawValue = vscode.workspace
-    .getConfiguration("ghostPrompt")
-    .get<number>("maxSuggestionChars", 180);
+    .getConfiguration('ghostPrompt')
+    .get<number>('maxSuggestionChars', 180);
   if (!Number.isFinite(rawValue)) {
     return 180;
   }
@@ -72,12 +72,12 @@ export function getGhostPromptMaxSuggestionChars(): number {
  */
 export function getGhostPromptSuggestionStyle(): SuggestionStyle {
   const value = vscode.workspace
-    .getConfiguration("ghostPrompt")
-    .get<string>("suggestionStyle", "balanced");
-  if (value === "concise" || value === "detailed") {
+    .getConfiguration('ghostPrompt')
+    .get<string>('suggestionStyle', 'balanced');
+  if (value === 'concise' || value === 'detailed') {
     return value;
   }
-  return "balanced";
+  return 'balanced';
 }
 
 /**
@@ -86,8 +86,8 @@ export function getGhostPromptSuggestionStyle(): SuggestionStyle {
  */
 export function getGhostPromptProjectMemoryEnabled(): boolean {
   return vscode.workspace
-    .getConfiguration("ghostPrompt")
-    .get<boolean>("projectMemoryEnabled", true);
+    .getConfiguration('ghostPrompt')
+    .get<boolean>('projectMemoryEnabled', true);
 }
 
 /**
@@ -96,9 +96,9 @@ export function getGhostPromptProjectMemoryEnabled(): boolean {
  */
 export function getGhostPromptSuggestionLanguageMode(): SuggestionLanguageMode {
   const value = vscode.workspace
-    .getConfiguration("ghostPrompt")
-    .get<string>("suggestionLanguageMode", "auto");
-  return value === "manual" ? "manual" : "auto";
+    .getConfiguration('ghostPrompt')
+    .get<string>('suggestionLanguageMode', 'auto');
+  return value === 'manual' ? 'manual' : 'auto';
 }
 
 /**
@@ -107,21 +107,19 @@ export function getGhostPromptSuggestionLanguageMode(): SuggestionLanguageMode {
  */
 export function getGhostPromptSuggestionLanguage(): SupportedSuggestionLanguage {
   const value = vscode.workspace
-    .getConfiguration("ghostPrompt")
-    .get<string>("suggestionLanguage", "en");
-  return value === "es" ? "es" : "en";
+    .getConfiguration('ghostPrompt')
+    .get<string>('suggestionLanguage', 'en');
+  return value === 'es' ? 'es' : 'en';
 }
 
 /**
  * Obtiene la elección de idioma de sugerencia mostrada en la UI.
  * @returns {{| "auto" | SupportedSuggestionLanguage |}} "auto" o el idioma manual seleccionado.
  */
-export function getGhostPromptSuggestionLanguageChoice():
-  | "auto"
-  | SupportedSuggestionLanguage {
+export function getGhostPromptSuggestionLanguageChoice(): 'auto' | SupportedSuggestionLanguage {
   const mode = getGhostPromptSuggestionLanguageMode();
-  if (mode === "auto") {
-    return "auto";
+  if (mode === 'auto') {
+    return 'auto';
   }
   return getGhostPromptSuggestionLanguage();
 }
@@ -132,8 +130,8 @@ export function getGhostPromptSuggestionLanguageChoice():
  */
 export function getGhostPromptOllamaBaseUrl(): string {
   return vscode.workspace
-    .getConfiguration("ghostPrompt")
-    .get<string>("ollamaBaseUrl", "http://localhost:11434");
+    .getConfiguration('ghostPrompt')
+    .get<string>('ollamaBaseUrl', 'http://localhost:11434');
 }
 
 /**
@@ -142,8 +140,8 @@ export function getGhostPromptOllamaBaseUrl(): string {
  */
 export function getGhostPromptOllamaExcludedModelIds(): string[] {
   return vscode.workspace
-    .getConfiguration("ghostPrompt")
-    .get<string[]>("ollamaExcludedModelIds", []);
+    .getConfiguration('ghostPrompt')
+    .get<string[]>('ollamaExcludedModelIds', []);
 }
 
 /**
@@ -163,9 +161,7 @@ export function collectGhostPromptProjectContext(): {
   }
   const activeLanguageId = editor.document.languageId;
   const activeFilePath = vscode.workspace.asRelativePath(editor.document.uri, false);
-  const selected = editor.selection?.isEmpty
-    ? ""
-    : editor.document.getText(editor.selection);
+  const selected = editor.selection?.isEmpty ? '' : editor.document.getText(editor.selection);
   const activeSelection = selected ? trimContextField(selected, 320) : undefined;
   return {
     workspaceName,

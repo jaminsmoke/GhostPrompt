@@ -1,4 +1,4 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
 import { buildCompletionInstruction } from '../../core/instruction';
 import { normalizeSuggestion } from '../../core/normalize';
@@ -16,7 +16,7 @@ import {
   promptOpenCode,
   resetClient,
   getSession,
-} from "./opencodeApiClient";
+} from './opencodeApiClient';
 
 /**
  * Describe un modelo OpenCode para el pipeline de sugerencias.
@@ -27,8 +27,8 @@ function describeOpenCodeModel(modelId: string): SuggestionModelDescriptor {
   return {
     id: modelId,
     label: modelId,
-    tier: "included",
-    provider: "opencode",
+    tier: 'included',
+    provider: 'opencode',
   };
 }
 
@@ -40,7 +40,7 @@ function describeOpenCodeModel(modelId: string): SuggestionModelDescriptor {
 async function resolveOpenCodeModel(
   preferredModelId: string | undefined,
 ): Promise<string | undefined> {
-  if (preferredModelId && preferredModelId !== "auto") {
+  if (preferredModelId && preferredModelId !== 'auto') {
     return preferredModelId;
   }
   return undefined;
@@ -51,9 +51,9 @@ async function resolveOpenCodeModel(
  * @returns True si el cliente es válido y responde.
  */
 async function ensureClient(): Promise<boolean> {
-  const cfg = vscode.workspace.getConfiguration("ghostPrompt");
-  const port = cfg.get<number>("opencodePort");
-  const authToken = cfg.get<string>("opencodeAuthToken");
+  const cfg = vscode.workspace.getConfiguration('ghostPrompt');
+  const port = cfg.get<number>('opencodePort');
+  const authToken = cfg.get<string>('opencodeAuthToken');
 
   try {
     const client = await createOpenCodeClient({
@@ -80,23 +80,23 @@ export async function requestOpencodeCompletion(
     token,
     preferredModelId,
     maxSuggestionChars = DEFAULT_MAX_SUGGESTION_CHARS,
-    style = "balanced",
+    style = 'balanced',
     context,
     requestTimeoutMs = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
     onLoadingPhase,
     onStreamPreview: _onStreamPreview,
   } = options;
 
-  onLoadingPhase?.("opencode-start");
+  onLoadingPhase?.('opencode-start');
 
   const alive = await ensureClient();
   if (!alive) {
-    return { kind: "empty", reason: "no-model" };
+    return { kind: 'empty', reason: 'no-model' };
   }
 
   const modelName = await resolveOpenCodeModel(preferredModelId);
   if (!modelName) {
-    return { kind: "empty", reason: "no-model" };
+    return { kind: 'empty', reason: 'no-model' };
   }
 
   const client = getGlobalClient();
@@ -105,58 +105,54 @@ export async function requestOpencodeCompletion(
   try {
     const sessionId = await getSession(client);
 
-    onLoadingPhase?.("opencode-generating");
+    onLoadingPhase?.('opencode-generating');
     const completionText = await Promise.race([
       promptOpenCode(
         sessionId,
-        { providerID: "opencode", modelID: modelName },
-        [{ type: "text", text: instruction }],
+        { providerID: 'opencode', modelID: modelName },
+        [{ type: 'text', text: instruction }],
         client,
       ),
       new Promise<string>((_, reject) => {
         const id = setTimeout(() => {
           clearTimeout(id);
-          reject(new Error("request-timed-out"));
+          reject(new Error('request-timed-out'));
         }, requestTimeoutMs);
         if (token.isCancellationRequested) {
           clearTimeout(id);
-          reject(new Error("request-cancelled"));
+          reject(new Error('request-cancelled'));
         }
       }),
     ]);
 
     if (token.isCancellationRequested) {
-      return { kind: "empty", reason: "request-timeout" };
+      return { kind: 'empty', reason: 'request-timeout' };
     }
 
-    const suggestion = normalizeSuggestion(
-      completionText,
-      userText,
-      maxSuggestionChars,
-    );
+    const suggestion = normalizeSuggestion(completionText, userText, maxSuggestionChars);
 
     if (!suggestion) {
-      return { kind: "empty", reason: "empty-response" };
+      return { kind: 'empty', reason: 'empty-response' };
     }
 
     return {
-      kind: "suggestion",
+      kind: 'suggestion',
       suggestion,
       model: describeOpenCodeModel(modelName),
     };
   } catch (err) {
     if (token.isCancellationRequested) {
-      return { kind: "empty", reason: "request-timeout" };
+      return { kind: 'empty', reason: 'request-timeout' };
     }
     const message = err instanceof Error ? err.message : String(err);
     if (/timed out|cancelled/i.test(message)) {
-      return { kind: "empty", reason: "request-timeout" };
+      return { kind: 'empty', reason: 'request-timeout' };
     }
     if (/ECONNREFUSED|fetch failed|not found|no model/i.test(message)) {
       resetClient();
-      return { kind: "empty", reason: "no-model" };
+      return { kind: 'empty', reason: 'no-model' };
     }
     resetClient();
-    return { kind: "error", message };
+    return { kind: 'error', message };
   }
 }

@@ -1,4 +1,4 @@
-import type { OutboundMessage } from "../types";
+import type { OutboundMessage } from '../types';
 
 /**
  * Envía un mensaje al host y espera una respuesta específica.
@@ -15,11 +15,11 @@ export function hostQuery<T>(
   return new Promise((resolve) => {
     const handler = (e: MessageEvent) => {
       if (e.data.type === responseType) {
-        window.removeEventListener("message", handler);
+        window.removeEventListener('message', handler);
         resolve(e.data as T);
       }
     };
-    window.addEventListener("message", handler);
+    window.addEventListener('message', handler);
     sendMessage(msg);
   });
 }

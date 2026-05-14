@@ -56,33 +56,33 @@
 
 ## 2. Module map
 
-| Location | Responsibility |
-| -------- | -------------- |
-| `src/extension/extension.ts` | Entry point: commands, configuration listeners, two `WebviewViewProvider` registrations, `deactivate` (resetea client OpenCode). |
-| `src/vscode/MiniInputViewProvider.ts` | Webview HTML/CSP, broadcast a Sidebar+Panel, delegación a handlers. |
-| `src/vscode/webviewHtml.ts` | HTML template generation, CSP nonce, secure URI substitution. |
-| `src/vscode/suggestionNotification.ts` | Non-intrusive `vscode.window.showWarningMessage` for actionable suggestion failures. |
-| `src/api/protocols/webviewProtocols.ts` | Zod parseo de mensajes webview→host; validación de sobre `settings` host→webview. |
-| `src/api/protocols/inboundHandlers.ts` | Router/dispatch de mensajes inbound (`init`, `suggest`, `send`, `accept`, `draftChanged`, `updateSetting`). |
-| `src/api/settings/settingsPostMessage.ts` | Construye y envía el mensaje `settings` al webview (lista de modelos, chips, etc.). |
-| `src/api/settings/applyWebviewUpdate.ts` | Aplica cambios de configuración originados en el webview (`updateSetting`). |
-| `src/api/getters/workspaceGetters.ts` | Lectores de `vscode.workspace.getConfiguration` + resolución de destino agente. |
-| `src/core/` | Core cross-engine: tipos, instrucción, normalize, streaming, language, loading, sources, merged catalog, governor, session, context bootstrap, pipeline. |
-| `src/core/pipeline/suggestPipeline.ts` | Orquestación completa: governor → LM routing → loading phases → broadcast UI. |
-| `src/core/session/GhostPromptSessionStore.ts` | Estado compartido (borrador, suggestions, `activeCaptureId`, token de cancelación). |
-| `src/core/governor/SuggestionRequestGovernor.ts` | Dedupe, cache, cooldown, rate limit, presupuesto antes del LM. |
-| `src/engines/` | Motores de completion canónicos. `copilot/`, `opencode/` (apiClient + catalog), `ollama/`, y `engineRegistry.ts`. |
-| `src/destinations/` | Destinos de prompt. `copilotChat/` (`sendToChat`), `vsOpenCodeX/` (forward UI, notify missing). |
-| `src/system/contracts/webviewMessageSchemas.ts` | Schemas Zod canónicos host ↔ webview. |
-| `src/system/log/ConversationLog.ts` | `conversation.md` bajo `storageUri`. |
-| `src/system/log/SuggestionLog.ts` | `suggestions.md` bajo `storageUri`. |
-| `src/system/debug/SuggestionDebug.ts` | Toggle debug y canal **GhostPrompt Suggestions**. |
-| `src/system/status/` | Sistema de estados de proveedores (ProviderStatusManager + módulos por engine/destination). |
-| `src/system/build/verifyWebviewBundle.ts` | Verificación del bundle webview en CI/dev. |
-| `src/projectMemory/*` | Store JSON por carpeta, reconcile, ingest, watchers opcionales. |
-| `src/ui/webview/react/index.html` | Shell HTML; Vite entry template. CSP, URIs de assets inyectados en runtime por `webviewHtml.ts`. |
-| `src/ui/webview/dist/react/index.html` (build) | Bundle generado por Vite desde `src/ui/webview/react/` (`npm run build:webview`). |
-| `src/ui/webview/react/index.css` | Tailwind + variables VS Code; ghost text. |
+| Location                                         | Responsibility                                                                                                                                           |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/extension/extension.ts`                     | Entry point: commands, configuration listeners, two `WebviewViewProvider` registrations, `deactivate` (resetea client OpenCode).                         |
+| `src/vscode/MiniInputViewProvider.ts`            | Webview HTML/CSP, broadcast a Sidebar+Panel, delegación a handlers.                                                                                      |
+| `src/vscode/webviewHtml.ts`                      | HTML template generation, CSP nonce, secure URI substitution.                                                                                            |
+| `src/vscode/suggestionNotification.ts`           | Non-intrusive `vscode.window.showWarningMessage` for actionable suggestion failures.                                                                     |
+| `src/api/protocols/webviewProtocols.ts`          | Zod parseo de mensajes webview→host; validación de sobre `settings` host→webview.                                                                        |
+| `src/api/protocols/inboundHandlers.ts`           | Router/dispatch de mensajes inbound (`init`, `suggest`, `send`, `accept`, `draftChanged`, `updateSetting`).                                              |
+| `src/api/settings/settingsPostMessage.ts`        | Construye y envía el mensaje `settings` al webview (lista de modelos, chips, etc.).                                                                      |
+| `src/api/settings/applyWebviewUpdate.ts`         | Aplica cambios de configuración originados en el webview (`updateSetting`).                                                                              |
+| `src/api/getters/workspaceGetters.ts`            | Lectores de `vscode.workspace.getConfiguration` + resolución de destino agente.                                                                          |
+| `src/core/`                                      | Core cross-engine: tipos, instrucción, normalize, streaming, language, loading, sources, merged catalog, governor, session, context bootstrap, pipeline. |
+| `src/core/pipeline/suggestPipeline.ts`           | Orquestación completa: governor → LM routing → loading phases → broadcast UI.                                                                            |
+| `src/core/session/GhostPromptSessionStore.ts`    | Estado compartido (borrador, suggestions, `activeCaptureId`, token de cancelación).                                                                      |
+| `src/core/governor/SuggestionRequestGovernor.ts` | Dedupe, cache, cooldown, rate limit, presupuesto antes del LM.                                                                                           |
+| `src/engines/`                                   | Motores de completion canónicos. `copilot/`, `opencode/` (apiClient + catalog), `ollama/`, y `engineRegistry.ts`.                                        |
+| `src/destinations/`                              | Destinos de prompt. `copilotChat/` (`sendToChat`), `vsOpenCodeX/` (forward UI, notify missing).                                                          |
+| `src/system/contracts/webviewMessageSchemas.ts`  | Schemas Zod canónicos host ↔ webview.                                                                                                                    |
+| `src/system/log/ConversationLog.ts`              | `conversation.md` bajo `storageUri`.                                                                                                                     |
+| `src/system/log/SuggestionLog.ts`                | `suggestions.md` bajo `storageUri`.                                                                                                                      |
+| `src/system/debug/SuggestionDebug.ts`            | Toggle debug y canal **GhostPrompt Suggestions**.                                                                                                        |
+| `src/system/status/`                             | Sistema de estados de proveedores (ProviderStatusManager + módulos por engine/destination).                                                              |
+| `src/system/build/verifyWebviewBundle.ts`        | Verificación del bundle webview en CI/dev.                                                                                                               |
+| `src/projectMemory/*`                            | Store JSON por carpeta, reconcile, ingest, watchers opcionales.                                                                                          |
+| `src/ui/webview/react/index.html`                | Shell HTML; Vite entry template. CSP, URIs de assets inyectados en runtime por `webviewHtml.ts`.                                                         |
+| `src/ui/webview/dist/react/index.html` (build)   | Bundle generado por Vite desde `src/ui/webview/react/` (`npm run build:webview`).                                                                        |
+| `src/ui/webview/react/index.css`                 | Tailwind + variables VS Code; ghost text.                                                                                                                |
 
 ---
 
@@ -120,14 +120,14 @@ User types in textarea
 
 Esta capa **no** define cómo “piensa” el modelo lingüístico: adapta **datos y políticas** antes de llamar al LM.
 
-| Pieza | Responsabilidad | ¿Sustituible por prompt al modelo? |
-| ----- | ----------------- | ----------------------------------- |
-| `normalizeOpencodeProviderModels` | El SDK puede devolver `models` como **array** o como **mapa**; se normaliza a lista de `{ id, … }` sin inventar campos. | **No** — sin esto no hay ids estables para `session.prompt`. |
-| `classifyOpencodeModelTier` | A partir de metadatos del catálogo (`pricing` tipo `0x`/`1x`, `free`) y reglas conservadoras por `providerID` (p. ej. proveedor `opencode`, backends locales), clasifica **included / premium / unknown** para `ghostPrompt.suggestionModelPolicy`. | **No** para cumplir **nonPremiumOnly**; no es redacción de sugerencias. |
-| `listOpencodeSuggestionModels` | Construye filas del dropdown (etiqueta, tier), respeta `ghostPrompt.opencodeExcludedModelIds`. | UX |
-| `listOllamaSuggestionModels` | Lista modelos locales de Ollama vía `/api/tags`, respeta `ghostPrompt.ollamaExcludedModelIds`. | UX |
-| `listMergedSuggestionModels` | Concatena Copilot + OpenCode + **Ollama** y deduplica por `id` (prioriza Copilot). | Multi-fuente |
-| Resolución en `opencodeLmCompletion.ts` (`resolveOpencodeModelIdsFromSnapshot`) | Elige `providerID`/`modelID` alineado al snapshot cacheado y la política. | Contrato del SDK |
+| Pieza                                                                           | Responsabilidad                                                                                                                                                                                                                                     | ¿Sustituible por prompt al modelo?                                      |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `normalizeOpencodeProviderModels`                                               | El SDK puede devolver `models` como **array** o como **mapa**; se normaliza a lista de `{ id, … }` sin inventar campos.                                                                                                                             | **No** — sin esto no hay ids estables para `session.prompt`.            |
+| `classifyOpencodeModelTier`                                                     | A partir de metadatos del catálogo (`pricing` tipo `0x`/`1x`, `free`) y reglas conservadoras por `providerID` (p. ej. proveedor `opencode`, backends locales), clasifica **included / premium / unknown** para `ghostPrompt.suggestionModelPolicy`. | **No** para cumplir **nonPremiumOnly**; no es redacción de sugerencias. |
+| `listOpencodeSuggestionModels`                                                  | Construye filas del dropdown (etiqueta, tier), respeta `ghostPrompt.opencodeExcludedModelIds`.                                                                                                                                                      | UX                                                                      |
+| `listOllamaSuggestionModels`                                                    | Lista modelos locales de Ollama vía `/api/tags`, respeta `ghostPrompt.ollamaExcludedModelIds`.                                                                                                                                                      | UX                                                                      |
+| `listMergedSuggestionModels`                                                    | Concatena Copilot + OpenCode + **Ollama** y deduplica por `id` (prioriza Copilot).                                                                                                                                                                  | Multi-fuente                                                            |
+| Resolución en `opencodeLmCompletion.ts` (`resolveOpencodeModelIdsFromSnapshot`) | Elige `providerID`/`modelID` alineado al snapshot cacheado y la política.                                                                                                                                                                           | Contrato del SDK                                                        |
 
 El **texto** de la suggestion sigue gobernado por `instruction.ts`, post-proceso `normalize.ts`, y el LM/OpenCode en sí — véase roadmap v0.4.2 Fase 1.
 
@@ -135,11 +135,11 @@ El **texto** de la suggestion sigue gobernado por `instruction.ts`, post-proceso
 
 Mitigaciones ya implementadas en GhostPrompt (sin duplicar trabajo del modelo lingüístico):
 
-| Mecanismo | Ubicación típica | Efecto |
-| --------- | ------------------ | ------ |
-| **Session pool** | `opencodeApiClient.ts` | Sesiones reutilizadas con TTL (5 min) y max-size (4); evita `create`+`delete` por request. |
-| **Snapshot `config.providers()`** | `opencodeModelCatalog.ts` | Lista modelos del servidor OpenCode para el selector webview. |
-| **SSE preview** | `promptStreamOpenCode` | Opcional; filtro por `sessionID`, recorte `maxPreviewChars`; abort compartido con el request. |
+| Mecanismo                         | Ubicación típica          | Efecto                                                                                        |
+| --------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------- |
+| **Session pool**                  | `opencodeApiClient.ts`    | Sesiones reutilizadas con TTL (5 min) y max-size (4); evita `create`+`delete` por request.    |
+| **Snapshot `config.providers()`** | `opencodeModelCatalog.ts` | Lista modelos del servidor OpenCode para el selector webview.                                 |
+| **SSE preview**                   | `promptStreamOpenCode`    | Opcional; filtro por `sessionID`, recorte `maxPreviewChars`; abort compartido con el request. |
 
 **Dependencia:** `@opencode-ai/sdk` (versión en `package.json`). El SDK se importa dinámicamente (`await import("@opencode-ai/sdk")`) por ser ESM-only. `createOpencodeClient` es síncrono — devuelve `OpencodeClient` directamente. Health check ligero via `client.config.get()`. Puerto por defecto: **4096** (configurable via `ghostPrompt.opencodePort`). Auth via `ghostPrompt.opencodeAuthToken`.
 
@@ -157,25 +157,25 @@ Los mensajes son JSON. Contratos **Zod** en `src/system/contracts/webviewMessage
 
 ### Webview → Host (resumen)
 
-| `type` | Rol |
-| ------ | --- |
-| `init` | Primera carga de la vista. |
-| `suggest` | `{ text, captureId }` — pedir suggestion. |
-| `draftChanged` | Sincronizar borrador entre vistas (`originViewId`). |
-| `accept` / `send` | Tab en ghost-text / Enter para chat. |
-| `updateSetting` | Cambios desde chips (política, modelo, estilo, contexto, idioma, debug, `completionProvider`, …). |
+| `type`            | Rol                                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------------------- |
+| `init`            | Primera carga de la vista.                                                                        |
+| `suggest`         | `{ text, captureId }` — pedir suggestion.                                                         |
+| `draftChanged`    | Sincronizar borrador entre vistas (`originViewId`).                                               |
+| `accept` / `send` | Tab en ghost-text / Enter para chat.                                                              |
+| `updateSetting`   | Cambios desde chips (política, modelo, estilo, contexto, idioma, debug, `completionProvider`, …). |
 
 ### Host → Webview (resumen)
 
-| `type` | Rol |
-| ------ | --- |
-| `settings` | Payload completo de UI (modelos, motor, `completionUiKind`, …). |
-| `loading` | Fase de carga (`phase`, `statusText`, `captureId`); incluye fases Copilot, OpenCode y **Ollama** (`ollama-start`, `ollama-generating`). |
-| `suggestion-stream` | OpenCode: texto acumulado por SSE antes del resultado final (`captureId`). |
-| `suggestion` / `empty` / `error` | Resultado del intento (`captureId`). |
-| `languageEffective` | Idioma efectivo resuelto para la suggestion. |
-| `draftSync` / `draftHydrate` | Estado de borrador entre Sidebar y Panel. |
-| `clear` | Tras envío exitoso al chat. |
+| `type`                           | Rol                                                                                                                                     |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `settings`                       | Payload completo de UI (modelos, motor, `completionUiKind`, …).                                                                         |
+| `loading`                        | Fase de carga (`phase`, `statusText`, `captureId`); incluye fases Copilot, OpenCode y **Ollama** (`ollama-start`, `ollama-generating`). |
+| `suggestion-stream`              | OpenCode: texto acumulado por SSE antes del resultado final (`captureId`).                                                              |
+| `suggestion` / `empty` / `error` | Resultado del intento (`captureId`).                                                                                                    |
+| `languageEffective`              | Idioma efectivo resuelto para la suggestion.                                                                                            |
+| `draftSync` / `draftHydrate`     | Estado de borrador entre Sidebar y Panel.                                                                                               |
+| `clear`                          | Tras envío exitoso al chat.                                                                                                             |
 
 Lista exhaustiva y campos: código fuente + tests `webviewProtocols.test.ts`.
 
@@ -204,11 +204,11 @@ Both log modules call `vscode.workspace.fs.createDirectory(storageUri)` before e
 
 When **`ghostPrompt.projectMemoryEnabled`** is on and **`ghostPrompt.contextMode`** is **`project`**, the suggest path **reconciles** excerpts from disk into a per-workspace-folder store, then merges reconciled lines into the LM instruction (alongside existing volatile project context).
 
-| Path (relative to `ExtensionContext.globalStorageUri`) | Content |
-| ------------------------------------------------------- | ------- |
-| `ghostPrompt/projectMemory/v1/registry.json` | Workspace keys (`workspaceKey`), relative store folder name, `lastSeenAt` for whole-store GC. |
-| `ghostPrompt/projectMemory/v1/stores/<sha256>/manifest.json` | Schema version and store metadata. |
-| `ghostPrompt/projectMemory/v1/stores/<sha256>/entries.json` | Bootstrap rows (`README*`, `package.json`, …) and optional **editor-ingest** rows; LRU fields; mtime/hash for invalidation. |
+| Path (relative to `ExtensionContext.globalStorageUri`)       | Content                                                                                                                     |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `ghostPrompt/projectMemory/v1/registry.json`                 | Workspace keys (`workspaceKey`), relative store folder name, `lastSeenAt` for whole-store GC.                               |
+| `ghostPrompt/projectMemory/v1/stores/<sha256>/manifest.json` | Schema version and store metadata.                                                                                          |
+| `ghostPrompt/projectMemory/v1/stores/<sha256>/entries.json`  | Bootstrap rows (`README*`, `package.json`, …) and optional **editor-ingest** rows; LRU fields; mtime/hash for invalidation. |
 
 **Multi-root:** one store directory per `WorkspaceFolder`; the active document’s workspace root selects which store participates in a given suggestion.
 

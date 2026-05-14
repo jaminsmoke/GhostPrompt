@@ -3,17 +3,17 @@ export {
   pickWorkspaceFolderForProjectMemory,
   readProjectMemoryUnusedStoreTtlDays,
   registerProjectMemory,
-} from "./activate";
+} from './activate';
 export {
   readProjectMemoryFileWatcherConfig,
   refreshProjectMemoryIndexedPathWatchers,
   scheduleIndexedPathWatcherRefresh,
-} from "./probes/watchers";
+} from './probes/watchers';
 export {
   mergeEntriesReplacingBootstrapSubset,
   mergeValidatedBootstrapWithLive,
   pruneBootstrapStoredAgainstFileProbes,
-} from "./entries/bootstrap";
+} from './entries/bootstrap';
 export {
   bootstrapPieceToStoredItem,
   persistProjectBootstrapSnapshot,
@@ -22,8 +22,8 @@ export {
   writeReconciledProjectBootstrapSnapshot,
   type ProjectBootstrapReconcileSnapshot,
   type ProjectMemoryReconcileSnapshot,
-} from "./persist";
-export { NodeProjectMemoryFs, type ProjectMemoryFsAdapter } from "./io/fs";
-export { ProjectMemoryStore } from "./Store";
-export * from "./types";
-export { workspaceKeyFromRootUriString } from "./io/key";
+} from './persist';
+export { NodeProjectMemoryFs, type ProjectMemoryFsAdapter } from './io/fs';
+export { ProjectMemoryStore } from './Store';
+export * from './types';
+export { workspaceKeyFromRootUriString } from './io/key';

@@ -9,9 +9,13 @@ import {
   type WebviewInboundMessage,
   type WebviewOutboundMessage,
 } from '../../system/contracts/webviewMessageSchemas';
-import type { z } from "zod";
+import type { z } from 'zod';
 
-export type { WebviewInboundMessage, WebviewOutboundMessage, WebviewSettingsPayload } from '../../system/contracts/webviewMessageSchemas';
+export type {
+  WebviewInboundMessage,
+  WebviewOutboundMessage,
+  WebviewSettingsPayload,
+} from '../../system/contracts/webviewMessageSchemas';
 export {
   suggestionModelDescriptorSchema,
   webviewInboundMessageSchema,
@@ -27,16 +31,10 @@ export {
  * @param {unknown} raw Datos sin validar recibidos desde el webview.
  * @returns {WebviewInboundMessage | undefined} El mensaje parseado o undefined si no pasa la validación Zod.
  */
-export function parseWebviewInboundMessage(
-  raw: unknown,
-): WebviewInboundMessage | undefined {
+export function parseWebviewInboundMessage(raw: unknown): WebviewInboundMessage | undefined {
   const r = webviewInboundMessageSchema.safeParse(raw);
   if (!r.success) {
-    console.warn(
-      "[GhostPrompt] Mensaje webview inválido:",
-      r.error.flatten(),
-      raw,
-    );
+    console.warn('[GhostPrompt] Mensaje webview inválido:', r.error.flatten(), raw);
     return undefined;
   }
   return r.data;
@@ -52,11 +50,7 @@ export function parseOutboundSettingsEnvelope(
 ): z.infer<typeof webviewOutboundSettingsEnvelopeSchema> | undefined {
   const r = webviewOutboundSettingsEnvelopeSchema.safeParse(raw);
   if (!r.success) {
-    console.error(
-      "[GhostPrompt] Payload `settings` inválido (host):",
-      r.error.flatten(),
-      raw,
-    );
+    console.error('[GhostPrompt] Payload `settings` inválido (host):', r.error.flatten(), raw);
     return undefined;
   }
   return r.data;
@@ -68,16 +62,10 @@ export function parseOutboundSettingsEnvelope(
  * @param {unknown} raw Datos sin validar que se enviarán al webview.
  * @returns {WebviewOutboundMessage | undefined} El mensaje parseado o undefined si no pasa la validación Zod.
  */
-export function parseWebviewOutboundMessage(
-  raw: unknown,
-): WebviewOutboundMessage | undefined {
+export function parseWebviewOutboundMessage(raw: unknown): WebviewOutboundMessage | undefined {
   const r = webviewOutboundMessageSchema.safeParse(raw);
   if (!r.success) {
-    console.warn(
-      "[GhostPrompt] Mensaje saliente inválido:",
-      r.error.flatten(),
-      raw,
-    );
+    console.warn('[GhostPrompt] Mensaje saliente inválido:', r.error.flatten(), raw);
     return undefined;
   }
   return r.data;

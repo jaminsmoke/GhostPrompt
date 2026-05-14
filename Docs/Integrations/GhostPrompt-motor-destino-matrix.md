@@ -8,11 +8,11 @@ Documento de **diseño compartido** entre **VSOpenCodeX** y **GhostPrompt**. Act
 
 ## Tres ejes (GhostPrompt debe distinguirlos en configuración y código)
 
-| Eje | Significado | Ejemplos |
-|-----|-------------|----------|
-| **Motor de suggestions** | De dónde sale el texto sugerido (streaming / completion). | Copilot LM (`vscode.lm`), OpenCode (SDK contra `opencode serve`). |
-| **Destino (Send / agente)** | A qué servicio se envía el **prompt final** para que trabaje el agente (no es solo “copiar UI”). | GitHub Copilot Chat; **VSOpenCodeX** (tubería propia → OpenCode según configuración VSX). |
-| **Superficie de visualización** | Dónde el usuario ve el borrador y las suggestions **inline**. | Webview + chat inline de GhostPrompt (modo clásico); **solo chat / panel de VSOpenCodeX** cuando el destino es VSOpenCodeX. |
+| Eje                             | Significado                                                                                      | Ejemplos                                                                                                                    |
+| ------------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| **Motor de suggestions**        | De dónde sale el texto sugerido (streaming / completion).                                        | Copilot LM (`vscode.lm`), OpenCode (SDK contra `opencode serve`).                                                           |
+| **Destino (Send / agente)**     | A qué servicio se envía el **prompt final** para que trabaje el agente (no es solo “copiar UI”). | GitHub Copilot Chat; **VSOpenCodeX** (tubería propia → OpenCode según configuración VSX).                                   |
+| **Superficie de visualización** | Dónde el usuario ve el borrador y las suggestions **inline**.                                    | Webview + chat inline de GhostPrompt (modo clásico); **solo chat / panel de VSOpenCodeX** cuando el destino es VSOpenCodeX. |
 
 Motivo del tercer eje: en el producto GhostPrompt estándar, el inline no puede apoyarse en el UI propietario de Copilot Chat por restricciones; con VSOpenCodeX **sí** existe una superficie explícita (**nuestro** webview de chat). Por tanto:
 
@@ -26,63 +26,63 @@ El **motor** sigue siendo elegible en GhostPrompt **en los cuatro escenarios**; 
 
 ### Situación 1 — Motor Copilot · Destino Copilot
 
-| Aspecto | Comportamiento |
-|---------|----------------|
-| Rol | GhostPrompt **standalone** al servicio de Copilot. |
-| Suggestions | Motor Copilot. |
-| Send | Copilot (p. ej. `workbench.action.chat.open` o API equivalente). |
-| Superficie | Webview GhostPrompt + inline GhostPrompt (como hoy). |
+| Aspecto     | Comportamiento                                                            |
+| ----------- | ------------------------------------------------------------------------- |
+| Rol         | GhostPrompt **standalone** al servicio de Copilot.                        |
+| Suggestions | Motor Copilot.                                                            |
+| Send        | Copilot (p. ej. `workbench.action.chat.open` o API equivalente).          |
+| Superficie  | Webview GhostPrompt + inline GhostPrompt (como hoy).                      |
 | VSOpenCodeX | Irrelevante para el flujo; puede estar instalada sin usarse en este modo. |
 
 ### Situación 2 — Motor OpenCode · Destino Copilot
 
-| Aspecto | Comportamiento |
-|---------|----------------|
-| Rol | GhostPrompt **autónomo**: genera suggestions con OpenCode, **envía** el prompt final al agente **Copilot**. |
-| Suggestions | OpenCode (cliente SDK). |
-| Send | **GitHub Copilot** (quien ejecuta el prompt final). |
-| Superficie | Webview GhostPrompt + inline GhostPrompt. |
-| OpenCode | Puede ser instancia reutilizada vía VSX (`getOpenCodeConnection`) **solo como motor**, o instancia embebida de GhostPrompt — **decisión de implementación** (una sesión, latencia, política de fallos); documentar en CHANGELOG de GhostPrompt. No implica destino VSOpenCodeX. |
+| Aspecto     | Comportamiento                                                                                                                                                                                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rol         | GhostPrompt **autónomo**: genera suggestions con OpenCode, **envía** el prompt final al agente **Copilot**.                                                                                                                                                                     |
+| Suggestions | OpenCode (cliente SDK).                                                                                                                                                                                                                                                         |
+| Send        | **GitHub Copilot** (quien ejecuta el prompt final).                                                                                                                                                                                                                             |
+| Superficie  | Webview GhostPrompt + inline GhostPrompt.                                                                                                                                                                                                                                       |
+| OpenCode    | Puede ser instancia reutilizada vía VSX (`getOpenCodeConnection`) **solo como motor**, o instancia embebida de GhostPrompt — **decisión de implementación** (una sesión, latencia, política de fallos); documentar en CHANGELOG de GhostPrompt. No implica destino VSOpenCodeX. |
 
 ### Situación 3 — Motor Copilot · Destino VSOpenCodeX
 
-| Aspecto | Comportamiento |
-|---------|----------------|
-| Rol | GhostPrompt trabaja **para VSOpenCodeX** como destino del prompt. |
-| Suggestions | Motor Copilot. |
-| Send | **Delegado a VSOpenCodeX** (misma tubería que el chat de VSOpenCodeX; contratos por implementar). |
-| Superficie | **Solo VSOpenCodeX** — deshabilitar chat inline GhostPrompt según acuerdo de producto. |
-| VSOpenCodeX | Superficie autorizada + ejecución del agente/OpenCode según diseño VSX. |
+| Aspecto     | Comportamiento                                                                                    |
+| ----------- | ------------------------------------------------------------------------------------------------- |
+| Rol         | GhostPrompt trabaja **para VSOpenCodeX** como destino del prompt.                                 |
+| Suggestions | Motor Copilot.                                                                                    |
+| Send        | **Delegado a VSOpenCodeX** (misma tubería que el chat de VSOpenCodeX; contratos por implementar). |
+| Superficie  | **Solo VSOpenCodeX** — deshabilitar chat inline GhostPrompt según acuerdo de producto.            |
+| VSOpenCodeX | Superficie autorizada + ejecución del agente/OpenCode según diseño VSX.                           |
 
 ### Situación 4 — Motor OpenCode · Destino VSOpenCodeX
 
-| Aspecto | Comportamiento |
-|---------|----------------|
-| Rol | GhostPrompt trabaja **para VSOpenCodeX**; suggestions y send alineados con OpenCode vía VSX. |
-| Suggestions | OpenCode. |
-| Send | **VSOpenCodeX** (sin segundo send paralelo desde GhostPrompt al mismo backend). |
-| OpenCode | **Ideal:** una sola instancia — la gestionada por VSX (`getOpenCodeConnection` + cabecera Basic). |
-| Superficie | **Solo VSOpenCodeX**; inline GhostPrompt deshabilitado. |
+| Aspecto     | Comportamiento                                                                                    |
+| ----------- | ------------------------------------------------------------------------------------------------- |
+| Rol         | GhostPrompt trabaja **para VSOpenCodeX**; suggestions y send alineados con OpenCode vía VSX.      |
+| Suggestions | OpenCode.                                                                                         |
+| Send        | **VSOpenCodeX** (sin segundo send paralelo desde GhostPrompt al mismo backend).                   |
+| OpenCode    | **Ideal:** una sola instancia — la gestionada por VSX (`getOpenCodeConnection` + cabecera Basic). |
+| Superficie  | **Solo VSOpenCodeX**; inline GhostPrompt deshabilitado.                                           |
 
 ### Situación 5 — Motor Ollama · Destino Copilot
 
-| Aspecto | Comportamiento |
-|---------|----------------|
-| Rol | GhostPrompt **autónomo**: suggestions con Ollama local, envío a Copilot Chat. |
-| Suggestions | Ollama (HTTP REST contra `ollama serve`). |
-| Send | **GitHub Copilot** (`workbench.action.chat.open` o API). |
-| Superficie | Webview GhostPrompt + inline GhostPrompt. |
-| Ollama | Debe tener `ollama serve` corriendo; GhostPrompt no lo inicia. |
+| Aspecto     | Comportamiento                                                                |
+| ----------- | ----------------------------------------------------------------------------- |
+| Rol         | GhostPrompt **autónomo**: suggestions con Ollama local, envío a Copilot Chat. |
+| Suggestions | Ollama (HTTP REST contra `ollama serve`).                                     |
+| Send        | **GitHub Copilot** (`workbench.action.chat.open` o API).                      |
+| Superficie  | Webview GhostPrompt + inline GhostPrompt.                                     |
+| Ollama      | Debe tener `ollama serve` corriendo; GhostPrompt no lo inicia.                |
 
 ### Situación 6 — Motor Ollama · Destino VSOpenCodeX
 
-| Aspecto | Comportamiento |
-|---------|----------------|
-| Rol | GhostPrompt genera suggestions con Ollama local, envía a VSOpenCodeX. |
-| Suggestions | Ollama (HTTP REST). |
-| Send | **VSOpenCodeX** (tubería propia). |
-| Superficie | **Solo VSOpenCodeX**; inline GhostPrompt deshabilitado. |
-| Ollama | Independiente de la instancia OpenCode; no implica `getOpenCodeConnection`.
+| Aspecto     | Comportamiento                                                              |
+| ----------- | --------------------------------------------------------------------------- |
+| Rol         | GhostPrompt genera suggestions con Ollama local, envía a VSOpenCodeX.       |
+| Suggestions | Ollama (HTTP REST).                                                         |
+| Send        | **VSOpenCodeX** (tubería propia).                                           |
+| Superficie  | **Solo VSOpenCodeX**; inline GhostPrompt deshabilitado.                     |
+| Ollama      | Independiente de la instancia OpenCode; no implica `getOpenCodeConnection`. |
 
 ---
 
@@ -115,6 +115,6 @@ El **motor** sigue siendo elegible en GhostPrompt **en los cuatro escenarios**; 
 
 ## Historial
 
-| Fecha | Nota |
-|-------|------|
+| Fecha      | Nota                                                                              |
+| ---------- | --------------------------------------------------------------------------------- |
 | 2026-05-11 | Primera versión: matriz 1–4, tres ejes, reglas VSX/GP, ajuste Fase C GhostPrompt. |

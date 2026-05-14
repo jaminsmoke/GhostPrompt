@@ -11,7 +11,8 @@
 > Ghost-text completions for your Copilot prompts — write faster, think clearer.
 
 <!-- markdownlint-disable-next-line MD036 -->
-**Version 0.5.3** *(host/ desmantelado en api/ + vscode/ + core/pipeline/; última publicada de referencia: **0.4.0**)*
+
+**Version 0.5.3** _(host/ desmantelado en api/ + vscode/ + core/pipeline/; última publicada de referencia: **0.4.0**)_
 
 ---
 
@@ -87,8 +88,8 @@ Watch GhostPrompt in action on YouTube: [GhostPrompt demo](https://youtu.be/luGP
 
 GhostPrompt never writes project-memory JSON **inside your repository** by default. Indexed snippets and registry metadata live only under the extension host’s storage:
 
-| Location | Contents |
-| -------- | -------- |
+| Location                                                              | Contents                                                                                                                                     |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`ExtensionContext.globalStorageUri/ghostPrompt/projectMemory/v1/`** | `registry.json` (workspace keys + `lastSeenAt`), `stores/<workspaceKeySha>/entries.json` (bootstrap + editor-ingest items), `manifest.json`. |
 
 - **What may be stored:** truncated text derived from files you open or from standard bootstrap paths (`README*`, `package.json`), plus metadata (`relativePath`, mtime, content hash, LRU timestamps). Nothing is uploaded by GhostPrompt itself beyond what you already send to your chosen completion backend (Copilot LM / OpenCode) when you request a suggestion.
@@ -104,7 +105,7 @@ For the full settings matrix, search **`ghostPrompt.projectMemory`** in VS Code 
 ## Requirements
 
 - VS Code **1.90** or later
-- [GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) extension installed and signed in *(default completion backend)*
+- [GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) extension installed and signed in _(default completion backend)_
 
 ### Optional: OpenCode backend
 
@@ -120,11 +121,11 @@ If you set **`ghostPrompt.completionProvider`** to **`opencode`** (or include `"
 
 ## Completion provider (Copilot LM vs OpenCode)
 
-| Setting | Behavior |
-| ------- | -------- |
-| `ghostPrompt.completionProvider = copilot` *(default)* | Inline suggestions use **`vscode.lm`** (GitHub Copilot chat models). |
-| `ghostPrompt.completionProvider = opencode` | Suggestions use your **OpenCode** installation via GhostPrompt’s embedded server (port **17433** by default). The webview lists models from OpenCode’s catalog; model ids use `providerID/modelID`. |
-| **`ghostPrompt.enabledCompletionSources`** *(optional)* | Array such as `[ "copilot", "opencode" ]` to show **both** catalogs in one dropdown and **route** by selected model (`providerID/modelID` → OpenCode; Copilot chat model id → Copilot LM). If you **never** save this key, GhostPrompt keeps using **`completionProvider`** only (backward compatible). |
+| Setting                                                 | Behavior                                                                                                                                                                                                                                                                                                |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ghostPrompt.completionProvider = copilot` _(default)_  | Inline suggestions use **`vscode.lm`** (GitHub Copilot chat models).                                                                                                                                                                                                                                    |
+| `ghostPrompt.completionProvider = opencode`             | Suggestions use your **OpenCode** installation via GhostPrompt’s embedded server (port **17433** by default). The webview lists models from OpenCode’s catalog; model ids use `providerID/modelID`.                                                                                                     |
+| **`ghostPrompt.enabledCompletionSources`** _(optional)_ | Array such as `[ "copilot", "opencode" ]` to show **both** catalogs in one dropdown and **route** by selected model (`providerID/modelID` → OpenCode; Copilot chat model id → Copilot LM). If you **never** save this key, GhostPrompt keeps using **`completionProvider`** only (backward compatible). |
 
 Switch providers in **Settings** (search `ghostPrompt.completionProvider` or `enabledCompletionSources`). With **both** sources enabled, the composer shows **Motor: Copilot + OpenCode** and **Auto (Copilot primero)** uses Copilot when available.
 
@@ -143,13 +144,13 @@ Related settings: **`ghostPrompt.opencodeExcludedModelIds`** (hide specific `pro
 3. Press `Tab` to accept the suggestion and append it to your prompt.
 4. Press `Enter` to send the final prompt to **Copilot Chat**.
 
-*Screenshots: expand **2 · Inline continuation** in [Preview](#preview) above.*
+_Screenshots: expand **2 · Inline continuation** in [Preview](#preview) above._
 
 ### Integrated with Copilot
 
 You can keep GhostPrompt near Copilot Chat and move quickly between drafting and sending prompts.
 
-*See **3 · Next to Copilot Chat** in [Preview](#preview).*
+_See **3 · Next to Copilot Chat** in [Preview](#preview)._
 
 ---
 
@@ -167,12 +168,12 @@ You can keep GhostPrompt near Copilot Chat and move quickly between drafting and
 
 ### Completion provider & models
 
-- **`ghostPrompt.completionProvider`**: `copilot` *(default)* or `opencode` — legacy single-backend switch when **`enabledCompletionSources`** has not been saved; see [Completion provider](#completion-provider-copilot-lm-vs-opencode).
+- **`ghostPrompt.completionProvider`**: `copilot` _(default)_ or `opencode` — legacy single-backend switch when **`enabledCompletionSources`** has not been saved; see [Completion provider](#completion-provider-copilot-lm-vs-opencode).
 - **`ghostPrompt.enabledCompletionSources`**: e.g. `[ "copilot", "opencode" ]` for a unified model list (optional).
 - **`ghostPrompt.selectedModelId`**: `auto` or a concrete model id; with OpenCode, ids are `providerID/modelID`.
 - **`ghostPrompt.opencodeExcludedModelIds`**: array of OpenCode model ids to hide from the dropdown (only applies when the provider is OpenCode).
 
-### Model policy *(Copilot LM)*
+### Model policy _(Copilot LM)_
 
 - `ghostPrompt.suggestionModelPolicy = nonPremiumOnly` (default): only included (`0x`) models are allowed when pricing metadata is available.
 - `ghostPrompt.suggestionModelPolicy = anyModel`: uses the first available model (may consume premium quota).
@@ -208,12 +209,12 @@ Inside the webview mini-input, you can also change policy, style, context, and d
 
 Requires an open workspace folder for paths relative to that folder. Summary — tune in Settings (`ghostPrompt.projectMemory*`):
 
-| Setting | Role |
-| ------- | ---- |
-| `projectMemoryEnabled` | Master switch for persisted reconcile + disk store. |
-| `projectMemoryEditorIngestEnabled` | Focused-file excerpts (extension/size filters). |
-| `projectMemoryMaxTotalBytes` / `projectMemoryMaxEditorSources` | LRU caps for editor-ingest pool. |
-| `projectMemoryUnusedStoreTtlDays` | GC for whole store folders left unused. |
+| Setting                                                                  | Role                                                           |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| `projectMemoryEnabled`                                                   | Master switch for persisted reconcile + disk store.            |
+| `projectMemoryEditorIngestEnabled`                                       | Focused-file excerpts (extension/size filters).                |
+| `projectMemoryMaxTotalBytes` / `projectMemoryMaxEditorSources`           | LRU caps for editor-ingest pool.                               |
+| `projectMemoryUnusedStoreTtlDays`                                        | GC for whole store folders left unused.                        |
 | `projectMemoryFileWatcherEnabled` / `projectMemoryFileWatcherThrottleMs` | Invalidate indexed paths on external change/delete (optional). |
 
 Command: **`GhostPrompt: Clear Project Memory (This Workspace)`**. Details: [`Roadmap-v0.4-project-context-store.md`](./Docs/Plans/Roadmaps/Roadmap-v0.4-project-context-store.md).
@@ -228,13 +229,13 @@ Command: **`GhostPrompt: Clear Project Memory (This Workspace)`**. Details: [`Ro
 
 From the repo root:
 
-| Command | What it does |
-| ------- | ------------ |
-| `npm run validate` | ESLint on `src` + **no circular deps** (`deps:circular`) + extension `tsc` + **webview** typecheck (`webview/tsconfig.json`) + React webview build + **`verify:webview-bundle`** (`src/system/build` → `out/build`) |
-| `npm run build:webview` | Build webview only: React app in `src/ui/webview/react/` → `src/ui/webview/dist/react/index.html` + assets. The extension host loads this bundle via CSP-safe URI substitution in `src/ui/provider/webviewHtml.ts`. |
-| `npm run typecheck:webview` | `tsc --noEmit` for the webview tree only |
-| `npm run test` | Vitest unit tests (OpenCode is **mocked**; safe for CI, no network) |
-| `npm run check` | `validate` + `test` — run before shipping or opening a PR |
+| Command                     | What it does                                                                                                                                                                                                        |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run validate`          | ESLint on `src` + **no circular deps** (`deps:circular`) + extension `tsc` + **webview** typecheck (`webview/tsconfig.json`) + React webview build + **`verify:webview-bundle`** (`src/system/build` → `out/build`) |
+| `npm run build:webview`     | Build webview only: React app in `src/ui/webview/react/` → `src/ui/webview/dist/react/index.html` + assets. The extension host loads this bundle via CSP-safe URI substitution in `src/ui/provider/webviewHtml.ts`. |
+| `npm run typecheck:webview` | `tsc --noEmit` for the webview tree only                                                                                                                                                                            |
+| `npm run test`              | Vitest unit tests (OpenCode is **mocked**; safe for CI, no network)                                                                                                                                                 |
+| `npm run check`             | `validate` + `test` — run before shipping or opening a PR                                                                                                                                                           |
 
 Edit webview behavior in **TypeScript** under `src/ui/webview/react/` (not hand-edit `src/ui/webview/dist/react/index.html`; it is regenerated). After changing webview sources, `npm run validate` or `npm run build:webview` refreshes the bundle.
 
@@ -250,21 +251,21 @@ Edit webview behavior in **TypeScript** under `src/ui/webview/react/` (not hand-
 
 GhostPrompt registers **two** `WebviewViewProvider` instances (`ghostPrompt.input` and `ghostPrompt.inputPanel`) backed by the **same** HTML/JS/CSS bundle. Changes to the toolbar, chips, or protocol must stay **symmetric** unless a roadmap explicitly documents a divergence.
 
-| Rule | Detail |
-| ---- | ------ |
-| **Single bundle** | HTML is built only in `src/ui/provider/webviewHtml.ts` → `src/ui/webview/dist/react/index.html` + React assets. Do not maintain separate templates per view. |
-| **Capabilities** | `MiniInputViewProvider` passes `viewContributionId` into `window.__ghostPromptCapabilities`; use it for layout flags only—keep suggestion/settings behavior identical across views. |
-| **Shared copy** | User-visible empty/error strings for the status line live in **`webview/src/lib/userErrorMessage.ts`**. Optional host toasts (`src/host/suggestionHostNotification.ts`) should stay aligned for the same actionable cases. |
-| **Regression tests** | Before merging webview or toolbar edits, run **`npm run check`** (includes `tests/webviewToolbarParity.test.ts`, `tests/webviewProtocols.test.ts`, `tests/webview/userErrorMessage.test.ts`). |
+| Rule                 | Detail                                                                                                                                                                                                                     |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Single bundle**    | HTML is built only in `src/ui/provider/webviewHtml.ts` → `src/ui/webview/dist/react/index.html` + React assets. Do not maintain separate templates per view.                                                               |
+| **Capabilities**     | `MiniInputViewProvider` passes `viewContributionId` into `window.__ghostPromptCapabilities`; use it for layout flags only—keep suggestion/settings behavior identical across views.                                        |
+| **Shared copy**      | User-visible empty/error strings for the status line live in **`webview/src/lib/userErrorMessage.ts`**. Optional host toasts (`src/host/suggestionHostNotification.ts`) should stay aligned for the same actionable cases. |
+| **Regression tests** | Before merging webview or toolbar edits, run **`npm run check`** (includes `tests/webviewToolbarParity.test.ts`, `tests/webviewProtocols.test.ts`, `tests/webview/userErrorMessage.test.ts`).                              |
 
 ### Architecture and dependencies (v0.3.2)
 
 High-level roadmap: [`Docs/Plans/Roadmaps/Roadmap-v0.3.2-host-refactor-webview-tooling.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.2-host-refactor-webview-tooling.md).
 
-| Command | What it does |
-| ------- | ------------ |
-| `npm run deps:graph` | Lists the dependency tree from `src/extension/extension.ts` (uses [madge](https://github.com/pahen/madge); optional ad‑hoc inspection — **`deps:circular`** is what runs in `validate`). |
-| `npm run deps:circular` | Fails with exit code `1` if circular imports are found (same entrypoint). Also runs automatically as part of **`npm run validate`** / **`npm run check`**. |
+| Command                         | What it does                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run deps:graph`            | Lists the dependency tree from `src/extension/extension.ts` (uses [madge](https://github.com/pahen/madge); optional ad‑hoc inspection — **`deps:circular`** is what runs in `validate`).                                                                                                                                                                                        |
+| `npm run deps:circular`         | Fails with exit code `1` if circular imports are found (same entrypoint). Also runs automatically as part of **`npm run validate`** / **`npm run check`**.                                                                                                                                                                                                                      |
 | `npm run verify:webview-bundle` | Runs the compiled smoke script `out/build/verifyWebviewBundle.js` (source: [`src/system/build/verifyWebviewBundle.ts`](./src/system/build/verifyWebviewBundle.ts)). Checks that `src/ui/webview/dist/react/index.html` exists after the React build. **Not shipped in the VSIX** — `.vscodeignore` excludes `out/build/**`; this is dev/CI tooling only, not extension runtime. |
 
 **Soft size guideline:** prefer keeping new host modules under ~400 lines per file unless the content is mostly data; split extractors before crossing ~800 lines without a strong reason (same spirit as roadmap Phase A).
@@ -306,12 +307,12 @@ v0.2 is **shipped**; roadmap documents:
 
 - Archived v0.2: [`Docs/Plans/Roadmaps/Roadmap-v0.2.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.md)
 - Current v0.2.2 execution: [`Docs/Plans/Roadmaps/Roadmap-v0.2.2.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.2.md)
-- Unified session (Sidebar + Panel): [`Docs/Plans/Roadmaps/Roadmap-v0.2.4b.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.4b.md) *(complete)*
-- **v0.3.0 — `src` layout & completion providers** *(architecture complete; OpenCode & VSIX bundling landed in-repo)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md)
-- **OpenCode integration** *(Phases 1–4 complete)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md)
-- **v0.3.0c — OpenCode UX, rendimiento y multi‑proveedor** *(plan activo, misma línea 0.3.0)*: [`Docs/Plans/Roadmaps/Roadmap-v0.3.0c-opencode-ux-perf.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.0c-opencode-ux-perf.md)
-- **v0.4.0 — Memoria de proyecto por workspace (JSON), contexto bootstrap + editor** *(phases A–F shipped)*: [`Docs/Plans/Roadmaps/Roadmap-v0.4-project-context-store.md`](./Docs/Plans/Roadmaps/Roadmap-v0.4-project-context-store.md)
-- **v0.5.0 — VSOpenCodeX coexistence + agent destination / surface** *(release + roadmap de ejecución)*: [`Docs/Plans/Roadmaps/Roadmap-v0.5-vsopencodex-coexistence.md`](./Docs/Plans/Roadmaps/Roadmap-v0.5-vsopencodex-coexistence.md) — coexistencia: [`GhostPrompt-OpenCode-coexistence.md`](./Docs/Integrations/GhostPrompt-OpenCode-coexistence.md); matriz motor/destino: [`GhostPrompt-motor-destino-matrix.md`](./Docs/Integrations/GhostPrompt-motor-destino-matrix.md)
+- Unified session (Sidebar + Panel): [`Docs/Plans/Roadmaps/Roadmap-v0.2.4b.md`](./Docs/Plans/Roadmaps/Roadmap-v0.2.4b.md) _(complete)_
+- **v0.3.0 — `src` layout & completion providers** _(architecture complete; OpenCode & VSIX bundling landed in-repo)_: [`Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.0-architecture.md)
+- **OpenCode integration** _(Phases 1–4 complete)_: [`Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3-opencode-integration.md)
+- **v0.3.0c — OpenCode UX, rendimiento y multi‑proveedor** _(plan activo, misma línea 0.3.0)_: [`Docs/Plans/Roadmaps/Roadmap-v0.3.0c-opencode-ux-perf.md`](./Docs/Plans/Roadmaps/Roadmap-v0.3.0c-opencode-ux-perf.md)
+- **v0.4.0 — Memoria de proyecto por workspace (JSON), contexto bootstrap + editor** _(phases A–F shipped)_: [`Docs/Plans/Roadmaps/Roadmap-v0.4-project-context-store.md`](./Docs/Plans/Roadmaps/Roadmap-v0.4-project-context-store.md)
+- **v0.5.0 — VSOpenCodeX coexistence + agent destination / surface** _(release + roadmap de ejecución)_: [`Docs/Plans/Roadmaps/Roadmap-v0.5-vsopencodex-coexistence.md`](./Docs/Plans/Roadmaps/Roadmap-v0.5-vsopencodex-coexistence.md) — coexistencia: [`GhostPrompt-OpenCode-coexistence.md`](./Docs/Integrations/GhostPrompt-OpenCode-coexistence.md); matriz motor/destino: [`GhostPrompt-motor-destino-matrix.md`](./Docs/Integrations/GhostPrompt-motor-destino-matrix.md)
 
 Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 
@@ -327,7 +328,7 @@ Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 
 - **Reorganización `src/` → dominios canónicos:** `core/` (lógica pura de suggestions: types, instruction, normalize, streaming, language, loading, sources, catalog, governor, session, context) y `system/` (infra transversal: debug, log, contracts, build). Carpetas eliminadas: `completion/`, `governor/`, `session/`, `debug/`, `log/`, `shared/`, `build/`. 226 tests passing, `npm run check` verde.
 
-### 0.5.0 *(pendiente de publicación)*
+### 0.5.0 _(pendiente de publicación)_
 
 - **VSOpenCodeX:** coexistencia OpenCode (reintentos, sin servidor embebido en el puerto compartido si VSX está instalada y **prefer** activo), destino agente (`ghostPrompt.agentDestination`), comandos **`ghostPrompt.runSuggestPipeline`** / **`vsopencodex.ghostPromptInlineUi`**, selector **Destino** en webview, debounce suggestions por defecto **800 ms**.
 - **OpenCode observability:** con debug activo, líneas **`[opencode-perf]`** en **GhostPrompt Suggestions** — ver § [Debug mode](#debug-mode).

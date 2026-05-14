@@ -1,15 +1,15 @@
 /**
  * Tipos y opciones compartidas entre proveedores de completion (Copilot LM, futuros).
  */
-import type { CancellationToken } from "vscode";
+import type { CancellationToken } from 'vscode';
 
-import type { SuggestionLoadingPhase } from "./loading";
+import type { SuggestionLoadingPhase } from './loading';
 
-export type SuggestionModelPolicy = "nonPremiumOnly" | "anyModel";
-export type SuggestionStyle = "concise" | "balanced" | "detailed";
-export type SuggestionLanguageMode = "auto" | "manual";
-export type SupportedSuggestionLanguage = "es" | "en";
-export type SuggestionModelTier = "included" | "premium" | "unknown";
+export type SuggestionModelPolicy = 'nonPremiumOnly' | 'anyModel';
+export type SuggestionStyle = 'concise' | 'balanced' | 'detailed';
+export type SuggestionLanguageMode = 'auto' | 'manual';
+export type SupportedSuggestionLanguage = 'es' | 'en';
+export type SuggestionModelTier = 'included' | 'premium' | 'unknown';
 
 export const DEFAULT_MAX_SUGGESTION_CHARS = 180;
 /** Timeout desde que el LM empieza a generar (no incluye setup ni carga de modelo). */
@@ -22,30 +22,30 @@ export interface SuggestionModelDescriptor {
   pricing?: string;
   provider?: string;
   /** Motor que debe ejecutar esta fila del selector (multi‑fuente). */
-  completionSource?: "copilot" | "opencode" | "ollama";
+  completionSource?: 'copilot' | 'opencode' | 'ollama';
 }
 
 export type CompletionResult =
   | {
-      kind: "suggestion";
+      kind: 'suggestion';
       suggestion: string;
       model?: SuggestionModelDescriptor;
     }
   | {
-      kind: "empty";
+      kind: 'empty';
       reason:
-        | "no-model"
-        | "no-included-model"
-        | "premium-quota-blocked"
-        | "empty-response"
-        | "request-timeout"
-        | "too-short"
-        | "duplicate-input"
-        | "rate-limited"
-        | "session-budget-exhausted"
-        | "content-blocked";
+        | 'no-model'
+        | 'no-included-model'
+        | 'premium-quota-blocked'
+        | 'empty-response'
+        | 'request-timeout'
+        | 'too-short'
+        | 'duplicate-input'
+        | 'rate-limited'
+        | 'session-budget-exhausted'
+        | 'content-blocked';
     }
-  | { kind: "error"; message: string };
+  | { kind: 'error'; message: string };
 
 export interface CompletionRequestOptions {
   token: CancellationToken;

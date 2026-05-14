@@ -9,6 +9,7 @@
 `api/` es la **capa de protocolo** de GhostPrompt. Gestiona la validación de mensajes entrantes desde el webview, el dispatch a los handlers correctos, la construcción y envío del envelope `settings`, y la aplicación de cambios de configuración. También expone los getters de configuración del workspace.
 
 **No debe contener:**
+
 - Lógica de suggestion (eso es `core/`)
 - Providers de vistas VS Code (eso es `vscode/`)
 - HTML/CSP generation (eso es `vscode/`)
@@ -67,14 +68,14 @@ Webview.postMessage({ type: 'suggest', text, captureId })
 
 ## Mensajes inbound soportados
 
-| `type` | Campos | Rol |
-|--------|--------|-----|
-| `init` | — | Primera carga de la vista |
-| `suggest` | `text`, `captureId` | Pedir suggestion para texto parcial |
-| `draftChanged` | `text`, `originViewId` | Sincronizar borrador entre vistas |
-| `updateSetting` | `key`, `value` | Cambiar configuración desde chips |
-| `accept` | `suggestion`, `context` | Usuario aceptó suggestion con Tab |
-| `send` | `text` | Enviar prompt al destino (Copilot Chat / VSOpenCodeX) |
+| `type`          | Campos                  | Rol                                                   |
+| --------------- | ----------------------- | ----------------------------------------------------- |
+| `init`          | —                       | Primera carga de la vista                             |
+| `suggest`       | `text`, `captureId`     | Pedir suggestion para texto parcial                   |
+| `draftChanged`  | `text`, `originViewId`  | Sincronizar borrador entre vistas                     |
+| `updateSetting` | `key`, `value`          | Cambiar configuración desde chips                     |
+| `accept`        | `suggestion`, `context` | Usuario aceptó suggestion con Tab                     |
+| `send`          | `text`                  | Enviar prompt al destino (Copilot Chat / VSOpenCodeX) |
 
 ---
 
@@ -89,24 +90,24 @@ Los schemas canónicos viven en `system/contracts/webviewMessageSchemas.ts`. `ap
 
 ## Dependencias
 
-| Importa de | Por qué |
-|------------|---------|
-| `core/` | Types, `listSuggestionModels`, `getCompletionUiKind`, etc. |
-| `core/session/GhostPromptSessionStore` | Estado compartido (draft, language, model) |
-| `core/pipeline` | `handleGhostPromptSuggest` para el mensaje `suggest` |
-| `system/contracts/webviewMessageSchemas` | Schemas Zod canónicos |
-| `system/log/*` | Logging de conversation y suggestions |
-| `system/debug/SuggestionDebug` | Debug toggle check |
-| `destinations/destinationRegistry` | Resolución de destino agente |
+| Importa de                               | Por qué                                                    |
+| ---------------------------------------- | ---------------------------------------------------------- |
+| `core/`                                  | Types, `listSuggestionModels`, `getCompletionUiKind`, etc. |
+| `core/session/GhostPromptSessionStore`   | Estado compartido (draft, language, model)                 |
+| `core/pipeline`                          | `handleGhostPromptSuggest` para el mensaje `suggest`       |
+| `system/contracts/webviewMessageSchemas` | Schemas Zod canónicos                                      |
+| `system/log/*`                           | Logging de conversation y suggestions                      |
+| `system/debug/SuggestionDebug`           | Debug toggle check                                         |
+| `destinations/destinationRegistry`       | Resolución de destino agente                               |
 
 ---
 
 ## Tests relevantes
 
-| Test | Qué cubre |
-|------|-----------|
-| `webviewProtocols.test.ts` | Parseo Zod de mensajes inbound |
-| `host/ghostPromptWebviewInboundHandlers.test.ts` | Dispatch por tipo de mensaje |
-| `host/applyWebviewUpdateSetting.test.ts` | Aplicación de `updateSetting` |
-| `shared/webviewMessageSchemas.test.ts` | Validación de schemas Zod |
-| `MiniInputViewProvider.test.ts` | Flujo end-to-end con mocks |
+| Test                                             | Qué cubre                      |
+| ------------------------------------------------ | ------------------------------ |
+| `webviewProtocols.test.ts`                       | Parseo Zod de mensajes inbound |
+| `host/ghostPromptWebviewInboundHandlers.test.ts` | Dispatch por tipo de mensaje   |
+| `host/applyWebviewUpdateSetting.test.ts`         | Aplicación de `updateSetting`  |
+| `shared/webviewMessageSchemas.test.ts`           | Validación de schemas Zod      |
+| `MiniInputViewProvider.test.ts`                  | Flujo end-to-end con mocks     |

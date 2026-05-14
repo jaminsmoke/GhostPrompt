@@ -18,8 +18,8 @@ export type RawOpencodeProviderModel = {
 function isModelRecord(v: unknown): v is RawOpencodeProviderModel {
   return (
     v !== null &&
-    typeof v === "object" &&
-    typeof (v as { id?: unknown }).id === "string" &&
+    typeof v === 'object' &&
+    typeof (v as { id?: unknown }).id === 'string' &&
     (v as { id: string }).id.trim().length > 0
   );
 }
@@ -29,16 +29,14 @@ function isModelRecord(v: unknown): v is RawOpencodeProviderModel {
  * @param models Datos devueltos por config.providers().
  * @returns Array de registros de modelo válidos.
  */
-export function normalizeOpencodeProviderModels(
-  models: unknown,
-): RawOpencodeProviderModel[] {
+export function normalizeOpencodeProviderModels(models: unknown): RawOpencodeProviderModel[] {
   if (models === null || models === undefined) {
     return [];
   }
   if (Array.isArray(models)) {
     return models.filter(isModelRecord);
   }
-  if (typeof models === "object") {
+  if (typeof models === 'object') {
     const out: RawOpencodeProviderModel[] = [];
     for (const v of Object.values(models)) {
       if (isModelRecord(v)) {

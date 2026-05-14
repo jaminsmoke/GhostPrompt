@@ -1,7 +1,7 @@
 /**
  * Construye y envía el mensaje `settings` al webview (lista de modelos, chips, etc.).
  */
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 import {
   getCompletionUiKind,
   getEnabledCompletionSources,
@@ -21,14 +21,14 @@ import { ghostPromptSessionStore } from '../../core/session/GhostPromptSessionSt
 import {
   getGhostPromptAgentDestination,
   isVsOpenCodeXExtensionInstalled,
-} from "../getters/workspaceGetters";
-import { parseOutboundSettingsEnvelope } from "../protocols/webviewProtocols";
+} from '../getters/workspaceGetters';
+import { parseOutboundSettingsEnvelope } from '../protocols/webviewProtocols';
 
 export type GhostPromptSettingsGetters = {
   getSuggestionModelPolicy: () => SuggestionModelPolicy;
   getSelectedModelId: () => string;
   getSuggestionStyle: () => SuggestionStyle;
-  getSuggestionLanguageChoice: () => "auto" | SupportedSuggestionLanguage;
+  getSuggestionLanguageChoice: () => 'auto' | SupportedSuggestionLanguage;
 };
 
 /**
@@ -50,22 +50,21 @@ export async function buildAndPostGhostPromptSettings(
   webview: vscode.Webview,
   getters: GhostPromptSettingsGetters,
 ): Promise<void> {
-  const gpCfg = vscode.workspace.getConfiguration("ghostPrompt");
+  const gpCfg = vscode.workspace.getConfiguration('ghostPrompt');
   const suggestionDebounceMs = clampSuggestionDebounceMs(
-    gpCfg.get<number>("suggestionDebounceMs", 800),
+    gpCfg.get<number>('suggestionDebounceMs', 800),
   );
   const policy = getters.getSuggestionModelPolicy();
   const enabledSources = getEnabledCompletionSources();
   const completionUiKind = getCompletionUiKind();
-  const completionProvider =
-    completionUiKind === "multi" ? "copilot" : completionUiKind;
+  const completionProvider = completionUiKind === 'multi' ? 'copilot' : completionUiKind;
   let availableModels: SuggestionModelDescriptor[] = [];
   try {
     if (enabledSources.length > 1) {
       availableModels = await listMergedSuggestionModels(policy, enabledSources);
-    } else if (enabledSources[0] === "opencode") {
+    } else if (enabledSources[0] === 'opencode') {
       availableModels = await listOpencodeSuggestionModels(policy);
-    } else if (enabledSources[0] === "ollama") {
+    } else if (enabledSources[0] === 'ollama') {
       availableModels = await listOllamaSuggestionModels(policy);
     } else {
       availableModels = await listSuggestionModels(policy);
@@ -74,7 +73,7 @@ export async function buildAndPostGhostPromptSettings(
     availableModels = [];
   }
   const envelope = {
-    type: "settings" as const,
+    type: 'settings' as const,
     settings: {
       completionProvider,
       completionUiKind,

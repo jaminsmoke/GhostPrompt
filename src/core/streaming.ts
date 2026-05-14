@@ -1,6 +1,6 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
-import { DEFAULT_MODEL_REQUEST_TIMEOUT_MS } from "./types";
+import { DEFAULT_MODEL_REQUEST_TIMEOUT_MS } from './types';
 
 /**
  * Recompone el texto completo de la respuesta de Copilot/LM a partir del stream.
@@ -12,7 +12,7 @@ export async function collectResponseText(
   response: vscode.LanguageModelChatResponse,
   timeoutMs: number = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
 ): Promise<string> {
-  let completion = "";
+  let completion = '';
   const iterator = response.text[Symbol.asyncIterator]();
   while (true) {
     const nextChunk = await awaitNextChunkWithTimeout(iterator, timeoutMs);
@@ -40,7 +40,7 @@ async function awaitNextChunkWithTimeout(
       iterator.next(),
       new Promise<IteratorResult<string>>((_, reject) => {
         timeoutHandle = setTimeout(() => {
-          reject(new Error("request-timeout"));
+          reject(new Error('request-timeout'));
         }, timeoutMs);
       }),
     ]);

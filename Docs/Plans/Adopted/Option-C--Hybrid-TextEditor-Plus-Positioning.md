@@ -76,8 +76,8 @@ El orden de registro determina si queda encima o debajo del input nativo.
 
 ### Posicionamiento: encima del input nativo ✅ (opción elegida)
 
-| Opción                      | Cómo                                      | Valoración                                                 |
-| --------------------------- | ----------------------------------------- | ---------------------------------------------------------- |
+| Opción                      | Cómo                                      | Valoración                                                  |
+| --------------------------- | ----------------------------------------- | ----------------------------------------------------------- |
 | **Encima del input nativo** | Primera vista registrada en el contenedor | ✅ Natural — el usuario redacta arriba, ve respuestas abajo |
 | Debajo del input nativo     | Última vista registrada                   | ⚠️ Dos inputs superpuestos, el inferior queda más oculto    |
 | Reemplazar visualmente      | No hay API para ocultar el input nativo   | ❌ No viable sin reverse engineering                        |
@@ -121,15 +121,15 @@ aparece en el historial de Copilot debajo.
 
 ## Ventajas sobre A y B
 
-|                                        | Option A | Option B            | **Option C**    |
-| -------------------------------------- | -------- | ------------------- | --------------- |
-| Suggestions nativas de Copilot         | ✅        | ❌ (requiere LM API) | ✅               |
-| Sin cambio de vista / cercanía al chat | ❌        | ✅                   | ✅ (mismo panel) |
-| Solo reemplaza el input, no el chat    | ❌        | ❌                   | ✅               |
+|                                        | Option A | Option B             | **Option C**     |
+| -------------------------------------- | -------- | -------------------- | ---------------- |
+| Suggestions nativas de Copilot         | ✅       | ❌ (requiere LM API) | ✅               |
+| Sin cambio de vista / cercanía al chat | ❌       | ✅                   | ✅ (mismo panel) |
+| Solo reemplaza el input, no el chat    | ❌       | ❌                   | ✅               |
 | Control sobre el input                 | Parcial  | ✅                   | ✅               |
-| Complejidad de implementación          | Baja     | Media               | Media-baja      |
-| Persistencia de historial en `.md`     | ✅        | ❌                   | ✅               |
-| Resistente a cambios de Copilot        | ✅        | ✅                   | ✅               |
+| Complejidad de implementación          | Baja     | Media                | Media-baja       |
+| Persistencia de historial en `.md`     | ✅       | ❌                   | ✅               |
+| Resistente a cambios de Copilot        | ✅       | ✅                   | ✅               |
 
 ---
 

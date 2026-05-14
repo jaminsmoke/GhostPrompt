@@ -60,7 +60,7 @@ VsCodeExtension-InlineChatSuggestions/
 - Exporta `activate(context)` y `deactivate()`.
 - Instancia `MiniInputViewProvider` y lo registra:
   ```ts
-  vscode.window.registerWebviewViewProvider('inlineChatInput.miniInput', provider)
+  vscode.window.registerWebviewViewProvider('inlineChatInput.miniInput', provider);
   ```
 - Registra cualquier comando adicional de la extensión.
 - No contiene lógica de negocio — solo wiring.
@@ -190,8 +190,8 @@ webview/main.js  ←→  host/MiniInputViewProvider.ts   (postMessage / onDidRec
 
 | Capa           | Archivos                        | Acceso a API de VS Code |
 | -------------- | ------------------------------- | ----------------------- |
-| Host (Node.js) | `src/*.ts`                      | ✅ Completo              |
-| Webview (DOM)  | `webview/main.js`, `index.html` | ❌ Solo via postMessage  |
+| Host (Node.js) | `src/*.ts`                      | ✅ Completo             |
+| Webview (DOM)  | `webview/main.js`, `index.html` | ❌ Solo via postMessage |
 
 Esta separación es obligatoria por el modelo de seguridad de VS Code.
 Todo lo que requiera `vscode.*` debe vivir en `src/`.

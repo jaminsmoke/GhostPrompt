@@ -15,6 +15,7 @@
 - **`ui/notifications/`** — Corre en Node. Contiene notificaciones al usuario via `vscode.window.showWarningMessage`.
 
 **No debe contener:**
+
 - Lógica de suggestion (eso es `core/`)
 - Protocolos de mensajes (eso es `api/`)
 - Lógica de motores (eso es `engines/`)
@@ -82,9 +83,9 @@ Ambos paneles deben mantener **paridad funcional**: los chips, el protocolo de m
 
 ## Tests relevantes
 
-| Test | Qué cubre |
-|------|-----------|
+| Test                            | Qué cubre                                             |
+| ------------------------------- | ----------------------------------------------------- |
 | `MiniInputViewProvider.test.ts` | Flujo completo: init, suggest, accept, send, settings |
-| `webviewToolbarParity.test.ts` | Paridad dual vista (sidebar + panel) |
-| `webviewThemeTokens.test.ts` | Tokens CSS del webview |
-| `tests/webview/App.test.tsx` | React webview render smoke test |
+| `webviewToolbarParity.test.ts`  | Paridad dual vista (sidebar + panel)                  |
+| `webviewThemeTokens.test.ts`    | Tokens CSS del webview                                |
+| `tests/webview/App.test.tsx`    | React webview render smoke test                       |

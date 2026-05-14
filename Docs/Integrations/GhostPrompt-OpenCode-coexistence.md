@@ -8,10 +8,10 @@ Objetivo: evitar **dos procesos** `opencode serve` en el mismo puerto cuando el 
 
 ## Qué expone VSOpenCodeX (hecho en este repo)
 
-| Comando VS Code | Retorno | Notas |
-|-----------------|--------|--------|
+| Comando VS Code                     | Retorno        | Notas                                                                                        |
+| ----------------------------------- | -------------- | -------------------------------------------------------------------------------------------- |
 | `vsopencodex.getOpenCodeConnection` | Ver tipo abajo | Solo tiene sentido si VSOpenCodeX **ya** arrancó su servidor (p. ej. usuario abrió el chat). |
-| `vsopencodex.isOpenCodeRunning` | `boolean` | Comprobación rápida sin credenciales. |
+| `vsopencodex.isOpenCodeRunning`     | `boolean`      | Comprobación rápida sin credenciales.                                                        |
 
 Están **ocultos de la paleta** (`when: false` en `commandPalette`) pero **sí** se pueden invocar con `vscode.commands.executeCommand`.
 
@@ -40,12 +40,13 @@ Fallo (servidor no iniciado por VSOpenCodeX, etc.):
 Uso con el SDK (igual que en la documentación oficial de OpenCode, más cabecera):
 
 ```ts
-import { createOpencodeClient } from "@opencode-ai/sdk";
+import { createOpencodeClient } from '@opencode-ai/sdk';
 
 const conn = await vscode.commands.executeCommand<
   /* importar tipo desde copia local o definir inline */
-  { ok: true; baseUrl: string; authorizationHeader: string; port: number } | { ok: false; reason: string }
->("vsopencodex.getOpenCodeConnection");
+  | { ok: true; baseUrl: string; authorizationHeader: string; port: number }
+  | { ok: false; reason: string }
+>('vsopencodex.getOpenCodeConnection');
 
 if (conn && conn.ok) {
   const client = createOpencodeClient({
@@ -83,13 +84,13 @@ Orden sugerido:
 
 2. Llamar `await vscode.commands.executeCommand("vsopencodex.getOpenCodeConnection")`. Si falla (excepción, comando aún no registrado, `ok: false` mientras VSX levanta el servidor), **reintentar** varias veces con pausa entre intentos **antes** de arrancar `opencode serve` embebido, para no ocupar el puerto por defecto y bloquear a VSOpenCodeX. GhostPrompt expone `ghostPrompt.vsOpenCodeXConnectionMaxAttempts` y `ghostPrompt.vsOpenCodeXConnectionRetryGapMs` (además del delay inicial `vsOpenCodeXProbeDelayMs`).
 
-3. Si `result.ok === true`:  
-   - **No** lanzar `opencode serve` propio.  
-   - Crear el cliente SDK con `baseUrl` + `Authorization` devueltos.  
+3. Si `result.ok === true`:
+   - **No** lanzar `opencode serve` propio.
+   - Crear el cliente SDK con `baseUrl` + `Authorization` devueltos.
    - Opcional: mostrar en ajustes un aviso de “usando instancia VSOpenCodeX”.
 
-4. Si `ok === false` **y** la extensión VSOpenCodeX **sí** está instalada y la política es reutilizar VSX:  
-   - Reintentar `getOpenCodeConnection` con pausas; **no** arrancar `opencode serve` embebido en el puerto compartido (evitar bloquear el arranque de VSX).  
+4. Si `ok === false` **y** la extensión VSOpenCodeX **sí** está instalada y la política es reutilizar VSX:
+   - Reintentar `getOpenCodeConnection` con pausas; **no** arrancar `opencode serve` embebido en el puerto compartido (evitar bloquear el arranque de VSX).
    - Tras agotar reintentos: error claro al usuario; opción de desactivar **preferVsOpenCodeXOpenCode** para volver al servidor embebido solo en ese caso.
 
 5. Si VSOpenCodeX **no** está instalada: GhostPrompt puede seguir con el arranque embebido habitual (`opencode serve` propio).

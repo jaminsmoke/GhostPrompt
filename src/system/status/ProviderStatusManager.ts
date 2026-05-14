@@ -1,4 +1,4 @@
-import type { ProviderStatusModule, ProviderStateRecord } from "./types";
+import type { ProviderStatusModule, ProviderStateRecord } from './types';
 
 type Listener<T> = (data: T) => void;
 
@@ -52,9 +52,9 @@ export class ProviderStatusManager {
         results.push({
           id: mod.id,
           kind: mod.kind,
-          status: "error",
+          status: 'error',
           label: mod.label,
-          statusText: "Error al comprobar estado",
+          statusText: 'Error al comprobar estado',
         });
       }
     }
@@ -75,9 +75,9 @@ export class ProviderStatusManager {
       const errorState: ProviderStateRecord = {
         id: mod.id,
         kind: mod.kind,
-        status: "error",
+        status: 'error',
         label: mod.label,
-        statusText: "Error al comprobar estado",
+        statusText: 'Error al comprobar estado',
       };
       this._onDidChange.fire([errorState]);
       return errorState;

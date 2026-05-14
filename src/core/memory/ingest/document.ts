@@ -1,24 +1,26 @@
-import * as path from "node:path";
+import * as path from 'node:path';
 
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
+import { sha256HexBytes, truncateProjectCardText } from '../../context/projectBootstrapContext';
 import {
-  sha256HexBytes,
-  truncateProjectCardText,
-} from '../../context/projectBootstrapContext';
-import { readEditorIngestConfig, PROJECT_EDITOR_CARD_MAX_CHARS, normalizeWorkspaceRelativePath, pathLikelyExcludedForEditorIngest } from "./settings";
-import { applyEditorIngestLruEviction } from "./lru";
+  readEditorIngestConfig,
+  PROJECT_EDITOR_CARD_MAX_CHARS,
+  normalizeWorkspaceRelativePath,
+  pathLikelyExcludedForEditorIngest,
+} from './settings';
+import { applyEditorIngestLruEviction } from './lru';
 import {
   isProjectMemoryEditorIngestStoredItem,
   mergeEntriesReplacingEditorSubset,
-} from "../entries/editor";
+} from '../entries/editor';
 import {
   PROJECT_EDITOR_INGEST_ENTRY_KIND,
   type ProjectMemoryEditorIngestStoredItem,
-} from "../types";
-import { scheduleIndexedPathWatcherRefresh } from "../probes/watchers";
-import type { ProjectMemoryStore } from "../Store";
-import { workspaceKeyFromRootUriString } from "../io/key";
+} from '../types';
+import { scheduleIndexedPathWatcherRefresh } from '../probes/watchers';
+import type { ProjectMemoryStore } from '../Store';
+import { workspaceKeyFromRootUriString } from '../io/key';
 
 /**
  * Ingierir el documento activo del editor en project memory si aplica.
@@ -36,7 +38,7 @@ export async function ingestActiveEditorDocument(
   }
 
   const doc = editor.document;
-  if (doc.isUntitled || doc.uri.scheme !== "file") {
+  if (doc.isUntitled || doc.uri.scheme !== 'file') {
     return;
   }
 
@@ -46,7 +48,7 @@ export async function ingestActiveEditorDocument(
   }
 
   const relRaw = vscode.workspace.asRelativePath(doc.uri, false);
-  if (relRaw.startsWith("..")) {
+  if (relRaw.startsWith('..')) {
     return;
   }
   const relativePath = normalizeWorkspaceRelativePath(relRaw);
@@ -101,11 +103,7 @@ export async function ingestActiveEditorDocument(
       return { ...item, lastUsedAtMs: now };
     });
     const editors = touched.filter(isProjectMemoryEditorIngestStoredItem);
-    const evicted = applyEditorIngestLruEviction(
-      editors,
-      cfg.maxEditorSources,
-      cfg.maxTotalBytes,
-    );
+    const evicted = applyEditorIngestLruEviction(editors, cfg.maxEditorSources, cfg.maxTotalBytes);
     const merged = mergeEntriesReplacingEditorSubset(touched, evicted);
     await store.writeMemoryEntries(workspaceKey, merged);
     await bumpManifest(store, workspaceKey, merged.length);
@@ -114,8 +112,8 @@ export async function ingestActiveEditorDocument(
   }
 
   const sliceLen = Math.min(bytes.length, cfg.maxEntryBytes);
-  const text = new TextDecoder("utf-8", { fatal: false }).decode(bytes.subarray(0, sliceLen));
-  const compact = text.replace(/\s+/g, " ").trim();
+  const text = new TextDecoder('utf-8', { fatal: false }).decode(bytes.subarray(0, sliceLen));
+  const compact = text.replace(/\s+/g, ' ').trim();
   const excerpt = truncateProjectCardText(compact, PROJECT_EDITOR_CARD_MAX_CHARS);
   const promptLine = `Editor excerpt (${relativePath}): ${excerpt}`;
 

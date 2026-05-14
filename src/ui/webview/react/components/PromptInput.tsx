@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 interface PromptInputProps {
   text: string;
@@ -47,7 +47,7 @@ export function PromptInput(props: PromptInputProps): JSX.Element {
     if (!input) {
       return;
     }
-    input.style.height = "auto";
+    input.style.height = 'auto';
     input.style.height = `${Math.max(input.scrollHeight, compact ? 80 : 120)}px`;
   }, [textareaRef, compact]);
 
@@ -86,28 +86,28 @@ export function PromptInput(props: PromptInputProps): JSX.Element {
       <textarea
         ref={textareaRef}
         id="prompt-input"
-        className={`w-full rounded-md border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] px-3 py-2 text-sm leading-6 text-[var(--vscode-input-foreground)] outline-none transition focus:border-[var(--vscode-focusBorder)] focus:ring-1 focus:ring-[var(--vscode-focusBorder)] resize-none ${compact ? "min-h-[64px]" : "min-h-[100px]"}`}
+        className={`w-full rounded-md border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] px-3 py-2 text-sm leading-6 text-[var(--vscode-input-foreground)] outline-none transition focus:border-[var(--vscode-focusBorder)] focus:ring-1 focus:ring-[var(--vscode-focusBorder)] resize-none ${compact ? 'min-h-[64px]' : 'min-h-[100px]'}`}
         value={text}
         onChange={onTextChange}
         onScroll={syncScroll}
         onMouseUp={onCursorCheck}
         onKeyUp={onCursorCheck}
         onKeyDown={(event) => {
-          if (event.key === "Tab") {
+          if (event.key === 'Tab') {
             if (suggestion && isGhostUiAllowed()) {
               event.preventDefault();
               onAccept();
             }
           }
-          if (event.key === "Enter" && !event.shiftKey) {
+          if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             onSend();
           }
         }}
         placeholder={
           vsxActive
-            ? "Destino VSOpenCodeX activo: escribe aquí pero envía desde VSOpenCodeX."
-            : "Escribe tu prompt…"
+            ? 'Destino VSOpenCodeX activo: escribe aquí pero envía desde VSOpenCodeX.'
+            : 'Escribe tu prompt…'
         }
         disabled={vsxActive}
         rows={3}

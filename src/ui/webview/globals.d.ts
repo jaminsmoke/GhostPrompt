@@ -15,4 +15,4 @@ interface Window {
   __ghostPromptCapabilities?: GhostPromptCapabilities;
 }
 
-declare module "*.css";
+declare module '*.css';

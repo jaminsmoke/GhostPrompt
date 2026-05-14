@@ -1,18 +1,18 @@
 /**
  * Registro en `activate`: layout en `globalStorageUri`, toque de raíces abiertas, GC y comando clear.
  */
-import * as path from "node:path";
+import * as path from 'node:path';
 
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
-import { ingestActiveEditorDocument } from "./ingest/document";
+import { ingestActiveEditorDocument } from './ingest/document';
 import {
   bindProjectMemoryIndexedPathWatcher,
   refreshProjectMemoryIndexedPathWatchers,
-} from "./probes/watchers";
-import { NodeProjectMemoryFs } from "./io/fs";
-import { ProjectMemoryStore } from "./Store";
-import { PROJECT_MEMORY_REL_SEGMENTS } from "./types";
+} from './probes/watchers';
+import { NodeProjectMemoryFs } from './io/fs';
+import { ProjectMemoryStore } from './Store';
+import { PROJECT_MEMORY_REL_SEGMENTS } from './types';
 
 /**
  * Normaliza la TTL de project memory eliminada en días.
@@ -32,8 +32,8 @@ function clampTtlDays(raw: number): number {
  */
 export function readProjectMemoryUnusedStoreTtlDays(): number {
   const v = vscode.workspace
-    .getConfiguration("ghostPrompt")
-    .get<number>("projectMemoryUnusedStoreTtlDays", 30);
+    .getConfiguration('ghostPrompt')
+    .get<number>('projectMemoryUnusedStoreTtlDays', 30);
   return clampTtlDays(v);
 }
 
@@ -50,9 +50,7 @@ export function getProjectMemoryBaseDir(globalStoragePath: string): string {
  * Selecciona una carpeta de workspace adecuada para project memory.
  * @returns Carpeta activa del workspace o la primera carpeta abierta.
  */
-export function pickWorkspaceFolderForProjectMemory():
-  | vscode.WorkspaceFolder
-  | undefined {
+export function pickWorkspaceFolderForProjectMemory(): vscode.WorkspaceFolder | undefined {
   const uri = vscode.window.activeTextEditor?.document.uri;
   if (uri) {
     const wf = vscode.workspace.getWorkspaceFolder(uri);
@@ -96,7 +94,7 @@ export function registerProjectMemory(context: vscode.ExtensionContext): Project
       await runGarbageCollect(store);
       await refreshProjectMemoryIndexedPathWatchers();
     } catch (e) {
-      console.error("[GhostPrompt] projectMemory lifecycle failed", e);
+      console.error('[GhostPrompt] projectMemory lifecycle failed', e);
     }
   };
 
@@ -137,7 +135,7 @@ export function registerProjectMemory(context: vscode.ExtensionContext): Project
           await runGarbageCollect(store);
           await refreshProjectMemoryIndexedPathWatchers();
         } catch (e) {
-          console.error("[GhostPrompt] projectMemory workspace-folder sync failed", e);
+          console.error('[GhostPrompt] projectMemory workspace-folder sync failed', e);
         }
       })();
     }),
@@ -146,9 +144,9 @@ export function registerProjectMemory(context: vscode.ExtensionContext): Project
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (
-        e.affectsConfiguration("ghostPrompt.projectMemoryEnabled") ||
-        e.affectsConfiguration("ghostPrompt.projectMemoryFileWatcherEnabled") ||
-        e.affectsConfiguration("ghostPrompt.projectMemoryFileWatcherThrottleMs")
+        e.affectsConfiguration('ghostPrompt.projectMemoryEnabled') ||
+        e.affectsConfiguration('ghostPrompt.projectMemoryFileWatcherEnabled') ||
+        e.affectsConfiguration('ghostPrompt.projectMemoryFileWatcherThrottleMs')
       ) {
         void refreshProjectMemoryIndexedPathWatchers();
       }
@@ -156,28 +154,25 @@ export function registerProjectMemory(context: vscode.ExtensionContext): Project
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand(
-      "ghostPrompt.clearProjectMemoryThisWorkspace",
-      async () => {
-        const folder = pickWorkspaceFolderForProjectMemory();
-        if (!folder) {
-          void vscode.window.showWarningMessage(
-            "GhostPrompt: no hay carpeta de workspace para borrar la memoria de proyecto.",
-          );
-          return;
-        }
-        const had = await store.clearWorkspaceRoot(folder.uri.toString());
-        if (had) {
-          void vscode.window.showInformationMessage(
-            "GhostPrompt: memoria de proyecto eliminada para esta carpeta del workspace.",
-          );
-        } else {
-          void vscode.window.showInformationMessage(
-            "GhostPrompt: no había memoria persistida para esta carpeta.",
-          );
-        }
-      },
-    ),
+    vscode.commands.registerCommand('ghostPrompt.clearProjectMemoryThisWorkspace', async () => {
+      const folder = pickWorkspaceFolderForProjectMemory();
+      if (!folder) {
+        void vscode.window.showWarningMessage(
+          'GhostPrompt: no hay carpeta de workspace para borrar la memoria de proyecto.',
+        );
+        return;
+      }
+      const had = await store.clearWorkspaceRoot(folder.uri.toString());
+      if (had) {
+        void vscode.window.showInformationMessage(
+          'GhostPrompt: memoria de proyecto eliminada para esta carpeta del workspace.',
+        );
+      } else {
+        void vscode.window.showInformationMessage(
+          'GhostPrompt: no había memoria persistida para esta carpeta.',
+        );
+      }
+    }),
   );
 
   return store;

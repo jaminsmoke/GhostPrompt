@@ -1,24 +1,23 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 import { logSuggestionDebug } from '../../system/debug/SuggestionDebug';
 import {
   type DestinationProvider,
   getGhostPromptAgentDestination,
   registerDestination,
   VS_OPEN_CODE_X_EXTENSION_ID,
-} from "../destinationRegistry";
+} from '../destinationRegistry';
 
 /** Comando en VSOpenCodeX: mismo payload que postMessage GP sin campo `broadcast`. */
-export const VS_OPEN_CODE_X_GHOST_PROMPT_INLINE_UI =
-  "vsopencodex.ghostPromptInlineUi";
+export const VS_OPEN_CODE_X_GHOST_PROMPT_INLINE_UI = 'vsopencodex.ghostPromptInlineUi';
 
 const FORWARD_MESSAGE_TYPES = new Set<string>([
-  "loading",
-  "suggestion-stream",
-  "suggestion",
-  "empty",
-  "error",
-  "clear",
-  "languageEffective",
+  'loading',
+  'suggestion-stream',
+  'suggestion',
+  'empty',
+  'error',
+  'clear',
+  'languageEffective',
 ]);
 
 /**
@@ -29,23 +28,20 @@ const FORWARD_MESSAGE_TYPES = new Set<string>([
 export function forwardGhostPromptInlineUiToVsOpenCodeIfApplicable(
   payloadWithBroadcast: Record<string, unknown>,
 ): void {
-  if (getGhostPromptAgentDestination() !== "vsOpenCodeX") {
+  if (getGhostPromptAgentDestination() !== 'vsOpenCodeX') {
     return;
   }
   const t = payloadWithBroadcast.type;
-  if (typeof t !== "string" || !FORWARD_MESSAGE_TYPES.has(t)) {
+  if (typeof t !== 'string' || !FORWARD_MESSAGE_TYPES.has(t)) {
     return;
   }
 
   const { broadcast: _b, ...sanitized } = payloadWithBroadcast;
   void Promise.resolve(
-    vscode.commands.executeCommand(
-      VS_OPEN_CODE_X_GHOST_PROMPT_INLINE_UI,
-      sanitized,
-    ),
+    vscode.commands.executeCommand(VS_OPEN_CODE_X_GHOST_PROMPT_INLINE_UI, sanitized),
   ).catch((e: unknown) => {
     const msg = e instanceof Error ? e.message : String(e);
-    logSuggestionDebug(0, "vsopencodex-inline-forward-failed", msg);
+    logSuggestionDebug(0, 'vsopencodex-inline-forward-failed', msg);
   });
 }
 
@@ -56,7 +52,7 @@ let notifiedMissingVsxThisSession = false;
  * @returns Void.
  */
 export function notifyIfVsxAgentDestinationWithoutVsOpenCodeX(): void {
-  if (getGhostPromptAgentDestination() !== "vsOpenCodeX") {
+  if (getGhostPromptAgentDestination() !== 'vsOpenCodeX') {
     notifiedMissingVsxThisSession = false;
     return;
   }
@@ -69,21 +65,21 @@ export function notifyIfVsxAgentDestinationWithoutVsOpenCodeX(): void {
   notifiedMissingVsxThisSession = true;
   void vscode.window
     .showInformationMessage(
-      "GhostPrompt: el destino del agente es VSOpenCodeX, pero esa extensión no está instalada o no está cargada. Instálala o cambia ghostPrompt.agentDestination a copilotChat.",
-      "Abrir ajustes",
+      'GhostPrompt: el destino del agente es VSOpenCodeX, pero esa extensión no está instalada o no está cargada. Instálala o cambia ghostPrompt.agentDestination a copilotChat.',
+      'Abrir ajustes',
     )
     .then((choice) => {
-      if (choice === "Abrir ajustes") {
+      if (choice === 'Abrir ajustes') {
         void vscode.commands.executeCommand(
-          "workbench.action.openSettings",
-          "ghostPrompt.agentDestination",
+          'workbench.action.openSettings',
+          'ghostPrompt.agentDestination',
         );
       }
     });
 }
 
 const vsOpenCodeXProvider: DestinationProvider = {
-  id: "vsOpenCodeX",
+  id: 'vsOpenCodeX',
   forwardSuggestionUi: forwardGhostPromptInlineUiToVsOpenCodeIfApplicable,
 };
 

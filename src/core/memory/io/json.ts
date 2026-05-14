@@ -4,7 +4,7 @@ import {
   type ProjectMemoryManifestFile,
   type ProjectMemoryRegistryEntry,
   type ProjectMemoryRegistryFile,
-} from "../types";
+} from '../types';
 
 /**
  * Devuelve el registro de project memory por defecto.
@@ -29,10 +29,10 @@ export function parseRegistryJson(text: string): ProjectMemoryRegistryFile {
       .filter(
         (e): e is NonNullable<typeof e> =>
           e !== null &&
-          typeof e === "object" &&
-          typeof (e as ProjectMemoryRegistryEntry).workspaceKey === "string" &&
-          typeof (e as ProjectMemoryRegistryEntry).storeRelativePath === "string" &&
-          typeof (e as ProjectMemoryRegistryEntry).lastSeenAt === "number",
+          typeof e === 'object' &&
+          typeof (e as ProjectMemoryRegistryEntry).workspaceKey === 'string' &&
+          typeof (e as ProjectMemoryRegistryEntry).storeRelativePath === 'string' &&
+          typeof (e as ProjectMemoryRegistryEntry).lastSeenAt === 'number',
       )
       .map((e) => ({
         workspaceKey: (e as ProjectMemoryRegistryEntry).workspaceKey,
@@ -81,20 +81,20 @@ export function parseManifestJson(text: string, workspaceKey: string): ProjectMe
     const base = defaultManifest(workspaceKey, Date.now());
     return {
       ...base,
-      workspaceKey: typeof v.workspaceKey === "string" ? v.workspaceKey : workspaceKey,
-      updatedAtMs: typeof v.updatedAtMs === "number" ? v.updatedAtMs : base.updatedAtMs,
+      workspaceKey: typeof v.workspaceKey === 'string' ? v.workspaceKey : workspaceKey,
+      updatedAtMs: typeof v.updatedAtMs === 'number' ? v.updatedAtMs : base.updatedAtMs,
       quotas:
         v.quotas &&
-        typeof v.quotas === "object" &&
-        typeof (v.quotas as ProjectMemoryManifestFile["quotas"]).maxTotalBytes === "number" &&
-        typeof (v.quotas as ProjectMemoryManifestFile["quotas"]).maxEntryBytes === "number"
-          ? (v.quotas as ProjectMemoryManifestFile["quotas"])
+        typeof v.quotas === 'object' &&
+        typeof (v.quotas as ProjectMemoryManifestFile['quotas']).maxTotalBytes === 'number' &&
+        typeof (v.quotas as ProjectMemoryManifestFile['quotas']).maxEntryBytes === 'number'
+          ? (v.quotas as ProjectMemoryManifestFile['quotas'])
           : base.quotas,
       stats:
         v.stats &&
-        typeof v.stats === "object" &&
-        typeof (v.stats as ProjectMemoryManifestFile["stats"]).entryCount === "number"
-          ? (v.stats as ProjectMemoryManifestFile["stats"])
+        typeof v.stats === 'object' &&
+        typeof (v.stats as ProjectMemoryManifestFile['stats']).entryCount === 'number'
+          ? (v.stats as ProjectMemoryManifestFile['stats'])
           : base.stats,
     };
   } catch {

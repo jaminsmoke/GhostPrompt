@@ -4,7 +4,7 @@
  * Proporciona verificación de instalación, listado de modelos locales,
  * inicio/detención de modelos con estados visibles.
  */
-import { exec, spawn, type ChildProcess } from "node:child_process";
+import { exec, spawn, type ChildProcess } from 'node:child_process';
 
 type Listener<T> = (data: T) => void;
 
@@ -12,27 +12,41 @@ class SimpleEventEmitter<T> {
   private _listeners: Listener<T>[] = [];
   on(listener: Listener<T>): { dispose: () => void } {
     this._listeners.push(listener);
-    return { dispose: () => { this._listeners = this._listeners.filter((l) => l !== listener); } };
+    return {
+      dispose: () => {
+        this._listeners = this._listeners.filter((l) => l !== listener);
+      },
+    };
   }
-  fire(data: T): void { for (const l of this._listeners) { l(data); } }
-  dispose(): void { this._listeners = []; }
+  fire(data: T): void {
+    for (const l of this._listeners) {
+      l(data);
+    }
+  }
+  dispose(): void {
+    this._listeners = [];
+  }
 }
 
 export type OllamaManagerState =
-  | "idle"
-  | "checking"
-  | "ready"
-  | "listing"
-  | "starting"
-  | "ready-model"
-  | "stopping"
-  | "error";
+  | 'idle'
+  | 'checking'
+  | 'ready'
+  | 'listing'
+  | 'starting'
+  | 'ready-model'
+  | 'stopping'
+  | 'error';
 
 class OllamaModelManager {
-  private _state: OllamaManagerState = "idle";
+  private _state: OllamaManagerState = 'idle';
   private _currentModel: string | null = null;
   private _ollamaProcess: ChildProcess | null = null;
-  private _onDidChangeState = new SimpleEventEmitter<{ state: OllamaManagerState; model?: string; message?: string }>();
+  private _onDidChangeState = new SimpleEventEmitter<{
+    state: OllamaManagerState;
+    model?: string;
+    message?: string;
+  }>();
 
   readonly onDidChangeState = this._onDidChangeState.on.bind(this._onDidChangeState);
 
@@ -67,14 +81,14 @@ class OllamaModelManager {
    * @returns Versión de Ollama.
    */
   async checkInstallation(): Promise<string> {
-    this.setState("checking");
+    this.setState('checking');
     try {
-      const version = await this.execAsync("ollama --version", 5000);
-      this.setState("ready");
+      const version = await this.execAsync('ollama --version', 5000);
+      this.setState('ready');
       return version;
     } catch {
-      this.setState("error", undefined, "Ollama no está instalado o no está en el PATH.");
-      throw new Error("Ollama not installed");
+      this.setState('error', undefined, 'Ollama no está instalado o no está en el PATH.');
+      throw new Error('Ollama not installed');
     }
   }
 
@@ -84,21 +98,24 @@ class OllamaModelManager {
    * @returns Lista de modelos instalados.
    */
   async listInstalledModels(): Promise<string[]> {
-    this.setState("listing");
+    this.setState('listing');
     try {
-      const stdout = await this.execAsync("ollama list", 10000);
-      const lines = stdout.split("\n").filter((l) => l.trim().length > 0);
+      const stdout = await this.execAsync('ollama list', 10000);
+      const lines = stdout.split('\n').filter((l) => l.trim().length > 0);
       if (lines.length <= 1) {
         return [];
       }
-      const models = lines.slice(1).map((line) => {
-        const parts = line.trim().split(/\s+/);
-        return parts[0];
-      }).filter(Boolean);
-      this.setState("ready");
+      const models = lines
+        .slice(1)
+        .map((line) => {
+          const parts = line.trim().split(/\s+/);
+          return parts[0];
+        })
+        .filter(Boolean);
+      this.setState('ready');
       return models;
     } catch {
-      this.setState("error", undefined, "No se pudieron listar los modelos Ollama.");
+      this.setState('error', undefined, 'No se pudieron listar los modelos Ollama.');
       return [];
     }
   }
@@ -124,11 +141,11 @@ class OllamaModelManager {
     }
 
     this._currentModel = modelId;
-    this.setState("starting", modelId);
+    this.setState('starting', modelId);
 
     return new Promise((resolve, reject) => {
-      const proc = spawn("ollama", ["run", modelId, "--keepalive", "5m", "--nowordwrap"], {
-        stdio: ["pipe", "pipe", "pipe"],
+      const proc = spawn('ollama', ['run', modelId, '--keepalive', '5m', '--nowordwrap'], {
+        stdio: ['pipe', 'pipe', 'pipe'],
       });
       this._ollamaProcess = proc;
 
@@ -139,70 +156,82 @@ class OllamaModelManager {
           if (!this._ollamaProcess?.killed) {
             this._ollamaProcess?.kill();
           }
-          this.setState("error", modelId, "Tiempo de espera agotado al iniciar el modelo.");
-          reject(new Error("Timeout starting model"));
+          this.setState('error', modelId, 'Tiempo de espera agotado al iniciar el modelo.');
+          reject(new Error('Timeout starting model'));
         }
       }, 120000);
 
       const checkOutput = (data: string) => {
-        if (resolved) { return; }
+        if (resolved) {
+          return;
+        }
         if (
-          data.includes("success") ||
-          data.includes("loaded") ||
-          data.toLowerCase().includes("send a message") ||
-          data.includes("/bye")
+          data.includes('success') ||
+          data.includes('loaded') ||
+          data.toLowerCase().includes('send a message') ||
+          data.includes('/bye')
         ) {
           resolved = true;
           clearTimeout(startTimeout);
-          this.setState("ready-model", modelId);
+          this.setState('ready-model', modelId);
           resolve();
         }
       };
 
-      proc.stdout?.on("data", (data: Buffer) => checkOutput(data.toString()));
+      proc.stdout?.on('data', (data: Buffer) => checkOutput(data.toString()));
 
-      proc.stderr?.on("data", (data: Buffer) => {
+      proc.stderr?.on('data', (data: Buffer) => {
         const text = data.toString();
         checkOutput(text);
-        if (!resolved && /error|failed|not found/i.test(text) && !text.includes("Failed to connect to socket")) {
+        if (
+          !resolved &&
+          /error|failed|not found/i.test(text) &&
+          !text.includes('Failed to connect to socket')
+        ) {
           resolved = true;
           clearTimeout(startTimeout);
           this._ollamaProcess = null;
           proc.kill();
-          this.setState("error", modelId, text.trim());
+          this.setState('error', modelId, text.trim());
           reject(new Error(text.trim()));
         }
       });
 
-      proc.on("error", (err) => {
-        if (resolved) { return; }
+      proc.on('error', (err) => {
+        if (resolved) {
+          return;
+        }
         resolved = true;
         clearTimeout(startTimeout);
         this._ollamaProcess = null;
-        this.setState("error", modelId, err.message);
+        this.setState('error', modelId, err.message);
         reject(err);
       });
 
-      proc.on("exit", (code) => {
+      proc.on('exit', (code) => {
         this._ollamaProcess = null;
         if (!resolved && code !== 0) {
           resolved = true;
           clearTimeout(startTimeout);
-          this.setState("error", modelId, `Process exited with code ${code}`);
+          this.setState('error', modelId, `Process exited with code ${code}`);
           reject(new Error(`ollama run exited with code ${code}`));
         }
       });
 
       if (signal) {
-        signal.addEventListener("abort", () => {
-          if (!resolved) {
-            resolved = true;
-            clearTimeout(startTimeout);
-            proc.kill();
-            this._ollamaProcess = null;
-            reject(new Error("Cancelled"));
-          }
-        }, { once: true });
+        signal.addEventListener(
+          'abort',
+          () => {
+            if (!resolved) {
+              resolved = true;
+              clearTimeout(startTimeout);
+              proc.kill();
+              this._ollamaProcess = null;
+              reject(new Error('Cancelled'));
+            }
+          },
+          { once: true },
+        );
       }
     });
   }
@@ -214,9 +243,11 @@ class OllamaModelManager {
    */
   async ps(): Promise<string | null> {
     try {
-      const stdout = await this.execAsync("ollama ps", 5000);
-      const lines = stdout.split("\n").filter((l) => l.trim().length > 0);
-      if (lines.length <= 1) { return null; }
+      const stdout = await this.execAsync('ollama ps', 5000);
+      const lines = stdout.split('\n').filter((l) => l.trim().length > 0);
+      if (lines.length <= 1) {
+        return null;
+      }
       const name = lines[1].trim().split(/\s+/)[0];
       return name || null;
     } catch {
@@ -229,13 +260,13 @@ class OllamaModelManager {
    * @param modelId Opcional ID del modelo a detener.
    */
   async stopModel(modelId?: string): Promise<void> {
-    this.setState("stopping", modelId ?? this._currentModel ?? undefined);
+    this.setState('stopping', modelId ?? this._currentModel ?? undefined);
     try {
-      const target = modelId ?? this._currentModel ?? "";
+      const target = modelId ?? this._currentModel ?? '';
       if (target) {
         await this.execAsync(`ollama stop ${target}`, 10000);
       } else {
-        await this.execAsync("ollama stop", 10000);
+        await this.execAsync('ollama stop', 10000);
       }
     } catch {
       // ollama stop puede fallar si el modelo no estaba corriendo — se ignora
@@ -247,7 +278,7 @@ class OllamaModelManager {
     }
 
     this._currentModel = null;
-    this.setState("idle");
+    this.setState('idle');
   }
 
   /**

@@ -1,4 +1,4 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
 import type {
   SuggestionModelDescriptor,
@@ -19,17 +19,15 @@ export function selectModelByPolicy(
   preferredModelId?: string,
 ): vscode.LanguageModelChat | undefined {
   if (preferredModelId) {
-    const preferred = models.find(
-      (candidate) => getModelId(candidate) === preferredModelId,
-    );
+    const preferred = models.find((candidate) => getModelId(candidate) === preferredModelId);
     if (preferred) {
-      if (policy === "anyModel" || isIncludedModel(preferred)) {
+      if (policy === 'anyModel' || isIncludedModel(preferred)) {
         return preferred;
       }
     }
   }
 
-  if (policy === "anyModel") {
+  if (policy === 'anyModel') {
     return models[0];
   }
   return models.find((candidate) => isIncludedModel(candidate));
@@ -43,11 +41,9 @@ export function selectModelByPolicy(
 export async function listSuggestionModels(
   policy: SuggestionModelPolicy,
 ): Promise<SuggestionModelDescriptor[]> {
-  const models = await vscode.lm.selectChatModels({ vendor: "copilot" });
+  const models = await vscode.lm.selectChatModels({ vendor: 'copilot' });
   const filtered =
-    policy === "anyModel"
-      ? models
-      : models.filter((candidate) => isIncludedModel(candidate));
+    policy === 'anyModel' ? models : models.filter((candidate) => isIncludedModel(candidate));
   const seen = new Set<string>();
   const descriptors: SuggestionModelDescriptor[] = [];
   for (const candidate of filtered) {
@@ -59,7 +55,7 @@ export async function listSuggestionModels(
     seen.add(dedupeKey);
     descriptors.push({
       ...descriptor,
-      completionSource: "copilot",
+      completionSource: 'copilot',
     });
   }
   return descriptors;
@@ -98,7 +94,7 @@ export function describeModel(model: unknown): SuggestionModelDescriptor {
  */
 function getModelId(model: unknown): string {
   const data = model as { id?: string; family?: string; name?: string };
-  return data.id?.trim() || data.family?.trim() || data.name?.trim() || "unknown";
+  return data.id?.trim() || data.family?.trim() || data.name?.trim() || 'unknown';
 }
 
 /**
@@ -108,15 +104,15 @@ function getModelId(model: unknown): string {
  */
 function isIncludedModel(model: unknown): boolean {
   const tierByPricing = classifyTierFromPricing(model);
-  if (tierByPricing === "included") {
+  if (tierByPricing === 'included') {
     return true;
   }
-  if (tierByPricing === "premium") {
+  if (tierByPricing === 'premium') {
     return false;
   }
 
   const data = model as { id?: string; family?: string; name?: string };
-  const fingerprint = `${data.id ?? ""} ${data.family ?? ""} ${data.name ?? ""}`
+  const fingerprint = `${data.id ?? ''} ${data.family ?? ''} ${data.name ?? ''}`
     .toLowerCase()
     .trim();
 
@@ -124,25 +120,13 @@ function isIncludedModel(model: unknown): boolean {
     return false;
   }
 
-  const allowMarkers = ["mini", "nano", "haiku", "flash"];
-  const hasAllowMarker = allowMarkers.some((marker) =>
-    fingerprint.includes(marker),
-  );
+  const allowMarkers = ['mini', 'nano', 'haiku', 'flash'];
+  const hasAllowMarker = allowMarkers.some((marker) => fingerprint.includes(marker));
   if (!hasAllowMarker) {
     return false;
   }
 
-  const denyMarkers = [
-    "premium",
-    "pro",
-    "opus",
-    "sonnet",
-    "gpt-5",
-    "gpt-4.1",
-    "o1",
-    "o3",
-    "o4",
-  ];
+  const denyMarkers = ['premium', 'pro', 'opus', 'sonnet', 'gpt-5', 'gpt-4.1', 'o1', 'o3', 'o4'];
   return !denyMarkers.some((marker) => fingerprint.includes(marker));
 }
 
@@ -153,10 +137,10 @@ function isIncludedModel(model: unknown): boolean {
  */
 function classifyModelTier(model: unknown): SuggestionModelTier {
   const tierByPricing = classifyTierFromPricing(model);
-  if (tierByPricing !== "unknown") {
+  if (tierByPricing !== 'unknown') {
     return tierByPricing;
   }
-  return isIncludedModel(model) ? "included" : "unknown";
+  return isIncludedModel(model) ? 'included' : 'unknown';
 }
 
 /**
@@ -168,13 +152,13 @@ function classifyTierFromPricing(model: unknown): SuggestionModelTier {
   const data = model as { pricing?: string };
   const normalized = normalizePricing(data.pricing);
   if (!normalized) {
-    return "unknown";
+    return 'unknown';
   }
   const multiplier = parsePricingMultiplier(normalized);
   if (multiplier === undefined) {
-    return "unknown";
+    return 'unknown';
   }
-  return multiplier === 0 ? "included" : "premium";
+  return multiplier === 0 ? 'included' : 'premium';
 }
 
 /**
@@ -183,7 +167,7 @@ function classifyTierFromPricing(model: unknown): SuggestionModelTier {
  * @returns Pricing limpio o undefined si no es válido.
  */
 function normalizePricing(pricing: unknown): string | undefined {
-  if (typeof pricing !== "string") {
+  if (typeof pricing !== 'string') {
     return undefined;
   }
   const value = pricing.trim();
@@ -210,11 +194,13 @@ function parsePricingMultiplier(pricing: string): number | undefined {
  * @returns Clave única usada para evitar duplicados.
  */
 function buildModelDedupeKey(model: SuggestionModelDescriptor): string {
-  const normalize = (value: string | undefined): string =>
-    (value ?? "").trim().toLowerCase();
-  return [normalize(model.provider), normalize(model.label), model.tier, normalize(model.pricing)].join(
-    "|",
-  );
+  const normalize = (value: string | undefined): string => (value ?? '').trim().toLowerCase();
+  return [
+    normalize(model.provider),
+    normalize(model.label),
+    model.tier,
+    normalize(model.pricing),
+  ].join('|');
 }
 
 /**
@@ -224,31 +210,31 @@ function buildModelDedupeKey(model: SuggestionModelDescriptor): string {
  */
 function inferModelProvider(model: unknown): string | undefined {
   const data = model as { id?: string; family?: string; name?: string };
-  const fingerprint = `${data.id ?? ""} ${data.family ?? ""} ${data.name ?? ""}`
+  const fingerprint = `${data.id ?? ''} ${data.family ?? ''} ${data.name ?? ''}`
     .toLowerCase()
     .trim();
   if (!fingerprint) {
     return undefined;
   }
   if (
-    fingerprint.includes("gpt") ||
-    fingerprint.includes("o1") ||
-    fingerprint.includes("o3") ||
-    fingerprint.includes("o4")
+    fingerprint.includes('gpt') ||
+    fingerprint.includes('o1') ||
+    fingerprint.includes('o3') ||
+    fingerprint.includes('o4')
   ) {
-    return "OpenAI";
+    return 'OpenAI';
   }
-  if (fingerprint.includes("claude")) {
-    return "Anthropic";
+  if (fingerprint.includes('claude')) {
+    return 'Anthropic';
   }
-  if (fingerprint.includes("gemini")) {
-    return "Google";
+  if (fingerprint.includes('gemini')) {
+    return 'Google';
   }
-  if (fingerprint.includes("grok")) {
-    return "xAI";
+  if (fingerprint.includes('grok')) {
+    return 'xAI';
   }
-  if (fingerprint.includes("raptor") || fingerprint.includes("oswe")) {
-    return "GitHub";
+  if (fingerprint.includes('raptor') || fingerprint.includes('oswe')) {
+    return 'GitHub';
   }
-  return "Other";
+  return 'Other';
 }

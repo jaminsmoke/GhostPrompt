@@ -1,10 +1,10 @@
-import * as fs from "node:fs/promises";
-import * as os from "node:os";
-import * as path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
 
-import { NodeProjectMemoryFs } from "../src/core/memory/io/fs";
-import { ProjectMemoryStore } from "../src/core/memory/Store";
+import { NodeProjectMemoryFs } from '../src/core/memory/io/fs';
+import { ProjectMemoryStore } from '../src/core/memory/Store';
 import {
   PROJECT_MEMORY_SCHEMA_VERSION,
   PROJECT_MEMORY_REL_SEGMENTS,
@@ -14,22 +14,22 @@ import {
   MANIFEST_FILE,
   type ProjectMemoryRegistryFile,
   type ProjectMemoryManifestFile,
-} from "../src/core/memory/types";
-import { workspaceKeyFromRootUriString } from "../src/core/memory/io/key";
+} from '../src/core/memory/types';
+import { workspaceKeyFromRootUriString } from '../src/core/memory/io/key';
 
-describe("workspaceKeyFromRootUriString", () => {
-  it("es determinista por URI canónica", () => {
-    expect(workspaceKeyFromRootUriString("file:///c%3A/demo")).toHaveLength(64);
-    expect(workspaceKeyFromRootUriString("file:///c%3A/demo")).toBe(
-      workspaceKeyFromRootUriString("file:///c%3A/demo"),
+describe('workspaceKeyFromRootUriString', () => {
+  it('es determinista por URI canónica', () => {
+    expect(workspaceKeyFromRootUriString('file:///c%3A/demo')).toHaveLength(64);
+    expect(workspaceKeyFromRootUriString('file:///c%3A/demo')).toBe(
+      workspaceKeyFromRootUriString('file:///c%3A/demo'),
     );
-    expect(workspaceKeyFromRootUriString("file:///c%3A/other")).not.toBe(
-      workspaceKeyFromRootUriString("file:///c%3A/demo"),
+    expect(workspaceKeyFromRootUriString('file:///c%3A/other')).not.toBe(
+      workspaceKeyFromRootUriString('file:///c%3A/demo'),
     );
   });
 });
 
-describe("ProjectMemoryStore", () => {
+describe('ProjectMemoryStore', () => {
   let baseDir: string;
 
   afterEach(async () => {
@@ -38,11 +38,11 @@ describe("ProjectMemoryStore", () => {
     }
   });
 
-  it("touch crea manifest, entries placeholder y entrada de registro", async () => {
-    baseDir = await fs.mkdtemp(path.join(os.tmpdir(), "gp-pm-"));
+  it('touch crea manifest, entries placeholder y entrada de registro', async () => {
+    baseDir = await fs.mkdtemp(path.join(os.tmpdir(), 'gp-pm-'));
     const store = new ProjectMemoryStore(baseDir, new NodeProjectMemoryFs());
     const now = Date.now();
-    const root = "file:///tmp/repoAlpha";
+    const root = 'file:///tmp/repoAlpha';
     const key = workspaceKeyFromRootUriString(root);
     await store.touchWorkspaceRoot(root, now);
 
@@ -60,12 +60,12 @@ describe("ProjectMemoryStore", () => {
     expect(items).toEqual([]);
   });
 
-  it("gc elimina entradas muy antiguas y conserva la reciente tras touch", async () => {
-    baseDir = await fs.mkdtemp(path.join(os.tmpdir(), "gp-pm-"));
+  it('gc elimina entradas muy antiguas y conserva la reciente tras touch', async () => {
+    baseDir = await fs.mkdtemp(path.join(os.tmpdir(), 'gp-pm-'));
     const store = new ProjectMemoryStore(baseDir, new NodeProjectMemoryFs());
     const now = Date.now();
-    await store.touchWorkspaceRoot("file:///tmp/repoFresh", now);
-    const staleKey = workspaceKeyFromRootUriString("file:///tmp/repoStaleSynth");
+    await store.touchWorkspaceRoot('file:///tmp/repoFresh', now);
+    const staleKey = workspaceKeyFromRootUriString('file:///tmp/repoStaleSynth');
     let reg = await store.loadRegistry();
     reg.entries.push({
       workspaceKey: staleKey,
@@ -76,7 +76,7 @@ describe("ProjectMemoryStore", () => {
 
     const staleDir = path.join(baseDir, STORES_DIR, staleKey);
     await fs.mkdir(staleDir, { recursive: true });
-    await fs.writeFile(path.join(staleDir, "manifest.json"), "{}", "utf8");
+    await fs.writeFile(path.join(staleDir, 'manifest.json'), '{}', 'utf8');
 
     const removed = await store.garbageCollectUnusedStores(40 * 86_400_000, now);
     expect(removed).toBe(1);
@@ -86,10 +86,10 @@ describe("ProjectMemoryStore", () => {
     expect(reg.entries[0].workspaceKey).not.toBe(staleKey);
   });
 
-  it("clearWorkspaceRoot borra el directorio y la fila del registro", async () => {
-    baseDir = await fs.mkdtemp(path.join(os.tmpdir(), "gp-pm-"));
+  it('clearWorkspaceRoot borra el directorio y la fila del registro', async () => {
+    baseDir = await fs.mkdtemp(path.join(os.tmpdir(), 'gp-pm-'));
     const store = new ProjectMemoryStore(baseDir, new NodeProjectMemoryFs());
-    const root = "file:///tmp/repoToClear";
+    const root = 'file:///tmp/repoToClear';
     const key = workspaceKeyFromRootUriString(root);
     await store.touchWorkspaceRoot(root, Date.now());
 
@@ -101,12 +101,12 @@ describe("ProjectMemoryStore", () => {
 
     const manifestPath = path.join(store.storeAbsoluteDir(key), MANIFEST_FILE);
     await expect(fs.stat(manifestPath)).rejects.toMatchObject({
-      code: "ENOENT",
+      code: 'ENOENT',
     });
   });
 
-  it("reject invalid workspace keys en storeAbsoluteDir", () => {
-    const store = new ProjectMemoryStore("/x", new NodeProjectMemoryFs());
-    expect(() => store.storeAbsoluteDir("../evil")).toThrow("invalid workspaceKey");
+  it('reject invalid workspace keys en storeAbsoluteDir', () => {
+    const store = new ProjectMemoryStore('/x', new NodeProjectMemoryFs());
+    expect(() => store.storeAbsoluteDir('../evil')).toThrow('invalid workspaceKey');
   });
 });

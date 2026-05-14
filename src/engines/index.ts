@@ -3,8 +3,8 @@ export {
   getCompletionProviderForSource,
   getActiveCompletionProvider,
   getCompletionProviderKind,
-} from "./engineRegistry";
+} from './engineRegistry';
 
-export * from "./copilot/index";
-export * from "./ollama/index";
-export * from "./opencode/index";
+export * from './copilot/index';
+export * from './ollama/index';
+export * from './opencode/index';

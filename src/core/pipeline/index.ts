@@ -3,6 +3,6 @@
  * Implementación en `suggestPipeline.ts`.
  */
 
-export type { GhostPromptSuggestDeps } from "./suggestPipeline";
-export { runGhostPromptSuggestPipeline } from "./suggestPipeline";
-export { runGhostPromptSuggestPipeline as handleGhostPromptSuggest } from "./suggestPipeline";
+export type { GhostPromptSuggestDeps } from './suggestPipeline';
+export { runGhostPromptSuggestPipeline } from './suggestPipeline';
+export { runGhostPromptSuggestPipeline as handleGhostPromptSuggest } from './suggestPipeline';

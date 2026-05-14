@@ -1,13 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const executeCommandMock = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 const configGetMock = vi.hoisted(() => vi.fn());
 const getExtensionMock = vi.hoisted(() => vi.fn());
-const showInformationMessageMock = vi.hoisted(() =>
-  vi.fn(() => Promise.resolve(undefined)),
-);
+const showInformationMessageMock = vi.hoisted(() => vi.fn(() => Promise.resolve(undefined)));
 
-vi.mock("vscode", () => ({
+vi.mock('vscode', () => ({
   workspace: {
     getConfiguration: () => ({
       get: configGetMock,
@@ -29,85 +27,78 @@ vi.mock("vscode", () => ({
   },
 }));
 
-vi.mock("../src/system/debug/SuggestionDebug", () => ({
+vi.mock('../src/system/debug/SuggestionDebug', () => ({
   logSuggestionDebug: vi.fn(),
 }));
 
-describe("vsOpenCodeXDestination", () => {
+describe('vsOpenCodeXDestination', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    configGetMock.mockImplementation(
-      (key: string, fallback: unknown) =>
-        key === "agentDestination" ? "copilotChat" : fallback,
+    configGetMock.mockImplementation((key: string, fallback: unknown) =>
+      key === 'agentDestination' ? 'copilotChat' : fallback,
     );
     getExtensionMock.mockReturnValue(undefined);
   });
 
-  describe("forwardGhostPromptInlineUiToVsOpenCodeIfApplicable", () => {
-    it("no llama executeCommand si destino es Copilot", async () => {
-      configGetMock.mockReturnValue("copilotChat");
-      const { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } = await import(
-        "../src/destinations/vsOpenCodeX/vsOpenCodeXDestination",
-      );
+  describe('forwardGhostPromptInlineUiToVsOpenCodeIfApplicable', () => {
+    it('no llama executeCommand si destino es Copilot', async () => {
+      configGetMock.mockReturnValue('copilotChat');
+      const { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } =
+        await import('../src/destinations/vsOpenCodeX/vsOpenCodeXDestination');
       forwardGhostPromptInlineUiToVsOpenCodeIfApplicable({
-        type: "suggestion",
-        suggestion: "x",
+        type: 'suggestion',
+        suggestion: 'x',
         broadcast: true,
       });
       expect(executeCommandMock).not.toHaveBeenCalled();
     });
 
-    it("reenvía suggestion sin broadcast si destino es VSX", async () => {
-      configGetMock.mockReturnValue("vsOpenCodeX");
-      const { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } = await import(
-        "../src/destinations/vsOpenCodeX/vsOpenCodeXDestination",
-      );
+    it('reenvía suggestion sin broadcast si destino es VSX', async () => {
+      configGetMock.mockReturnValue('vsOpenCodeX');
+      const { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } =
+        await import('../src/destinations/vsOpenCodeX/vsOpenCodeXDestination');
       forwardGhostPromptInlineUiToVsOpenCodeIfApplicable({
-        type: "suggestion",
-        suggestion: "x",
+        type: 'suggestion',
+        suggestion: 'x',
         broadcast: true,
       });
-      expect(executeCommandMock).toHaveBeenCalledWith(
-        "vsopencodex.ghostPromptInlineUi",
-        { type: "suggestion", suggestion: "x" },
-      );
+      expect(executeCommandMock).toHaveBeenCalledWith('vsopencodex.ghostPromptInlineUi', {
+        type: 'suggestion',
+        suggestion: 'x',
+      });
     });
 
-    it("reenvía tipos válidos (loading, empty, error, clear)", async () => {
-      configGetMock.mockReturnValue("vsOpenCodeX");
-      const { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } = await import(
-        "../src/destinations/vsOpenCodeX/vsOpenCodeXDestination",
-      );
-      for (const type of ["loading", "empty", "error", "clear"]) {
+    it('reenvía tipos válidos (loading, empty, error, clear)', async () => {
+      configGetMock.mockReturnValue('vsOpenCodeX');
+      const { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } =
+        await import('../src/destinations/vsOpenCodeX/vsOpenCodeXDestination');
+      for (const type of ['loading', 'empty', 'error', 'clear']) {
         vi.clearAllMocks();
         forwardGhostPromptInlineUiToVsOpenCodeIfApplicable({
           type,
           broadcast: true,
         });
-        expect(executeCommandMock).toHaveBeenCalledWith(
-          "vsopencodex.ghostPromptInlineUi",
-          { type },
-        );
+        expect(executeCommandMock).toHaveBeenCalledWith('vsopencodex.ghostPromptInlineUi', {
+          type,
+        });
       }
     });
   });
 
-  describe("notifyIfVsxAgentDestinationWithoutVsOpenCodeX", () => {
-    it("no notifica si destino es copilotChat", async () => {
-      configGetMock.mockReturnValue("copilotChat");
-      const { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } = await import(
-        "../src/destinations/vsOpenCodeX/vsOpenCodeXDestination",
-      );
+  describe('notifyIfVsxAgentDestinationWithoutVsOpenCodeX', () => {
+    it('no notifica si destino es copilotChat', async () => {
+      configGetMock.mockReturnValue('copilotChat');
+      const { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } =
+        await import('../src/destinations/vsOpenCodeX/vsOpenCodeXDestination');
       notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
       expect(showInformationMessageMock).not.toHaveBeenCalled();
     });
 
-    it("notifica una vez si destino es vsOpenCodeX y extensión ausente", async () => {
-      configGetMock.mockReturnValue("vsOpenCodeX");
+    it('notifica una vez si destino es vsOpenCodeX y extensión ausente', async () => {
+      configGetMock.mockReturnValue('vsOpenCodeX');
       getExtensionMock.mockReturnValue(undefined);
-      const { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } = await import(
-        "../src/destinations/vsOpenCodeX/vsOpenCodeXDestination",
-      );
+      const { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } =
+        await import('../src/destinations/vsOpenCodeX/vsOpenCodeXDestination');
       notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
       notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
       expect(showInformationMessageMock).toHaveBeenCalledTimes(1);

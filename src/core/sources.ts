@@ -2,17 +2,17 @@
  * Fuentes de completion habilitadas (`copilot` LM vs OpenCode).
  * Si `enabledCompletionSources` no está definido en ningún scope, se usa el legacy `completionProvider`.
  */
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
-export type CompletionSourceId = "copilot" | "opencode" | "ollama";
+export type CompletionSourceId = 'copilot' | 'opencode' | 'ollama';
 
 /**
  * Devuelve las fuentes de sugerencia activas según configuración o el modo legacy.
  * @returns Lista de IDs de fuentes habilitadas para completado.
  */
 export function getEnabledCompletionSources(): CompletionSourceId[] {
-  const cfg = vscode.workspace.getConfiguration("ghostPrompt");
-  const inspected = cfg.inspect<CompletionSourceId[]>("enabledCompletionSources");
+  const cfg = vscode.workspace.getConfiguration('ghostPrompt');
+  const inspected = cfg.inspect<CompletionSourceId[]>('enabledCompletionSources');
 
   const explicit =
     inspected?.globalValue !== undefined ||
@@ -23,7 +23,7 @@ export function getEnabledCompletionSources(): CompletionSourceId[] {
     return legacySourcesFromCompletionProvider();
   }
 
-  const normalized = normalizeCompletionSources(cfg.get("enabledCompletionSources"));
+  const normalized = normalizeCompletionSources(cfg.get('enabledCompletionSources'));
   if (normalized.length === 0) {
     return legacySourcesFromCompletionProvider();
   }
@@ -36,15 +36,15 @@ export function getEnabledCompletionSources(): CompletionSourceId[] {
  */
 function legacySourcesFromCompletionProvider(): CompletionSourceId[] {
   const v = vscode.workspace
-    .getConfiguration("ghostPrompt")
-    .get<string>("completionProvider", "copilot");
-  if (v === "opencode") {
-    return ["opencode"];
+    .getConfiguration('ghostPrompt')
+    .get<string>('completionProvider', 'copilot');
+  if (v === 'opencode') {
+    return ['opencode'];
   }
-  if (v === "ollama") {
-    return ["ollama"];
+  if (v === 'ollama') {
+    return ['ollama'];
   }
-  return ["copilot"];
+  return ['copilot'];
 }
 
 /**
@@ -59,7 +59,7 @@ function normalizeCompletionSources(raw: unknown): CompletionSourceId[] {
   const out: CompletionSourceId[] = [];
   const seen = new Set<CompletionSourceId>();
   for (const item of raw) {
-    if (item === "copilot" || item === "opencode" || item === "ollama") {
+    if (item === 'copilot' || item === 'opencode' || item === 'ollama') {
       if (!seen.has(item)) {
         seen.add(item);
         out.push(item);
@@ -76,7 +76,7 @@ function normalizeCompletionSources(raw: unknown): CompletionSourceId[] {
  * @returns True si el ID corresponde a un modelo Ollama.
  */
 export function looksLikeOllamaModelId(id: string): boolean {
-  return id.includes(":") && !id.includes("/");
+  return id.includes(':') && !id.includes('/');
 }
 
 /**
@@ -92,34 +92,28 @@ export function resolveCompletionSourceForRequest(
   if (enabledSources.length === 1) {
     return enabledSources[0];
   }
-  if (selectedModelId === "auto") {
-    if (enabledSources.includes("copilot")) {
-      return "copilot";
+  if (selectedModelId === 'auto') {
+    if (enabledSources.includes('copilot')) {
+      return 'copilot';
     }
-    if (enabledSources.includes("opencode")) {
-      return "opencode";
+    if (enabledSources.includes('opencode')) {
+      return 'opencode';
     }
-    return "ollama";
+    return 'ollama';
   }
-  if (
-    enabledSources.includes("ollama") &&
-    looksLikeOllamaModelId(selectedModelId)
-  ) {
-    return "ollama";
+  if (enabledSources.includes('ollama') && looksLikeOllamaModelId(selectedModelId)) {
+    return 'ollama';
   }
-  if (
-    enabledSources.includes("opencode") &&
-    looksLikeOpencodeModelId(selectedModelId)
-  ) {
-    return "opencode";
+  if (enabledSources.includes('opencode') && looksLikeOpencodeModelId(selectedModelId)) {
+    return 'opencode';
   }
-  if (enabledSources.includes("copilot")) {
-    return "copilot";
+  if (enabledSources.includes('copilot')) {
+    return 'copilot';
   }
-  if (enabledSources.includes("opencode")) {
-    return "opencode";
+  if (enabledSources.includes('opencode')) {
+    return 'opencode';
   }
-  return "ollama";
+  return 'ollama';
 }
 
 /**
@@ -129,21 +123,21 @@ export function resolveCompletionSourceForRequest(
  */
 export function looksLikeOpencodeModelId(id: string): boolean {
   const t = id.trim();
-  const slash = t.indexOf("/");
+  const slash = t.indexOf('/');
   if (slash <= 0 || slash === t.length - 1) {
     return false;
   }
-  return !t.includes("//") && t.split("/").length === 2;
+  return !t.includes('//') && t.split('/').length === 2;
 }
 
 /**
  * Determina el tipo de UI de completado que debe usar la webview.
  * @returns `multi` si hay varias fuentes habilitadas, de lo contrario la única fuente disponible.
  */
-export function getCompletionUiKind(): "copilot" | "opencode" | "ollama" | "multi" {
+export function getCompletionUiKind(): 'copilot' | 'opencode' | 'ollama' | 'multi' {
   const s = getEnabledCompletionSources();
   if (s.length > 1) {
-    return "multi";
+    return 'multi';
   }
   return s[0];
 }

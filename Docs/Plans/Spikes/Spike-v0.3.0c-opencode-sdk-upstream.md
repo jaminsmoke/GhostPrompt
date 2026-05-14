@@ -10,12 +10,12 @@
 
 ### Subpaths exportados (`package.json` → `exports`)
 
-| Export | Rol |
-|--------|-----|
-| `@opencode-ai/sdk` | `createOpencode()`, reexport de `./client`, `./server` — **entrada usada por GhostPrompt**. |
-| `@opencode-ai/sdk/client` | `createOpencodeClient(config?)` → `OpencodeClient` (cliente HTTP contra URL base). |
-| `@opencode-ai/sdk/server` | `createOpencodeServer`, `createOpencodeTui`, `ServerOptions`. |
-| `@opencode-ai/sdk/v2` | Misma forma que la raíz; `createOpencodeClient` admite `experimental_workspaceID`. |
+| Export                    | Rol                                                                                         |
+| ------------------------- | ------------------------------------------------------------------------------------------- |
+| `@opencode-ai/sdk`        | `createOpencode()`, reexport de `./client`, `./server` — **entrada usada por GhostPrompt**. |
+| `@opencode-ai/sdk/client` | `createOpencodeClient(config?)` → `OpencodeClient` (cliente HTTP contra URL base).          |
+| `@opencode-ai/sdk/server` | `createOpencodeServer`, `createOpencodeTui`, `ServerOptions`.                               |
+| `@opencode-ai/sdk/v2`     | Misma forma que la raíz; `createOpencodeClient` admite `experimental_workspaceID`.          |
 
 El cliente generado (`OpencodeClient` en `dist/gen/sdk.gen.d.ts`) expone entre otros: **`config`** (`get`, `update`, **`providers`**), **`session`** (`create`, **`prompt`**, **`promptAsync`**, `abort`, `delete`, `messages`, …), **`global.event`**, **`event.subscribe`** (ambos devuelven tipos basados en **`ServerSentEventsResult`** / streaming SSE).
 
@@ -30,11 +30,11 @@ El cliente generado (`OpencodeClient` en `dist/gen/sdk.gen.d.ts`) expone entre o
 
 ## D2 — Streaming vs request-response
 
-| Enfoque | Comportamiento | Encaje con ghost-text incremental |
-|---------|------------------|-----------------------------------|
-| **`session.prompt`** | Request/response; el tipo usa `RequestResult` (no SSE en la llamada directa). | **Actual:** coincide con “mostrar sugerencia cuando termina el turno”. Latencia = tiempo hasta respuesta completa. |
-| **`session.promptAsync`** | Documentación SDK: arranca envío y **retorna enseguida**; el flujo completo implica **seguimiento** (p. ej. `session.messages` / eventos). | Posible **menor bloqueo** del cliente HTTP en teoría; el trabajo real sigue en servidor. Esfuerzo **M**: máquina de estados + cancelación + límites de tiempo alineados con `CancellationToken`. |
-| **`global.event()` / `event.subscribe()`** | SSE (`createSseClient`, callbacks `onSseEvent`). | Si el servidor emite **fragmentos de asistente** por SSE, permitiría ghost-text **progresivo** (gran mejora UX). Requiere validar **forma de eventos** y estabilidad del contrato → esfuerzo **L**, depende de documentación/API estable. |
+| Enfoque                                    | Comportamiento                                                                                                                             | Encaje con ghost-text incremental                                                                                                                                                                                                         |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`session.prompt`**                       | Request/response; el tipo usa `RequestResult` (no SSE en la llamada directa).                                                              | **Actual:** coincide con “mostrar sugerencia cuando termina el turno”. Latencia = tiempo hasta respuesta completa.                                                                                                                        |
+| **`session.promptAsync`**                  | Documentación SDK: arranca envío y **retorna enseguida**; el flujo completo implica **seguimiento** (p. ej. `session.messages` / eventos). | Posible **menor bloqueo** del cliente HTTP en teoría; el trabajo real sigue en servidor. Esfuerzo **M**: máquina de estados + cancelación + límites de tiempo alineados con `CancellationToken`.                                          |
+| **`global.event()` / `event.subscribe()`** | SSE (`createSseClient`, callbacks `onSseEvent`).                                                                                           | Si el servidor emite **fragmentos de asistente** por SSE, permitiría ghost-text **progresivo** (gran mejora UX). Requiere validar **forma de eventos** y estabilidad del contrato → esfuerzo **L**, depende de documentación/API estable. |
 
 **Decisión provisional:** Mantener **`session.prompt`** como fuente de verdad para el texto final; los SSE **`message.part.delta`** ya demuestran streaming incremental — el siguiente paso de producto es **filtrar por parte** (respuesta vs `reasoning`) y decidir si el ghost-text en vivo muestra solo la parte final o también el razonamiento.
 
@@ -87,7 +87,7 @@ GhostPrompt **no** usa hoy `createOpencodeClient({ baseUrl })` contra un `serve`
 
 ## D4 — Undici y `duplex: "half"`
 
-El cliente Hey-API puede enviar **body como `ReadableStream`** sin `duplex`, lo que en Node dispara: *"duplex option is required when sending a body"*.
+El cliente Hey-API puede enviar **body como `ReadableStream`** sin `duplex`, lo que en Node dispara: _"duplex option is required when sending a body"_.
 
 GhostPrompt aplica **`ensureNodeFetchDuplex()`** (`src/opencode/nodeFetchDuplex.ts`): parche de `Request` + envoltorio de `fetch`.
 
@@ -97,13 +97,13 @@ GhostPrompt aplica **`ensureNodeFetchDuplex()`** (`src/opencode/nodeFetchDuplex.
 
 ## D5 — Tabla decisión / riesgo / seguimiento
 
-| Mejora | Esfuerzo | Bloquea UX actual | Riesgo | Siguiente paso |
-|--------|----------|-------------------|--------|----------------|
-| Ghost-text **SSE** desde `event` / eventos globales | **L** | No | Contrato de eventos puede cambiar | [x] Log en debug (`opencodeSseDebug.ts`); interpretar muestras en salida **Suggestions** |
-| **`promptAsync` + polling** de mensajes | **M** | No | Complejidad de cancelación y condiciones de carrera | Prototipo tras definir API estable de “mensaje final” |
-| Seguir en **`session.prompt`** | — | — | Ninguno extra | Baseline mantenimiento |
-| Quitar **`nodeFetchDuplex`** tras fix upstream/SDK | **S** | No | Regresión en extension host | Test manual + CI en bump de SDK |
-| Documentar **`opencode serve --port 17433`** para usuarios avanzados | **S** | No | Confusión con embebido | Opcional: párrafo en README *Advanced* |
+| Mejora                                                               | Esfuerzo | Bloquea UX actual | Riesgo                                              | Siguiente paso                                                                           |
+| -------------------------------------------------------------------- | -------- | ----------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Ghost-text **SSE** desde `event` / eventos globales                  | **L**    | No                | Contrato de eventos puede cambiar                   | [x] Log en debug (`opencodeSseDebug.ts`); interpretar muestras en salida **Suggestions** |
+| **`promptAsync` + polling** de mensajes                              | **M**    | No                | Complejidad de cancelación y condiciones de carrera | Prototipo tras definir API estable de “mensaje final”                                    |
+| Seguir en **`session.prompt`**                                       | —        | —                 | Ninguno extra                                       | Baseline mantenimiento                                                                   |
+| Quitar **`nodeFetchDuplex`** tras fix upstream/SDK                   | **S**    | No                | Regresión en extension host                         | Test manual + CI en bump de SDK                                                          |
+| Documentar **`opencode serve --port 17433`** para usuarios avanzados | **S**    | No                | Confusión con embebido                              | Opcional: párrafo en README _Advanced_                                                   |
 
 ---
 

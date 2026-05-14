@@ -1,15 +1,15 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const executeCommandMock = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 const workspaceConfigGetMock = vi.hoisted(() =>
   vi.fn((key: string, fallback: unknown) => fallback),
 );
 
-vi.mock("../src/system/debug/SuggestionDebug", () => ({
+vi.mock('../src/system/debug/SuggestionDebug', () => ({
   logSuggestionDebug: vi.fn(),
 }));
 
-vi.mock("vscode", () => ({
+vi.mock('vscode', () => ({
   commands: {
     executeCommand: (...args: unknown[]) => executeCommandMock(...args),
   },
@@ -28,37 +28,37 @@ vi.mock("vscode", () => ({
 import {
   forwardGhostPromptInlineUiToVsOpenCodeIfApplicable,
   VS_OPEN_CODE_X_GHOST_PROMPT_INLINE_UI,
-} from "../src/destinations/vsOpenCodeX/vsOpenCodeXDestination";
+} from '../src/destinations/vsOpenCodeX/vsOpenCodeXDestination';
 
-describe("vsOpenCodeXGhostPromptUiBridge", () => {
+describe('vsOpenCodeXGhostPromptUiBridge', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) =>
-      key === "agentDestination" ? "copilotChat" : fallback,
+      key === 'agentDestination' ? 'copilotChat' : fallback,
     );
   });
 
-  it("no llama executeCommand si destino es Copilot", () => {
+  it('no llama executeCommand si destino es Copilot', () => {
     forwardGhostPromptInlineUiToVsOpenCodeIfApplicable({
-      type: "suggestion",
+      type: 'suggestion',
       captureId: 1,
-      suggestion: "x",
+      suggestion: 'x',
       broadcast: true,
     });
     expect(executeCommandMock).not.toHaveBeenCalled();
   });
 
-  it("reenvía tipo permitido sin campo broadcast si destino VSX", () => {
+  it('reenvía tipo permitido sin campo broadcast si destino VSX', () => {
     workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) =>
-      key === "agentDestination" ? "vsOpenCodeX" : fallback,
+      key === 'agentDestination' ? 'vsOpenCodeX' : fallback,
     );
     forwardGhostPromptInlineUiToVsOpenCodeIfApplicable({
-      type: "loading",
+      type: 'loading',
       captureId: 3,
       broadcast: true,
     });
     expect(executeCommandMock).toHaveBeenCalledWith(VS_OPEN_CODE_X_GHOST_PROMPT_INLINE_UI, {
-      type: "loading",
+      type: 'loading',
       captureId: 3,
     });
   });

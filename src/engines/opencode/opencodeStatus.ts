@@ -1,5 +1,5 @@
-import * as vscode from "vscode";
-import type { ProviderStatusModule, ProviderStateRecord } from "../../system/status/types";
+import * as vscode from 'vscode';
+import type { ProviderStatusModule, ProviderStateRecord } from '../../system/status/types';
 
 const OPENCODE_DEFAULT_PORT = 4096;
 
@@ -22,14 +22,14 @@ async function pingOpenCode(baseUrl: string): Promise<boolean> {
  * @returns URL de OpenCode para las comprobaciones de estado.
  */
 async function getOpenCodeBaseUrl(): Promise<string> {
-  const cfg = vscode.workspace.getConfiguration("ghostPrompt");
-  return cfg.get<string>("opencodeBaseUrl", `http://127.0.0.1:${OPENCODE_DEFAULT_PORT}`);
+  const cfg = vscode.workspace.getConfiguration('ghostPrompt');
+  return cfg.get<string>('opencodeBaseUrl', `http://127.0.0.1:${OPENCODE_DEFAULT_PORT}`);
 }
 
 export const opencodeStatusModule: ProviderStatusModule = {
-  id: "opencode",
-  kind: "engine",
-  label: "OpenCode",
+  id: 'opencode',
+  kind: 'engine',
+  label: 'OpenCode',
 
   /**
    * Comprueba el estado del servidor OpenCode.
@@ -41,22 +41,22 @@ export const opencodeStatusModule: ProviderStatusModule = {
 
     if (alive) {
       return {
-        id: "opencode",
-        kind: "engine",
-        status: "running",
-        label: "OpenCode",
-        statusText: "Servidor activo",
-        actions: ["stop"],
+        id: 'opencode',
+        kind: 'engine',
+        status: 'running',
+        label: 'OpenCode',
+        statusText: 'Servidor activo',
+        actions: ['stop'],
       };
     }
 
     return {
-      id: "opencode",
-      kind: "engine",
-      status: "stopped",
-      label: "OpenCode",
-      statusText: "Servidor detenido",
-      actions: ["start"],
+      id: 'opencode',
+      kind: 'engine',
+      status: 'stopped',
+      label: 'OpenCode',
+      statusText: 'Servidor detenido',
+      actions: ['start'],
     };
   },
 
@@ -66,16 +66,20 @@ export const opencodeStatusModule: ProviderStatusModule = {
    */
   async start(): Promise<void> {
     const baseUrl = await getOpenCodeBaseUrl();
-    const terminal = vscode.window.createTerminal("GhostPrompt OpenCode");
-    terminal.sendText(`opencode --headless --port ${new URL(baseUrl).port || OPENCODE_DEFAULT_PORT}`);
+    const terminal = vscode.window.createTerminal('GhostPrompt OpenCode');
+    terminal.sendText(
+      `opencode --headless --port ${new URL(baseUrl).port || OPENCODE_DEFAULT_PORT}`,
+    );
     terminal.show();
     // Esperar a que el servidor esté listo
     for (let i = 0; i < 30; i++) {
       const alive = await pingOpenCode(baseUrl);
-      if (alive) { return; }
+      if (alive) {
+        return;
+      }
       await new Promise((r) => setTimeout(r, 1000));
     }
-    throw new Error("No se pudo iniciar OpenCode (timeout 30s)");
+    throw new Error('No se pudo iniciar OpenCode (timeout 30s)');
   },
 
   /**
@@ -85,11 +89,13 @@ export const opencodeStatusModule: ProviderStatusModule = {
   async stop(): Promise<void> {
     const baseUrl = await getOpenCodeBaseUrl();
     try {
-      await fetch(`${baseUrl}/exit`, { method: "POST", signal: AbortSignal.timeout(3000) });
+      await fetch(`${baseUrl}/exit`, { method: 'POST', signal: AbortSignal.timeout(3000) });
     } catch {
       // Si no responde, forzar cierre de terminales de OpenCode
       vscode.window.terminals.forEach((t) => {
-        if (t.name.includes("OpenCode")) { t.dispose(); }
+        if (t.name.includes('OpenCode')) {
+          t.dispose();
+        }
       });
     }
   },

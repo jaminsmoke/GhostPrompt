@@ -1,6 +1,6 @@
-export type ProviderKind = "engine" | "destination";
+export type ProviderKind = 'engine' | 'destination';
 
-export type ProviderState = "running" | "stopped" | "starting" | "unavailable" | "error";
+export type ProviderState = 'running' | 'stopped' | 'starting' | 'unavailable' | 'error';
 
 export interface ProviderStateRecord {
   id: string;
@@ -8,7 +8,7 @@ export interface ProviderStateRecord {
   status: ProviderState;
   label: string;
   statusText?: string;
-  actions?: ("start" | "stop")[];
+  actions?: ('start' | 'stop')[];
 }
 
 export interface ProviderStatusModule {

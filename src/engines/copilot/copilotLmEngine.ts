@@ -1,7 +1,7 @@
-import * as vscode from "vscode";
+import * as vscode from 'vscode';
 
 import { buildCompletionInstruction } from '../../core/instruction';
-import { describeModel, selectModelByPolicy } from "./catalog/modelCatalog";
+import { describeModel, selectModelByPolicy } from './catalog/modelCatalog';
 import { normalizeSuggestion } from '../../core/normalize';
 import { collectResponseText } from '../../core/streaming';
 import {
@@ -29,23 +29,23 @@ export async function requestCopilotLmCompletion(
     policy,
     preferredModelId,
     maxSuggestionChars = DEFAULT_MAX_SUGGESTION_CHARS,
-    style = "balanced",
+    style = 'balanced',
     context,
     requestTimeoutMs = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
     onLoadingPhase,
   } = options;
-  if (policy === "nonPremiumOnly" && premiumQuotaBlocked) {
-    return { kind: "empty", reason: "premium-quota-blocked" };
+  if (policy === 'nonPremiumOnly' && premiumQuotaBlocked) {
+    return { kind: 'empty', reason: 'premium-quota-blocked' };
   }
 
-  const models = await vscode.lm.selectChatModels({ vendor: "copilot" });
+  const models = await vscode.lm.selectChatModels({ vendor: 'copilot' });
   if (!models.length) {
-    return { kind: "empty", reason: "no-model" };
+    return { kind: 'empty', reason: 'no-model' };
   }
 
   const model = selectModelByPolicy(models, policy, preferredModelId);
   if (!model) {
-    return { kind: "empty", reason: "no-included-model" };
+    return { kind: 'empty', reason: 'no-included-model' };
   }
 
   try {
@@ -54,7 +54,7 @@ export async function requestCopilotLmCompletion(
     let requestCancellation: vscode.Disposable | undefined;
     let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
     try {
-      onLoadingPhase?.("copilot");
+      onLoadingPhase?.('copilot');
       requestTokenSource = new vscode.CancellationTokenSource();
       requestCancellation = token.onCancellationRequested(() => {
         requestTokenSource!.cancel();
@@ -62,7 +62,7 @@ export async function requestCopilotLmCompletion(
       timeoutHandle = setTimeout(() => {
         requestTokenSource!.cancel();
       }, requestTimeoutMs);
-      onLoadingPhase?.("copilot-generating");
+      onLoadingPhase?.('copilot-generating');
       const response = await model.sendRequest(
         [vscode.LanguageModelChatMessage.User(instruction)],
         {},
@@ -71,17 +71,13 @@ export async function requestCopilotLmCompletion(
 
       const completion = await collectResponseText(response, requestTimeoutMs);
       if (looksLikeCopilotRefusal(completion)) {
-        return { kind: "empty", reason: "content-blocked" };
+        return { kind: 'empty', reason: 'content-blocked' };
       }
-      const suggestion = normalizeSuggestion(
-        completion,
-        userText,
-        maxSuggestionChars,
-      );
+      const suggestion = normalizeSuggestion(completion, userText, maxSuggestionChars);
       if (!suggestion) {
-        return { kind: "empty", reason: "empty-response" };
+        return { kind: 'empty', reason: 'empty-response' };
       }
-      return { kind: "suggestion", suggestion, model: describeModel(model) };
+      return { kind: 'suggestion', suggestion, model: describeModel(model) };
     } finally {
       clearTimeout(timeoutHandle);
       requestCancellation?.dispose();
@@ -92,14 +88,14 @@ export async function requestCopilotLmCompletion(
       throw error;
     }
     if (error instanceof Error && /request-timeout/i.test(error.message)) {
-      return { kind: "empty", reason: "request-timeout" };
+      return { kind: 'empty', reason: 'request-timeout' };
     }
-    const message = error instanceof Error ? error.message : "Unknown error";
-    if (policy === "nonPremiumOnly" && isPremiumQuotaError(message)) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    if (policy === 'nonPremiumOnly' && isPremiumQuotaError(message)) {
       premiumQuotaBlocked = true;
-      return { kind: "empty", reason: "premium-quota-blocked" };
+      return { kind: 'empty', reason: 'premium-quota-blocked' };
     }
-    return { kind: "error", message };
+    return { kind: 'error', message };
   }
 }
 
@@ -111,9 +107,9 @@ export async function requestCopilotLmCompletion(
 function isPremiumQuotaError(message: string): boolean {
   const normalized = message.toLowerCase();
   return (
-    normalized.includes("premium model quota") ||
-    normalized.includes("additional paid premium requests") ||
-    normalized.includes("allowance to renew")
+    normalized.includes('premium model quota') ||
+    normalized.includes('additional paid premium requests') ||
+    normalized.includes('allowance to renew')
   );
 }
 
@@ -122,16 +118,16 @@ function looksLikeCopilotRefusal(text: string): boolean {
   if (!normalized) {
     return false;
   }
-  if (normalized.startsWith("i'm sorry") || normalized.startsWith("im sorry")) {
+  if (normalized.startsWith("i'm sorry") || normalized.startsWith('im sorry')) {
     return /assist|help|provide|cannot|can't|unable/.test(normalized);
   }
   return (
     normalized.includes("can't assist") ||
-    normalized.includes("cannot assist") ||
-    normalized.includes("unable to assist") ||
+    normalized.includes('cannot assist') ||
+    normalized.includes('unable to assist') ||
     normalized.includes("can't help") ||
-    normalized.includes("cannot help") ||
-    normalized.includes("unable to provide") ||
-    normalized.includes("cannot provide")
+    normalized.includes('cannot help') ||
+    normalized.includes('unable to provide') ||
+    normalized.includes('cannot provide')
   );
 }
