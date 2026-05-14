@@ -79,7 +79,17 @@ export const webviewOutboundSuggestionStreamSchema = z.object({
 
 export const webviewOutboundEmptySchema = z.object({
   type: z.literal("empty"),
-  reason: z.string(),
+  reason: z.enum([
+    "no-model",
+    "no-included-model",
+    "premium-quota-blocked",
+    "empty-response",
+    "request-timeout",
+    "too-short",
+    "duplicate-input",
+    "rate-limited",
+    "session-budget-exhausted",
+  ]),
   captureId: z.number().optional(),
   broadcast: z.boolean().optional(),
 });

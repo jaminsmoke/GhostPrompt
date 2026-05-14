@@ -14,6 +14,10 @@ describe("suggestionLoadingStatusText", () => {
     ["ollama-start", "Iniciando Ollama…"],
     ["ollama-loading", "Cargando modelo local…"],
     ["ollama-generating", "Generando sugerencia…"],
+    ["ollama-checking-install", "Verificando instalación de Ollama…"],
+    ["ollama-listing-models", "Obteniendo modelos locales…"],
+    ["ollama-starting-model", "Iniciando modelo…"],
+    ["ollama-model-ready", "Modelo listo"],
   ];
 
   it.each(cases)("maps %s", (phase, expected) => {

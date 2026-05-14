@@ -10,6 +10,7 @@
 ### 1. Mock paths rotos en tests de VSOpenCodeX — solved
 
 **Archivos:**
+
 - `tests/vsOpenCodeXDestination.test.ts:32`
 - `tests/vsOpenCodeXGhostPromptUiBridge.test.ts:8`
 
@@ -30,6 +31,7 @@
 ### 2. Mensaje `languageEffective` — schema, host y webview desincronizados — solved
 
 **Host envía** (`src/core/pipeline/suggestPipeline.ts:220-223`):
+
 ```ts
 deps.broadcastUi({
   type: "languageEffective",
@@ -38,6 +40,7 @@ deps.broadcastUi({
 ```
 
 **Schema Zod** (`src/system/contracts/webviewMessageSchemas.ts:115-119`):
+
 ```ts
 export const webviewOutboundLanguageEffectiveSchema = z.object({
   type: z.literal("languageEffective"),
@@ -48,6 +51,7 @@ export const webviewOutboundLanguageEffectiveSchema = z.object({
 ```
 
 **Webview React types** (`src/ui/webview/react/types.ts`):
+
 - El discriminated union `InboundMessage` ahora incluye la variante `languageEffective`
 - El handler en `useGhostPrompt.ts` reconoce el mensaje y ya no lo ignora silenciosamente
 
@@ -59,7 +63,7 @@ export const webviewOutboundLanguageEffectiveSchema = z.object({
 
 ## 🟡 MEDIUM — Riesgos de mantenimiento
 
-### 3. `parseWebviewOutboundMessage` — return value descartado
+### 3. `parseWebviewOutboundMessage` — return value descartado — solved
 
 **Archivo:** `src/ui/provider/MiniInputViewProvider.ts:106`
 
@@ -79,64 +83,64 @@ private static _broadcastUi(payload: Record<string, unknown>): void {
 
 **Fix propuesto:** Usar el return value: `const parsed = parseWebviewOutboundMessage(message); if (!parsed) return;` y enviar `parsed` en vez de `message`. O al menos loggear error cuando falla.
 
+**Estado:** Solucionado. `MiniInputViewProvider` y `ghostPromptInboundInit` / `postProviderStatus` ahora validan y usan el mensaje parseado antes de enviarlo.
+
 ---
 
-### 4. Cobertura incompleta de fases de loading
+### 4. Cobertura incompleta de fases de loading — solved
 
 **Archivo:** `tests/suggestionLoadingUi.test.ts`
 
-Se testean 8 de 12 fases. Faltan:
-| Fase faltante | Source (`src/core/loading.ts`) |
+Se testean 12 de 12 fases. Se agregaron casos faltantes para:
+
+| Fase | Source (`src/core/loading.ts`) |
 |---|---|
 | `ollama-checking-install` | L46 |
 | `ollama-listing-models` | L48 |
 | `ollama-starting-model` | L49 |
 | `ollama-model-ready` | L52 |
 
-**Impacto:** Bajo ahora, pero si alguien cambia los textos de esas 4 fases, no hay test que lo detecte.
+**Impacto:** Bajo ahora, pero la cobertura ya protege los cambios de texto y asegura que todas las fases Ollama estén validadas.
 
 ---
 
-### 5. Docs de arquitectura desactualizados
+### 5. Docs de arquitectura desactualizados — solved
 
 **Archivo:** `Docs/Plans/Roadmaps/v0.3/1.architecture.md`
 
 Referencias a rutas que ya no existen:
+
 - `src/debug/SuggestionDebug.ts` → movido a `src/system/debug/SuggestionDebug.ts`
 - `src/governor/` → movido a `src/core/governor/`
-- `src/bridge/` → eliminado o movido
+- `src/bridge/` → reemplazado por `src/destinations/` y lógica de envío de backends específicos
 - `src/log/*` → movido a `src/system/log/`
 
 ---
 
 ## 🟢 LOW — Cobertura y estilo
 
-### 6. `completionProvider.test.ts` solo cubre el path legacy
+### 6. `completionProvider.test.ts` solo cubre el path legacy — solved
 
 **Archivo:** `tests/completionProvider.test.ts`
 
-Solo mockea la clave legacy `completionProvider`. Nunca testea el path de `enabledCompletionSources`. Si la lógica de `getEnabledCompletionSources` en `src/core/sources.ts` cambia (p. ej. la detección de "explicitly configured"), estos tests no detectarían regresiones.
+Se agregaron casos para `enabledCompletionSources` explícito y multi-fuente, cubriendo el path actual de `src/core/sources.ts`.
 
 ---
 
-### 7. Webview types más restrictivas que Zod schema en `empty.reason`
+### 7. Webview types más restrictivas que Zod schema en `empty.reason` — solved
 
 - `src/ui/webview/react/types.ts` — `InboundMessage["empty"]["reason"]` es unión de 9 literales específicas
-- `src/system/contracts/webviewMessageSchemas.ts` — `webviewOutboundEmptySchema["reason"]` es `z.string()` (acepta cualquier string)
+- `src/system/contracts/webviewMessageSchemas.ts` — `webviewOutboundEmptySchema["reason"]` ahora es un `z.enum(...)` con los mismos 9 literales
 
-Si se agrega un nuevo `reason` del lado host, Zod lo acepta pero el tipo en React no, causando un falso positivo de TypeScript o un `@ts-expect-error` silenciado.
+Se agregó cobertura de schema outbound que acepta `empty` con `reason: "no-model"` y rechaza valores desconocidos.
 
 ---
 
-### 8. `parseWebviewOutboundMessage` mockeado como no-op en test principal
+### 8. `parseWebviewOutboundMessage` mockeado como no-op en test principal — solved
 
 **Archivo:** `tests/MiniInputViewProvider.test.ts:117`
 
-```ts
-parseWebviewOutboundMessage: () => undefined,
-```
-
-Esto desactiva la validación Zod en el test de integración más importante. Cualquier drift entre schema y emisor (como el issue #2) pasa inadvertido en la suite. Fix: usar el `parseWebviewOutboundMessage` real — o un spy — para que los tests también validen los mensajes salientes.
+El mock se actualizó para conservar la implementación real de `parseWebviewOutboundMessage` del módulo `webviewProtocols`, manteniendo la validación Zod de los mensajes salientes mientras se sigue usando un parser mínimo inbound para `suggest`.
 
 ---
 

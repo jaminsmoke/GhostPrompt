@@ -103,11 +103,14 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    */
   private static _broadcastUi(payload: Record<string, unknown>): void {
     const message = { ...payload, broadcast: true };
-    parseWebviewOutboundMessage(message);
-    for (const instance of MiniInputViewProvider._instances) {
-      instance._view?.webview.postMessage(message);
+    const validated = parseWebviewOutboundMessage(message);
+    if (!validated) {
+      return;
     }
-    forwardGhostPromptInlineUiToVsOpenCodeIfApplicable(message);
+    for (const instance of MiniInputViewProvider._instances) {
+      instance._view?.webview.postMessage(validated);
+    }
+    forwardGhostPromptInlineUiToVsOpenCodeIfApplicable(validated);
   }
 
   /**
@@ -121,8 +124,11 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         continue;
       }
       const msg = { type: "draftSync" as const, text, originViewId };
-      parseWebviewOutboundMessage(msg);
-      instance._view?.webview.postMessage(msg);
+      const validated = parseWebviewOutboundMessage(msg);
+      if (!validated) {
+        continue;
+      }
+      instance._view?.webview.postMessage(validated);
     }
   }
 
@@ -133,9 +139,12 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
       broadcast: true,
     });
     const msg = { type: "clear" as const };
-    parseWebviewOutboundMessage(msg);
+    const validated = parseWebviewOutboundMessage(msg);
+    if (!validated) {
+      return;
+    }
     for (const instance of MiniInputViewProvider._instances) {
-      instance._view?.webview.postMessage(msg);
+      instance._view?.webview.postMessage(validated);
     }
   }
 

@@ -54,8 +54,11 @@ export async function handleGhostPromptInboundInit(
     type: "draftHydrate" as const,
     text: ghostPromptSessionStore.getSnapshot().draftText,
   };
-  parseWebviewOutboundMessage(draftPayload);
-  webview.postMessage(draftPayload);
+  const validated = parseWebviewOutboundMessage(draftPayload);
+  if (!validated) {
+    return;
+  }
+  webview.postMessage(validated);
 }
 
 /**
@@ -263,7 +266,10 @@ async function handleProviderStatusRequest(webview: vscode.Webview, services: Gh
 async function postProviderStatus(webview: vscode.Webview, services: GhostPromptInboundDispatchServices): Promise<void> {
   const providers = await providerStatusManager.refreshAll();
   const msg = { type: "providerStatus" as const, providers };
-  parseWebviewOutboundMessage(msg);
-  webview.postMessage(msg);
-  services.broadcastUi(msg);
+  const validated = parseWebviewOutboundMessage(msg);
+  if (!validated) {
+    return;
+  }
+  webview.postMessage(validated);
+  services.broadcastUi(validated);
 }

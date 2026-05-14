@@ -98,24 +98,27 @@ vi.mock("../src/api/protocols/inboundHandlers", async (importOriginal) => {
   };
 });
 
-vi.mock("../src/api/protocols/webviewProtocols", () => ({
-  parseWebviewInboundMessage: (raw: unknown) => {
-    if (
-      typeof raw === "object" &&
-      raw !== null &&
-      "type" in raw &&
-      typeof (raw as { type: unknown }).type === "string"
-    ) {
-      const msg = raw as Record<string, unknown>;
-      if (msg.type === "suggest" && (typeof msg.captureId !== "number" || typeof msg.text !== "string")) {
-        return undefined;
+vi.mock("../src/api/protocols/webviewProtocols", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../src/api/protocols/webviewProtocols")>();
+  return {
+    ...actual,
+    parseWebviewInboundMessage: (raw: unknown) => {
+      if (
+        typeof raw === "object" &&
+        raw !== null &&
+        "type" in raw &&
+        typeof (raw as { type: unknown }).type === "string"
+      ) {
+        const msg = raw as Record<string, unknown>;
+        if (msg.type === "suggest" && (typeof msg.captureId !== "number" || typeof msg.text !== "string")) {
+          return undefined;
+        }
+        return raw;
       }
-      return raw;
-    }
-    return undefined;
-  },
-  parseWebviewOutboundMessage: () => undefined,
-}));
+      return undefined;
+    },
+  };
+});
 
 vi.mock("../src/api/settings/settingsPostMessage", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../src/api/settings/settingsPostMessage")>();

@@ -142,4 +142,22 @@ describe("webviewMessageSchemas (shared)", () => {
     };
     expect(webviewOutboundMessageSchema.safeParse(msg).success).toBe(true);
   });
+
+  it("acepta el mensaje outbound empty con reason válido", () => {
+    const msg = {
+      type: "empty" as const,
+      reason: "no-model" as const,
+      captureId: 1,
+    };
+    expect(webviewOutboundMessageSchema.safeParse(msg).success).toBe(true);
+  });
+
+  it("rechaza el mensaje outbound empty con reason inválido", () => {
+    const msg = {
+      type: "empty" as const,
+      reason: "unexpected-reason" as string,
+      captureId: 1,
+    };
+    expect(webviewOutboundMessageSchema.safeParse(msg).success).toBe(false);
+  });
 });
