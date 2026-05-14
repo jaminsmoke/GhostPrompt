@@ -1,5 +1,6 @@
 import { exec } from "node:child_process";
 import type { ProviderStatusModule, ProviderStateRecord } from "../../system/status/types";
+import { ollamaModelManager } from "./ollamaModelManager";
 
 function execAsync(cmd: string, timeoutMs = 5000): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -10,13 +11,17 @@ function execAsync(cmd: string, timeoutMs = 5000): Promise<string> {
   });
 }
 
+function parseModelList(stdout: string): string[] {
+  const lines = stdout.split("\n").filter((l) => l.trim().length > 0);
+  return lines.slice(1).map((line) => line.trim().split(/\s+/)[0]).filter(Boolean);
+}
+
 export const ollamaStatusModule: ProviderStatusModule = {
   id: "ollama",
   kind: "engine",
   label: "Ollama",
 
   async check(): Promise<ProviderStateRecord> {
-    // 1. Verificar instalación
     let version: string;
     try {
       version = await execAsync("ollama --version", 5000);
@@ -30,31 +35,10 @@ export const ollamaStatusModule: ProviderStatusModule = {
       };
     }
 
-    // 2. Listar modelos
+    let models: string[] = [];
     try {
       const stdout = await execAsync("ollama list", 10000);
-      const lines = stdout.split("\n").filter((l) => l.trim().length > 0);
-      const modelCount = Math.max(0, lines.length - 1);
-
-      if (modelCount > 0) {
-        return {
-          id: "ollama",
-          kind: "engine",
-          status: "running",
-          label: "Ollama",
-          statusText: `${modelCount} modelo${modelCount !== 1 ? "s" : ""} instalado${modelCount !== 1 ? "s" : ""}`,
-          actions: ["stop"],
-        };
-      }
-
-      return {
-        id: "ollama",
-        kind: "engine",
-        status: "stopped",
-        label: "Ollama",
-        statusText: `Instalado (${version}) — sin modelos`,
-        actions: [],
-      };
+      models = parseModelList(stdout);
     } catch {
       return {
         id: "ollama",
@@ -62,8 +46,38 @@ export const ollamaStatusModule: ProviderStatusModule = {
         status: "stopped",
         label: "Ollama",
         statusText: `Instalado (${version})`,
-        actions: [],
       };
     }
+
+    if (models.length === 0) {
+      return {
+        id: "ollama",
+        kind: "engine",
+        status: "stopped",
+        label: "Ollama",
+        statusText: "Instalado — sin modelos",
+      };
+    }
+
+    const activeModel = await ollamaModelManager.ps();
+    if (activeModel) {
+      return {
+        id: "ollama",
+        kind: "engine",
+        status: "running",
+        label: "Ollama",
+        statusText: `${activeModel} activo`,
+        actions: ["stop"],
+      };
+    }
+
+    return {
+      id: "ollama",
+      kind: "engine",
+      status: "stopped",
+      label: "Ollama",
+      statusText: `${models.length} modelo${models.length > 1 ? "s" : ""} disponible${models.length > 1 ? "s" : ""}`,
+      actions: [],
+    };
   },
 };

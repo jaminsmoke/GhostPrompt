@@ -5,7 +5,18 @@
  * inicio/detención de modelos con estados visibles.
  */
 import { exec, spawn, type ChildProcess } from "node:child_process";
-import * as vscode from "vscode";
+
+type Listener<T> = (data: T) => void;
+
+class SimpleEventEmitter<T> {
+  private _listeners: Listener<T>[] = [];
+  on(listener: Listener<T>): { dispose: () => void } {
+    this._listeners.push(listener);
+    return { dispose: () => { this._listeners = this._listeners.filter((l) => l !== listener); } };
+  }
+  fire(data: T): void { for (const l of this._listeners) { l(data); } }
+  dispose(): void { this._listeners = []; }
+}
 
 export type OllamaManagerState =
   | "idle"
@@ -21,9 +32,9 @@ class OllamaModelManager {
   private _state: OllamaManagerState = "idle";
   private _currentModel: string | null = null;
   private _ollamaProcess: ChildProcess | null = null;
-  private _onDidChangeState = new vscode.EventEmitter<{ state: OllamaManagerState; model?: string; message?: string }>();
+  private _onDidChangeState = new SimpleEventEmitter<{ state: OllamaManagerState; model?: string; message?: string }>();
 
-  readonly onDidChangeState = this._onDidChangeState.event;
+  readonly onDidChangeState = this._onDidChangeState.on.bind(this._onDidChangeState);
 
   get state(): OllamaManagerState {
     return this._state;
@@ -183,6 +194,22 @@ class OllamaModelManager {
         }, { once: true });
       }
     });
+  }
+
+  /**
+   * Verifica si hay un modelo cargado actualmente vía `ollama ps`.
+   * Retorna el nombre del modelo activo o null si no hay ninguno.
+   */
+  async ps(): Promise<string | null> {
+    try {
+      const stdout = await this.execAsync("ollama ps", 5000);
+      const lines = stdout.split("\n").filter((l) => l.trim().length > 0);
+      if (lines.length <= 1) { return null; }
+      const name = lines[1].trim().split(/\s+/)[0];
+      return name || null;
+    } catch {
+      return null;
+    }
   }
 
   /**

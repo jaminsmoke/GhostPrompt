@@ -17,6 +17,8 @@ import {
   handleGhostPromptSuggest,
 } from "../../core/pipeline";
 import { providerStatusManager } from "../../system/status";
+import { ollamaModelManager } from "../../engines/ollama";
+import { looksLikeOllamaModelId } from "../../core/sources";
 import type { WebviewInboundMessage } from "./webviewProtocols";
 
 export type GhostPromptInboundBroadcastServices = {
@@ -64,9 +66,23 @@ export function handleGhostPromptInboundDraftChanged(
 export async function handleGhostPromptInboundUpdateSetting(
   message: Extract<WebviewInboundMessage, { type: "updateSetting" }>,
   broadcastSettingsToAllViews: () => Promise<void>,
+  dispatchServices?: GhostPromptInboundDispatchServices,
 ): Promise<void> {
   await applyWebviewUpdateSetting(message);
   await broadcastSettingsToAllViews();
+
+  if (message.key === "selectedModelId" && message.value && dispatchServices) {
+    if (looksLikeOllamaModelId(message.value)) {
+      ollamaModelManager.stopAll();
+      ollamaModelManager.startModel(message.value).then(async () => {
+        const providers = await providerStatusManager.refreshAll();
+        dispatchServices!.broadcastUi({ type: "providerStatus", providers });
+      }).catch(async () => {
+        const providers = await providerStatusManager.refreshAll();
+        dispatchServices!.broadcastUi({ type: "providerStatus", providers });
+      });
+    }
+  }
 }
 
 export async function handleGhostPromptInboundAccept(
@@ -137,6 +153,7 @@ export async function dispatchGhostPromptInboundMessage(
       await handleGhostPromptInboundUpdateSetting(
         message,
         dispatchServices.broadcastSettingsToAllViews,
+        dispatchServices,
       );
       return;
     case "suggest":

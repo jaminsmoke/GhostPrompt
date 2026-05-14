@@ -99,6 +99,22 @@ export function useGhostPrompt() {
 
   const canSend = useMemo(() => Boolean(text.trim()) && !vsxActive, [text, vsxActive]);
 
+  const displayStatus = useMemo(() => {
+    if (completionProvider === "ollama") {
+      const ollama = providerStatuses.find((s) => s.id === "ollama");
+      if (ollama) {
+        if (ollama.status === "unavailable") { return "Ollama no está instalado"; }
+        if (ollama.status === "stopped") {
+          if (ollama.statusText?.includes("sin modelos")) { return "Ollama — sin modelos instalados"; }
+          return "Selecciona un modelo de Ollama";
+        }
+        if (ollama.status === "starting") { return "Iniciando modelo…"; }
+        if (ollama.status === "running") { return "Modelo listo"; }
+      }
+    }
+    return status;
+  }, [completionProvider, providerStatuses, status]);
+
   const sendUpdateSetting = useCallback((message: UpdateSettingMessage) => {
     postToHost(message);
   }, []);
@@ -242,20 +258,8 @@ export function useGhostPrompt() {
           }
           setText(message.text);
           break;
-        case "ollama-status":
-          if (message.status === "checking-install") {
-            setStatus("Verificando instalación de Ollama…");
-          } else if (message.status === "not-installed") {
-            setStatus("Ollama no está instalado. Instálalo desde ollama.com");
-          } else if (message.status === "listing-models") {
-            setStatus("Obteniendo modelos locales…");
-          } else if (message.status === "starting-model") {
-            setStatus("Iniciando modelo…");
-          } else if (message.status === "model-ready") {
-            setStatus("Modelo listo");
-          } else if (message.status === "model-error") {
-            setStatus(`Error: ${message.message ?? "Error al iniciar el modelo"}`);
-          }
+        case "providerStatus":
+          queryClient.setQueryData<ProviderStateRecord[]>(["providerStatus"], message.providers);
           break;
         default:
           break;
@@ -269,7 +273,7 @@ export function useGhostPrompt() {
     postToHost({ type: "init" });
 
     return () => window.removeEventListener("message", handleMessage);
-  }, [viewId]);
+  }, [viewId, queryClient]);
 
   const syncTextareaHeight = useCallback(() => {
     const input = textareaRef.current;
@@ -370,6 +374,7 @@ export function useGhostPrompt() {
     debugSuggestions,
     isLoading,
     statusLoading,
+    displayStatus,
     providerStatuses,
     textareaRef,
     canSend,

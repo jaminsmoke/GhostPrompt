@@ -11,7 +11,6 @@ export function App(): JSX.Element {
   const {
     text,
     suggestion,
-    status,
     capabilities,
     isLoading,
     vsxActive,
@@ -30,6 +29,7 @@ export function App(): JSX.Element {
     agentDestination,
     providerStatuses,
     statusLoading,
+    displayStatus,
     handleTextChange,
     handleSend,
     acceptSuggestion,
@@ -92,7 +92,7 @@ export function App(): JSX.Element {
       />
 
       <BottomBar
-        status={status}
+        status={displayStatus}
         isLoading={isLoading}
         canSend={canSend}
         onSend={handleSend}

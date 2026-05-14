@@ -104,6 +104,5 @@
 
 ## Referencias
 
-- Oleada previa: [`Roadmap-v0.3.0c-opencode-ux-perf.md`](./Roadmap-v0.3.0c-opencode-ux-perf.md)
 - Spike técnico: [`Spike-v0.3.0c-opencode-sdk-upstream.md`](../Spikes/Spike-v0.3.0c-opencode-sdk-upstream.md)
-- Integración base: [`Roadmap-v0.3-opencode-integration.md`](./Roadmap-v0.3-opencode-integration.md)
+- Integración base consolidada: [`Roadmap-v0.4-opencode_perf.md`](./opencode_perf.md)
