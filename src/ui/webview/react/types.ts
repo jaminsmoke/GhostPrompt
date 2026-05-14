@@ -30,7 +30,6 @@ export type SettingsPayload = {
   selectedModelId: string;
   availableModels: SuggestionModel[];
   suggestionStyle: "concise" | "balanced" | "detailed";
-  contextMode: "off" | "basic" | "project";
   suggestionLanguageChoice: "auto" | "es" | "en";
   effectiveSuggestionLanguage: "es" | "en";
   effectiveModel?: SuggestionModel;
@@ -72,7 +71,8 @@ export type InboundMessage =
         | "too-short"
         | "duplicate-input"
         | "rate-limited"
-        | "session-budget-exhausted";
+        | "session-budget-exhausted"
+        | "content-blocked";
       captureId?: number;
       broadcast?: boolean;
     }
@@ -134,7 +134,6 @@ export type UpdateSettingMessage =
   | { type: "updateSetting"; key: "suggestionModelPolicy"; value: "nonPremiumOnly" | "anyModel" }
   | { type: "updateSetting"; key: "selectedModelId"; value: string }
   | { type: "updateSetting"; key: "suggestionStyle"; value: "concise" | "balanced" | "detailed" }
-  | { type: "updateSetting"; key: "contextMode"; value: "off" | "basic" | "project" }
   | { type: "updateSetting"; key: "suggestionLanguageChoice"; value: "auto" | "es" | "en" }
   | { type: "updateSetting"; key: "debugSuggestions"; value: boolean }
   | { type: "updateSetting"; key: "completionProvider"; value: CompletionProvider }

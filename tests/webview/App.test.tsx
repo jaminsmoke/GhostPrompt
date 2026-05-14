@@ -1,6 +1,5 @@
-(globalThis as any).window = globalThis as any;
-
 const { postMessageMock } = vi.hoisted(() => {
+  (globalThis as any).window = globalThis as any;
   const pm = vi.fn();
   (globalThis as any).acquireVsCodeApi = () => ({ postMessage: pm });
   return { postMessageMock: pm };

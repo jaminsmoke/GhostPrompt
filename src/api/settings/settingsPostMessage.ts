@@ -28,7 +28,6 @@ export type GhostPromptSettingsGetters = {
   getSuggestionModelPolicy: () => SuggestionModelPolicy;
   getSelectedModelId: () => string;
   getSuggestionStyle: () => SuggestionStyle;
-  getContextMode: () => "off" | "basic" | "project";
   getSuggestionLanguageChoice: () => "auto" | SupportedSuggestionLanguage;
 };
 
@@ -84,7 +83,6 @@ export async function buildAndPostGhostPromptSettings(
       selectedModelId: getters.getSelectedModelId(),
       availableModels,
       suggestionStyle: getters.getSuggestionStyle(),
-      contextMode: getters.getContextMode(),
       suggestionLanguageChoice: getters.getSuggestionLanguageChoice(),
       effectiveSuggestionLanguage:
         ghostPromptSessionStore.getSnapshot().lastEffectiveSuggestionLanguage,

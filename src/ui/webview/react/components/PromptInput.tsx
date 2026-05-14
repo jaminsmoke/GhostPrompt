@@ -10,6 +10,7 @@ interface PromptInputProps {
   onTextChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSend: () => void;
   onAccept: () => void;
+  onCursorCheck: () => void;
 }
 
 /**
@@ -37,6 +38,7 @@ export function PromptInput(props: PromptInputProps): JSX.Element {
     onTextChange,
     onSend,
     onAccept,
+    onCursorCheck,
   } = props;
   const ghostRef = useRef<HTMLPreElement | null>(null);
 
@@ -53,6 +55,15 @@ export function PromptInput(props: PromptInputProps): JSX.Element {
     syncTextareaHeight();
   }, [text, syncTextareaHeight]);
 
+  const syncScroll = useCallback(() => {
+    const input = textareaRef.current;
+    const ghost = ghostRef.current;
+    if (input && ghost) {
+      ghost.scrollTop = input.scrollTop;
+      ghost.scrollLeft = input.scrollLeft;
+    }
+  }, []);
+
   const ghostContent = useMemo(() => {
     if (!suggestion || !text.trim()) {
       return null;
@@ -60,10 +71,10 @@ export function PromptInput(props: PromptInputProps): JSX.Element {
     return (
       <pre
         ref={ghostRef}
-        className="absolute inset-0 pointer-events-none m-0 p-3 text-[var(--vscode-input-foreground)]/40 whitespace-pre-wrap break-words text-sm leading-6"
+        className="absolute inset-[1px] pointer-events-none m-0 px-3 py-2 whitespace-pre-wrap break-words text-sm leading-6 overflow-auto"
         aria-hidden="true"
       >
-        <span className="opacity-30">{text}</span>
+        <span className="opacity-0">{text}</span>
         <span className="text-[var(--vscode-input-foreground)]/70">{suggestion}</span>
       </pre>
     );
@@ -78,6 +89,9 @@ export function PromptInput(props: PromptInputProps): JSX.Element {
         className={`w-full rounded-md border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] px-3 py-2 text-sm leading-6 text-[var(--vscode-input-foreground)] outline-none transition focus:border-[var(--vscode-focusBorder)] focus:ring-1 focus:ring-[var(--vscode-focusBorder)] resize-none ${compact ? "min-h-[64px]" : "min-h-[100px]"}`}
         value={text}
         onChange={onTextChange}
+        onScroll={syncScroll}
+        onMouseUp={onCursorCheck}
+        onKeyUp={onCursorCheck}
         onKeyDown={(event) => {
           if (event.key === "Tab") {
             if (suggestion && isGhostUiAllowed()) {

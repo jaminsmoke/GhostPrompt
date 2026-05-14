@@ -55,14 +55,6 @@ export async function applyWebviewUpdateSetting(
     );
     return;
   }
-  if (message.key === "contextMode") {
-    const value =
-      message.value === "off" || message.value === "project"
-        ? message.value
-        : "basic";
-    await config.update("contextMode", value, vscode.ConfigurationTarget.Global);
-    return;
-  }
   if (message.key === "suggestionLanguageChoice") {
     const choice =
       message.value === "auto" || message.value === "es" || message.value === "en"

@@ -102,11 +102,7 @@ function minimalSuggestDeps(): GhostPromptSuggestDeps {
     getSuggestionModelPolicy: () => "nonPremiumOnly",
     getSelectedModelId: () => "auto",
     getSuggestionStyle: () => "balanced",
-    getContextMode: () => "basic",
-    getSuggestionLanguageMode: () => "auto",
-    getSuggestionLanguage: () => "en",
     getMaxSuggestionChars: () => 180,
-    collectProjectContext: () => ({}),
   };
 }
 

@@ -1,36 +1,21 @@
 /**
- * Orquestación del mensaje webview `suggest`: gobernador, caché, LM (Copilot/OpenCode) y broadcast UI.
+ * Orquestación del mensaje webview `suggest`: LM (Copilot/OpenCode) y broadcast UI.
  * Invocado desde `handleGhostPromptSuggest.ts` (wrapper estable para imports existentes).
  */
-import {
-  collectProjectBootstrapPieces,
-  fingerprintProjectBootstrapLines,
-  resolveGhostPromptWorkspaceFolderUri,
-  type ProjectBootstrapPiece,
-  sortProjectBootstrapPieces,
-} from '../context/projectBootstrapContext';
-import {
-  getCompletionProviderForSource,
-} from '../../engines/engineRegistry';
+import { getCompletionProviderForSource } from '../../engines/engineRegistry';
 import {
   getEnabledCompletionSources,
   resolveCompletionSourceForRequest,
 } from '../sources';
-import { resolveSuggestionLanguage } from '../language';
 import {
   suggestionLoadingStatusText,
   type SuggestionLoadingPhase,
 } from '../loading';
 import type {
-  SuggestionLanguageMode,
   SuggestionModelPolicy,
   SuggestionStyle,
-  SupportedSuggestionLanguage,
 } from '../types';
-import type { Uri } from "vscode";
-import type { ProjectMemoryReconcileSnapshot } from "../memory/persist";
 import { logSuggestionDebug } from '../../system/debug/SuggestionDebug';
-import { SuggestionRequestGovernor } from '../governor/SuggestionRequestGovernor';
 import { ghostPromptSessionStore } from '../session/GhostPromptSessionStore';
 import { maybeNotifySuggestionIssue } from "../../ui/notifications/suggestionNotification";
 import type { WebviewInboundMessage } from "../../api/protocols/webviewProtocols";
@@ -40,32 +25,13 @@ export type GhostPromptSuggestDeps = {
   getSuggestionModelPolicy: () => SuggestionModelPolicy;
   getSelectedModelId: () => string;
   getSuggestionStyle: () => SuggestionStyle;
-  getContextMode: () => "off" | "basic" | "project";
-  getSuggestionLanguageMode: () => SuggestionLanguageMode;
-  getSuggestionLanguage: () => SupportedSuggestionLanguage;
   getMaxSuggestionChars: () => number;
-  collectProjectContext: () => {
-    workspaceName?: string;
-    activeFilePath?: string;
-    activeLanguageId?: string;
-    activeSelection?: string;
-  };
-  reconcileGhostPromptBootstrap?: (params: {
-    workspaceRootUriString: string;
-    workspaceFolderUri: Uri;
-    livePieces: readonly ProjectBootstrapPiece[];
-  }) => Promise<ProjectMemoryReconcileSnapshot>;
-
-  writeGhostPromptBootstrapSnapshot?: (
-    snapshot: ProjectMemoryReconcileSnapshot,
-  ) => Promise<void>;
 };
 
 /**
  * Ejecuta el flujo completo de suggestion para un par texto + captureId (tras validar entrada).
- * @param message Mensaje de sugerencia recibido desde el webview.
- * @param deps Dependencias y callbacks necesarios para el pipeline.
- * @returns Promise que se resuelve cuando el pipeline termina.
+ * @param {WebviewInboundMessage} message Mensaje de sugerencia recibido desde el webview.
+ * @param {GhostPromptSuggestDeps} deps Dependencias y callbacks necesarios para el pipeline.
  */
 export async function runGhostPromptSuggestPipeline(
   message: Extract<WebviewInboundMessage, { type: "suggest" }>,
@@ -78,108 +44,6 @@ export async function runGhostPromptSuggestPipeline(
   const policy = deps.getSuggestionModelPolicy();
   const selectedModelId = deps.getSelectedModelId();
   const style = deps.getSuggestionStyle();
-  const contextMode = deps.getContextMode();
-  const languageMode = deps.getSuggestionLanguageMode();
-  const effectiveLanguage = resolveSuggestionLanguage(
-    languageMode,
-    deps.getSuggestionLanguage(),
-    text,
-    ghostPromptSessionStore.getSnapshot().lastEffectiveSuggestionLanguage,
-  );
-
-  let projectBootstrapLines: readonly string[] = [];
-  let projectBootstrapFingerprint = "";
-  let projectBootstrapReconcile: ProjectMemoryReconcileSnapshot | undefined;
-  if (contextMode === "project") {
-    const folderUri = resolveGhostPromptWorkspaceFolderUri();
-    const pieces = await collectProjectBootstrapPieces(folderUri);
-    if (
-      folderUri &&
-      deps.reconcileGhostPromptBootstrap &&
-      deps.writeGhostPromptBootstrapSnapshot
-    ) {
-      projectBootstrapReconcile = await deps.reconcileGhostPromptBootstrap({
-        workspaceRootUriString: folderUri.toString(),
-        workspaceFolderUri: folderUri,
-        livePieces: pieces,
-      });
-      projectBootstrapLines = projectBootstrapReconcile.promptLines;
-    } else {
-      projectBootstrapLines = sortProjectBootstrapPieces(pieces).map((p) => p.promptLine);
-    }
-    projectBootstrapFingerprint = fingerprintProjectBootstrapLines(projectBootstrapLines);
-  }
-
-  const governor = SuggestionRequestGovernor.shared;
-  const governorConfig = SuggestionRequestGovernor.fromWorkspace();
-  const decision = governor.decide(text, governorConfig, {
-    language: effectiveLanguage,
-    style,
-    contextMode,
-    modelPolicy: policy,
-    selectedModelId,
-    ...(contextMode === "project" ? { projectBootstrapFingerprint } : {}),
-  });
-  const usage = governor.getUsageSnapshot(governorConfig);
-
-  if (decision.kind === "serve-cache") {
-    logSuggestionDebug(
-      captureId,
-      "request-cache-hit",
-      `metrics=${JSON.stringify(governor.getMetrics())} usage=${JSON.stringify(usage)}`,
-    );
-    if (decision.result.kind === "suggestion") {
-      ghostPromptSessionStore.patchState({
-        pendingSuggestion: decision.result.suggestion,
-        suggestionFlowStatus: "success",
-        ...(decision.result.model
-          ? { lastEffectiveModel: decision.result.model }
-          : {}),
-      });
-      deps.broadcastUi({
-        type: "suggestion",
-        suggestion: decision.result.suggestion,
-        ...(decision.result.model ? { model: decision.result.model } : {}),
-        captureId,
-      });
-    } else if (decision.result.kind === "empty") {
-      ghostPromptSessionStore.patchState({ suggestionFlowStatus: "empty" });
-      deps.broadcastUi({
-        type: "empty",
-        reason: decision.result.reason,
-        captureId,
-      });
-      maybeNotifySuggestionIssue(decision.result);
-    } else {
-      ghostPromptSessionStore.patchState({
-        suggestionFlowStatus: "error",
-        lastSuggestionError: decision.result.message,
-      });
-      deps.broadcastUi({
-        type: "error",
-        message: decision.result.message,
-        captureId,
-      });
-      maybeNotifySuggestionIssue(decision.result);
-    }
-    return;
-  }
-
-  if (decision.kind === "block") {
-    logSuggestionDebug(
-      captureId,
-      "request-blocked",
-      `reason=${decision.reason} metrics=${JSON.stringify(governor.getMetrics())} usage=${JSON.stringify(usage)}`,
-    );
-    ghostPromptSessionStore.patchState({ suggestionFlowStatus: "empty" });
-    deps.broadcastUi({
-      type: "empty",
-      reason: decision.reason,
-      captureId,
-    });
-    maybeNotifySuggestionIssue({ kind: "empty", reason: decision.reason });
-    return;
-  }
 
   const tokenSource = ghostPromptSessionStore.prepareSuggestionRequest(captureId);
 
@@ -192,7 +56,7 @@ export async function runGhostPromptSuggestPipeline(
   logSuggestionDebug(
     captureId,
     "request-start",
-    `chars=${text.length} policy=${policy} selectedModelId=${selectedModelId} source=${routedSource} style=${style} lang=${effectiveLanguage} metrics=${JSON.stringify(governor.getMetrics())} usage=${JSON.stringify(usage)}`,
+    `chars=${text.length} policy=${policy} selectedModelId=${selectedModelId} source=${routedSource} style=${style}`,
   );
   const initialPhase: SuggestionLoadingPhase =
     routedSource === "opencode" ? "opencode-start" :
@@ -214,21 +78,6 @@ export async function runGhostPromptSuggestPipeline(
   });
 
   try {
-    ghostPromptSessionStore.patchState({
-      lastEffectiveSuggestionLanguage: effectiveLanguage,
-    });
-    deps.broadcastUi({
-      type: "languageEffective",
-      language: effectiveLanguage,
-    });
-    if (
-      projectBootstrapReconcile &&
-      deps.writeGhostPromptBootstrapSnapshot
-    ) {
-      await deps.writeGhostPromptBootstrapSnapshot(projectBootstrapReconcile);
-    }
-    const projectContext =
-      contextMode === "project" ? deps.collectProjectContext() : {};
     const result = await getCompletionProviderForSource(
       routedSource,
     ).requestCompletion(text, {
@@ -255,27 +104,8 @@ export async function runGhostPromptSuggestPipeline(
             },
           }
         : {}),
-      context: {
-        lastAcceptedSuggestion:
-          contextMode === "off"
-            ? undefined
-            : ghostPromptSessionStore.getSnapshot().lastAcceptedSuggestion,
-        lastSentPrompt:
-          contextMode === "off"
-            ? undefined
-            : ghostPromptSessionStore.getSnapshot().lastSentPrompt,
-        recentSentPrompts:
-          contextMode === "off"
-            ? undefined
-            : ghostPromptSessionStore.getSnapshot().recentSentPrompts.slice(0, 3),
-        outputLanguage: effectiveLanguage,
-        ...projectContext,
-        ...(contextMode === "project" && projectBootstrapLines.length
-          ? { projectBootstrapLines }
-          : {}),
-      },
     });
-    governor.saveResult(decision.key, result, governorConfig);
+
     if (
       tokenSource.token.isCancellationRequested ||
       captureId !== ghostPromptSessionStore.getSnapshot().activeCaptureId
@@ -293,7 +123,7 @@ export async function runGhostPromptSuggestPipeline(
       logSuggestionDebug(
         captureId,
         "request-success",
-        `suggestionChars=${result.suggestion.length} model=${result.model?.id ?? "unknown"} modelTier=${result.model?.tier ?? "unknown"} usage=${JSON.stringify(governor.getUsageSnapshot(governorConfig))}`,
+        `suggestionChars=${result.suggestion.length} model=${result.model?.id ?? "unknown"} modelTier=${result.model?.tier ?? "unknown"}`,
       );
       deps.broadcastUi({
         type: "suggestion",

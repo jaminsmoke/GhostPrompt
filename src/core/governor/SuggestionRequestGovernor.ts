@@ -57,6 +57,10 @@ const DEFAULT_CONFIG: GovernorConfig = {
   sessionBudget: 300,
 };
 
+/**
+ * @deprecated El governor se mantiene solo para compatibilidad, pero ya no se usa en el pipeline principal.
+ * Este archivo está marcado como legacy mientras el flujo se simplifica.
+ */
 export class SuggestionRequestGovernor {
   private readonly _cache = new Map<string, CacheEntry>();
   private _lastKey = "";

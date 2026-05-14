@@ -143,7 +143,6 @@ vi.mock('../src/api/settings/settingsPostMessage', async (importOriginal) => {
             selectedModelId: 'auto',
             availableModels: models,
             suggestionStyle: 'balanced',
-            contextMode: 'basic',
             suggestionLanguageChoice: 'auto',
             effectiveSuggestionLanguage: 'en',
             effectiveModel: undefined,
@@ -160,7 +159,6 @@ vi.mock('../src/api/settings/settingsPostMessage', async (importOriginal) => {
 
 vi.mock('../src/api/getters/workspaceGetters', () => ({
   collectGhostPromptProjectContext: () => ({}),
-  getGhostPromptContextMode: () => 'basic',
   getGhostPromptMaxSuggestionChars: () => 180,
   getGhostPromptProjectMemoryEnabled: () => true,
   getGhostPromptSelectedModelId: () => 'auto',

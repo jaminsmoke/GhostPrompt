@@ -49,7 +49,6 @@ export {
   getGhostPromptSelectedModelId,
   getGhostPromptMaxSuggestionChars,
   getGhostPromptSuggestionStyle,
-  getGhostPromptContextMode,
   getGhostPromptProjectMemoryEnabled,
   getGhostPromptSuggestionLanguageMode,
   getGhostPromptSuggestionLanguage,

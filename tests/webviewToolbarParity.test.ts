@@ -15,15 +15,14 @@ function read(rel: string): string {
 }
 
 describe("React webview toolbar parity", () => {
-  it("GhostToolbar defines exactly six setting groups with stable data-keys", () => {
+  it("GhostToolbar defines exactly five setting groups with stable data-keys", () => {
     const source = read("src/ui/webview/react/components/GhostToolbar.tsx");
-    expect(source.match(/data-key="/g)?.length).toBe(6);
+    expect(source.match(/data-key="/g)?.length).toBe(5);
     for (const key of [
       "completionProvider",
       "agentDestination",
       "suggestionModelPolicy",
       "suggestionStyle",
-      "contextMode",
       "suggestionLanguageChoice",
     ]) {
       expect(source).toContain(`data-key="${key}"`);

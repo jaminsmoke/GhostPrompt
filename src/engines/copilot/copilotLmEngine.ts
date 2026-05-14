@@ -70,6 +70,9 @@ export async function requestCopilotLmCompletion(
       );
 
       const completion = await collectResponseText(response, requestTimeoutMs);
+      if (looksLikeCopilotRefusal(completion)) {
+        return { kind: "empty", reason: "content-blocked" };
+      }
       const suggestion = normalizeSuggestion(
         completion,
         userText,
@@ -111,5 +114,24 @@ function isPremiumQuotaError(message: string): boolean {
     normalized.includes("premium model quota") ||
     normalized.includes("additional paid premium requests") ||
     normalized.includes("allowance to renew")
+  );
+}
+
+function looksLikeCopilotRefusal(text: string): boolean {
+  const normalized = text.trim().toLowerCase();
+  if (!normalized) {
+    return false;
+  }
+  if (normalized.startsWith("i'm sorry") || normalized.startsWith("im sorry")) {
+    return /assist|help|provide|cannot|can't|unable/.test(normalized);
+  }
+  return (
+    normalized.includes("can't assist") ||
+    normalized.includes("cannot assist") ||
+    normalized.includes("unable to assist") ||
+    normalized.includes("can't help") ||
+    normalized.includes("cannot help") ||
+    normalized.includes("unable to provide") ||
+    normalized.includes("cannot provide")
   );
 }

@@ -13,6 +13,53 @@ import type {
   UpdateSettingMessage,
 } from "../types";
 
+export function isDraftSyncForAnotherView(
+  message: InboundMessage,
+  viewId: string,
+): message is Extract<InboundMessage, { type: "draftSync" }> {
+  return (
+    message.type === "draftSync" &&
+    Boolean(viewId) &&
+    message.originViewId !== viewId
+  );
+}
+
+export function shouldSkipSuggestionOnRemoteDraft(
+  message: InboundMessage,
+  viewId: string,
+): boolean {
+  return message.type === "draftHydrate" || isDraftSyncForAnotherView(message, viewId);
+}
+
+/** Mensajes host→webview que pueden llevar `captureId` / `broadcast` para correlación. */
+export type GhostPromptInboundCaptureCarrier = {
+  broadcast?: boolean;
+  captureId?: number;
+};
+
+/**
+ * Actualiza el ref de correlación y decide si el mensaje debe ignorarse (respuestas obsoletas).
+ * Expuesto para tests unitarios del filtro.
+ */
+export function ghostPromptApplyInboundCaptureRef(
+  refBefore: number,
+  message: GhostPromptInboundCaptureCarrier,
+): { refAfter: number; drop: boolean } {
+  let nextRef = refBefore;
+  if (message.broadcast === true && typeof message.captureId === "number") {
+    nextRef = Math.max(nextRef, message.captureId);
+  }
+  if (typeof message.captureId === "number") {
+    if (message.captureId < nextRef) {
+      return { refAfter: nextRef, drop: true };
+    }
+    if (message.captureId !== nextRef && message.broadcast !== true) {
+      return { refAfter: nextRef, drop: true };
+    }
+  }
+  return { refAfter: nextRef, drop: false };
+}
+
 const getInitialViewId = (): string =>
   typeof window.__ghostPromptViewId === "string" ? window.__ghostPromptViewId : "";
 
@@ -62,12 +109,13 @@ export function useGhostPrompt() {
   const [availableModels, setAvailableModels] = useState<SuggestionModel[]>([]);
   const [suggestionModelPolicy, setSuggestionModelPolicy] = useState<"nonPremiumOnly" | "anyModel">("nonPremiumOnly");
   const [suggestionStyle, setSuggestionStyle] = useState<"concise" | "balanced" | "detailed">("balanced");
-  const [contextMode, setContextMode] = useState<"off" | "basic" | "project">("basic");
   const [suggestionLanguageChoice, setSuggestionLanguageChoice] = useState<"auto" | "es" | "en">("auto");
+  const [_effectiveLanguage, setEffectiveLanguage] = useState<"es" | "en">("es");
   const [debugSuggestions, setDebugSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const currentCaptureId = useRef(0);
   const debounceTimer = useRef<number | null>(null);
+  const skipSuggestionOnDraftSync = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const queryClient = useQueryClient();
 
@@ -152,6 +200,7 @@ export function useGhostPrompt() {
     }
     const context = text;
     const inserted = suggestion;
+    skipSuggestionOnDraftSync.current = true;
     setText(context + inserted);
     setSuggestion("");
     setStatus("Suggestion aceptada.");
@@ -192,14 +241,12 @@ export function useGhostPrompt() {
       try {
         const message = event.data as InboundMessage;
 
-        if (message.broadcast === true && typeof message.captureId === "number") {
-          currentCaptureId.current = message.captureId;
-        }
-        if (
-          typeof message.captureId === "number" &&
-          message.captureId !== currentCaptureId.current &&
-          message.broadcast !== true
-        ) {
+        const { refAfter, drop } = ghostPromptApplyInboundCaptureRef(
+          currentCaptureId.current,
+          message,
+        );
+        currentCaptureId.current = refAfter;
+        if (drop) {
           return;
         }
 
@@ -212,7 +259,6 @@ export function useGhostPrompt() {
           setAvailableModels(message.settings.availableModels);
           setSuggestionModelPolicy(message.settings.suggestionModelPolicy);
           setSuggestionStyle(message.settings.suggestionStyle);
-          setContextMode(message.settings.contextMode);
           setSuggestionLanguageChoice(message.settings.suggestionLanguageChoice);
           setSuggestionDebounceMs(message.settings.suggestionDebounceMs);
           if (message.settings.suggestionDebounceMs < 150) {
@@ -267,15 +313,19 @@ export function useGhostPrompt() {
           setStatus("Prompt enviado. Escribe otro texto...");
           break;
         case "draftHydrate":
+          if (shouldSkipSuggestionOnRemoteDraft(message, viewId)) {
+            skipSuggestionOnDraftSync.current = true;
+          }
           setText(message.text);
           break;
         case "languageEffective":
           setEffectiveLanguage(message.language);
           break;
-        case "draftSync":
-          if (!viewId || message.originViewId === viewId) {
+            case "draftSync":
+          if (!shouldSkipSuggestionOnRemoteDraft(message, viewId)) {
             return;
           }
+          skipSuggestionOnDraftSync.current = true;
           setText(message.text);
           break;
         case "providerStatus":
@@ -309,6 +359,13 @@ export function useGhostPrompt() {
       window.clearTimeout(debounceTimer.current);
     }
     debounceTimer.current = window.setTimeout(() => {
+      if (skipSuggestionOnDraftSync.current) {
+        skipSuggestionOnDraftSync.current = false;
+        return;
+      }
+      if (!isGhostUiAllowed()) {
+        return;
+      }
       requestSuggestion(text);
     }, suggestionDebounceMs);
     return () => {
@@ -322,10 +379,18 @@ export function useGhostPrompt() {
     syncTextareaHeight();
   }, [syncTextareaHeight]);
 
+  const handleCursorCheck = useCallback(() => {
+    if (!isGhostUiAllowed()) {
+      setSuggestion("");
+    }
+  }, [isGhostUiAllowed]);
+
   const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     try {
       const nextText = event.target.value;
       console.log("[GP] text change", { length: nextText.length });
+      skipSuggestionOnDraftSync.current = false;
+      setSuggestion("");
       setText(nextText);
       if (viewId) {
         postToHost({ type: "draftChanged", text: nextText, originViewId: viewId });
@@ -397,7 +462,6 @@ export function useGhostPrompt() {
     availableModels,
     suggestionModelPolicy,
     suggestionStyle,
-    contextMode,
     suggestionLanguageChoice,
     debugSuggestions,
     isLoading,
@@ -407,6 +471,7 @@ export function useGhostPrompt() {
     textareaRef,
     canSend,
     isGhostUiAllowed,
+    handleCursorCheck,
     handleTextChange,
     handleSend,
     acceptSuggestion,

@@ -11,8 +11,6 @@ const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
 describe("webview theme tokens (v0.3.1 Fase D)", () => {
   it("React webview CSS uses Tailwind directives", () => {
     const css = readFileSync(join(repoRoot, "src/ui/webview/react/index.css"), "utf8");
-    expect(css).toContain("@tailwind base;");
-    expect(css).toContain("@tailwind components;");
-    expect(css).toContain("@tailwind utilities;");
+    expect(css).toContain("@import \"tailwindcss\";");
   });
 });

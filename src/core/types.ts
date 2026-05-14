@@ -42,7 +42,8 @@ export type CompletionResult =
         | "too-short"
         | "duplicate-input"
         | "rate-limited"
-        | "session-budget-exhausted";
+        | "session-budget-exhausted"
+        | "content-blocked";
     }
   | { kind: "error"; message: string };
 

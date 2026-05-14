@@ -58,27 +58,13 @@ vi.mock("../../src/core/sources", () => ({
   getCompletionUiKind: () => "copilot" as const,
 }));
 
-vi.mock("../../src/core/context/projectBootstrapContext", () => ({
-  resolveGhostPromptWorkspaceFolderUri: () => vscode.Uri.file("/tmp/ws"),
-  collectProjectBootstrapPieces: vi.fn(async () => []),
-  sortProjectBootstrapPieces: (pieces: unknown[]) => pieces,
-  fingerprintProjectBootstrapLines: (lines: string[]) => lines.join("|"),
-}));
-
 function minimalDeps(overrides?: Partial<GhostPromptSuggestDeps>): GhostPromptSuggestDeps {
   return {
     broadcastUi: vi.fn(),
     getSuggestionModelPolicy: () => "nonPremiumOnly",
     getSelectedModelId: () => "auto",
     getSuggestionStyle: () => "balanced",
-    getContextMode: () => "basic",
-    getSuggestionLanguageMode: () => "auto",
-    getSuggestionLanguage: () => "en",
     getMaxSuggestionChars: () => 180,
-    collectProjectContext: () => ({
-      workspaceName: "ws-test",
-      activeFilePath: "src/a.ts",
-    }),
     ...overrides,
   };
 }
@@ -142,69 +128,6 @@ describe("runGhostPromptSuggestPipeline", () => {
         captureId: 3,
       }),
     );
-  });
-
-  it("contextMode off no pasa lastSentPrompt ni recentSentPrompts al LM", async () => {
-    ghostPromptSessionStore.patchState({
-      lastSentPrompt: "previous prompt",
-      lastAcceptedSuggestion: "accepted ghost",
-      recentSentPrompts: ["one", "two"],
-    });
-    const deps = minimalDeps({ getContextMode: () => "off" });
-    const text = "long enough phrase for governor pass unique-off";
-    await runGhostPromptSuggestPipeline(
-      { type: "suggest", text, captureId: 10 },
-      deps,
-    );
-    const opts = requestCompletion.mock.calls[0]?.[1] as { context?: Record<string, unknown> };
-    expect(opts?.context?.lastSentPrompt).toBeUndefined();
-    expect(opts?.context?.lastAcceptedSuggestion).toBeUndefined();
-    expect(opts?.context?.recentSentPrompts).toBeUndefined();
-  });
-
-  it("contextMode basic pasa señales de sesión al LM", async () => {
-    ghostPromptSessionStore.patchState({
-      lastSentPrompt: "previous prompt",
-      lastAcceptedSuggestion: "accepted ghost",
-      recentSentPrompts: ["r1", "r2", "r3", "r4"],
-    });
-    const deps = minimalDeps({ getContextMode: () => "basic" });
-    const text = "long enough phrase for governor pass unique-basic";
-    await runGhostPromptSuggestPipeline(
-      { type: "suggest", text, captureId: 11 },
-      deps,
-    );
-    const opts = requestCompletion.mock.calls[0]?.[1] as { context?: Record<string, unknown> };
-    expect(opts?.context?.lastSentPrompt).toBe("previous prompt");
-    expect(opts?.context?.lastAcceptedSuggestion).toBe("accepted ghost");
-    expect(opts?.context?.recentSentPrompts).toEqual(["r1", "r2", "r3"]);
-  });
-
-  it("contextMode project incluye projectBootstrapLines cuando hay piezas", async () => {
-    const { collectProjectBootstrapPieces } = await import("../../src/core/context/projectBootstrapContext");
-    vi.mocked(collectProjectBootstrapPieces).mockResolvedValue([
-      {
-        relativePath: "README.md",
-        promptLine: "README excerpt (README.md): hello project",
-        sourceMtimeMs: 1,
-        sourceSha256: "abc",
-      },
-    ]);
-    const deps = minimalDeps({
-      getContextMode: () => "project",
-    });
-    const text = "long enough phrase for governor pass unique-project";
-    await runGhostPromptSuggestPipeline(
-      { type: "suggest", text, captureId: 12 },
-      deps,
-    );
-    const opts = requestCompletion.mock.calls[0]?.[1] as {
-      context?: { projectBootstrapLines?: string[] };
-    };
-    expect(opts?.context?.projectBootstrapLines).toEqual([
-      "README excerpt (README.md): hello project",
-    ]);
-    expect(opts?.context?.workspaceName).toBe("ws-test");
   });
 
   it("ruta OpenCode: loading inicial opencode-start y onStreamPreview en opciones", async () => {

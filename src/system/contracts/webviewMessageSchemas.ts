@@ -22,7 +22,6 @@ export const webviewSettingsPayloadSchema = z.object({
   selectedModelId: z.string(),
   availableModels: z.array(suggestionModelDescriptorSchema),
   suggestionStyle: z.enum(['concise', 'balanced', 'detailed']),
-  contextMode: z.enum(['off', 'basic', 'project']),
   suggestionLanguageChoice: z.enum(['auto', 'es', 'en']),
   effectiveSuggestionLanguage: z.enum(['es', 'en']),
   effectiveModel: suggestionModelDescriptorSchema.optional(),
@@ -89,6 +88,7 @@ export const webviewOutboundEmptySchema = z.object({
     'duplicate-input',
     'rate-limited',
     'session-budget-exhausted',
+    'content-blocked',
   ]),
   captureId: z.number().optional(),
   broadcast: z.boolean().optional(),
@@ -163,11 +163,6 @@ export const webviewUpdateSettingSchema = z.discriminatedUnion('key', [
     type: z.literal('updateSetting'),
     key: z.literal('suggestionStyle'),
     value: z.enum(['concise', 'balanced', 'detailed']),
-  }),
-  z.object({
-    type: z.literal('updateSetting'),
-    key: z.literal('contextMode'),
-    value: z.enum(['off', 'basic', 'project']),
   }),
   z.object({
     type: z.literal('updateSetting'),

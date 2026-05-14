@@ -1,8 +1,7 @@
-import { detectSuggestionLanguageFromInput } from "./language";
-import type { SuggestionContext, SuggestionStyle, SupportedSuggestionLanguage } from "./types";
+import type { SuggestionContext, SuggestionStyle } from "./types";
 
 /**
- * Prefix used for the partial completion chunk sent to Copilot as a second user message.
+ * Prefix used for the partial completion chunk sent to the model.
  */
 export const COMPLETION_PARTIAL_LABEL = "Partial text to continue: ";
 
@@ -24,110 +23,28 @@ export function suggestionStyleDirective(style: SuggestionStyle): string {
 }
 
 /**
- * Resuelve el idioma de salida para la sugerencia.
- * @param {SuggestionContext | undefined} context Contexto de sugerencia opcional.
- * @returns {SupportedSuggestionLanguage} El idioma resuelto para el prompt.
- */
-function resolveOutputLanguage(context?: SuggestionContext): SupportedSuggestionLanguage {
-  if (context?.outputLanguage) {
-    return context.outputLanguage;
-  }
-  if (context?.lastSentPrompt) {
-    return detectSuggestionLanguageFromInput(context.lastSentPrompt);
-  }
-  return "en";
-}
-
-/**
- * Construye la sección de contexto de proyecto para el prompt.
- * @param {SuggestionContext} context Contexto de sugerencia con información de workspace y archivo.
- * @returns {string} El texto de contexto de proyecto o una cadena vacía.
- */
-function buildProjectContext(context: SuggestionContext): string {
-  const lines: string[] = [];
-  if (context.workspaceName) {
-    lines.push(`Workspace: ${context.workspaceName}`);
-  }
-  if (context.activeFilePath) {
-    lines.push(`Active file: ${context.activeFilePath}`);
-  }
-  if (context.activeLanguageId) {
-    lines.push(`Active language: ${context.activeLanguageId}`);
-  }
-  if (context.projectBootstrapLines?.length) {
-    lines.push(...context.projectBootstrapLines);
-  }
-  if (lines.length === 0) {
-    return "";
-  }
-
-  return [`Relevant project context:`, ...lines].join("\n");
-}
-
-/**
- * Divide la instrucción completa en el prefijo del prompt y el texto parcial etiquetado.
- * @param {string} userText Texto que se quiere continuar.
- * @param {SuggestionStyle} style Estilo de sugerencia deseado.
- * @param {SuggestionContext | undefined} context Contexto adicional para el prompt.
- * @returns {{ prefixInstruction: string; labeledPartial: string }} Un objeto con el prompt prefijo y el texto parcial etiquetado.
- */
-export function buildCompletionInstructionParts(
-  userText: string,
-  style: SuggestionStyle = "balanced",
-  context?: SuggestionContext,
-): { prefixInstruction: string; labeledPartial: string } {
-  const outputLanguage = resolveOutputLanguage(context);
-  const prefixLines: string[] = [suggestionStyleDirective(style)];
-
-  if (context?.lastSentPrompt) {
-    prefixLines.push(`Recent prompt sent by user: ${context.lastSentPrompt}`);
-  }
-  if (context?.lastAcceptedSuggestion) {
-    prefixLines.push(`Recent accepted suggestion style: ${context.lastAcceptedSuggestion}`);
-  }
-  if (context?.recentSentPrompts?.length) {
-    prefixLines.push("Recent prompts (latest first):");
-    prefixLines.push(...context.recentSentPrompts);
-  }
-
-  const projectContext = context ? buildProjectContext(context) : "";
-  if (projectContext) {
-    prefixLines.push(projectContext);
-  }
-
-  prefixLines.push(
-    `Write the continuation in ${outputLanguage === "es" ? "Spanish" : "English"}.`,
-    "If your continuation starts a new word and the partial text does not end with whitespace, include exactly one leading space.",
-    "If you are completing the current unfinished word, do not add a leading space.",
-    "Do not translate code identifiers.",
-    "Do not repeat the prompt text before the partial text.",
-  );
-
-  const prefixInstruction = prefixLines.join("\n") + "\n";
-  const labeledPartial = `${COMPLETION_PARTIAL_LABEL}${userText}`;
-
-  return {
-    prefixInstruction,
-    labeledPartial,
-  };
-}
-
-/**
- * Construye la instrucción completa para el LM a partir del texto del usuario, estilo y contexto.
+ * Construye la instrucción completa para el modelo a partir del texto del usuario.
+ * El contexto adicional se ignora para mantener el prompt lo más simple posible.
  * @param {string} userText Texto que se debe continuar.
  * @param {SuggestionStyle} style Estilo de sugerencia deseado.
- * @param {SuggestionContext | undefined} context Contexto adicional para guiar la generación.
+ * @param {SuggestionContext | undefined} _context Contexto adicional que se ignora por ahora.
  * @returns {string} Prompt completo listo para enviar al modelo.
  */
 export function buildCompletionInstruction(
   userText: string,
   style: SuggestionStyle = "balanced",
-  context?: SuggestionContext,
+  _context?: SuggestionContext,
 ): string {
-  const { prefixInstruction, labeledPartial } = buildCompletionInstructionParts(
-    userText,
-    style,
-    context,
+  const prefixLines: string[] = [suggestionStyleDirective(style)];
+  prefixLines.push(
+    "You are an autocomplete assistant. Complete the partial text as a natural continuation.",
+    "Do not add extra commentary, explanations, or anything beyond the suggested completion.",
+    "If the partial text does not end with whitespace and the continuation starts a new word, include exactly one leading space.",
+    "If you are continuing the current unfinished word, do not add a leading space.",
+    "Do not repeat the prompt text before the partial text.",
   );
+
+  const prefixInstruction = prefixLines.join("\n") + "\n";
+  const labeledPartial = `${COMPLETION_PARTIAL_LABEL}${userText}`;
   return prefixInstruction + labeledPartial;
 }

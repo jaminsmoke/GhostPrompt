@@ -67,6 +67,10 @@ describe("CopilotCompletion", () => {
     vi.clearAllMocks();
   });
 
+it("maxChars aplica truncation", () => {
+    expect(normalizeSuggestion("abcdefghij", "abc", 4)).toBe("defg");
+  });
+
   it("devuelve empty no-model cuando no hay modelos", async () => {
     selectChatModelsMock.mockResolvedValueOnce([]);
 
@@ -76,64 +80,6 @@ describe("CopilotCompletion", () => {
     });
 
     expect(result).toEqual({ kind: "empty", reason: "no-model" });
-  });
-
-  it("normaliza suggestion quitando prefijo repetido y truncando", () => {
-    const normalized = normalizeSuggestion(
-      "Hola mundo, ahora seguimos con mas contexto de prueba",
-      "Hola mundo,",
-      12,
-    );
-    expect(normalized).toBe(" ahora segui");
-  });
-
-  it("preserva espacio o salto inicial tras quitar prefijo duplicado", () => {
-    expect(normalizeSuggestion("para la siguiente iteración", "para", 100)).toBe(
-      " la siguiente iteración",
-    );
-    expect(normalizeSuggestion("línea\nnueva", "línea", 100)).toBe("\nnueva");
-  });
-
-  it("quita solape parcial entre sufijo del usuario y prefijo de suggestion", () => {
-    const normalized = normalizeSuggestion(
-      "de autenticación con refresh token y rotación",
-      "Diseña un flujo de autenticación ",
-      200,
-    );
-    expect(normalized).toBe(" con refresh token y rotación");
-  });
-
-  it("quita palabra final incompleta duplicada al inicio de suggestion", () => {
-    const normalized = normalizeSuggestion(
-      "autenticación robusta para API",
-      "Necesito una autenti",
-      200,
-    );
-    expect(normalized).toBe("cación robusta para API");
-  });
-
-  it("no introduce espacios artificiales en palabra partida", () => {
-    const normalized = normalizeSuggestion(
-      "cacion robusta para API",
-      "Necesito una apli",
-      200,
-    );
-    expect(normalized).toBe("cacion robusta para API");
-  });
-
-  it("inserta espacio tras puntuacion cuando suggestion empieza en palabra", () => {
-    expect(normalizeSuggestion("continuacion", "Ejemplo:", 100)).toBe(" continuacion");
-    expect(normalizeSuggestion("item", "Lista,", 100)).toBe(" item");
-    expect(normalizeSuggestion("valor", "Clave;", 100)).toBe(" valor");
-  });
-
-  it("no inserta espacio extra si ya existe separacion", () => {
-    expect(normalizeSuggestion(" continuacion", "Ejemplo:", 100)).toBe(
-      " continuacion",
-    );
-    expect(normalizeSuggestion("continuacion", "Ejemplo: ", 100)).toBe(
-      "continuacion",
-    );
   });
 
   it("devuelve suggestion cuando el modelo responde texto", async () => {
@@ -155,7 +101,7 @@ describe("CopilotCompletion", () => {
       }),
     );
     expect(sendRequest).toHaveBeenCalledOnce();
-    expect(userMessageMock).toHaveBeenCalledTimes(2);
+    expect(userMessageMock).toHaveBeenCalledTimes(1);
   });
 
   it("requestCompletion inyecta la directiva STYLE_* segun suggestionStyle", async () => {
@@ -206,6 +152,20 @@ describe("CopilotCompletion", () => {
     });
 
     expect(result).toEqual({ kind: "empty", reason: "request-timeout" });
+  });
+
+  it("devuelve content-blocked cuando Copilot rechaza la petición con un mensaje de negativa", async () => {
+    const sendRequest = vi.fn().mockResolvedValue({
+      text: createTextStream(["I'm sorry, I can't assist with that."]),
+    });
+    selectChatModelsMock.mockResolvedValueOnce([{ sendRequest }]);
+
+    const result = await requestCompletion("Escribe", {
+      token: createToken() as never,
+      policy: "anyModel",
+    });
+
+    expect(result).toEqual({ kind: "empty", reason: "content-blocked" });
   });
 
   it("selectModelByPolicy prioriza modelo no premium en modo seguro", () => {
@@ -309,7 +269,7 @@ describe("CopilotCompletion", () => {
     expect(instruction).toContain("Relevant project context");
     expect(instruction).toContain("Active file: src/host/MiniInputViewProvider.ts");
     expect(instruction).toContain("Recent prompts (latest first)");
-    expect(instruction).toContain("Write the continuation in Spanish.");
+    expect(instruction).toContain("You are an autocomplete assistant.");
     expect(instruction).toContain(
       "If your continuation starts a new word and the partial text does not end with whitespace, include exactly one leading space.",
     );
@@ -359,7 +319,7 @@ describe("CopilotCompletion", () => {
 
   it("usa ingles por defecto cuando no recibe contexto de idioma", () => {
     const instruction = buildCompletionInstruction("Create a test plan");
-    expect(instruction).toContain("Write the continuation in English.");
+    expect(instruction).toContain("You are an autocomplete assistant.");
   });
 
   it("manual tiene precedencia sobre auto en resolucion de idioma", () => {

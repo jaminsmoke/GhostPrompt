@@ -8,7 +8,6 @@ interface GhostToolbarProps {
   availableModels: SuggestionModel[];
   suggestionModelPolicy: "nonPremiumOnly" | "anyModel";
   suggestionStyle: "concise" | "balanced" | "detailed";
-  contextMode: "off" | "basic" | "project";
   suggestionLanguageChoice: "auto" | "es" | "en";
   debugSuggestions: boolean;
   agentDestination: AgentDestination;
@@ -107,7 +106,6 @@ export function GhostToolbar(props: GhostToolbarProps) {
     availableModels,
     suggestionModelPolicy,
     suggestionStyle,
-    contextMode,
     suggestionLanguageChoice,
     debugSuggestions,
     agentDestination,
@@ -152,9 +150,8 @@ export function GhostToolbar(props: GhostToolbarProps) {
   const modeloLabel = currentModel?.label ?? (selectedModelId === "auto" ? "Auto" : selectedModelId);
 
   const styleLabel = suggestionStyle === "concise" ? "Breve" : suggestionStyle === "balanced" ? "Normal" : "Extenso";
-  const ctxLabel = contextMode === "basic" ? "Básico" : contextMode === "project" ? "Proyecto" : "Off";
   const langLabel = suggestionLanguageChoice === "auto" ? "Auto" : suggestionLanguageChoice === "es" ? "ES" : "EN";
-  const compLabel = `${styleLabel} · ${ctxLabel} · ${langLabel}`;
+  const compLabel = `${styleLabel} · ${langLabel}`;
 
   const handleProvider = (v: CompletionProvider) => {
     onCompletionProviderChange(v);
@@ -343,7 +340,7 @@ export function GhostToolbar(props: GhostToolbarProps) {
         id="composicion-chip"
         label={compLabel}
         chipLabel="Composición"
-        tooltip="Estilo, contexto e idioma de las sugerencias"
+        tooltip="Estilo e idioma de las sugerencias"
         isOpen={openChip === "composicion"}
         onToggle={() => toggleChip("composicion")}
         onClose={closeChips}
@@ -367,26 +364,6 @@ export function GhostToolbar(props: GhostToolbarProps) {
                 suggestionStyle === "detailed",
                 () => handleToggle("suggestionStyle", "detailed"),
                 "Extenso",
-              )}
-            </div>
-          </div>
-          <div data-key="contextMode" className="flex flex-col gap-1">
-            <span className={chipLabelClass(compact)}>Contexto</span>
-            <div className="flex gap-1">
-              {renderToggleOption(
-                contextMode === "basic",
-                () => handleToggle("contextMode", "basic"),
-                "Básico",
-              )}
-              {renderToggleOption(
-                contextMode === "project",
-                () => handleToggle("contextMode", "project"),
-                "Proyecto",
-              )}
-              {renderToggleOption(
-                contextMode === "off",
-                () => handleToggle("contextMode", "off"),
-                "Off",
               )}
             </div>
           </div>

@@ -81,20 +81,6 @@ export function getGhostPromptSuggestionStyle(): SuggestionStyle {
 }
 
 /**
- * Obtiene el modo de contexto configurado para GhostPrompt.
- * @returns {"off" | "basic" | "project"} Modo de contexto válido: off, basic o project.
- */
-export function getGhostPromptContextMode(): "off" | "basic" | "project" {
-  const value = vscode.workspace
-    .getConfiguration("ghostPrompt")
-    .get<string>("contextMode", "basic");
-  if (value === "off" || value === "project") {
-    return value;
-  }
-  return "basic";
-}
-
-/**
  * Comprueba si el project memory está habilitado en la configuración.
  * @returns {boolean} True si project memory está activo.
  */

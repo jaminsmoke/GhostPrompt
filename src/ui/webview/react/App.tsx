@@ -27,7 +27,6 @@ export function App(): JSX.Element {
     availableModels,
     suggestionModelPolicy,
     suggestionStyle,
-    contextMode,
     suggestionLanguageChoice,
     debugSuggestions,
     agentDestination,
@@ -36,6 +35,7 @@ export function App(): JSX.Element {
     displayStatus,
     handleTextChange,
     handleSend,
+    handleCursorCheck,
     acceptSuggestion,
     handleCompletionProviderChange,
     handleSelectedModelChange,
@@ -57,7 +57,6 @@ export function App(): JSX.Element {
         availableModels={availableModels}
         suggestionModelPolicy={suggestionModelPolicy}
         suggestionStyle={suggestionStyle}
-        contextMode={contextMode}
         suggestionLanguageChoice={suggestionLanguageChoice}
         debugSuggestions={debugSuggestions}
         agentDestination={agentDestination}
@@ -93,6 +92,7 @@ export function App(): JSX.Element {
         onTextChange={handleTextChange}
         onSend={handleSend}
         onAccept={acceptSuggestion}
+        onCursorCheck={handleCursorCheck}
       />
 
       <BottomBar

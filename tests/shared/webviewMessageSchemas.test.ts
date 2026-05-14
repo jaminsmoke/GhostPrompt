@@ -52,11 +52,6 @@ describe('webviewMessageSchemas (shared)', () => {
       },
       {
         type: 'updateSetting' as const,
-        key: 'contextMode' as const,
-        value: 'off' as const,
-      },
-      {
-        type: 'updateSetting' as const,
         key: 'suggestionLanguageChoice' as const,
         value: 'es' as const,
       },
@@ -90,7 +85,6 @@ describe('webviewMessageSchemas (shared)', () => {
       selectedModelId: 'auto',
       availableModels: [],
       suggestionStyle: 'concise',
-      contextMode: 'project',
       suggestionLanguageChoice: 'auto',
       effectiveSuggestionLanguage: 'es',
       effectiveModel: {
@@ -117,7 +111,6 @@ describe('webviewMessageSchemas (shared)', () => {
         selectedModelId: 'auto',
         availableModels: [],
         suggestionStyle: 'balanced' as const,
-        contextMode: 'basic' as const,
         suggestionLanguageChoice: 'auto' as const,
         effectiveSuggestionLanguage: 'en' as const,
         debugSuggestions: false,
@@ -143,6 +136,15 @@ describe('webviewMessageSchemas (shared)', () => {
     const msg = {
       type: 'empty' as const,
       reason: 'no-model' as const,
+      captureId: 1,
+    };
+    expect(webviewOutboundMessageSchema.safeParse(msg).success).toBe(true);
+  });
+
+  it('acepta el mensaje outbound empty con reason content-blocked', () => {
+    const msg = {
+      type: 'empty' as const,
+      reason: 'content-blocked' as const,
       captureId: 1,
     };
     expect(webviewOutboundMessageSchema.safeParse(msg).success).toBe(true);

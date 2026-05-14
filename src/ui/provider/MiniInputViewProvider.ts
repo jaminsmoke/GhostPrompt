@@ -30,22 +30,10 @@ import * as vscode from 'vscode';
 import { buildAndPostGhostPromptSettings } from '../../api/settings/settingsPostMessage';
 import { buildGhostPromptWebviewHtml } from './webviewHtml';
 import { logDebugInfo } from '../../system/debug/SuggestionDebug';
-import { getProjectMemoryBaseDir } from '../../core/memory/activate';
 import {
-  reconcileProjectMemoryForSuggest,
-  writeReconciledProjectBootstrapSnapshot,
-} from '../../core/memory/persist';
-import { NodeProjectMemoryFs } from '../../core/memory/io/fs';
-import { ProjectMemoryStore } from '../../core/memory/Store';
-import {
-  collectGhostPromptProjectContext,
-  getGhostPromptContextMode,
   getGhostPromptMaxSuggestionChars,
-  getGhostPromptProjectMemoryEnabled,
   getGhostPromptSelectedModelId,
-  getGhostPromptSuggestionLanguage,
   getGhostPromptSuggestionLanguageChoice,
-  getGhostPromptSuggestionLanguageMode,
   getGhostPromptSuggestionModelPolicy,
   getGhostPromptSuggestionStyle,
 } from '../../api/getters/workspaceGetters';
@@ -68,22 +56,12 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
 
   private _view?: vscode.WebviewView;
 
-  private _ghostProjectMemoryStore?: ProjectMemoryStore;
-
   constructor(
     private readonly _context: vscode.ExtensionContext,
     /** Identificador de contribución de la vista (`ghostPrompt.input` vs `ghostPrompt.inputPanel`). */
     public readonly viewContributionId: string,
   ) {
     MiniInputViewProvider._instances.add(this);
-  }
-
-  private _getGhostProjectMemoryStore(): ProjectMemoryStore {
-    this._ghostProjectMemoryStore ??= new ProjectMemoryStore(
-      getProjectMemoryBaseDir(this._context.globalStorageUri.fsPath),
-      new NodeProjectMemoryFs(),
-    );
-    return this._ghostProjectMemoryStore;
   }
 
   /**
@@ -149,36 +127,13 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  private static ghostPromptSuggestDeps(
-    provider: MiniInputViewProvider | undefined,
-  ): GhostPromptSuggestDeps {
-    const base: GhostPromptSuggestDeps = {
+  private static ghostPromptSuggestDeps(): GhostPromptSuggestDeps {
+    return {
       broadcastUi: MiniInputViewProvider._broadcastUi,
       getSuggestionModelPolicy: () => getGhostPromptSuggestionModelPolicy(),
       getSelectedModelId: () => getGhostPromptSelectedModelId(),
       getSuggestionStyle: () => getGhostPromptSuggestionStyle(),
-      getContextMode: () => getGhostPromptContextMode(),
-      getSuggestionLanguageMode: () => getGhostPromptSuggestionLanguageMode(),
-      getSuggestionLanguage: () => getGhostPromptSuggestionLanguage(),
       getMaxSuggestionChars: () => getGhostPromptMaxSuggestionChars(),
-      collectProjectContext: () => collectGhostPromptProjectContext(),
-    };
-    if (!provider || !getGhostPromptProjectMemoryEnabled()) {
-      return base;
-    }
-    return {
-      ...base,
-      reconcileGhostPromptBootstrap: (args) =>
-        reconcileProjectMemoryForSuggest({
-          store: provider._getGhostProjectMemoryStore(),
-          ...args,
-        }),
-      writeGhostPromptBootstrapSnapshot: (snapshot) =>
-        writeReconciledProjectBootstrapSnapshot({
-          store: provider._getGhostProjectMemoryStore(),
-          workspaceKey: snapshot.workspaceKey,
-          mergedItems: snapshot.mergedItems,
-        }),
     };
   }
 
@@ -192,11 +147,10 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     if (!trimmed) {
       return;
     }
-    const first = [...MiniInputViewProvider._instances][0] ?? undefined;
     const captureId = Date.now();
     await handleGhostPromptSuggest(
       { type: 'suggest', text: trimmed, captureId },
-      MiniInputViewProvider.ghostPromptSuggestDeps(first),
+      MiniInputViewProvider.ghostPromptSuggestDeps(),
     );
   }
 
@@ -205,7 +159,6 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
       getSuggestionModelPolicy: () => getGhostPromptSuggestionModelPolicy(),
       getSelectedModelId: () => getGhostPromptSelectedModelId(),
       getSuggestionStyle: () => getGhostPromptSuggestionStyle(),
-      getContextMode: () => getGhostPromptContextMode(),
       getSuggestionLanguageChoice: () => getGhostPromptSuggestionLanguageChoice(),
     });
   }
@@ -280,7 +233,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         broadcastSettingsToAllViews: MiniInputViewProvider._broadcastSettingsToAllViews,
         broadcastClearAll: MiniInputViewProvider._broadcastClearAll,
         broadcastUi: MiniInputViewProvider._broadcastUi,
-        suggestDeps: MiniInputViewProvider.ghostPromptSuggestDeps(this),
+        suggestDeps: MiniInputViewProvider.ghostPromptSuggestDeps(),
       });
     });
   }

@@ -15,7 +15,6 @@ const minimalSettingsPayload = {
   selectedModelId: "auto",
   availableModels: [] as const,
   suggestionStyle: "balanced" as const,
-  contextMode: "basic" as const,
   suggestionLanguageChoice: "auto" as const,
   effectiveSuggestionLanguage: "en" as const,
   effectiveModel: undefined,
@@ -146,8 +145,8 @@ describe("webviewProtocols (v0.3.1 Fase B)", () => {
   it("webviewInboundMessageSchema cubre updateSetting discriminado", () => {
     const r = webviewInboundMessageSchema.safeParse({
       type: "updateSetting",
-      key: "contextMode",
-      value: "project",
+      key: "suggestionLanguageChoice",
+      value: "es",
     });
     expect(r.success).toBe(true);
   });
