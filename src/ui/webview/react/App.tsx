@@ -29,6 +29,7 @@ export function App(): JSX.Element {
     debugSuggestions,
     agentDestination,
     providerStatuses,
+    statusLoading,
     handleTextChange,
     handleSend,
     acceptSuggestion,
@@ -37,7 +38,6 @@ export function App(): JSX.Element {
     handleAgentDestinationChange,
     handleDebugToggle,
     makeToggle,
-    requestProviderStatus,
     startProvider,
     stopProvider,
   } = useGhostPrompt();
@@ -59,12 +59,12 @@ export function App(): JSX.Element {
         agentDestination={agentDestination}
         vsOpenCodeXExtensionInstalled={vsOpenCodeXExtensionInstalled}
         providerStatuses={providerStatuses}
+        statusLoading={statusLoading}
         onCompletionProviderChange={handleCompletionProviderChange}
         onSelectedModelChange={handleSelectedModelChange}
         onAgentDestinationChange={handleAgentDestinationChange}
         onToggle={makeToggle}
         onDebugToggle={handleDebugToggle}
-        onRequestProviderStatus={requestProviderStatus}
         onStartProvider={startProvider}
         onStopProvider={stopProvider}
       />

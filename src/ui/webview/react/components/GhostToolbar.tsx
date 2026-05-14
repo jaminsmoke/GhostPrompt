@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { AgentDestination, CompletionProvider, ProviderState, ProviderStateRecord, SuggestionModel, UpdateSettingMessage } from "../types";
+import type { AgentDestination, CompletionProvider, ProviderState, ProviderStateRecord, SuggestionModel } from "../types";
 import { ToolbarChip } from "./ToolbarChip";
 
 interface GhostToolbarProps {
@@ -15,15 +15,12 @@ interface GhostToolbarProps {
   vsOpenCodeXExtensionInstalled: boolean;
   compact: boolean;
   providerStatuses: ProviderStateRecord[];
+  statusLoading: boolean;
   onCompletionProviderChange: (value: CompletionProvider) => void;
   onSelectedModelChange: (value: string) => void;
   onAgentDestinationChange: (value: AgentDestination) => void;
-  onToggle: <K extends UpdateSettingMessage["key"]>(
-    key: K,
-    value: Extract<UpdateSettingMessage, { key: K }>["value"],
-  ) => void;
+  onToggle: (key: string, value: string) => void;
   onDebugToggle: () => void;
-  onRequestProviderStatus: () => void;
   onStartProvider: (id: string) => void;
   onStopProvider: (id: string) => void;
 }
@@ -81,12 +78,12 @@ export function GhostToolbar({
   vsOpenCodeXExtensionInstalled,
   compact,
   providerStatuses,
+  statusLoading,
   onCompletionProviderChange,
   onSelectedModelChange,
   onAgentDestinationChange,
   onToggle,
   onDebugToggle,
-  onRequestProviderStatus,
   onStartProvider,
   onStopProvider,
 }: GhostToolbarProps) {
@@ -132,10 +129,7 @@ export function GhostToolbar({
     closeChips();
   };
 
-  const handleToggle = <K extends UpdateSettingMessage["key"]>(
-    key: K,
-    value: Extract<UpdateSettingMessage, { key: K }>["value"],
-  ) => {
+  const handleToggle = (key: string, value: string) => {
     onToggle(key, value);
     closeChips();
   };
@@ -148,59 +142,65 @@ export function GhostToolbar({
         chipLabel="Motor"
         tooltip="Motor de sugerencias: Copilot LM, OpenCode u Ollama"
         isOpen={openChip === "motor"}
-        onToggle={() => { onRequestProviderStatus(); toggleChip("motor"); }}
+        onToggle={() => toggleChip("motor")}
         onClose={closeChips}
         compact={compact}
       >
         <div className="py-1" data-key="completionProvider">
-          {(["copilot", "opencode", "ollama"] as const).map((p) => {
-            const pStatus = providerStatuses.find((s) =>
-              p === "copilot" ? s.id === "copilot" :
-              p === "opencode" ? s.id === "opencode" : s.id === "ollama",
-            );
-            const isActive = completionProvider === p;
-            return (
-              <div key={p} className={`${itemClass} flex-col items-stretch gap-1 ${isActive ? "bg-[var(--vscode-list-hoverBackground)]" : ""}`}>
-                <button
-                  type="button"
-                  className="flex w-full items-center justify-between"
-                  onClick={() => {
-                    if (pStatus?.status === "running" || p === "copilot") {
-                      handleProvider(p);
-                    } else if (pStatus?.actions?.includes("start")) {
-                      onStartProvider(p);
-                    }
-                  }}
-                >
-                  <span className="flex items-center gap-2">
-                    {pStatus && (
-                      <span className={`${statusColor(pStatus.status)} text-xs`}>
-                        {statusIcon(pStatus.status)}
-                      </span>
-                    )}
-                    <span>{p === "copilot" ? "Copilot LM" : p === "opencode" ? "OpenCode" : "Ollama"}</span>
-                  </span>
-                  <span className="flex items-center gap-2">
-                    {pStatus?.statusText && (
-                      <span className="text-[10px] text-[var(--vscode-descriptionForeground)]">{pStatus.statusText}</span>
-                    )}
-                    {isActive && (
-                      <span className="text-[var(--vscode-badge-background)]">✓</span>
-                    )}
-                  </span>
-                </button>
-                {pStatus?.actions?.includes("stop") && isActive && p !== "copilot" && (
+          {statusLoading ? (
+            <div className="px-3 py-2 text-sm text-[var(--vscode-descriptionForeground)]">
+              ◌ Comprobando estados...
+            </div>
+          ) : (
+            (["copilot", "opencode", "ollama"] as const).map((p) => {
+              const pStatus = providerStatuses.find((s) =>
+                p === "copilot" ? s.id === "copilot" :
+                p === "opencode" ? s.id === "opencode" : s.id === "ollama",
+              );
+              const isActive = completionProvider === p;
+              return (
+                <div key={p} className={`${itemClass} flex-col items-stretch gap-1 ${isActive ? "bg-[var(--vscode-list-hoverBackground)]" : ""}`}>
                   <button
                     type="button"
-                    className={actionBtnClass}
-                    onClick={() => { onStopProvider(p); closeChips(); }}
+                    className="flex w-full items-center justify-between"
+                    onClick={() => {
+                      handleProvider(p);
+                      if (pStatus?.actions?.includes("start")) {
+                        onStartProvider(p);
+                      }
+                      closeChips();
+                    }}
                   >
-                    ■ Detener
+                    <span className="flex items-center gap-2">
+                      {pStatus && (
+                        <span className={`${statusColor(pStatus.status)} text-xs`}>
+                          {statusIcon(pStatus.status)}
+                        </span>
+                      )}
+                      <span>{p === "copilot" ? "Copilot LM" : p === "opencode" ? "OpenCode" : "Ollama"}</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      {pStatus?.statusText && (
+                        <span className="text-[10px] text-[var(--vscode-descriptionForeground)]">{pStatus.statusText}</span>
+                      )}
+                      {isActive && (
+                        <span className="text-[var(--vscode-badge-background)]">✓</span>
+                      )}
+                    </span>
                   </button>
-                )}
-              </div>
-            );
-          })}
+                  {pStatus?.actions?.includes("stop") && isActive && p !== "copilot" && (
+                    <button
+                      type="button"
+                      className={actionBtnClass}
+                      onClick={() => { onStopProvider(p); closeChips(); }}
+                    >
+                      ■ Detener
+                    </button>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       </ToolbarChip>
 
@@ -258,7 +258,7 @@ export function GhostToolbar({
                 type="button"
                 className={toggleBtn(suggestionModelPolicy === "nonPremiumOnly")}
                 onClick={() => handleToggle("suggestionModelPolicy", "nonPremiumOnly")}
-                aria-pressed={suggestionModelPolicy === "nonPremiumOnly"}
+                aria-pressed={suggestionModelPolicy === "nonPremiumOnly" ? "true" : "false"}
               >
                 No premium
               </button>
@@ -266,7 +266,7 @@ export function GhostToolbar({
                 type="button"
                 className={toggleBtn(suggestionModelPolicy === "anyModel")}
                 onClick={() => handleToggle("suggestionModelPolicy", "anyModel")}
-                aria-pressed={suggestionModelPolicy === "anyModel"}
+                aria-pressed={suggestionModelPolicy === "anyModel" ? "true" : "false"}
               >
                 Cualquiera
               </button>
@@ -318,7 +318,7 @@ export function GhostToolbar({
                 type="button"
                 className={toggleBtn(suggestionStyle === "concise")}
                 onClick={() => handleToggle("suggestionStyle", "concise")}
-                aria-pressed={suggestionStyle === "concise"}
+                aria-pressed={suggestionStyle === "concise" ? "true" : "false"}
               >
                 Breve
               </button>
@@ -326,7 +326,7 @@ export function GhostToolbar({
                 type="button"
                 className={toggleBtn(suggestionStyle === "balanced")}
                 onClick={() => handleToggle("suggestionStyle", "balanced")}
-                aria-pressed={suggestionStyle === "balanced"}
+                aria-pressed={suggestionStyle === "balanced" ? "true" : "false"}
               >
                 Normal
               </button>
@@ -334,7 +334,7 @@ export function GhostToolbar({
                 type="button"
                 className={toggleBtn(suggestionStyle === "detailed")}
                 onClick={() => handleToggle("suggestionStyle", "detailed")}
-                aria-pressed={suggestionStyle === "detailed"}
+                aria-pressed={suggestionStyle === "detailed" ? "true" : "false"}
               >
                 Extenso
               </button>
@@ -347,7 +347,7 @@ export function GhostToolbar({
                 type="button"
                 className={toggleBtn(contextMode === "basic")}
                 onClick={() => handleToggle("contextMode", "basic")}
-                aria-pressed={contextMode === "basic"}
+                aria-pressed={contextMode === "basic" ? "true" : "false"}
               >
                 Básico
               </button>
@@ -355,7 +355,7 @@ export function GhostToolbar({
                 type="button"
                 className={toggleBtn(contextMode === "project")}
                 onClick={() => handleToggle("contextMode", "project")}
-                aria-pressed={contextMode === "project"}
+                aria-pressed={contextMode === "project" ? "true" : "false"}
               >
                 Proyecto
               </button>
@@ -363,7 +363,7 @@ export function GhostToolbar({
                 type="button"
                 className={toggleBtn(contextMode === "off")}
                 onClick={() => handleToggle("contextMode", "off")}
-                aria-pressed={contextMode === "off"}
+                aria-pressed={contextMode === "off" ? "true" : "false"}
               >
                 Off
               </button>
@@ -376,7 +376,7 @@ export function GhostToolbar({
                 type="button"
                 className={toggleBtn(suggestionLanguageChoice === "auto")}
                 onClick={() => handleToggle("suggestionLanguageChoice", "auto")}
-                aria-pressed={suggestionLanguageChoice === "auto"}
+                aria-pressed={suggestionLanguageChoice === "auto" ? "true" : "false"}
               >
                 Auto
               </button>
@@ -384,7 +384,7 @@ export function GhostToolbar({
                 type="button"
                 className={toggleBtn(suggestionLanguageChoice === "es")}
                 onClick={() => handleToggle("suggestionLanguageChoice", "es")}
-                aria-pressed={suggestionLanguageChoice === "es"}
+                aria-pressed={suggestionLanguageChoice === "es" ? "true" : "false"}
               >
                 ES
               </button>
@@ -392,7 +392,7 @@ export function GhostToolbar({
                 type="button"
                 className={toggleBtn(suggestionLanguageChoice === "en")}
                 onClick={() => handleToggle("suggestionLanguageChoice", "en")}
-                aria-pressed={suggestionLanguageChoice === "en"}
+                aria-pressed={suggestionLanguageChoice === "en" ? "true" : "false"}
               >
                 EN
               </button>

@@ -5,7 +5,7 @@ interface PromptInputProps {
   suggestion: string;
   vsxActive: boolean;
   compact: boolean;
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  textareaRef: React.MutableRefObject<HTMLTextAreaElement | null>;
   isGhostUiAllowed: () => boolean;
   onTextChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSend: () => void;
@@ -60,8 +60,7 @@ export function PromptInput({
       <textarea
         ref={textareaRef}
         id="prompt-input"
-        className="w-full rounded-md border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] px-3 py-2 text-sm leading-6 text-[var(--vscode-input-foreground)] outline-none transition focus:border-[var(--vscode-focusBorder)] focus:ring-1 focus:ring-[var(--vscode-focusBorder)] resize-none"
-        style={{ minHeight: compact ? 64 : 100 }}
+        className={`w-full rounded-md border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] px-3 py-2 text-sm leading-6 text-[var(--vscode-input-foreground)] outline-none transition focus:border-[var(--vscode-focusBorder)] focus:ring-1 focus:ring-[var(--vscode-focusBorder)] resize-none ${compact ? "min-h-[64px]" : "min-h-[100px]"}`}
         value={text}
         onChange={onTextChange}
         onKeyDown={(event) => {

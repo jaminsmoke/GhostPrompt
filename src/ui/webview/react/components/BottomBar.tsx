@@ -9,9 +9,9 @@ const errorPatterns = /^Error/i;
 const successPatterns = /Modelo listo|Suggestion aceptada|Sugerencia recibida/i;
 
 function statusIcon(status: string, isLoading: boolean): string | null {
-  if (isLoading) return "\u25CB";
-  if (errorPatterns.test(status)) return "\u26A0";
-  if (successPatterns.test(status)) return "\u2713";
+  if (isLoading) { return "\u25CB"; }
+  if (errorPatterns.test(status)) { return "\u26A0"; }
+  if (successPatterns.test(status)) { return "\u2713"; }
   return null;
 }
 

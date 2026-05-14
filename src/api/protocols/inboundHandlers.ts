@@ -23,6 +23,7 @@ export type GhostPromptInboundBroadcastServices = {
   broadcastDraftSync: (originViewId: string, text: string) => void;
   broadcastSettingsToAllViews: () => Promise<void>;
   broadcastClearAll: () => void;
+  broadcastUi: (payload: Record<string, unknown>) => void;
 };
 
 export type GhostPromptInboundDispatchServices =
@@ -155,15 +156,15 @@ export async function dispatchGhostPromptInboundMessage(
       );
       return;
     case "requestProviderStatus":
-      await handleProviderStatusRequest(dispatchServices.webview);
+      await handleProviderStatusRequest(dispatchServices.webview, dispatchServices);
       return;
     case "startProvider":
       await providerStatusManager.start(message.provider);
-      await postProviderStatus(dispatchServices.webview);
+      await postProviderStatus(dispatchServices.webview, dispatchServices);
       return;
     case "stopProvider":
       await providerStatusManager.stop(message.provider);
-      await postProviderStatus(dispatchServices.webview);
+      await postProviderStatus(dispatchServices.webview, dispatchServices);
       return;
     default: {
       const _exhaustiveCheck: never = message;
@@ -172,11 +173,12 @@ export async function dispatchGhostPromptInboundMessage(
   }
 }
 
-async function handleProviderStatusRequest(webview: vscode.Webview): Promise<void> {
-  await postProviderStatus(webview);
+async function handleProviderStatusRequest(webview: vscode.Webview, services: GhostPromptInboundDispatchServices): Promise<void> {
+  await postProviderStatus(webview, services);
 }
 
-async function postProviderStatus(webview: vscode.Webview): Promise<void> {
+async function postProviderStatus(webview: vscode.Webview, services: GhostPromptInboundDispatchServices): Promise<void> {
   const providers = await providerStatusManager.refreshAll();
   webview.postMessage({ type: "providerStatus", providers });
+  services.broadcastUi({ type: "providerStatus", providers });
 }

@@ -1,0 +1,143 @@
+# Roadmap v0.8.0 — TanStack Query para comunicación host↔webview
+
+<!-- markdownlint-disable MD022 MD024 MD060 -->
+
+> Estado general: 🔵 Planificado → ⚪ No iniciado | 🟡 En progreso | 🟢 Completado | 🔴 Bloqueado
+>
+> Objetivo: Integrar TanStack Query (`@tanstack/react-query`) en el webview para gestionar de forma robusta la comunicación async con el host mediante patrón request-response sobre `postMessage`. Esto elimina bugs de race condition, estados de carga/error manuales, y prepara el terreno para futuros motores y destinos.
+
+---
+
+## Resumen
+
+| Fase | Alcance | Resultado | Estado |
+|------|---------|-----------|--------|
+| Fase 1 | Instalar + QueryClientProvider + utility `hostQuery` | Base técnica lista | ⚪ No iniciado |
+| Fase 2 | ProviderStatus: reemplazar estado manual por `useQuery` + `useMutation` | Estados de carga/error automáticos, caché 30s | ⚪ No iniciado |
+| Fase 3 | GhostToolbar: simplificar lógica con `isLoading` | Popup muestra "Comprobando..." + click siempre cambia motor | ⚪ No iniciado |
+| Fase 4 | Host: broadcast providerStatus a todas las vistas en start/stop | Ambas vistas (sidebar+panel) actualizadas | ⚪ No iniciado |
+| Fase 5 | Validación final | Build + 237+ tests | ⚪ No iniciado |
+
+---
+
+## Fase 1 — Setup
+
+### Tareas
+
+1. `npm install @tanstack/react-query`
+2. Crear `src/ui/webview/react/utils/hostQuery.ts`:
+   ```ts
+   export function hostQuery<T>(msg: OutboundMessage, responseType: string): Promise<T> {
+     return new Promise((resolve) => {
+       const handler = (e: MessageEvent) => {
+         if (e.data.type === responseType) {
+           window.removeEventListener("message", handler);
+           resolve(e.data as T);
+         }
+       };
+       window.addEventListener("message", handler);
+       postToHost(msg);
+     });
+   }
+   ```
+3. En `main.tsx`, envolver `<App>` en `<QueryClientProvider>`
+
+### Criterios de aceptación
+
+- Build pasa
+- Tests pasan
+- hostQuery funciona como utility reutilizable
+
+---
+
+## Fase 2 — ProviderStatus con TanStack Query
+
+### Tareas
+
+1. En `useGhostPrompt.ts`:
+   - Reemplazar `useState<ProviderStateRecord[]>` por `useQuery`:
+     ```ts
+     const { data: providerStatuses = [], isLoading: statusLoading } = useQuery({
+       queryKey: ["providerStatus"],
+       queryFn: () => hostQuery<{ providers: ProviderStateRecord[] }>(
+         { type: "requestProviderStatus" }, "providerStatus",
+       ).then(r => r.providers),
+       staleTime: 30_000,
+     });
+     ```
+   - Reemplazar `startProvider`/`stopProvider` manuales por `useMutation`
+
+2. Eliminar `requestProviderStatus`, `startProvider`, `stopProvider` del return del hook (reemplazado por TanStack Query)
+
+### Criterios de aceptación
+
+- ProviderStatus se obtiene con caché de 30s
+- Start/Stop funcionan con mutations
+- Estados de carga se reflejan correctamente
+
+---
+
+## Fase 3 — GhostToolbar simplificado
+
+### Tareas
+
+1. Agregar `statusLoading` como prop (o usarlo directo en GhostToolbar)
+2. Si `isLoading` → mostrar `"◌ Comprobando estados..."` en el popup
+3. Simplificar onClick de cada provider:
+   ```tsx
+   onClick={() => {
+     handleProvider(p);  // siempre cambia
+     if (pStatus?.actions?.includes("start")) {
+       startMutation.mutate(p);  // también inicia
+     }
+   }}
+   ```
+
+### Criterios de aceptación
+
+- Popup muestra "Comprobando estados..." mientras host responde
+- Click en provider stopped: cambia motor + inicia en background
+- Click en provider running: cambia motor directamente
+
+---
+
+## Fase 4 — Broadcast a todas las vistas
+
+### Tareas
+
+1. En `inboundHandlers.ts`, `postProviderStatus` debe enviar a todas las instancias:
+   ```ts
+   async function postProviderStatus(webview: vscode.Webview): Promise<void> {
+     const providers = await providerStatusManager.refreshAll();
+     webview.postMessage({ type: "providerStatus", providers });
+     // Broadcast a otras vistas registradas
+     broadcastProviderStatusToAll(providers);
+   }
+   ```
+
+2. Agregar `_broadcastProviderStatus` en `MiniInputViewProvider` (similar a `_broadcastDraftSync`)
+
+### Criterios de aceptación
+
+- Al iniciar/detener provider, ambas vistas reciben actualización
+
+---
+
+## Fase 5 — Validación
+
+### Tareas
+
+1. `npm run validate`
+2. `npm run test`
+3. Verificar 237+ tests pasan
+
+---
+
+## Hitos clave
+
+| Hito | Objetivo | Criterio de éxito | Estado |
+|------|----------|-------------------|--------|
+| Hito 1 | hostQuery utility | Función genérica postMessage→Promise funcionando | ⚪ No iniciado |
+| Hito 2 | ProviderStatus via useQuery | Caché, loading, error automáticos | ⚪ No iniciado |
+| Hito 3 | GhostToolbar con estados | Popup muestra loading + click siempre funcional | ⚪ No iniciado |
+| Hito 4 | Broadcast a todas las vistas | ProviderStatus llega a ambas instancias | ⚪ No iniciado |

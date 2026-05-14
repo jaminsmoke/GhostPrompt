@@ -260,6 +260,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         broadcastSettingsToAllViews:
           MiniInputViewProvider._broadcastSettingsToAllViews,
         broadcastClearAll: MiniInputViewProvider._broadcastClearAll,
+        broadcastUi: MiniInputViewProvider._broadcastUi,
         suggestDeps:
           MiniInputViewProvider.ghostPromptSuggestDeps(this),
       });

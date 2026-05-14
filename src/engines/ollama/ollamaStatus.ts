@@ -4,8 +4,8 @@ import type { ProviderStatusModule, ProviderStateRecord } from "../../system/sta
 function execAsync(cmd: string, timeoutMs = 5000): Promise<string> {
   return new Promise((resolve, reject) => {
     exec(cmd, { timeout: timeoutMs }, (err, stdout, stderr) => {
-      if (err) reject(new Error(stderr.trim() || err.message));
-      else resolve(stdout.trim());
+      if (err) { reject(new Error(stderr.trim() || err.message)); }
+      else { resolve(stdout.trim()); }
     });
   });
 }

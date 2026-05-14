@@ -17,8 +17,10 @@ import { ollamaModelManager } from "../engines/ollama";
 import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from "../destinations/vsOpenCodeX/vsOpenCodeXDestination";
 import "../destinations/copilotChat/copilotChatDestination";
 import { registerProjectMemory } from "../core/memory/activate";
+import { registerAllProviderModules } from "../system/status/registerModules";
 
 export function activate(context: vscode.ExtensionContext): void {
+  registerAllProviderModules();
   registerProjectMemory(context);
   const sidebarProvider = new MiniInputViewProvider(
     context,

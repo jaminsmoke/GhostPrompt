@@ -26,6 +26,7 @@
       { "selector": "variable", "format": ["camelCase", "UPPER_CASE", "PascalCase"], "leadingUnderscore": "allow" },
       { "selector": "function", "format": ["camelCase", "PascalCase"] },
       { "selector": "typeLike", "format": ["PascalCase"] },
+      { "selector": "property", "format": null, "filter": { "regex": "^__", "match": true } },
       { "selector": "objectLiteralProperty", "format": null, "modifiers": ["requiresQuotes"] },
       { "selector": "import", "format": ["camelCase", "PascalCase"] }
     ],

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { hostQuery } from "../utils/hostQuery";
 import type {
   AgentDestination,
   CompletionProvider,
@@ -47,10 +49,41 @@ export function useGhostPrompt() {
   const [suggestionLanguageChoice, setSuggestionLanguageChoice] = useState<"auto" | "es" | "en">("auto");
   const [debugSuggestions, setDebugSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [providerStatuses, setProviderStatuses] = useState<ProviderStateRecord[]>([]);
   const currentCaptureId = useRef(0);
   const debounceTimer = useRef<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const queryClient = useQueryClient();
+
+  const { data: providerStatuses = [], isLoading: statusLoading } = useQuery({
+    queryKey: ["providerStatus"],
+    queryFn: () =>
+      hostQuery<{ providers: ProviderStateRecord[] }>(
+        { type: "requestProviderStatus" },
+        "providerStatus",
+        postToHost,
+      ).then((r) => r.providers),
+    staleTime: 30_000,
+  });
+
+  const { mutate: mutateStartProvider } = useMutation({
+    mutationFn: (provider: string) =>
+      hostQuery<{ providers: ProviderStateRecord[] }>(
+        { type: "startProvider", provider },
+        "providerStatus",
+        postToHost,
+      ),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["providerStatus"] }); },
+  });
+
+  const { mutate: mutateStopProvider } = useMutation({
+    mutationFn: (provider: string) =>
+      hostQuery<{ providers: ProviderStateRecord[] }>(
+        { type: "stopProvider", provider },
+        "providerStatus",
+        postToHost,
+      ),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["providerStatus"] }); },
+  });
 
   const isGhostUiAllowed = useCallback(() => {
     const input = textareaRef.current;
@@ -224,9 +257,6 @@ export function useGhostPrompt() {
             setStatus(`Error: ${message.message ?? "Error al iniciar el modelo"}`);
           }
           break;
-        case "providerStatus":
-          setProviderStatuses(message.providers);
-          break;
         default:
           break;
       }
@@ -312,17 +342,13 @@ export function useGhostPrompt() {
     sendUpdateSetting({ type: "updateSetting", key: "debugSuggestions", value: next });
   };
 
-  const requestProviderStatus = useCallback(() => {
-    postToHost({ type: "requestProviderStatus" });
-  }, []);
-
   const startProvider = useCallback((provider: string) => {
-    postToHost({ type: "startProvider", provider });
-  }, []);
+    mutateStartProvider(provider);
+  }, [mutateStartProvider]);
 
   const stopProvider = useCallback((provider: string) => {
-    postToHost({ type: "stopProvider", provider });
-  }, []);
+    mutateStopProvider(provider);
+  }, [mutateStopProvider]);
 
   return {
     viewId,
@@ -343,6 +369,7 @@ export function useGhostPrompt() {
     suggestionLanguageChoice,
     debugSuggestions,
     isLoading,
+    statusLoading,
     providerStatuses,
     textareaRef,
     canSend,
@@ -354,7 +381,6 @@ export function useGhostPrompt() {
     handleAgentDestinationChange,
     handleSelectedModelChange,
     handleDebugToggle,
-    requestProviderStatus,
     startProvider,
     stopProvider,
     makeToggle,

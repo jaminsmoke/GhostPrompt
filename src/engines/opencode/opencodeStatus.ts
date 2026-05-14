@@ -55,7 +55,7 @@ export const opencodeStatusModule: ProviderStatusModule = {
     // Esperar a que el servidor esté listo
     for (let i = 0; i < 30; i++) {
       const alive = await pingOpenCode(baseUrl);
-      if (alive) return;
+      if (alive) { return; }
       await new Promise((r) => setTimeout(r, 1000));
     }
     throw new Error("No se pudo iniciar OpenCode (timeout 30s)");
@@ -68,7 +68,7 @@ export const opencodeStatusModule: ProviderStatusModule = {
     } catch {
       // Si no responde, forzar cierre de terminales de OpenCode
       vscode.window.terminals.forEach((t) => {
-        if (t.name.includes("OpenCode")) t.dispose();
+        if (t.name.includes("OpenCode")) { t.dispose(); }
       });
     }
   },

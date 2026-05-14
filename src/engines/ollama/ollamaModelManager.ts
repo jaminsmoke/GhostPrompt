@@ -123,7 +123,7 @@ class OllamaModelManager {
       }, 120000);
 
       const checkOutput = (data: string) => {
-        if (resolved) return;
+        if (resolved) { return; }
         if (
           data.includes("success") ||
           data.includes("loaded") ||
@@ -153,7 +153,7 @@ class OllamaModelManager {
       });
 
       proc.on("error", (err) => {
-        if (resolved) return;
+        if (resolved) { return; }
         resolved = true;
         clearTimeout(startTimeout);
         this._ollamaProcess = null;

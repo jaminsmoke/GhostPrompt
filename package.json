@@ -366,6 +366,7 @@
   },
   "dependencies": {
     "@opencode-ai/sdk": "^1.14.44",
+    "@tanstack/react-query": "^5.100.10",
     "zod": "^3.25.76"
   }
 }
