@@ -35,7 +35,6 @@ async function fetchJson<T>(
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-  const signal = (init.signal as AbortSignal | undefined) ?? controller.signal;
   const mergedSignal = init.signal
     ? anySignal([init.signal, controller.signal])
     : controller.signal;
@@ -177,12 +176,11 @@ async function streamGenerate(
       throw new Error("Ollama stream response body is null");
     }
 
-    const decoder = new TextDecoder();
     let fullText = "";
     let buffer = "";
 
     while (true) {
-      const { done, value } = await reader.read();
+      const { done, value: _value } = await reader.read();
       if (done) {
         break;
       }

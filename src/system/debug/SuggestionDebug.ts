@@ -5,11 +5,15 @@ const OUTPUT_CHANNEL_NAME = "GhostPrompt Suggestions";
 
 let outputChannel: vscode.OutputChannel | undefined;
 
-function appendDebugLine(line: string): void {
+function ensureDebugOutputChannel(): void {
   if (!outputChannel) {
     outputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
   }
-  outputChannel.appendLine(line);
+}
+
+function appendDebugLine(line: string): void {
+  ensureDebugOutputChannel();
+  outputChannel?.appendLine(line);
 }
 
 export function isSuggestionDebugEnabled(): boolean {
@@ -23,7 +27,29 @@ export async function toggleSuggestionDebug(): Promise<boolean> {
   const current = config.get<boolean>(DEBUG_SETTING_KEY, false);
   const next = !current;
   await config.update(DEBUG_SETTING_KEY, next, vscode.ConfigurationTarget.Global);
+
+  if (next) {
+    const timestamp = new Date().toISOString();
+    appendDebugLine(
+      `[${timestamp}] [debug] GhostPrompt debug logging enabled. Open the 'GhostPrompt Suggestions' output channel to view logs.`,
+    );
+  }
+
   return next;
+}
+
+export function ensureSuggestionDebugChannel(): void {
+  if (isSuggestionDebugEnabled()) {
+    ensureDebugOutputChannel();
+  }
+}
+
+export function logDebugInfo(message: string): void {
+  if (!isSuggestionDebugEnabled()) {
+    return;
+  }
+  const timestamp = new Date().toISOString();
+  appendDebugLine(`[${timestamp}] [debug] ${message}`);
 }
 
 export function logSuggestionDebug(

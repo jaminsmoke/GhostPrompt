@@ -11,6 +11,7 @@ import { append as appendLog } from '../../system/log/ConversationLog';
 import { appendSuggestion } from '../../system/log/SuggestionLog';
 import { ghostPromptSessionStore } from '../../core/session/GhostPromptSessionStore';
 import { applyWebviewUpdateSetting } from "../settings/applyWebviewUpdate";
+import { logDebugInfo } from '../../system/debug/SuggestionDebug';
 import {
   type GhostPromptSuggestDeps,
   handleGhostPromptSuggest,
@@ -121,6 +122,7 @@ export async function dispatchGhostPromptInboundMessage(
   message: WebviewInboundMessage,
   services: GhostPromptInboundDispatchServices,
 ): Promise<void> {
+  logDebugInfo(`Dispatching inbound webview message type=${message.type}`);
   switch (message.type) {
     case "init":
       await handleGhostPromptInboundInit(services.webview, services.postSettings);

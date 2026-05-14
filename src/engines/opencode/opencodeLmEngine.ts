@@ -64,7 +64,7 @@ export async function requestOpencodeCompletion(
     context,
     requestTimeoutMs = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
     onLoadingPhase,
-    onStreamPreview,
+    onStreamPreview: _onStreamPreview,
   } = options;
 
   onLoadingPhase?.("opencode-start");

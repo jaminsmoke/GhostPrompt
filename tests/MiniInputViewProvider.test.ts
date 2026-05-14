@@ -10,6 +10,7 @@ const {
   appendLogMock,
   sendToChatMock,
   logSuggestionDebugMock,
+  logDebugInfoMock,
   readFileSyncMock,
   cancellationTokenSourceMock,
 } = vi.hoisted(() => {
@@ -30,6 +31,7 @@ const {
     appendLogMock: vi.fn(),
     sendToChatMock: vi.fn(),
     logSuggestionDebugMock: vi.fn(),
+    logDebugInfoMock: vi.fn(),
     readFileSyncMock: vi.fn(
       () => "<html>{{nonce}} {{cspSource}} {{styleUri}} {{scriptUri}}</html>",
     ),
@@ -175,6 +177,7 @@ vi.mock("../src/destinations/copilotChat/copilotChatDestination", () => ({
 
 vi.mock("../src/system/debug/SuggestionDebug", () => ({
   logSuggestionDebug: logSuggestionDebugMock,
+  logDebugInfo: logDebugInfoMock,
   isSuggestionDebugEnabled: () => false,
 }));
 

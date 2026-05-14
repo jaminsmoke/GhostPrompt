@@ -30,18 +30,22 @@ describe("React webview toolbar parity", () => {
     }
   });
 
-  it("component files expose stable toolbar control ids shared by both webviews", () => {
+  it("component files expose stable toolbar chip ids shared by both webviews", () => {
     const toolbar = read("src/ui/webview/react/components/GhostToolbar.tsx");
     const input = read("src/ui/webview/react/components/PromptInput.tsx");
     const footer = read("src/ui/webview/react/components/ActionBar.tsx");
     const app = read("src/ui/webview/react/App.tsx");
 
-    expect(toolbar).toContain('id="completion-backend-select"');
-    expect(toolbar).toContain('id="agent-destination-select"');
-    expect(toolbar).toContain('id="compose-options-details"');
-    expect(toolbar).toContain('id="model-select"');
-    expect(toolbar).toContain('id="model-runtime-label"');
+    // Chip IDs in GhostToolbar
+    expect(toolbar).toContain('id="motor-chip"');
+    expect(toolbar).toContain('id="modelo-chip"');
+    expect(toolbar).toContain('id="composicion-chip"');
+    expect(toolbar).toContain('id="gear-chip"');
+    // destino-chip is conditional, but the id string should exist in source
+    expect(toolbar).toContain('id="destino-chip"');
+    // Debug button inside gear popup
     expect(toolbar).toContain('id="debug-btn"');
+
     expect(input).toContain('id="prompt-input"');
     expect(app).toContain('id="gp-vsx-surface-note"');
     expect(footer).toContain('id="send-btn"');

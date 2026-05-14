@@ -27,9 +27,9 @@
  *   - Contratos Zod (`system/contracts/webviewMessageSchemas.ts` / `api/protocols/webviewProtocols.ts`): entrada webview → host y salida `settings`.
  */
 import * as vscode from "vscode";
-import { ghostPromptSessionStore } from '../../core/session/GhostPromptSessionStore';
 import { buildAndPostGhostPromptSettings } from "../../api/settings/settingsPostMessage";
 import { buildGhostPromptWebviewHtml } from "./webviewHtml";
+import { logDebugInfo } from '../../system/debug/SuggestionDebug';
 import { getProjectMemoryBaseDir } from "../../core/memory/activate";
 import {
   reconcileProjectMemoryForSuggest,
@@ -221,9 +221,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * Por defecto vacío: misma UX en ambas superficies.
    */
   private _webviewCapabilitiesPayload(): Record<string, unknown> {
-    return this.viewContributionId === "ghostPrompt.input"
-      ? { compactToolbar: true }
-      : {};
+    return {};
   }
 
   public resolveWebviewView(
@@ -246,10 +244,13 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
     webviewView.webview.onDidReceiveMessage(async (raw: unknown) => {
+      logDebugInfo("Received raw webview message.");
       const message = parseWebviewInboundMessage(raw);
       if (!message) {
+        logDebugInfo("Webview inbound message failed validation.");
         return;
       }
+      logDebugInfo(`Parsed webview message type=${message.type}`);
       await dispatchGhostPromptInboundMessage(message, {
         viewContributionId: this.viewContributionId,
         webview: webviewView.webview,

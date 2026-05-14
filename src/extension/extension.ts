@@ -7,7 +7,11 @@
  */
 import * as vscode from "vscode";
 import { MiniInputViewProvider } from "../ui/provider/MiniInputViewProvider";
-import { toggleSuggestionDebug } from '../system/debug/SuggestionDebug';
+import {
+  isSuggestionDebugEnabled,
+  ensureSuggestionDebugChannel,
+  toggleSuggestionDebug,
+} from '../system/debug/SuggestionDebug';
 import { resetClient } from "../engines/opencode/opencodeApiClient";
 import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from "../destinations/vsOpenCodeX/vsOpenCodeXDestination";
 import "../destinations/copilotChat/copilotChatDestination";
@@ -60,6 +64,10 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
   notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
+
+  if (isSuggestionDebugEnabled()) {
+    ensureSuggestionDebugChannel();
+  }
 
   context.subscriptions.push(
     openSuggestionPolicySettingsCommand,

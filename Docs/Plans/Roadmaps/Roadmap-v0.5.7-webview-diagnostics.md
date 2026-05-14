@@ -1,0 +1,75 @@
+# Roadmap v0.5.7 — Diagnóstico y corrección de regresión de sugerencias
+
+<!-- markdownlint-disable MD022 MD024 MD060 -->
+
+> Estado general: 🔵 Planificado → ⚪ No iniciado | 🟡 En progreso | 🟢 Completado | 🔴 Bloqueado
+>
+> Objetivo: Diagnosticar y corregir la pérdida de funcionalidad de sugerencias tras la migración a React. El webview se queda en "Solicitando sugerencia..." sin recibir respuesta del host.
+
+---
+
+## Resumen
+
+| Fase | Alcance | Resultado | Estado |
+|------|---------|-----------|--------|
+| Fase 1 | Diagnóstico rápido | Identificar causa raíz (StrictMode, cache, CSP, error runtime) | ⚪ No iniciado |
+| Fase 2 | Corrección | Aplicar fix según causa identificada | ⚪ No iniciado |
+| Fase 3 | Validación | Sugerencias funcionales + tests pasan | ⚪ No iniciado |
+
+---
+
+## Fase 1 — Diagnóstico rápido
+
+### Tareas
+
+1. Eliminar `<React.StrictMode>` de `main.tsx` y probar
+2. Agregar `console.log` en `useGhostPrompt.ts`:
+   - En `requestSuggestion`: log antes de `postToHost`
+   - En `handleMessage`: log al recibir cada tipo de mensaje (`type`, `captureId`)
+3. Agregar `console.log` en `PromptInput.tsx` en `onChange`
+4. Realizar `Developer: Reload Window`
+5. Abrir consola del webview (`Ctrl+Shift+I`) y buscar errores
+
+### Criterios de aceptación
+
+- Se identifica si el problema es StrictMode, cache, CSP o error runtime
+- Logs permiten rastrear el flujo completo de un suggest request
+
+---
+
+## Fase 2 — Corrección por causa
+
+| Si la causa es | Acción |
+|----------------|--------|
+| **StrictMode** | Eliminar StrictMode de producción. Agregar flag `useRef` para evitar doble `postToHost("init")` |
+| **Cache VS Code** | Agregar hash al HTML del bundle o limpiar caché del webview |
+| **Error runtime** | Corregir según error en consola |
+| **CSP del webview** | Ajustar CSP para permitir `unsafe-eval` solo en desarrollo |
+| **Timing / orden renders** | Ajustar dependencias de efectos o migrar a `useLayoutEffect` |
+
+---
+
+## Fase 3 — Validación
+
+### Tareas
+
+1. Verificar que las sugerencias aparecen al escribir
+2. Verificar que Tab acepta la sugerencia
+3. Verificar que Enter envía el prompt
+4. Verificar que todos los settings funcionan (Motor, Destino, Modelo, Composición, Debug)
+5. Ejecutar `npm run validate` + `npm run test`
+
+### Criterios de aceptación
+
+- 219 tests pasan
+- Suggestion flow completo: escribir → debounce → suggest → recibir → mostrar ghost → Tab aceptar
+
+---
+
+## Archivos a modificar
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/ui/webview/react/main.tsx` | Quitar `<React.StrictMode>` |
+| `src/ui/webview/react/hooks/useGhostPrompt.ts` | Agregar logs diagnósticos |
+| `src/ui/webview/react/components/PromptInput.tsx` | Agregar log de onChange |

@@ -4,6 +4,7 @@ import { GhostToolbar } from "./components/GhostToolbar";
 import { PromptInput } from "./components/PromptInput";
 import { GhostStatusLine } from "./components/GhostStatusLine";
 import { ActionBar } from "./components/ActionBar";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 export { postToHost } from "./hooks/useGhostPrompt";
 
@@ -40,7 +41,7 @@ export function App(): JSX.Element {
   const compact = capabilities.compactToolbar === true;
 
   return (
-    <div>
+    <ErrorBoundary>
       <GhostToolbar
         compact={compact}
         completionProvider={completionProvider}
@@ -84,7 +85,7 @@ export function App(): JSX.Element {
 
       <GhostStatusLine status={status} />
 
-      <ActionBar canSend={canSend} vsxActive={vsxActive} onSend={handleSend} />
-    </div>
+      <ActionBar canSend={canSend} onSend={handleSend} />
+    </ErrorBoundary>
   );
 }

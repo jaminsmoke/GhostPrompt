@@ -7,7 +7,6 @@ import {
   isProjectMemoryBootstrapStoredItem,
   mergeEntriesReplacingBootstrapSubset,
   mergeValidatedBootstrapWithLive,
-  pruneBootstrapStoredAgainstFileProbes,
 } from "./entries/bootstrap";
 import {
   isProjectMemoryEditorIngestStoredItem,

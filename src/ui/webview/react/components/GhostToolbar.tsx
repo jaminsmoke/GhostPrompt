@@ -1,4 +1,6 @@
+import { useState } from "react";
 import type { AgentDestination, CompletionProvider, SuggestionModel, UpdateSettingMessage } from "../types";
+import { ToolbarChip } from "./ToolbarChip";
 
 interface GhostToolbarProps {
   completionProvider: CompletionProvider;
@@ -22,15 +24,20 @@ interface GhostToolbarProps {
   onDebugToggle: () => void;
 }
 
-const toggleBtn = (active: boolean, compact: boolean) =>
-  `inline-flex items-center justify-center rounded-md border px-${compact ? "2" : "3"} py-${compact ? "1" : "1.5"} text-${compact ? "xs" : "sm"} transition focus:outline-none focus:ring-2 focus:ring-[var(--vscode-focusBorder)] ${
+const itemClass =
+  "flex w-full items-center justify-between px-3 py-1.5 text-sm text-[var(--vscode-sideBar-foreground)] hover:bg-[var(--vscode-list-hoverBackground)] transition";
+
+const toggleBtn = (active: boolean) =>
+  `inline-flex items-center justify-center rounded-md border px-2 py-1 text-xs transition ${
     active
       ? "border-[var(--vscode-badge-background)] bg-[var(--vscode-badge-background)] text-[var(--vscode-badge-foreground)]"
-      : "border-[var(--vscode-widget-border)] text-[var(--vscode-sideBar-foreground)] hover:border-[var(--vscode-input-border)] hover:bg-[var(--vscode-list-hoverBackground)]"
+      : "border-[var(--vscode-widget-border)] text-[var(--vscode-sideBar-foreground)] hover:bg-[var(--vscode-list-hoverBackground)]"
   }`;
 
-const selectClass =
-  "rounded-md border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] px-2 py-1.5 text-sm text-[var(--vscode-input-foreground)] outline-none ring-1 ring-transparent transition focus:border-[var(--vscode-focusBorder)] focus:ring-[var(--vscode-focusBorder)]";
+const separatorClass = "my-1 border-t border-[var(--vscode-widget-border)]";
+
+const chipLabelClass = (compact: boolean) =>
+  compact ? "text-[10px]" : "text-xs";
 
 export function GhostToolbar({
   completionProvider,
@@ -50,180 +57,265 @@ export function GhostToolbar({
   onToggle,
   onDebugToggle,
 }: GhostToolbarProps) {
-  const labelClass = compact
-    ? "text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--vscode-descriptionForeground)]"
-    : "text-xs font-semibold uppercase tracking-[0.18em] text-[var(--vscode-descriptionForeground)]";
+  const [openChip, setOpenChip] = useState<string | null>(null);
+
+  const toggleChip = (id: string) => setOpenChip((p) => (p === id ? null : id));
+  const closeChips = () => setOpenChip(null);
+
+  const providerLabel = completionProvider === "copilot"
+    ? "Copilot LM"
+    : completionProvider === "opencode"
+      ? "OpenCode"
+      : "Ollama";
+
+  const currentModel = availableModels.find((m) => m.id === selectedModelId);
+  const modeloLabel = currentModel?.label ?? (selectedModelId === "auto" ? "Auto" : selectedModelId);
+
+  const styleLabel = suggestionStyle === "concise" ? "Breve" : suggestionStyle === "balanced" ? "Normal" : "Extenso";
+  const ctxLabel = contextMode === "basic" ? "Básico" : contextMode === "project" ? "Proyecto" : "Off";
+  const langLabel = suggestionLanguageChoice === "auto" ? "Auto" : suggestionLanguageChoice === "es" ? "ES" : "EN";
+  const compLabel = `${styleLabel} · ${ctxLabel} · ${langLabel}`;
+
+  const handleProvider = (v: CompletionProvider) => {
+    onCompletionProviderChange(v);
+    closeChips();
+  };
+
+  const handleDestino = (v: AgentDestination) => {
+    onAgentDestinationChange(v);
+    closeChips();
+  };
+
+  const handleModel = (v: string) => {
+    onSelectedModelChange(v);
+    closeChips();
+  };
+
+  const handleToggle = <K extends UpdateSettingMessage["key"]>(
+    key: K,
+    value: Extract<UpdateSettingMessage, { key: K }>["value"],
+  ) => {
+    onToggle(key, value);
+    closeChips();
+  };
 
   return (
-    <div className={`flex flex-wrap gap-${compact ? "1" : "2"} mb-${compact ? "2" : "3"}`}>
-      <div className="flex flex-col gap-1" data-key="completionProvider">
-        <span className={labelClass}>Motor</span>
-        <select
-          id="completion-backend-select"
-          className={selectClass}
-          value={completionProvider}
-          onChange={(e) => onCompletionProviderChange(e.target.value as CompletionProvider)}
-          aria-label="Motor de suggestions (Copilot LM u OpenCode)"
-        >
-          <option value="copilot">Copilot LM</option>
-          <option value="opencode">OpenCode</option>
-          <option value="ollama">Ollama</option>
-        </select>
-      </div>
-
-      {vsOpenCodeXExtensionInstalled ? (
-        <div className="flex flex-col gap-1" data-key="agentDestination">
-          <span className={labelClass}>Destino</span>
-          <select
-            id="agent-destination-select"
-            className={selectClass}
-            value={agentDestination}
-            onChange={(e) => onAgentDestinationChange(e.target.value as AgentDestination)}
-            aria-label="Destino del prompt (Copilot Chat o VSOpenCodeX)"
-          >
-            <option value="copilotChat">Copilot Chat</option>
-            <option value="vsOpenCodeX">VSOpenCodeX</option>
-          </select>
-        </div>
-      ) : null}
-
-      <div className="flex flex-col gap-1" data-key="suggestionModelPolicy">
-        <span className={labelClass}>Modelo</span>
-        <div className="flex gap-1">
-          <button
-            type="button"
-            className={toggleBtn(suggestionModelPolicy === "nonPremiumOnly", compact)}
-            onClick={() => onToggle("suggestionModelPolicy", "nonPremiumOnly")}
-            aria-pressed={suggestionModelPolicy === "nonPremiumOnly"}
-          >
-            No premium
-          </button>
-          <button
-            type="button"
-            className={toggleBtn(suggestionModelPolicy === "anyModel", compact)}
-            onClick={() => onToggle("suggestionModelPolicy", "anyModel")}
-            aria-pressed={suggestionModelPolicy === "anyModel"}
-          >
-            Cualquiera
-          </button>
-        </div>
-        <select
-          id="model-select"
-          className={selectClass}
-          aria-label="Modelo sugerencias"
-          value={selectedModelId}
-          onChange={(e) => onSelectedModelChange(e.target.value)}
-        >
-          <option value="auto">Auto</option>
-          {availableModels.map((model) => (
-            <option key={model.id} value={model.id}>
-              {model.label}
-            </option>
-          ))}
-        </select>
-        <span
-          id="model-runtime-label"
-          className="inline-flex items-center justify-center rounded-md border border-[var(--vscode-widget-border)] bg-[var(--vscode-input-background)] px-2 py-1 text-xs text-[var(--vscode-descriptionForeground)]"
-          aria-live="polite"
-        >
-          {availableModels.find((m) => m.id === selectedModelId)?.label ?? "--"}
-        </span>
-      </div>
-
-      <details
-        className="rounded-md border border-[var(--vscode-widget-border)] bg-[var(--vscode-input-background)]"
-        id="compose-options-details"
+    <div className="flex flex-wrap items-start gap-1 mb-2">
+      <ToolbarChip
+        id="motor-chip"
+        label={providerLabel}
+        chipLabel="Motor"
+        tooltip="Motor de sugerencias: Copilot LM, OpenCode u Ollama"
+        isOpen={openChip === "motor"}
+        onToggle={() => toggleChip("motor")}
+        onClose={closeChips}
+        compact={compact}
       >
-        <summary
-          className="w-full rounded-md border border-[var(--vscode-widget-border)] bg-[var(--vscode-input-background)] px-2 py-1.5 text-left text-sm font-medium text-[var(--vscode-sideBar-foreground)]"
-          aria-label="Opciones de composición: estilo, contexto e idioma"
+        <div className="py-1" data-key="completionProvider">
+          {(["copilot", "opencode", "ollama"] as const).map((p) => (
+            <button
+              key={p}
+              type="button"
+              className={itemClass}
+              onClick={() => handleProvider(p)}
+            >
+              <span>{p === "copilot" ? "Copilot LM" : p === "opencode" ? "OpenCode" : "Ollama"}</span>
+              {completionProvider === p && (
+                <span className="text-[var(--vscode-badge-background)]">✓</span>
+              )}
+            </button>
+          ))}
+        </div>
+      </ToolbarChip>
+
+      {vsOpenCodeXExtensionInstalled && (
+        <ToolbarChip
+          id="destino-chip"
+          label={agentDestination === "copilotChat" ? "Copilot Chat" : "VSOpenCodeX"}
+          chipLabel="Destino"
+          tooltip="Destino del prompt: Copilot Chat o VSOpenCodeX"
+          isOpen={openChip === "destino"}
+          onToggle={() => toggleChip("destino")}
+          onClose={closeChips}
+          compact={compact}
         >
-          Normal · Básico · Auto
-        </summary>
-        <div className={`grid gap-${compact ? "1" : "2"} p-2`} role="group" aria-label="Estilo, contexto e idioma">
-          <div className="flex flex-col gap-1" data-key="suggestionStyle">
-            <span className={labelClass}>Estilo</span>
+          <div className="py-1" data-key="agentDestination">
+            <button
+              type="button"
+              className={itemClass}
+              onClick={() => handleDestino("copilotChat")}
+            >
+              <span>Copilot Chat</span>
+              {agentDestination === "copilotChat" && (
+                <span className="text-[var(--vscode-badge-background)]">✓</span>
+              )}
+            </button>
+            <button
+              type="button"
+              className={itemClass}
+              onClick={() => handleDestino("vsOpenCodeX")}
+            >
+              <span>VSOpenCodeX</span>
+              {agentDestination === "vsOpenCodeX" && (
+                <span className="text-[var(--vscode-badge-background)]">✓</span>
+              )}
+            </button>
+          </div>
+        </ToolbarChip>
+      )}
+
+      <ToolbarChip
+        id="modelo-chip"
+        label={modeloLabel}
+        chipLabel="Modelo"
+        tooltip="Modelo de IA y política de suscripción"
+        isOpen={openChip === "modelo"}
+        onToggle={() => toggleChip("modelo")}
+        onClose={closeChips}
+        compact={compact}
+      >
+        <div className="p-2 space-y-2 min-w-[200px]">
+          <div data-key="suggestionModelPolicy" className="flex flex-col gap-1">
+            <span className={chipLabelClass(compact)}>Política de modelo</span>
             <div className="flex gap-1">
               <button
                 type="button"
-                className={toggleBtn(suggestionStyle === "concise", compact)}
-                onClick={() => onToggle("suggestionStyle", "concise")}
+                className={toggleBtn(suggestionModelPolicy === "nonPremiumOnly")}
+                onClick={() => handleToggle("suggestionModelPolicy", "nonPremiumOnly")}
+                aria-pressed={suggestionModelPolicy === "nonPremiumOnly"}
+              >
+                No premium
+              </button>
+              <button
+                type="button"
+                className={toggleBtn(suggestionModelPolicy === "anyModel")}
+                onClick={() => handleToggle("suggestionModelPolicy", "anyModel")}
+                aria-pressed={suggestionModelPolicy === "anyModel"}
+              >
+                Cualquiera
+              </button>
+            </div>
+          </div>
+          <hr className={separatorClass} />
+          <div className="flex flex-col gap-1">
+            <span className={chipLabelClass(compact)}>Modelo específico</span>
+            <select
+              id="model-chip-select"
+              className="rounded-md border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] px-2 py-1 text-sm text-[var(--vscode-input-foreground)] outline-none"
+              value={selectedModelId}
+              onChange={(e) => handleModel(e.target.value)}
+              aria-label="Modelo sugerencias"
+            >
+              <option value="auto">Auto</option>
+              {availableModels.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.label}
+                </option>
+              ))}
+            </select>
+            <span
+              id="model-chip-label"
+              className="text-xs text-[var(--vscode-descriptionForeground)]"
+              aria-live="polite"
+            >
+              {currentModel?.label ?? "--"}
+            </span>
+          </div>
+        </div>
+      </ToolbarChip>
+
+      <ToolbarChip
+        id="composicion-chip"
+        label={compLabel}
+        chipLabel="Composición"
+        tooltip="Estilo, contexto e idioma de las sugerencias"
+        isOpen={openChip === "composicion"}
+        onToggle={() => toggleChip("composicion")}
+        onClose={closeChips}
+        compact={compact}
+      >
+        <div className="p-2 space-y-3 min-w-[220px]">
+          <div data-key="suggestionStyle" className="flex flex-col gap-1">
+            <span className={chipLabelClass(compact)}>Estilo</span>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                className={toggleBtn(suggestionStyle === "concise")}
+                onClick={() => handleToggle("suggestionStyle", "concise")}
                 aria-pressed={suggestionStyle === "concise"}
               >
                 Breve
               </button>
               <button
                 type="button"
-                className={toggleBtn(suggestionStyle === "balanced", compact)}
-                onClick={() => onToggle("suggestionStyle", "balanced")}
+                className={toggleBtn(suggestionStyle === "balanced")}
+                onClick={() => handleToggle("suggestionStyle", "balanced")}
                 aria-pressed={suggestionStyle === "balanced"}
               >
                 Normal
               </button>
               <button
                 type="button"
-                className={toggleBtn(suggestionStyle === "detailed", compact)}
-                onClick={() => onToggle("suggestionStyle", "detailed")}
+                className={toggleBtn(suggestionStyle === "detailed")}
+                onClick={() => handleToggle("suggestionStyle", "detailed")}
                 aria-pressed={suggestionStyle === "detailed"}
               >
                 Extenso
               </button>
             </div>
           </div>
-
-          <div className="flex flex-col gap-1" data-key="contextMode">
-            <span className={labelClass}>Contexto</span>
+          <div data-key="contextMode" className="flex flex-col gap-1">
+            <span className={chipLabelClass(compact)}>Contexto</span>
             <div className="flex gap-1">
               <button
                 type="button"
-                className={toggleBtn(contextMode === "basic", compact)}
-                onClick={() => onToggle("contextMode", "basic")}
+                className={toggleBtn(contextMode === "basic")}
+                onClick={() => handleToggle("contextMode", "basic")}
                 aria-pressed={contextMode === "basic"}
               >
                 Básico
               </button>
               <button
                 type="button"
-                className={toggleBtn(contextMode === "project", compact)}
-                onClick={() => onToggle("contextMode", "project")}
+                className={toggleBtn(contextMode === "project")}
+                onClick={() => handleToggle("contextMode", "project")}
                 aria-pressed={contextMode === "project"}
               >
                 Proyecto
               </button>
               <button
                 type="button"
-                className={toggleBtn(contextMode === "off", compact)}
-                onClick={() => onToggle("contextMode", "off")}
+                className={toggleBtn(contextMode === "off")}
+                onClick={() => handleToggle("contextMode", "off")}
                 aria-pressed={contextMode === "off"}
               >
                 Off
               </button>
             </div>
           </div>
-
-          <div className="flex flex-col gap-1" data-key="suggestionLanguageChoice">
-            <span className={labelClass}>Idioma</span>
+          <div data-key="suggestionLanguageChoice" className="flex flex-col gap-1">
+            <span className={chipLabelClass(compact)}>Idioma</span>
             <div className="flex gap-1">
               <button
                 type="button"
-                className={toggleBtn(suggestionLanguageChoice === "auto", compact)}
-                onClick={() => onToggle("suggestionLanguageChoice", "auto")}
+                className={toggleBtn(suggestionLanguageChoice === "auto")}
+                onClick={() => handleToggle("suggestionLanguageChoice", "auto")}
                 aria-pressed={suggestionLanguageChoice === "auto"}
               >
                 Auto
               </button>
               <button
                 type="button"
-                className={toggleBtn(suggestionLanguageChoice === "es", compact)}
-                onClick={() => onToggle("suggestionLanguageChoice", "es")}
+                className={toggleBtn(suggestionLanguageChoice === "es")}
+                onClick={() => handleToggle("suggestionLanguageChoice", "es")}
                 aria-pressed={suggestionLanguageChoice === "es"}
               >
                 ES
               </button>
               <button
                 type="button"
-                className={toggleBtn(suggestionLanguageChoice === "en", compact)}
-                onClick={() => onToggle("suggestionLanguageChoice", "en")}
+                className={toggleBtn(suggestionLanguageChoice === "en")}
+                onClick={() => handleToggle("suggestionLanguageChoice", "en")}
                 aria-pressed={suggestionLanguageChoice === "en"}
               >
                 EN
@@ -231,17 +323,32 @@ export function GhostToolbar({
             </div>
           </div>
         </div>
-      </details>
+      </ToolbarChip>
 
-      <button
-        type="button"
-        id="debug-btn"
-        className={toggleBtn(debugSuggestions, compact)}
-        aria-pressed={debugSuggestions}
-        onClick={onDebugToggle}
+      <ToolbarChip
+        id="gear-chip"
+        label="⚙"
+        tooltip="Ajustes adicionales (debug)"
+        isOpen={openChip === "gear"}
+        onToggle={() => toggleChip("gear")}
+        onClose={closeChips}
+        compact={compact}
       >
-        {debugSuggestions ? "Debug: on" : "Debug: off"}
-      </button>
+        <div className="py-1 min-w-[160px]">
+          <button
+            id="debug-btn"
+            type="button"
+            className={`${itemClass} ${debugSuggestions ? "text-[var(--vscode-badge-foreground)]" : ""}`}
+            onClick={() => {
+              onDebugToggle();
+              closeChips();
+            }}
+          >
+            <span>Debug</span>
+            <span className="text-xs opacity-70">{debugSuggestions ? "on" : "off"}</span>
+          </button>
+        </div>
+      </ToolbarChip>
     </div>
   );
 }

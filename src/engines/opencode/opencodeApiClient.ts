@@ -15,7 +15,6 @@ const POOL_TTL_MS = 5 * 60 * 1000;
 const POOL_MAX_SIZE = 4;
 
 let globalClient: unknown | undefined;
-let globalOptions: OpenCodeClientOptions = {};
 let sessionPool: PoolEntry[] = [];
 
 function buildBaseUrl(options: OpenCodeClientOptions): string {
@@ -39,7 +38,6 @@ export async function createOpenCodeClient(
   const headers = buildHeaders(options);
   const { createOpencodeClient: factory } = await import("@opencode-ai/sdk");
   globalClient = factory({ baseUrl, headers });
-  globalOptions = options;
   return globalClient;
 }
 
@@ -86,7 +84,7 @@ export async function promptOpenCode(
 }
 
 export async function* promptStreamOpenCode(
-  sessionId: string,
+  _sessionId: string,
   signal: AbortSignal,
   client?: unknown,
 ): AsyncGenerator<string> {
@@ -134,7 +132,6 @@ export async function closeAllSessions(client?: unknown): Promise<void> {
 
 export function resetClient(): void {
   globalClient = undefined;
-  globalOptions = {};
   sessionPool = [];
 }
 

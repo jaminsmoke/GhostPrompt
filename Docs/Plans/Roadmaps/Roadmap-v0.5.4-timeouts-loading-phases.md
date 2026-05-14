@@ -47,7 +47,7 @@ export type SuggestionLoadingPhase =
 ### Textos UX asociados
 
 | Fase | Texto |
-|------|-------|
+| :--- | :--- |
 | `copilot` | Buscando modelo… |
 | `copilot-generating` | Generando sugerencia… |
 | `opencode-start` | Iniciando OpenCode… |
@@ -62,7 +62,7 @@ export type SuggestionLoadingPhase =
 ## Progreso general — TODAS LAS FASES COMPLETADAS 🟢
 
 | Fase | Descripción | Estado |
-|------|-------------|--------|
+| :--- | :--- |
 | **Fase 1** | Actualizar `core/loading.ts` — nuevos phases + textos | 🟢 |
 | **Fase 2** | Actualizar `core/types.ts` — doc `requestTimeoutMs` | 🟢 |
 | **Fase 3** | Copilot: mover timeout a `copilot-generating` | 🟢 |
@@ -92,17 +92,14 @@ export type SuggestionLoadingPhase =
   | "ollama-generating";
 ```
 
-Textos:
-- `copilot` → "Buscando modelo…"
+\n\nTextos:\n- `copilot` → "Buscando modelo…"
 - `copilot-generating` → "Generando sugerencia…"
 - `opencode-start` → "Iniciando OpenCode…"
 - `opencode-connecting` → "Conectando con el servidor…"
 - `opencode-generating` → "Generando sugerencia…"
 - `ollama-start` → "Iniciando Ollama…"
 - `ollama-loading` → "Cargando modelo local…"
-- `ollama-generating` → "Generando sugerencia…"
-
-### Fase 2 — `core/types.ts`
+- `ollama-generating` → "Generando sugerencia…"\n\n### Fase 2 — `core/types.ts`
 
 **Cambios:**
 

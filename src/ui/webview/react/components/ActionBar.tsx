@@ -1,10 +1,9 @@
 interface ActionBarProps {
   canSend: boolean;
-  vsxActive: boolean;
   onSend: () => void;
 }
 
-export function ActionBar({ canSend, vsxActive, onSend }: ActionBarProps) {
+export function ActionBar({ canSend, onSend }: ActionBarProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-2">
       <span className="text-xs text-[var(--vscode-descriptionForeground)]">

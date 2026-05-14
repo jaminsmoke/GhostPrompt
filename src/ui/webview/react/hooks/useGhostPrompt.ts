@@ -19,15 +19,12 @@ const getInitialCapabilities = (): GhostPromptCapabilities =>
     ? window.__ghostPromptCapabilities
     : {};
 
-const getVsCodeApi = (): { postMessage(message: unknown): void } | undefined => {
-  if (typeof acquireVsCodeApi !== "function") {
-    return undefined;
-  }
-  return acquireVsCodeApi();
-};
+const vsCodeApi = typeof acquireVsCodeApi === "function"
+  ? acquireVsCodeApi()
+  : undefined;
 
 export function postToHost(message: OutboundMessage): void {
-  getVsCodeApi()?.postMessage(message);
+  vsCodeApi?.postMessage(message);
 }
 
 export function useGhostPrompt() {
@@ -99,38 +96,48 @@ export function useGhostPrompt() {
 
   const requestSuggestion = useCallback(
     (draftText: string) => {
-      if (vsxActive || !draftText.trim()) {
-        return;
+      try {
+        if (vsxActive || !draftText.trim()) {
+          return;
+        }
+        currentCaptureId.current += 1;
+        const nextCaptureId = currentCaptureId.current;
+        console.log("[GP] requestSuggestion", { text: draftText.slice(0, 40), captureId: nextCaptureId });
+        setIsLoading(true);
+        setStatus("Solicitando sugerencia...");
+        postToHost({
+          type: "suggest",
+          text: draftText,
+          captureId: nextCaptureId,
+        });
+      } catch (err) {
+        console.error("[GP] Error en requestSuggestion:", err);
+        setStatus("Error al solicitar sugerencia.");
+        setIsLoading(false);
       }
-      currentCaptureId.current += 1;
-      const nextCaptureId = currentCaptureId.current;
-      setIsLoading(true);
-      setStatus("Solicitando sugerencia...");
-      postToHost({
-        type: "suggest",
-        text: draftText,
-        captureId: nextCaptureId,
-      });
     },
     [vsxActive],
   );
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      const message = event.data as InboundMessage;
+      try {
+        const message = event.data as InboundMessage;
 
-      if (message.broadcast === true && typeof message.captureId === "number") {
-        currentCaptureId.current = message.captureId;
-      }
-      if (
-        typeof message.captureId === "number" &&
-        message.captureId !== currentCaptureId.current &&
-        message.broadcast !== true
-      ) {
-        return;
-      }
+        if (message.broadcast === true && typeof message.captureId === "number") {
+          currentCaptureId.current = message.captureId;
+        }
+        if (
+          typeof message.captureId === "number" &&
+          message.captureId !== currentCaptureId.current &&
+          message.broadcast !== true
+        ) {
+          return;
+        }
 
-      switch (message.type) {
+        console.log("[GP] inbound message", { type: message.type, captureId: "captureId" in message ? message.captureId : undefined });
+
+        switch (message.type) {
         case "settings": {
           setCompletionProvider(message.settings.completionProvider);
           setSelectedModelId(message.settings.selectedModelId);
@@ -140,6 +147,10 @@ export function useGhostPrompt() {
           setContextMode(message.settings.contextMode);
           setSuggestionLanguageChoice(message.settings.suggestionLanguageChoice);
           setSuggestionDebounceMs(message.settings.suggestionDebounceMs);
+          if (message.settings.suggestionDebounceMs < 150) {
+            console.warn("[GP] suggestionDebounceMs inválido (%d), corrigiendo a 800", message.settings.suggestionDebounceMs);
+            setSuggestionDebounceMs(800);
+          }
           setDebugSuggestions(message.settings.debugSuggestions);
           setAgentDestination(message.settings.agentDestination);
           setVsOpenCodeXExtensionInstalled(message.settings.vsOpenCodeXExtensionInstalled);
@@ -159,8 +170,8 @@ export function useGhostPrompt() {
           break;
         case "suggestion-stream":
           if (message.text) {
-            setStatus("Suggestion en progreso...");
             setSuggestion(message.text);
+            setStatus("Suggestion en progreso...");
           }
           break;
         case "empty":
@@ -199,6 +210,9 @@ export function useGhostPrompt() {
         default:
           break;
       }
+      } catch (err) {
+        console.error("[GP] Error en handleMessage:", err);
+      }
     };
 
     window.addEventListener("message", handleMessage);
@@ -235,12 +249,17 @@ export function useGhostPrompt() {
   }, [syncTextareaHeight]);
 
   const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    const nextText = event.target.value;
-    setText(nextText);
-    if (viewId) {
-      postToHost({ type: "draftChanged", text: nextText, originViewId: viewId });
+    try {
+      const nextText = event.target.value;
+      console.log("[GP] text change", { length: nextText.length });
+      setText(nextText);
+      if (viewId) {
+        postToHost({ type: "draftChanged", text: nextText, originViewId: viewId });
+      }
+      syncTextareaHeight();
+    } catch (err) {
+      console.error("[GP] Error en handleTextChange:", err);
     }
-    syncTextareaHeight();
   };
 
   const handleSend = () => {
