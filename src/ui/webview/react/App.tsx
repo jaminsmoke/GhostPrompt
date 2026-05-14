@@ -28,6 +28,7 @@ export function App(): JSX.Element {
     suggestionLanguageChoice,
     debugSuggestions,
     agentDestination,
+    providerStatuses,
     handleTextChange,
     handleSend,
     acceptSuggestion,
@@ -36,6 +37,9 @@ export function App(): JSX.Element {
     handleAgentDestinationChange,
     handleDebugToggle,
     makeToggle,
+    requestProviderStatus,
+    startProvider,
+    stopProvider,
   } = useGhostPrompt();
 
   const compact = capabilities.compactToolbar === true;
@@ -54,11 +58,15 @@ export function App(): JSX.Element {
         debugSuggestions={debugSuggestions}
         agentDestination={agentDestination}
         vsOpenCodeXExtensionInstalled={vsOpenCodeXExtensionInstalled}
+        providerStatuses={providerStatuses}
         onCompletionProviderChange={handleCompletionProviderChange}
         onSelectedModelChange={handleSelectedModelChange}
         onAgentDestinationChange={handleAgentDestinationChange}
         onToggle={makeToggle}
         onDebugToggle={handleDebugToggle}
+        onRequestProviderStatus={requestProviderStatus}
+        onStartProvider={startProvider}
+        onStopProvider={stopProvider}
       />
 
       {vsxActive ? (

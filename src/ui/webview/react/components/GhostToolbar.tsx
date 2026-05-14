@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { AgentDestination, CompletionProvider, SuggestionModel, UpdateSettingMessage } from "../types";
+import type { AgentDestination, CompletionProvider, ProviderState, ProviderStateRecord, SuggestionModel, UpdateSettingMessage } from "../types";
 import { ToolbarChip } from "./ToolbarChip";
 
 interface GhostToolbarProps {
@@ -14,6 +14,7 @@ interface GhostToolbarProps {
   agentDestination: AgentDestination;
   vsOpenCodeXExtensionInstalled: boolean;
   compact: boolean;
+  providerStatuses: ProviderStateRecord[];
   onCompletionProviderChange: (value: CompletionProvider) => void;
   onSelectedModelChange: (value: string) => void;
   onAgentDestinationChange: (value: AgentDestination) => void;
@@ -22,10 +23,38 @@ interface GhostToolbarProps {
     value: Extract<UpdateSettingMessage, { key: K }>["value"],
   ) => void;
   onDebugToggle: () => void;
+  onRequestProviderStatus: () => void;
+  onStartProvider: (id: string) => void;
+  onStopProvider: (id: string) => void;
 }
 
 const itemClass =
   "flex w-full items-center justify-between px-3 py-1.5 text-sm text-[var(--vscode-sideBar-foreground)] hover:bg-[var(--vscode-list-hoverBackground)] transition";
+
+const actionBtnClass =
+  "rounded px-2 py-0.5 text-xs font-medium transition border " +
+  "border-[var(--vscode-widget-border)] " +
+  "hover:bg-[var(--vscode-list-hoverBackground)]";
+
+const statusIcon = (s: ProviderState): string => {
+  switch (s) {
+    case "running": return "\u25CF";
+    case "stopped": return "\u25CB";
+    case "starting": return "\u25CB";
+    case "unavailable": return "\u2014";
+    case "error": return "\u26A0";
+  }
+};
+
+const statusColor = (s: ProviderState): string => {
+  switch (s) {
+    case "running": return "text-green-500";
+    case "stopped": return "text-gray-400";
+    case "starting": return "text-yellow-400";
+    case "unavailable": return "text-gray-500";
+    case "error": return "text-red-500";
+  }
+};
 
 const toggleBtn = (active: boolean) =>
   `inline-flex items-center justify-center rounded-md border px-2 py-1 text-xs transition ${
@@ -51,11 +80,15 @@ export function GhostToolbar({
   agentDestination,
   vsOpenCodeXExtensionInstalled,
   compact,
+  providerStatuses,
   onCompletionProviderChange,
   onSelectedModelChange,
   onAgentDestinationChange,
   onToggle,
   onDebugToggle,
+  onRequestProviderStatus,
+  onStartProvider,
+  onStopProvider,
 }: GhostToolbarProps) {
   const [openChip, setOpenChip] = useState<string | null>(null);
 
@@ -67,6 +100,14 @@ export function GhostToolbar({
     : completionProvider === "opencode"
       ? "OpenCode"
       : "Ollama";
+
+  const currentProviderStatus = providerStatuses.find((s) =>
+    completionProvider === "copilot" ? s.id === "copilot" :
+    completionProvider === "opencode" ? s.id === "opencode" : s.id === "ollama",
+  );
+  const providerLabelWithStatus = currentProviderStatus
+    ? `${statusIcon(currentProviderStatus.status)} ${providerLabel}`
+    : providerLabel;
 
   const currentModel = availableModels.find((m) => m.id === selectedModelId);
   const modeloLabel = currentModel?.label ?? (selectedModelId === "auto" ? "Auto" : selectedModelId);
@@ -103,28 +144,63 @@ export function GhostToolbar({
     <div className="flex flex-wrap items-start gap-1 mb-2">
       <ToolbarChip
         id="motor-chip"
-        label={providerLabel}
+        label={providerLabelWithStatus}
         chipLabel="Motor"
         tooltip="Motor de sugerencias: Copilot LM, OpenCode u Ollama"
         isOpen={openChip === "motor"}
-        onToggle={() => toggleChip("motor")}
+        onToggle={() => { onRequestProviderStatus(); toggleChip("motor"); }}
         onClose={closeChips}
         compact={compact}
       >
         <div className="py-1" data-key="completionProvider">
-          {(["copilot", "opencode", "ollama"] as const).map((p) => (
-            <button
-              key={p}
-              type="button"
-              className={itemClass}
-              onClick={() => handleProvider(p)}
-            >
-              <span>{p === "copilot" ? "Copilot LM" : p === "opencode" ? "OpenCode" : "Ollama"}</span>
-              {completionProvider === p && (
-                <span className="text-[var(--vscode-badge-background)]">✓</span>
-              )}
-            </button>
-          ))}
+          {(["copilot", "opencode", "ollama"] as const).map((p) => {
+            const pStatus = providerStatuses.find((s) =>
+              p === "copilot" ? s.id === "copilot" :
+              p === "opencode" ? s.id === "opencode" : s.id === "ollama",
+            );
+            const isActive = completionProvider === p;
+            return (
+              <div key={p} className={`${itemClass} flex-col items-stretch gap-1 ${isActive ? "bg-[var(--vscode-list-hoverBackground)]" : ""}`}>
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between"
+                  onClick={() => {
+                    if (pStatus?.status === "running" || p === "copilot") {
+                      handleProvider(p);
+                    } else if (pStatus?.actions?.includes("start")) {
+                      onStartProvider(p);
+                    }
+                  }}
+                >
+                  <span className="flex items-center gap-2">
+                    {pStatus && (
+                      <span className={`${statusColor(pStatus.status)} text-xs`}>
+                        {statusIcon(pStatus.status)}
+                      </span>
+                    )}
+                    <span>{p === "copilot" ? "Copilot LM" : p === "opencode" ? "OpenCode" : "Ollama"}</span>
+                  </span>
+                  <span className="flex items-center gap-2">
+                    {pStatus?.statusText && (
+                      <span className="text-[10px] text-[var(--vscode-descriptionForeground)]">{pStatus.statusText}</span>
+                    )}
+                    {isActive && (
+                      <span className="text-[var(--vscode-badge-background)]">✓</span>
+                    )}
+                  </span>
+                </button>
+                {pStatus?.actions?.includes("stop") && isActive && p !== "copilot" && (
+                  <button
+                    type="button"
+                    className={actionBtnClass}
+                    onClick={() => { onStopProvider(p); closeChips(); }}
+                  >
+                    ■ Detener
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       </ToolbarChip>
 
