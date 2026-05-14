@@ -63,8 +63,9 @@ export type GhostPromptSuggestDeps = {
 
 /**
  * Ejecuta el flujo completo de suggestion para un par texto + captureId (tras validar entrada).
- * @param message
- * @param deps
+ * @param message Mensaje de sugerencia recibido desde el webview.
+ * @param deps Dependencias y callbacks necesarios para el pipeline.
+ * @returns Promise que se resuelve cuando el pipeline termina.
  */
 export async function runGhostPromptSuggestPipeline(
   message: Extract<WebviewInboundMessage, { type: "suggest" }>,

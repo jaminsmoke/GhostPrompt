@@ -6,6 +6,13 @@ import type {
   SuggestionModelTier,
 } from '../../../core/types';
 
+/**
+ * Selecciona el modelo Copilot adecuado según la política y preferencia.
+ * @param models Lista de modelos disponibles.
+ * @param policy Política de selección de modelo.
+ * @param preferredModelId Identificador de modelo preferido opcional.
+ * @returns Modelo elegido o undefined si no hay coincidencias.
+ */
 export function selectModelByPolicy(
   models: readonly vscode.LanguageModelChat[],
   policy: SuggestionModelPolicy,
@@ -28,6 +35,11 @@ export function selectModelByPolicy(
   return models.find((candidate) => isIncludedModel(candidate));
 }
 
+/**
+ * Enumera los modelos Copilot que cumplen la política indicada.
+ * @param policy Política para filtrar los modelos devueltos.
+ * @returns Lista de descriptores de modelo Copilot.
+ */
 export async function listSuggestionModels(
   policy: SuggestionModelPolicy,
 ): Promise<SuggestionModelDescriptor[]> {
@@ -55,7 +67,7 @@ export async function listSuggestionModels(
 
 /**
  * Expuesto para el proveedor LM al armar el resultado de suggestion.
- * @param model
+ * @param model Objeto de modelo Copilot a describir.
  * @returns Descriptor del modelo.
  */
 export function describeModel(model: unknown): SuggestionModelDescriptor {
@@ -79,11 +91,21 @@ export function describeModel(model: unknown): SuggestionModelDescriptor {
   };
 }
 
+/**
+ * Resuelve el identificador de un modelo a partir de sus campos disponibles.
+ * @param model Objeto de modelo posible.
+ * @returns Id del modelo o "unknown" si no se encuentra ninguno.
+ */
 function getModelId(model: unknown): string {
   const data = model as { id?: string; family?: string; name?: string };
   return data.id?.trim() || data.family?.trim() || data.name?.trim() || "unknown";
 }
 
+/**
+ * Determina si un modelo debe incluirse según sus marcas y precio.
+ * @param model Objeto de modelo a evaluar.
+ * @returns True si el modelo es elegible para uso incluido.
+ */
 function isIncludedModel(model: unknown): boolean {
   const tierByPricing = classifyTierFromPricing(model);
   if (tierByPricing === "included") {
@@ -124,6 +146,11 @@ function isIncludedModel(model: unknown): boolean {
   return !denyMarkers.some((marker) => fingerprint.includes(marker));
 }
 
+/**
+ * Clasifica el nivel de un modelo en función de su precio y compatibilidad.
+ * @param model Objeto de modelo a clasificar.
+ * @returns Nivel de sugerencia deducido.
+ */
 function classifyModelTier(model: unknown): SuggestionModelTier {
   const tierByPricing = classifyTierFromPricing(model);
   if (tierByPricing !== "unknown") {
@@ -132,6 +159,11 @@ function classifyModelTier(model: unknown): SuggestionModelTier {
   return isIncludedModel(model) ? "included" : "unknown";
 }
 
+/**
+ * Clasifica el tier de un modelo en función de la cadena pricing.
+ * @param model Objeto de modelo con posible campo pricing.
+ * @returns Tier inferido a partir del precio.
+ */
 function classifyTierFromPricing(model: unknown): SuggestionModelTier {
   const data = model as { pricing?: string };
   const normalized = normalizePricing(data.pricing);
@@ -145,6 +177,11 @@ function classifyTierFromPricing(model: unknown): SuggestionModelTier {
   return multiplier === 0 ? "included" : "premium";
 }
 
+/**
+ * Normaliza la cadena de pricing de un modelo si es válida.
+ * @param pricing Valor bruto de pricing.
+ * @returns Pricing limpio o undefined si no es válido.
+ */
 function normalizePricing(pricing: unknown): string | undefined {
   if (typeof pricing !== "string") {
     return undefined;
@@ -153,6 +190,11 @@ function normalizePricing(pricing: unknown): string | undefined {
   return value.length ? value : undefined;
 }
 
+/**
+ * Extrae el multiplicador numérico de una cadena de pricing tipo `2x`.
+ * @param pricing Cadena de pricing a parsear.
+ * @returns Multiplicador numérico o undefined si no coincide.
+ */
 function parsePricingMultiplier(pricing: string): number | undefined {
   const match = /^([0-9]+(?:\.[0-9]+)?)x$/i.exec(pricing.trim());
   if (!match) {
@@ -162,6 +204,11 @@ function parsePricingMultiplier(pricing: string): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+/**
+ * Construye una clave de deduplicado para un descriptor de modelo.
+ * @param model Descriptor de modelo que se normaliza.
+ * @returns Clave única usada para evitar duplicados.
+ */
 function buildModelDedupeKey(model: SuggestionModelDescriptor): string {
   const normalize = (value: string | undefined): string =>
     (value ?? "").trim().toLowerCase();
@@ -170,6 +217,11 @@ function buildModelDedupeKey(model: SuggestionModelDescriptor): string {
   );
 }
 
+/**
+ * Infiera el proveedor original de un modelo a partir de su nombre/fingerprint.
+ * @param model Objeto de modelo con campos id, family o name.
+ * @returns Nombre del proveedor o undefined si no se puede inferir.
+ */
 function inferModelProvider(model: unknown): string | undefined {
   const data = model as { id?: string; family?: string; name?: string };
   const fingerprint = `${data.id ?? ""} ${data.family ?? ""} ${data.name ?? ""}`

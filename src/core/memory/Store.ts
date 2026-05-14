@@ -46,8 +46,8 @@ export class ProjectMemoryStore {
 
   /**
    * Crea `stores/<key>/` sin tocar registry (persistencia rápida en caliente del suggest).
-   * @param workspaceRootUriString
-   * @returns void
+   * @param workspaceRootUriString URI canónico de la raíz del workspace.
+   * @returns Clave del workspace derivada del URI.
    */
   public async ensureStoresDirExistsForWorkspaceRoot(
     workspaceRootUriString: string,
@@ -110,9 +110,9 @@ export class ProjectMemoryStore {
 
   /**
    * Crea manifest + entries placeholder y actualiza `lastSeenAt` del registro.
-   * @param workspaceRootUriString
-   * @param nowMs
-   * @returns Ruta del directorio del workspace.
+   * @param workspaceRootUriString URI canónico del workspace.
+   * @param nowMs Fecha/hora actual en milisegundos.
+   * @returns Clave del workspace del directorio creado.
    */
   public async touchWorkspaceRoot(workspaceRootUriString: string, nowMs: number): Promise<string> {
     const workspaceKey = workspaceKeyFromRootUriString(workspaceRootUriString);
@@ -157,7 +157,7 @@ export class ProjectMemoryStore {
 
   /**
    * Borra carpeta del store y quita la fila del registro (si existía).
-   * @param workspaceRootUriString
+   * @param workspaceRootUriString URI canónico del workspace a limpiar.
    * @returns `true` si existía entrada o directorio persistido.
    */
   public async clearWorkspaceRoot(workspaceRootUriString: string): Promise<boolean> {
@@ -180,8 +180,8 @@ export class ProjectMemoryStore {
   /**
    * Elimina árboles antiguos cuyo `lastSeenAt` supera el TTL. Devuelve nº eliminados.
    * Conviene llamar **después** de `touchOpenWorkspaceRoots` para no borrar el repo abierto.
-   * @param ttlMs
-   * @param nowMs
+   * @param ttlMs Tiempo de vida en milisegundos para considerar un store inactivo.
+   * @param nowMs Marca de tiempo actual en milisegundos.
    * @returns Número de árboles eliminados.
    */
   public async garbageCollectUnusedStores(ttlMs: number, nowMs: number): Promise<number> {

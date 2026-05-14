@@ -114,6 +114,7 @@ export const webviewOutboundDraftSyncSchema = z.object({
 
 export const webviewOutboundLanguageEffectiveSchema = z.object({
   type: z.literal("languageEffective"),
+  language: z.enum(["es", "en"]),
   captureId: z.number().optional(),
   broadcast: z.boolean().optional(),
 });

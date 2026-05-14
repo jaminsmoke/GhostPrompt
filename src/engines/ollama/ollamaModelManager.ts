@@ -106,16 +106,16 @@ class OllamaModelManager {
   /**
    * Inicia un modelo vía `ollama run <modelId>` con flags:
    * - `--keepalive 5m`: mantiene el modelo cargado 5 minutos tras el último uso
-   * - `--nowordwrap`: evita saltos de línea en el output
+   * - `--nowordwrap`: evita saltos de línea en el output.
    *
    * El proceso se lanza en background con `spawn`. La Promise resuelve cuando
    * stdout/stderr contiene "success", "loaded", "send a message" o "/bye",
    * indicando que el modelo está listo para recibir requests.
    *
-   * @param modelId - Nombre del modelo (ej. "mistral:latest")
-   * @param signal - Señal de cancelación (opcional)
-   * @throws TimeoutError si el modelo no se inicia en 120s
-   * @throws Error si stderr contiene "error" o "failed"
+   * @param modelId - Nombre del modelo (ej. "mistral:latest").
+   * @param signal - Señal de cancelación (opcional).
+   * @throws TimeoutError si el modelo no se inicia en 120s.
+   * @throws Error si stderr contiene "error" o "failed".
    */
   startModel(modelId: string, signal?: AbortSignal): Promise<void> {
     if (this._ollamaProcess) {
@@ -226,7 +226,7 @@ class OllamaModelManager {
 
   /**
    * Detiene un modelo específico o todos si no se especifica modelo.
-   * @param modelId
+   * @param modelId Opcional ID del modelo a detener.
    */
   async stopModel(modelId?: string): Promise<void> {
     this.setState("stopping", modelId ?? this._currentModel ?? undefined);

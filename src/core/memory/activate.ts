@@ -14,6 +14,11 @@ import { NodeProjectMemoryFs } from "./io/fs";
 import { ProjectMemoryStore } from "./Store";
 import { PROJECT_MEMORY_REL_SEGMENTS } from "./types";
 
+/**
+ * Normaliza la TTL de project memory eliminada en días.
+ * @param raw Valor bruto leído de la configuración.
+ * @returns Días válidos en el rango [1, 3650].
+ */
 function clampTtlDays(raw: number): number {
   if (!Number.isFinite(raw)) {
     return 30;
@@ -21,6 +26,10 @@ function clampTtlDays(raw: number): number {
   return Math.max(1, Math.min(3650, Math.floor(raw)));
 }
 
+/**
+ * Lee la configuración de TTL para stores desusados de project memory.
+ * @returns Número de días antes de eliminar stores desusados.
+ */
 export function readProjectMemoryUnusedStoreTtlDays(): number {
   const v = vscode.workspace
     .getConfiguration("ghostPrompt")
@@ -28,10 +37,19 @@ export function readProjectMemoryUnusedStoreTtlDays(): number {
   return clampTtlDays(v);
 }
 
+/**
+ * Construye la ruta base de project memory dentro del almacenamiento global.
+ * @param globalStoragePath Ruta del almacenamiento global de la extensión.
+ * @returns Ruta absoluta del directorio base de project memory.
+ */
 export function getProjectMemoryBaseDir(globalStoragePath: string): string {
   return path.join(globalStoragePath, ...PROJECT_MEMORY_REL_SEGMENTS);
 }
 
+/**
+ * Selecciona una carpeta de workspace adecuada para project memory.
+ * @returns Carpeta activa del workspace o la primera carpeta abierta.
+ */
 export function pickWorkspaceFolderForProjectMemory():
   | vscode.WorkspaceFolder
   | undefined {
@@ -45,6 +63,10 @@ export function pickWorkspaceFolderForProjectMemory():
   return vscode.workspace.workspaceFolders?.[0];
 }
 
+/**
+ * Actualiza la marca de acceso de todas las carpetas del workspace abiertas.
+ * @param store Store de project memory usado para tocar las raíces.
+ */
 async function touchOpenWorkspaceRoots(store: ProjectMemoryStore): Promise<void> {
   const folders = vscode.workspace.workspaceFolders;
   if (!folders?.length) {
@@ -56,6 +78,11 @@ async function touchOpenWorkspaceRoots(store: ProjectMemoryStore): Promise<void>
   }
 }
 
+/**
+ * Registra la funcionalidad de project memory en el ciclo de activación.
+ * @param context Contexto de la extensión de VS Code.
+ * @returns Instancia del ProjectMemoryStore enlazada al contexto.
+ */
 export function registerProjectMemory(context: vscode.ExtensionContext): ProjectMemoryStore {
   const baseDir = getProjectMemoryBaseDir(context.globalStorageUri.fsPath);
   const store = new ProjectMemoryStore(baseDir, new NodeProjectMemoryFs());
@@ -73,6 +100,10 @@ export function registerProjectMemory(context: vscode.ExtensionContext): Project
     }
   };
 
+  /**
+   * Ejecuta la recolección de basura de project memory.
+   * @param s Store de project memory donde se realizará la recolección.
+   */
   async function runGarbageCollect(s: ProjectMemoryStore): Promise<void> {
     const ttlDays = readProjectMemoryUnusedStoreTtlDays();
     await s.garbageCollectUnusedStores(ttlDays * 86_400_000, Date.now());

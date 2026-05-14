@@ -22,14 +22,31 @@ const getInitialCapabilities = (): GhostPromptCapabilities =>
     ? window.__ghostPromptCapabilities
     : {};
 
-const vsCodeApi = typeof acquireVsCodeApi === "function"
-  ? acquireVsCodeApi()
+interface VsCodeApi {
+  postMessage(message: unknown): void;
+}
+
+const windowWithVsCodeApi = window as Window & {
+  acquireVsCodeApi?: () => VsCodeApi;
+};
+
+const vsCodeApi = typeof windowWithVsCodeApi.acquireVsCodeApi === "function"
+  ? windowWithVsCodeApi.acquireVsCodeApi()
   : undefined;
 
+/**
+ * Envía un mensaje desde el webview React al host de VS Code.
+ * @param message Payload outbound que se transmite al host.
+ */
 export function postToHost(message: OutboundMessage): void {
   vsCodeApi?.postMessage(message);
 }
 
+/**
+ * Hook principal de GhostPrompt para el webview React.
+ * Gestiona estado local, comunicación con el host y sugerencias.
+ * @returns API y estado de GhostPrompt para el componente.
+ */
 export function useGhostPrompt() {
   const [viewId] = useState(getInitialViewId);
   const [capabilities] = useState(getInitialCapabilities);
@@ -252,6 +269,9 @@ export function useGhostPrompt() {
         case "draftHydrate":
           setText(message.text);
           break;
+        case "languageEffective":
+          setEffectiveLanguage(message.language);
+          break;
         case "draftSync":
           if (!viewId || message.originViewId === viewId) {
             return;
@@ -343,7 +363,7 @@ export function useGhostPrompt() {
     sendUpdateSetting({ type: "updateSetting", key: "selectedModelId", value });
     if (completionProvider === "ollama" && value) {
       queryClient.setQueryData<ProviderStateRecord[]>(["providerStatus"], (old) =>
-        old.map((p) => (p.id === "ollama" ? { ...p, status: "starting" as const, statusText: "Iniciando…" } : p)),
+        old?.map((p) => (p.id === "ollama" ? { ...p, status: "starting" as const, statusText: "Iniciando…" } : p)),
       );
     }
   };

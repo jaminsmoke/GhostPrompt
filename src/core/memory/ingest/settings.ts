@@ -7,6 +7,10 @@ export const PROJECT_EDITOR_CARD_MAX_CHARS = 1200;
 
 export { normalizeWorkspaceRelativePath };
 
+/**
+ * Lee la configuración de editor-ingest del workspace y normaliza los valores.
+ * @returns Objeto de configuración de editor-ingest con valores válidos.
+ */
 export function readEditorIngestConfig(): {
   /** `projectMemoryEnabled` && `projectMemoryEditorIngestEnabled` */
   includeEditorIngest: boolean;
@@ -70,6 +74,13 @@ export function readEditorIngestConfig(): {
   };
 }
 
+/**
+ * Normaliza un número para que quede en el rango [min, max] y sea entero.
+ * @param v Valor numérico a normalizar.
+ * @param min Límite mínimo permitido.
+ * @param max Límite máximo permitido.
+ * @returns Valor entero dentro del rango permitido.
+ */
 function clampInt(v: number, min: number, max: number): number {
   if (!Number.isFinite(v)) {
     return min;
@@ -78,9 +89,9 @@ function clampInt(v: number, min: number, max: number): number {
 }
 
 /**
- * Best-effort exclusión sin glob pesado (p. ej. segmentos `node_modules`, `.git`, `.env`).
- * @param normalizedRelativePath
- * @param extraPatterns
+ * Best-effort exclusión sin glob pesado (p. Ej. Segmentos `node_modules`, `.git`, `.env`).
+ * @param normalizedRelativePath Ruta normalizada del archivo dentro del workspace.
+ * @param extraPatterns Patrones extras de exclusión proporcionados por configuración.
  * @returns True si el path debería excluirse.
  */
 export function pathLikelyExcludedForEditorIngest(

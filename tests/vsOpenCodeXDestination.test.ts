@@ -29,7 +29,7 @@ vi.mock("vscode", () => ({
   },
 }));
 
-vi.mock("../src/debug/SuggestionDebug", () => ({
+vi.mock("../src/system/debug/SuggestionDebug", () => ({
   logSuggestionDebug: vi.fn(),
 }));
 

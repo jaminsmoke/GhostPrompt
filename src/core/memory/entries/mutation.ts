@@ -4,8 +4,8 @@ import { workspaceRelativePathsMatch } from "../io/path";
 
 /**
  * Quita entradas bootstrap/editor cuyo `relativePath` coincide con `targetRel`.
- * @param items
- * @param targetRel
+ * @param items Colección de entradas de project memory a filtrar.
+ * @param targetRel Ruta relativa objetivo que debe eliminarse de los items.
  * @returns Items filtrados sin las entradas que coinciden con targetRel.
  */
 export function removeIndexedEntriesForRelativePath(

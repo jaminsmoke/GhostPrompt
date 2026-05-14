@@ -18,7 +18,7 @@ let premiumQuotaBlocked = false;
  * @param userText Texto de usuario actual que debe completarse.
  * @param options Configuración de la petición, incluyendo modelo, timeout y contexto.
  * @returns Resultado de la petición de completado, con sugerencia o razón vacía.
- * @throws cuando la petición se cancela mientras se procesa la respuesta.
+ * @throws Cuando la petición se cancela mientras se procesa la respuesta.
  */
 export async function requestCopilotLmCompletion(
   userText: string,
@@ -103,7 +103,7 @@ export async function requestCopilotLmCompletion(
 /**
  * Detecta si el mensaje de error coincide con el bloqueo de cuota premium de Copilot.
  * @param message Mensaje devuelto por la API de Copilot.
- * @returns true cuando el error indica que se alcanzó cuota premium.
+ * @returns True cuando el error indica que se alcanzó cuota premium.
  */
 function isPremiumQuotaError(message: string): boolean {
   const normalized = message.toLowerCase();

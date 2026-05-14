@@ -5,6 +5,11 @@ import * as vscode from "vscode";
 import { ghostPromptSessionStore } from '../../core/session/GhostPromptSessionStore';
 import type { WebviewInboundMessage } from "../protocols/webviewProtocols";
 
+/**
+ * Aplica una actualización de configuración enviada desde el webview.
+ * @param {Extract<WebviewInboundMessage, { type: "updateSetting" }>} message Mensaje de configuración recibido del webview.
+ * @returns {Promise<void>} Promise que se resuelve una vez aplicados los cambios.
+ */
 export async function applyWebviewUpdateSetting(
   message: Extract<WebviewInboundMessage, { type: "updateSetting" }>,
 ): Promise<void> {

@@ -19,6 +19,10 @@ import "../destinations/copilotChat/copilotChatDestination";
 import { registerProjectMemory } from "../core/memory/activate";
 import { registerAllProviderModules } from "../system/status/registerModules";
 
+/**
+ * Activa la extensión GhostPrompt.
+ * @param context Contexto de la extensión proporcionado por VS Code.
+ */
 export function activate(context: vscode.ExtensionContext): void {
   registerAllProviderModules();
   registerProjectMemory(context);
@@ -87,6 +91,9 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 }
 
+/**
+ * Limpia los recursos de la extensión al desactivarse.
+ */
 export function deactivate(): void {
   resetClient();
   ollamaModelManager.stopAll();

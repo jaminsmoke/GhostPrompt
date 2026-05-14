@@ -33,6 +33,10 @@ export interface GhostPromptSessionState {
   activeCaptureId: number;
 }
 
+/**
+ * Crea el estado inicial por defecto para GhostPrompt.
+ * @returns Estado inicial para reiniciar el singleton de sesión.
+ */
 function createInitialSessionState(): GhostPromptSessionState {
   return {
     draftText: "",
@@ -65,7 +69,7 @@ export class GhostPromptSessionStore {
 
   /**
    * Fusiona campos en el estado y notifica suscriptores.
-   * @param partial
+   * @param partial Campos parciales que se aplican al estado existente.
    */
   public patchState(partial: Partial<GhostPromptSessionState>): void {
     const next: GhostPromptSessionState = {
@@ -81,8 +85,8 @@ export class GhostPromptSessionStore {
 
   /**
    * Suscripción por identificador de vista (ej. `ghostPrompt.input` vs `ghostPrompt.inputPanel`).
-   * @param viewId
-   * @param listener
+   * @param viewId Identificador único de la vista que se está suscribiendo.
+   * @param listener Callback que se invoca cuando el estado cambia.
    * @returns Disposable para cancelar la suscripción.
    */
   public subscribe(viewId: string, listener: GhostPromptSessionListener): vscode.Disposable {
@@ -103,8 +107,8 @@ export class GhostPromptSessionStore {
 
   /**
    * Inicia un nuevo intento de suggestion: cancela request anterior, fija capture id y estado loading.
-   * @param captureId
-   * @returns Token de cancelación para la request.
+   * @param captureId Identificador de la captura actual de sugerencia.
+   * @returns Token de cancelación para la solicitud en curso.
    */
   public prepareSuggestionRequest(captureId: number): vscode.CancellationTokenSource {
     this._activeSuggestionToken?.cancel();

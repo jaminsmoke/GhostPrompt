@@ -11,8 +11,8 @@ import type { CompletionSourceId } from "../sources";
 
 /**
  * Concatena modelos Copilot + OpenCode + Ollama; deduplica por `id` (prioriza el primero: Copilot).
- * @param policy
- * @param sources
+ * @param policy Política para filtrar modelos de cada fuente.
+ * @param sources Fuentes de completado habilitadas a consultar.
  * @returns Lista de descriptores de modelo fusionada y deduplicada.
  */
 export async function listMergedSuggestionModels(

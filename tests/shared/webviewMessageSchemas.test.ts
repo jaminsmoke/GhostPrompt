@@ -5,6 +5,7 @@
 import { describe, expect, it } from "vitest";
 import {
   webviewInboundMessageSchema,
+  webviewOutboundMessageSchema,
   webviewOutboundSettingsEnvelopeSchema,
   webviewSettingsPayloadSchema,
 } from "../../src/system/contracts/webviewMessageSchemas";
@@ -130,5 +131,15 @@ describe("webviewMessageSchemas (shared)", () => {
     expect(webviewOutboundSettingsEnvelopeSchema.safeParse(envelope).success).toBe(
       true,
     );
+  });
+
+  it("acepta el mensaje outbound languageEffective", () => {
+    const msg = {
+      type: "languageEffective" as const,
+      language: "es" as const,
+      captureId: 1,
+      broadcast: true,
+    };
+    expect(webviewOutboundMessageSchema.safeParse(msg).success).toBe(true);
   });
 });

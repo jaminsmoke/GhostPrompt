@@ -24,8 +24,8 @@ export {
 /**
  * Parsea un mensaje entrante del webview. Si falla el contrato, no debe procesarse
  * (no actualizar `vscode.workspace`).
- * @param raw
- * @returns El mensaje parseado o undefined si no pasa la validación Zod.
+ * @param {unknown} raw Datos sin validar recibidos desde el webview.
+ * @returns {WebviewInboundMessage | undefined} El mensaje parseado o undefined si no pasa la validación Zod.
  */
 export function parseWebviewInboundMessage(
   raw: unknown,
@@ -44,8 +44,8 @@ export function parseWebviewInboundMessage(
 
 /**
  * Valida el sobre `{ type: 'settings', settings }` antes de `postMessage`.
- * @param raw
- * @returns el objeto parseado (misma forma, posiblemente normalizada por Zod).
+ * @param {unknown} raw Datos sin validar que vienen del host para el payload de settings.
+ * @returns {z.infer<typeof webviewOutboundSettingsEnvelopeSchema> | undefined} El objeto parseado o undefined si no pasa la validación Zod.
  */
 export function parseOutboundSettingsEnvelope(
   raw: unknown,
@@ -65,8 +65,8 @@ export function parseOutboundSettingsEnvelope(
 /**
  * Parsea un mensaje saliente hacia el webview. Si falla el contrato,
  * loguea warning (no bloquea el envío en producción).
- * @param raw
- * @returns El mensaje parseado o undefined si no pasa la validación Zod.
+ * @param {unknown} raw Datos sin validar que se enviarán al webview.
+ * @returns {WebviewOutboundMessage | undefined} El mensaje parseado o undefined si no pasa la validación Zod.
  */
 export function parseWebviewOutboundMessage(
   raw: unknown,

@@ -21,7 +21,7 @@ type OpencodeProvidersBundle = {
  * Lista modelos instalados/configurados en OpenCode para el dropdown.
  * Vacío si no hay conexión o no hay CLI.
  * Con **`nonPremiumOnly`** se ocultan modelos clasificados como **premium** según metadatos del catálogo.
- * @param policy
+ * @param policy Política de modelo usada para filtrar modelos premium.
  * @returns Lista de descriptores de modelo OpenCode.
  */
 export async function listOpencodeSuggestionModels(

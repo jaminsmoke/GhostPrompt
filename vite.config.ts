@@ -1,11 +1,12 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwind from "@tailwindcss/vite";
 import path from "path";
 
 export default defineConfig({
   root: path.resolve(__dirname, "src/ui/webview/react"),
   base: "./",
-  plugins: [react()],
+  plugins: [react(), tailwind()],
   build: {
     outDir: path.resolve(__dirname, "src/ui/webview/dist/react"),
     emptyOutDir: true,

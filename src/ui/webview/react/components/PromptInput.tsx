@@ -12,17 +12,32 @@ interface PromptInputProps {
   onAccept: () => void;
 }
 
-export function PromptInput({
-  text,
-  suggestion,
-  vsxActive,
-  compact,
-  textareaRef,
-  isGhostUiAllowed,
-  onTextChange,
-  onSend,
-  onAccept,
-}: PromptInputProps) {
+/**
+ * Componente de entrada de prompt con sugerencia fantasma y atajos de teclado.
+ * @param props Propiedades del componente PromptInput.
+ * @param props.text Texto actual del prompt.
+ * @param props.suggestion Sugerencia fantasma a mostrar.
+ * @param props.vsxActive Indica si VSOpenCodeX está activo.
+ * @param props.compact Usa diseño compacto.
+ * @param props.textareaRef Referencia del textarea.
+ * @param props.isGhostUiAllowed Comprueba si se puede aceptar la sugerencia.
+ * @param props.onTextChange Controlador de cambios de texto.
+ * @param props.onSend Controlador de envío de prompt.
+ * @param props.onAccept Controlador de aceptación de la sugerencia.
+ * @returns JSX del textarea y la sugerencia.
+ */
+export function PromptInput(props: PromptInputProps): JSX.Element {
+  const {
+    text,
+    suggestion,
+    vsxActive,
+    compact,
+    textareaRef,
+    isGhostUiAllowed,
+    onTextChange,
+    onSend,
+    onAccept,
+  } = props;
   const ghostRef = useRef<HTMLPreElement | null>(null);
 
   const syncTextareaHeight = useCallback(() => {

@@ -7,6 +7,10 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 
 export { postToHost } from "./hooks/useGhostPrompt";
 
+/**
+ * Componente raíz del webview React de GhostPrompt.
+ * @returns Elemento raíz del webview.
+ */
 export function App(): JSX.Element {
   const {
     text,

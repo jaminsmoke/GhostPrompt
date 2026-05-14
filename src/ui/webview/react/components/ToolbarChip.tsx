@@ -13,18 +13,97 @@ interface ToolbarChipProps {
   disabled?: boolean;
 }
 
-export function ToolbarChip({
-  label,
-  chipLabel,
-  tooltip,
-  isOpen,
-  onToggle,
-  onClose,
-  children,
-  id,
-  compact,
-  disabled,
-}: ToolbarChipProps) {
+const getChipLabelClass = (chipLabel: string | undefined, compact?: boolean) =>
+  `text-[10px] font-semibold uppercase tracking-[0.15em] leading-tight mb-0.5 ${
+    chipLabel && !compact ? "text-[var(--vscode-descriptionForeground)]" : "invisible"
+  }`;
+
+const renderChipLabel = (chipLabel: string | undefined, compact?: boolean) => {
+  const className = getChipLabelClass(chipLabel, compact);
+  if (chipLabel) {
+    return (
+      <span className={className} aria-hidden="false">
+        {chipLabel}
+      </span>
+    );
+  }
+
+  return (
+    <span className={className} aria-hidden="true">
+      Label
+    </span>
+  );
+};
+
+const renderToggleButton = (
+  isOpen: boolean,
+  id: string | undefined,
+  tooltip: string | undefined,
+  disabled: boolean | undefined,
+  compact: boolean | undefined,
+  onToggle: () => void,
+  label: string,
+) => {
+  const buttonClass = `inline-flex items-center gap-1 rounded-md border px-2 py-1 text-sm transition
+            ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
+            ${
+              isOpen
+                ? "border-[var(--vscode-badge-background)] bg-[var(--vscode-badge-background)] text-[var(--vscode-badge-foreground)]"
+                : "border-[var(--vscode-widget-border)] bg-[var(--vscode-sideBar-background)] text-[var(--vscode-sideBar-foreground)] hover:bg-[var(--vscode-list-hoverBackground)]"
+            }
+            ${compact ? "text-xs px-1.5 py-0.5" : ""}`;
+
+  if (isOpen) {
+    return (
+      <button
+        id={id}
+        title={tooltip}
+        type="button"
+        className={buttonClass}
+        onClick={onToggle}
+        disabled={disabled}
+        aria-expanded="true"
+      >
+        <span className={`truncate ${compact ? "max-w-[80px]" : "max-w-[140px]"}`}>{label}</span>
+        <span className={`transition-transform text-[10px] ${isOpen ? "rotate-180" : ""}`}>▾</span>
+      </button>
+    );
+  }
+
+  return (
+    <button
+      id={id}
+      title={tooltip}
+      type="button"
+      className={buttonClass}
+      onClick={onToggle}
+      disabled={disabled}
+      aria-expanded="false"
+    >
+      <span className={`truncate ${compact ? "max-w-[80px]" : "max-w-[140px]"}`}>{label}</span>
+      <span className={`transition-transform text-[10px] ${isOpen ? "rotate-180" : ""}`}>▾</span>
+    </button>
+  );
+};
+
+/**
+ * Chip de la barra superior que gestiona estados abiertos y eventos de cierre.
+ * @param props Propiedades del componente ToolbarChip.
+ * @returns Elemento JSX para el chip de la barra superior.
+ */
+export function ToolbarChip(props: ToolbarChipProps) {
+  const {
+    label,
+    chipLabel,
+    tooltip,
+    isOpen,
+    onToggle,
+    onClose,
+    children,
+    id,
+    compact,
+    disabled,
+  } = props;
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,44 +133,13 @@ export function ToolbarChip({
 
   return (
     <div ref={ref} className="inline-flex flex-col gap-0">
-      <span
-        className={`text-[10px] font-semibold uppercase tracking-[0.15em] leading-tight mb-0.5 ${
-          chipLabel && !compact
-            ? "text-[var(--vscode-descriptionForeground)]"
-            : "invisible"
-        }`}
-        aria-hidden={!chipLabel}
-      >
-        {chipLabel || "Label"}
-      </span>
+      {renderChipLabel(chipLabel, compact)}
       <div className="relative">
-        <button
-          id={id}
-          title={tooltip}
-          type="button"
-          className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-sm transition
-            ${disabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
-            ${
-              isOpen
-                ? "border-[var(--vscode-badge-background)] bg-[var(--vscode-badge-background)] text-[var(--vscode-badge-foreground)]"
-                : "border-[var(--vscode-widget-border)] bg-[var(--vscode-sideBar-background)] text-[var(--vscode-sideBar-foreground)] hover:bg-[var(--vscode-list-hoverBackground)]"
-            }
-            ${compact ? "text-xs px-1.5 py-0.5" : ""}`}
-          onClick={onToggle}
-          disabled={disabled}
-          aria-expanded={isOpen}
-        >
-          <span className={`truncate ${compact ? "max-w-[80px]" : "max-w-[140px]"}`}>{label}</span>
-          <span className={`transition-transform text-[10px] ${isOpen ? "rotate-180" : ""}`}>▾</span>
-        </button>
+        {renderToggleButton(isOpen, id, tooltip, disabled, compact, onToggle, label)}
 
         {isOpen && (
           <div
-            className="absolute top-full left-0 z-50 mt-0.5 min-w-[180px] rounded-md border shadow-lg"
-            style={{
-              background: "var(--vscode-dropdown-background, var(--vscode-sideBar-background))",
-              borderColor: "var(--vscode-dropdown-border, var(--vscode-widget-border))",
-            }}
+            className="absolute top-full left-0 z-50 mt-0.5 min-w-[180px] rounded-md border border-[var(--vscode-dropdown-border)] bg-[var(--vscode-dropdown-background)] shadow-lg"
           >
             {children}
           </div>

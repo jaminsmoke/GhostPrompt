@@ -5,23 +5,38 @@ const OUTPUT_CHANNEL_NAME = "GhostPrompt Suggestions";
 
 let outputChannel: vscode.OutputChannel | undefined;
 
+/**
+ * Asegura que el canal de salida de debug exista.
+ */
 function ensureDebugOutputChannel(): void {
   if (!outputChannel) {
     outputChannel = vscode.window.createOutputChannel(OUTPUT_CHANNEL_NAME);
   }
 }
 
+/**
+ * Añade una línea al canal de salida de debug.
+ * @param line Línea de texto de debug.
+ */
 function appendDebugLine(line: string): void {
   ensureDebugOutputChannel();
   outputChannel?.appendLine(line);
 }
 
+/**
+ * Comprueba si el logging de suggestions está habilitado en la configuración.
+ * @returns True cuando `ghostPrompt.debugSuggestions` está activo.
+ */
 export function isSuggestionDebugEnabled(): boolean {
   return vscode.workspace
     .getConfiguration("ghostPrompt")
     .get<boolean>(DEBUG_SETTING_KEY, false);
 }
 
+/**
+ * Alterna la configuración de logging de suggestions.
+ * @returns El nuevo valor de activación.
+ */
 export async function toggleSuggestionDebug(): Promise<boolean> {
   const config = vscode.workspace.getConfiguration("ghostPrompt");
   const current = config.get<boolean>(DEBUG_SETTING_KEY, false);
@@ -38,12 +53,19 @@ export async function toggleSuggestionDebug(): Promise<boolean> {
   return next;
 }
 
+/**
+ * Crea el canal de debug si la depuración de suggestions está habilitada.
+ */
 export function ensureSuggestionDebugChannel(): void {
   if (isSuggestionDebugEnabled()) {
     ensureDebugOutputChannel();
   }
 }
 
+/**
+ * Registra un mensaje informativo en el canal de debug.
+ * @param message Mensaje de debug a registrar.
+ */
 export function logDebugInfo(message: string): void {
   if (!isSuggestionDebugEnabled()) {
     return;
@@ -52,6 +74,12 @@ export function logDebugInfo(message: string): void {
   appendDebugLine(`[${timestamp}] [debug] ${message}`);
 }
 
+/**
+ * Registra un evento de debug específico de suggestion.
+ * @param captureId Identificador de captura para correlación.
+ * @param stage Fase o nombre del evento de sugerencia.
+ * @param details Detalles adicionales opcionales.
+ */
 export function logSuggestionDebug(
   captureId: number,
   stage: string,
@@ -69,9 +97,9 @@ export function logSuggestionDebug(
 }
 
 /**
- * Timings OpenCode / ciclo de vida (misma canalización que suggestions cuando debug está activo).
- * @param stage
- * @param details
+ * Registra depuración de eventos de OpenCode.
+ * @param stage Fase o paso actual del ciclo de vida de OpenCode.
+ * @param details Detalles adicionales opcionales.
  */
 export function logOpenCodeDebug(stage: string, details?: string): void {
   if (!isSuggestionDebugEnabled()) {
@@ -84,10 +112,10 @@ export function logOpenCodeDebug(stage: string, details?: string): void {
 }
 
 /**
- * Fase I — duraciones por `suggest`; sólo cuando `ghostPrompt.debugSuggestions` está activo.
- * @param captureId
- * @param phase
- * @param details
+ * Registra timings de rendimiento para capturas OpenCode.
+ * @param captureId Identificador de captura opcional.
+ * @param phase Fase de desempeño dentro del ciclo OpenCode.
+ * @param details Detalles adicionales opcionales.
  */
 export function logOpenCodePerfCapture(
   captureId: number | undefined,

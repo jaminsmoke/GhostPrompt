@@ -8,6 +8,12 @@ import {
 const DEFAULT_OLLAMA_BASE_URL = "http://localhost:11434";
 const DEFAULT_REQUEST_TIMEOUT_MS = 30000;
 
+/**
+ * Construye una URL completa para una ruta de la API de Ollama.
+ * @param path Ruta del endpoint, incluyendo prefijo '/'.
+ * @param baseUrl URL base opcional de Ollama.
+ * @returns URL completa sin barras finales duplicadas.
+ */
 function resolveUrl(
   path: string,
   baseUrl?: string,
@@ -16,6 +22,11 @@ function resolveUrl(
   return `${base}${path}`;
 }
 
+/**
+ * Construye las opciones de cabecera y señal para una petición Ollama.
+ * @param opts Opciones de cliente que pueden incluir señal de cancelación.
+ * @returns Objeto con cabeceras y señal para fetch.
+ */
 function buildOptions(
   opts: OllamaClientOptions,
 ): { headers: Record<string, string>; signal?: AbortSignal } {
@@ -27,6 +38,13 @@ function buildOptions(
   };
 }
 
+/**
+ * Realiza una petición fetch y parsea la respuesta JSON con timeout.
+ * @param url URL a la que realizar la petición.
+ * @param init Configuración de la petición fetch.
+ * @param timeoutMs Tiempo máximo en milisegundos antes de abortar.
+ * @returns Respuesta parseada como JSON genérico.
+ */
 async function fetchJson<T>(
   url: string,
   init: RequestInit,
@@ -55,6 +73,11 @@ async function fetchJson<T>(
   }
 }
 
+/**
+ * Crea una señal combinada que se aborta cuando cualquiera de las señales internas se aborta.
+ * @param signals Señales a combinar.
+ * @returns Señal compuesta de cancelación.
+ */
 function anySignal(signals: AbortSignal[]): AbortSignal {
   const controller = new AbortController();
   for (const signal of signals) {
@@ -69,6 +92,11 @@ function anySignal(signals: AbortSignal[]): AbortSignal {
   return controller.signal;
 }
 
+/**
+ * Lista modelos disponibles en la instancia de Ollama.
+ * @param opts Opciones de cliente para la petición.
+ * @returns Array de modelos disponibles.
+ */
 export async function listModels(
   opts: OllamaClientOptions = {},
 ): Promise<OllamaModel[]> {
@@ -82,6 +110,13 @@ export async function listModels(
   return data.models ?? [];
 }
 
+/**
+ * Genera texto desde Ollama usando el prompt y modelo especificados.
+ * @param prompt Texto de entrada para el modelo.
+ * @param model Identificador del modelo Ollama.
+ * @param opts Opciones de generación y streaming.
+ * @returns Texto generado completo.
+ */
 export async function generate(
   prompt: string,
   model: string,
@@ -125,6 +160,15 @@ export async function generate(
   return res.response ?? "";
 }
 
+/**
+ * Realiza una generación de Ollama por streaming y emite previews.
+ * @param prompt Texto para enviar al modelo.
+ * @param model Modelo Ollama a usar.
+ * @param url URL de la API generate.
+ * @param opts Opciones de generación y streaming.
+ * @param timeoutMs Timeout en milisegundos para la operación.
+ * @returns Texto completo generado.
+ */
 async function streamGenerate(
   prompt: string,
   model: string,

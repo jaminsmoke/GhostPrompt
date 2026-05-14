@@ -112,8 +112,8 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
 
   /**
    * Propaga borrador a la otra vista GhostPrompt (Sidebar ↔ Panel).
-   * @param originViewId
-   * @param text
+   * @param originViewId Identificador de la vista origen que no debe recibir el sync.
+   * @param text Texto del borrador que se sincroniza.
    */
   private static _broadcastDraftSync(originViewId: string, text: string): void {
     for (const instance of MiniInputViewProvider._instances) {
@@ -126,7 +126,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  /** Vacía el composer en todas las vistas (p. ej. tras enviar al chat). */
+  /** Vacía el composer en todas las vistas (p. Ej. Tras enviar al chat). */
   private static _broadcastClearAll(): void {
     forwardGhostPromptInlineUiToVsOpenCodeIfApplicable({
       type: "clear",
@@ -175,7 +175,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /**
    * API para VSOpenCodeX (executeCommand): ejecuta el pipeline de suggestion con el texto actual del chat VSX.
    * Ignorar cuando el usuario usa destino Copilot (sigue usando la webview).
-   * @param text
+   * @param text Texto que se debe sugerir desde el host externo.
    */
   public static async runSuggestFromExternalHost(text: string): Promise<void> {
     const trimmed = text.trim();
@@ -228,7 +228,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * **Paridad v0.3.1:** Sidebar (`ghostPrompt.input`) y Panel (`ghostPrompt.inputPanel`)
    * comparten el mismo bundle React (`dist/react/index.html`); este objeto debe ser **funcionalmente
    * idéntico** para ambas contribuciones (misma forma y mismos flags). Solo se permiten
-   * claves que afecten **presentación** en CSS (p. ej. `compactToolbar`), nunca un catálogo
+   * claves que afecten **presentación** en CSS (p. Ej. `compactToolbar`), nunca un catálogo
    * distinto de controles por vista.
    *
    * Por defecto vacío: misma UX en ambas superficies.

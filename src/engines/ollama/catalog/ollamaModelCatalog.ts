@@ -4,6 +4,11 @@ import type { SuggestionModelDescriptor, SuggestionModelPolicy } from '../../../
 import { listModels } from "../ollamaApiClient";
 import { normalizeOllamaModels, ollamaModelToDescriptor } from "./normalizeOllamaModels";
 
+/**
+ * Lista los modelos de Ollama disponibles y los convierte en descriptores.
+ * @param _policy Política de modelo solicitada (actualmente no usada para Ollama).
+ * @returns Lista de descriptores de modelos Ollama.
+ */
 export async function listOllamaSuggestionModels(
   _policy: SuggestionModelPolicy,
 ): Promise<SuggestionModelDescriptor[]> {

@@ -18,6 +18,11 @@ import {
   getSession,
 } from "./opencodeApiClient";
 
+/**
+ * Describe un modelo OpenCode para el pipeline de sugerencias.
+ * @param modelId Identificador del modelo OpenCode.
+ * @returns Descriptor de modelo adecuado para la UI.
+ */
 function describeOpenCodeModel(modelId: string): SuggestionModelDescriptor {
   return {
     id: modelId,
@@ -27,6 +32,11 @@ function describeOpenCodeModel(modelId: string): SuggestionModelDescriptor {
   };
 }
 
+/**
+ * Resuelve el modelo OpenCode a usar según la preferencia y configuración.
+ * @param preferredModelId ID de modelo preferido o "auto".
+ * @returns Modelo seleccionado o undefined si no se encuentra ninguno.
+ */
 async function resolveOpenCodeModel(
   preferredModelId: string | undefined,
 ): Promise<string | undefined> {
@@ -36,6 +46,10 @@ async function resolveOpenCodeModel(
   return undefined;
 }
 
+/**
+ * Asegura que el cliente OpenCode esté inicializado y disponible.
+ * @returns True si el cliente es válido y responde.
+ */
 async function ensureClient(): Promise<boolean> {
   const cfg = vscode.workspace.getConfiguration("ghostPrompt");
   const port = cfg.get<number>("opencodePort");
@@ -52,6 +66,12 @@ async function ensureClient(): Promise<boolean> {
   }
 }
 
+/**
+ * Envía una solicitud de completado a OpenCode y normaliza la respuesta.
+ * @param userText Texto de usuario usado para construir el prompt.
+ * @param options Opciones de solicitud de completado.
+ * @returns Resultado de completado o un motivo vacío.
+ */
 export async function requestOpencodeCompletion(
   userText: string,
   options: CompletionRequestOptions,

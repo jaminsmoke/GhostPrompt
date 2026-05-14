@@ -14,6 +14,10 @@ export function resetSuggestionHostNotificationThrottleForTests(): void {
   lastShownAt.clear();
 }
 
+/**
+ * Comprueba si las notificaciones de issue de sugerencias están habilitadas.
+ * @returns True si deben mostrarse avisos de sugerencia en el host.
+ */
 function notificationsEnabled(): boolean {
   return (
     vscode.workspace
@@ -22,6 +26,11 @@ function notificationsEnabled(): boolean {
   );
 }
 
+/**
+ * Determina si se puede mostrar una notificación con throttle.
+ * @param key Clave de evento para evitar repetición rápida.
+ * @returns True si la notificación puede mostrarse.
+ */
 function shouldShow(key: string): boolean {
   const now = Date.now();
   const prev = lastShownAt.get(key);
@@ -32,6 +41,11 @@ function shouldShow(key: string): boolean {
   return true;
 }
 
+/**
+ * Muestra un aviso en el host cuando procede y pasa el throttle.
+ * @param text Texto de notificación mostrado al usuario.
+ * @param key Clave de notificación para el throttle.
+ */
 function notify(text: string, key: string): void {
   if (!shouldShow(key)) {
     return;
@@ -41,6 +55,11 @@ function notify(text: string, key: string): void {
 
 type EmptyReason = Extract<CompletionResult, { kind: "empty" }>["reason"];
 
+/**
+ * Obtiene un hint de UI para razones de resultado vacío.
+ * @param reason Motivo de resultado vacío.
+ * @returns Mensaje de ayuda o null si no hay hint aplicable.
+ */
 function hostHintForEmptyReason(reason: EmptyReason): string | null {
   switch (reason) {
     case "no-model":
@@ -54,6 +73,11 @@ function hostHintForEmptyReason(reason: EmptyReason): string | null {
   }
 }
 
+/**
+ * Traduce mensajes de error técnicos a hints de usuario.
+ * @param message Mensaje de error recibido de la sugerencia.
+ * @returns Texto de hint o null si no se reconoce el error.
+ */
 function hostHintForErrorMessage(message: string): string | null {
   const lower = message.toLowerCase();
   if (
@@ -98,7 +122,7 @@ function hostHintForErrorMessage(message: string): string | null {
 
 /**
  * Tras emitir UI al webview: aviso opcional para fallos accionables (con throttle).
- * @param result
+ * @param result Resultado del intento de sugerencia que puede generar un hint.
  */
 export function maybeNotifySuggestionIssue(result: CompletionResult): void {
   if (!notificationsEnabled()) {

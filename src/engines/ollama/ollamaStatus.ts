@@ -2,6 +2,12 @@ import { exec } from "node:child_process";
 import type { ProviderStatusModule, ProviderStateRecord } from "../../system/status/types";
 import { ollamaModelManager } from "./ollamaModelManager";
 
+/**
+ * Ejecuta un comando de shell y devuelve su salida estándar.
+ * @param cmd Comando a ejecutar.
+ * @param timeoutMs Tiempo máximo en milisegundos para la ejecución.
+ * @returns Salida estándar del comando.
+ */
 function execAsync(cmd: string, timeoutMs = 5000): Promise<string> {
   return new Promise((resolve, reject) => {
     exec(cmd, { timeout: timeoutMs }, (err, stdout, stderr) => {
@@ -11,6 +17,11 @@ function execAsync(cmd: string, timeoutMs = 5000): Promise<string> {
   });
 }
 
+/**
+ * Parsea el resultado de `ollama list` en nombres de modelo.
+ * @param stdout Salida estándar del comando ollama.
+ * @returns Lista de nombres de modelo disponibles.
+ */
 function parseModelList(stdout: string): string[] {
   const lines = stdout.split("\n").filter((l) => l.trim().length > 0);
   return lines.slice(1).map((line) => line.trim().split(/\s+/)[0]).filter(Boolean);

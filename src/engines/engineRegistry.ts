@@ -28,6 +28,11 @@ const ollamaProvider: CompletionProvider = {
   requestCompletion: requestOllamaCompletion,
 };
 
+/**
+ * Obtiene el proveedor de completado para una fuente concreta.
+ * @param source Fuente de completado solicitada.
+ * @returns Proveedor de completado correspondiente a la fuente.
+ */
 export function getCompletionProviderForSource(
   source: "copilot" | "opencode" | "ollama",
 ): CompletionProvider {
@@ -40,12 +45,20 @@ export function getCompletionProviderForSource(
   return copilotLmProvider;
 }
 
+/**
+ * Devuelve el proveedor de completado activo según la configuración.
+ * @returns Proveedor de completado seleccionado.
+ */
 export function getActiveCompletionProvider(): CompletionProvider {
   const sources = getEnabledCompletionSources();
   const source = sources.length === 1 ? sources[0] : "copilot";
   return getCompletionProviderForSource(source);
 }
 
+/**
+ * Devuelve el tipo de proveedor de completado activo.
+ * @returns Identificador de fuente activa de completado.
+ */
 export function getCompletionProviderKind(): "copilot" | "opencode" | "ollama" {
   const s = getEnabledCompletionSources();
   if (s.length === 1) {

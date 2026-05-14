@@ -8,6 +8,12 @@ interface BottomBarProps {
 const errorPatterns = /^Error/i;
 const successPatterns = /Modelo listo|Suggestion aceptada|Sugerencia recibida/i;
 
+/**
+ * Devuelve el icono de estado para el mensaje de estado.
+ * @param status Texto de estado.
+ * @param isLoading Indica si el estado es de carga.
+ * @returns Icono de estado o `null` si no hay icono.
+ */
 function statusIcon(status: string, isLoading: boolean): string | null {
   if (isLoading) { return "\u25CB"; }
   if (errorPatterns.test(status)) { return "\u26A0"; }
@@ -15,7 +21,13 @@ function statusIcon(status: string, isLoading: boolean): string | null {
   return null;
 }
 
-export function BottomBar({ status, isLoading, canSend, onSend }: BottomBarProps) {
+/**
+ * Barra inferior de estado y botón de envío para el webview.
+ * @param props Propiedades del componente BottomBar.
+ * @returns Elemento JSX con estado y botón de envío.
+ */
+export function BottomBar(props: BottomBarProps) {
+  const { status, isLoading, canSend, onSend } = props;
   const icon = statusIcon(status, isLoading);
   const isError = errorPatterns.test(status);
   const isSuccess = successPatterns.test(status);

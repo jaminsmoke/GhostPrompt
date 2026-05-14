@@ -32,10 +32,21 @@ export type GhostPromptSettingsGetters = {
   getSuggestionLanguageChoice: () => "auto" | SupportedSuggestionLanguage;
 };
 
+/**
+ * Normaliza el debounce de sugerencia al rango permitido.
+ * @param {number} value Valor de debounce de configuración.
+ * @return {number} Valor ajustado dentro del rango mínimo y máximo.
+ */
 function clampSuggestionDebounceMs(value: number): number {
   return Math.min(2000, Math.max(150, Math.round(value)));
 }
 
+/**
+ * Construye y envía el payload de configuración al webview.
+ * @param {vscode.Webview} webview Webview destinatario del mensaje de settings.
+ * @param {GhostPromptSettingsGetters} getters Callbacks para obtener valores runtime de settings.
+ * @return {Promise<void>} Promise que se resuelve cuando el mensaje se ha enviado.
+ */
 export async function buildAndPostGhostPromptSettings(
   webview: vscode.Webview,
   getters: GhostPromptSettingsGetters,

@@ -88,6 +88,12 @@ export type InboundMessage =
       broadcast?: boolean;
     }
   | {
+      type: "languageEffective";
+      language: "es" | "en";
+      captureId?: number;
+      broadcast?: boolean;
+    }
+  | {
       type: "draftSync";
       text: string;
       originViewId: string;

@@ -6,10 +6,19 @@ import {
   type ProjectMemoryRegistryFile,
 } from "../types";
 
+/**
+ * Devuelve el registro de project memory por defecto.
+ * @returns Registro vacío con la versión de esquema actual.
+ */
 export function defaultRegistry(): ProjectMemoryRegistryFile {
   return { schemaVersion: PROJECT_MEMORY_SCHEMA_VERSION, entries: [] };
 }
 
+/**
+ * Parse a project memory registry JSON string and valida su esquema.
+ * @param text Contenido JSON del registro.
+ * @returns Registro parseado o el valor por defecto si es inválido.
+ */
 export function parseRegistryJson(text: string): ProjectMemoryRegistryFile {
   try {
     const v = JSON.parse(text) as Partial<ProjectMemoryRegistryFile>;
@@ -36,6 +45,12 @@ export function parseRegistryJson(text: string): ProjectMemoryRegistryFile {
   }
 }
 
+/**
+ * Devuelve el manifiesto de project memory por defecto para un workspace.
+ * @param workspaceKey Clave del workspace para el manifiesto.
+ * @param now Marca de tiempo actual en milisegundos.
+ * @returns Manifiesto por defecto del workspace.
+ */
 export function defaultManifest(workspaceKey: string, now: number): ProjectMemoryManifestFile {
   return {
     schemaVersion: PROJECT_MEMORY_SCHEMA_VERSION,
@@ -51,6 +66,12 @@ export function defaultManifest(workspaceKey: string, now: number): ProjectMemor
   };
 }
 
+/**
+ * Parsea un manifiesto JSON de project memory y lo normaliza según el esquema.
+ * @param text Contenido JSON del manifiesto.
+ * @param workspaceKey Clave del workspace usada si el manifiesto es inválido o faltante.
+ * @returns Manifiesto parseado o el manifiesto por defecto.
+ */
 export function parseManifestJson(text: string, workspaceKey: string): ProjectMemoryManifestFile {
   try {
     const v = JSON.parse(text) as Partial<ProjectMemoryManifestFile>;
@@ -81,10 +102,19 @@ export function parseManifestJson(text: string, workspaceKey: string): ProjectMe
   }
 }
 
+/**
+ * Devuelve el archivo de entradas de project memory por defecto.
+ * @returns Archivo de entradas vacío con la versión de esquema actual.
+ */
 export function defaultEntries(): ProjectMemoryEntriesFile {
   return { schemaVersion: PROJECT_MEMORY_SCHEMA_VERSION, items: [] };
 }
 
+/**
+ * Parse a project memory entries JSON string y valida su esquema.
+ * @param text Contenido JSON del archivo de entradas.
+ * @returns Archivo de entradas parseado o el valor por defecto si es inválido.
+ */
 export function parseEntriesJson(text: string): ProjectMemoryEntriesFile {
   try {
     const v = JSON.parse(text) as Partial<ProjectMemoryEntriesFile>;

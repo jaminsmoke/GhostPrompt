@@ -10,6 +10,11 @@ export type RawOpencodeProviderModel = {
   name?: string;
 } & Record<string, unknown>;
 
+/**
+ * Comprueba si un valor es un registro de modelo OpenCode válido.
+ * @param v Valor a validar.
+ * @returns True si el valor representa un modelo OpenCode válido.
+ */
 function isModelRecord(v: unknown): v is RawOpencodeProviderModel {
   return (
     v !== null &&
@@ -19,6 +24,11 @@ function isModelRecord(v: unknown): v is RawOpencodeProviderModel {
   );
 }
 
+/**
+ * Normaliza la salida de modelos del proveedor OpenCode para el catálogo.
+ * @param models Datos devueltos por config.providers().
+ * @returns Array de registros de modelo válidos.
+ */
 export function normalizeOpencodeProviderModels(
   models: unknown,
 ): RawOpencodeProviderModel[] {

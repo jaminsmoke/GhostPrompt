@@ -8,8 +8,8 @@ export const COMPLETION_PARTIAL_LABEL = "Partial text to continue: ";
 
 /**
  * Devuelve la directiva de estilo adecuada para el prompt del modelo.
- * @param style Estilo de sugerencia deseado.
- * @returns Instrucción de estilo para el prompt.
+ * @param {SuggestionStyle} style Estilo de sugerencia deseado.
+ * @returns {string} Instrucción de estilo para el prompt.
  */
 export function suggestionStyleDirective(style: SuggestionStyle): string {
   switch (style) {
@@ -25,8 +25,8 @@ export function suggestionStyleDirective(style: SuggestionStyle): string {
 
 /**
  * Resuelve el idioma de salida para la sugerencia.
- * @param context Contexto de sugerencia opcional.
- * @returns El idioma resuelto para el prompt.
+ * @param {SuggestionContext | undefined} context Contexto de sugerencia opcional.
+ * @returns {SupportedSuggestionLanguage} El idioma resuelto para el prompt.
  */
 function resolveOutputLanguage(context?: SuggestionContext): SupportedSuggestionLanguage {
   if (context?.outputLanguage) {
@@ -40,8 +40,8 @@ function resolveOutputLanguage(context?: SuggestionContext): SupportedSuggestion
 
 /**
  * Construye la sección de contexto de proyecto para el prompt.
- * @param context Contexto de sugerencia con información de workspace y archivo.
- * @returns El texto de contexto de proyecto o una cadena vacía.
+ * @param {SuggestionContext} context Contexto de sugerencia con información de workspace y archivo.
+ * @returns {string} El texto de contexto de proyecto o una cadena vacía.
  */
 function buildProjectContext(context: SuggestionContext): string {
   const lines: string[] = [];
@@ -66,10 +66,10 @@ function buildProjectContext(context: SuggestionContext): string {
 
 /**
  * Divide la instrucción completa en el prefijo del prompt y el texto parcial etiquetado.
- * @param userText Texto que se quiere continuar.
- * @param style Estilo de sugerencia deseado.
- * @param context Contexto adicional para el prompt.
- * @returns Un objeto con el prompt prefijo y el texto parcial etiquetado.
+ * @param {string} userText Texto que se quiere continuar.
+ * @param {SuggestionStyle} style Estilo de sugerencia deseado.
+ * @param {SuggestionContext | undefined} context Contexto adicional para el prompt.
+ * @returns {{ prefixInstruction: string; labeledPartial: string }} Un objeto con el prompt prefijo y el texto parcial etiquetado.
  */
 export function buildCompletionInstructionParts(
   userText: string,
@@ -114,10 +114,10 @@ export function buildCompletionInstructionParts(
 
 /**
  * Construye la instrucción completa para el LM a partir del texto del usuario, estilo y contexto.
- * @param userText Texto que se debe continuar.
- * @param style Estilo de sugerencia deseado.
- * @param context Contexto adicional para guiar la generación.
- * @returns Prompt completo listo para enviar al modelo.
+ * @param {string} userText Texto que se debe continuar.
+ * @param {SuggestionStyle} style Estilo de sugerencia deseado.
+ * @param {SuggestionContext | undefined} context Contexto adicional para guiar la generación.
+ * @returns {string} Prompt completo listo para enviar al modelo.
  */
 export function buildCompletionInstruction(
   userText: string,

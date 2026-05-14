@@ -3,6 +3,11 @@ import {
   type ProjectMemoryBootstrapStoredItem,
 } from "../types";
 
+/**
+ * Comprueba si un valor coincide con el contrato de item bootstrap de project memory.
+ * @param x Valor sin tipar a validar.
+ * @returns True si el valor es un item bootstrap válido.
+ */
 export function isProjectMemoryBootstrapStoredItem(
   x: unknown,
 ): x is ProjectMemoryBootstrapStoredItem {
@@ -27,8 +32,8 @@ export function isProjectMemoryBootstrapStoredItem(
 
 /**
  * Elimina ítems bootstrap obsoletos (fichero borrado o contenido tocado vs mtime/hash).
- * @param items
- * @param probes
+ * @param items Ítems bootstrap almacenados a validar.
+ * @param probes Resultado de sondeo de rutas con mtime/hash actuales.
  * @returns Ítems bootstrap que siguen siendo válidos según probes.
  */
 export function pruneBootstrapStoredAgainstFileProbes(
@@ -49,9 +54,9 @@ export function pruneBootstrapStoredAgainstFileProbes(
 
 /**
  * Supervivientes validados contra `probes` + piezas vivas (`live` gana si comparten `relativePath`).
- * @param prevBootstrap
- * @param probes
- * @param liveAsStored
+ * @param prevBootstrap Items bootstrap previos almacenados.
+ * @param probes Resultado de sondeo de rutas para los ítems previos.
+ * @param liveAsStored Piezas bootstrap vivas convertidas a item persistible.
  * @returns Bootstrap mergeado con prioridad de piezas vivas.
  */
 export function mergeValidatedBootstrapWithLive(
@@ -68,6 +73,12 @@ export function mergeValidatedBootstrapWithLive(
   return [...merged].sort((a, b) => bootstrapStoredSortComparison(a.relativePath, b.relativePath));
 }
 
+/**
+ * Compara rutas bootstrap para orden estable en project memory.
+ * @param a Primera ruta relativa de bootstrap.
+ * @param b Segunda ruta relativa de bootstrap.
+ * @returns Valor de comparación para ordenar las rutas.
+ */
 function bootstrapStoredSortComparison(a: string, b: string): number {
   const d =
     bootstrapRelativePathBucketStable(a) - bootstrapRelativePathBucketStable(b);
@@ -77,6 +88,11 @@ function bootstrapStoredSortComparison(a: string, b: string): number {
   return a.localeCompare(b, "en", { sensitivity: "base" });
 }
 
+/**
+ * Calcula un bucket estable para ordenar rutas bootstrap con prioridad a README/package.
+ * @param rel Ruta relativa de bootstrap.
+ * @returns Bucket numérico para orden estable.
+ */
 function bootstrapRelativePathBucketStable(rel: string): number {
   const lower = rel.toLowerCase();
   if (lower === "package.json") {
@@ -88,8 +104,8 @@ function bootstrapRelativePathBucketStable(rel: string): number {
 
 /**
  * Reemplaza todo el subconjunto `bootstrap` por `nextBootstrap`; conserva otros `items`.
- * @param existingItems
- * @param nextBootstrap
+ * @param existingItems Items existentes en el store, incluyendo bootstrap y otros tipos.
+ * @param nextBootstrap Nuevo conjunto de items bootstrap a persistir.
  * @returns Items con bootstrap reemplazado.
  */
 export function mergeEntriesReplacingBootstrapSubset(

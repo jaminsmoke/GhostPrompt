@@ -17,6 +17,11 @@ export type SuggestionLoadingPhase =
   | "ollama-starting-model"
   | "ollama-model-ready";
 
+/**
+ * Convierte la fase de carga en texto de estado para la UI.
+ * @param {SuggestionLoadingPhase} phase Fase actual de la solicitud de sugerencia.
+ * @returns {string} Texto localizado que describe el estado de carga.
+ */
 export function suggestionLoadingStatusText(
   phase: SuggestionLoadingPhase,
 ): string {

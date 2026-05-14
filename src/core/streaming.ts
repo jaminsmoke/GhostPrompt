@@ -2,6 +2,12 @@ import * as vscode from "vscode";
 
 import { DEFAULT_MODEL_REQUEST_TIMEOUT_MS } from "./types";
 
+/**
+ * Recompone el texto completo de la respuesta de Copilot/LM a partir del stream.
+ * @param response Respuesta de chat de la API de lenguaje de VS Code.
+ * @param timeoutMs Tiempo máximo en milisegundos para esperar el siguiente fragmento.
+ * @returns Texto acumulado de la respuesta.
+ */
 export async function collectResponseText(
   response: vscode.LanguageModelChatResponse,
   timeoutMs: number = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
@@ -18,6 +24,12 @@ export async function collectResponseText(
   return completion;
 }
 
+/**
+ * Espera un fragmento del iterador de texto o expira si se supera el timeout.
+ * @param iterator Iterador asíncrono que produce trozos de texto.
+ * @param timeoutMs Tiempo de espera en milisegundos antes de cancelar.
+ * @returns El siguiente resultado del iterador.
+ */
 async function awaitNextChunkWithTimeout(
   iterator: AsyncIterator<string>,
   timeoutMs: number,

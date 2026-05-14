@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import type { AgentDestination, CompletionProvider, ProviderState, ProviderStateRecord, SuggestionModel } from "../types";
 import { ToolbarChip } from "./ToolbarChip";
 
@@ -60,33 +60,69 @@ const toggleBtn = (active: boolean) =>
       : "border-[var(--vscode-widget-border)] text-[var(--vscode-sideBar-foreground)] hover:bg-[var(--vscode-list-hoverBackground)]"
   }`;
 
+const renderToggleOption = (
+  active: boolean,
+  onClick: () => void,
+  children: ReactNode,
+) => {
+  if (active) {
+    return (
+      <button
+        type="button"
+        className={toggleBtn(active)}
+        onClick={onClick}
+        aria-pressed="true"
+      >
+        {children}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className={toggleBtn(active)}
+      onClick={onClick}
+      aria-pressed="false"
+    >
+      {children}
+    </button>
+  );
+};
+
 const separatorClass = "my-1 border-t border-[var(--vscode-widget-border)]";
 
 const chipLabelClass = (compact: boolean) =>
   compact ? "text-[10px]" : "text-xs";
 
-export function GhostToolbar({
-  completionProvider,
-  selectedModelId,
-  availableModels,
-  suggestionModelPolicy,
-  suggestionStyle,
-  contextMode,
-  suggestionLanguageChoice,
-  debugSuggestions,
-  agentDestination,
-  vsOpenCodeXExtensionInstalled,
-  compact,
-  providerStatuses,
-  statusLoading,
-  onCompletionProviderChange,
-  onSelectedModelChange,
-  onAgentDestinationChange,
-  onToggle,
-  onDebugToggle,
-  onStartProvider,
-  onStopProvider,
-}: GhostToolbarProps) {
+/**
+ * Toolbar de GhostPrompt con controles de modelo, sugerencia y proveedor.
+ * @param props Propiedades del componente GhostToolbar.
+ * @returns Elemento JSX del toolbar de GhostPrompt.
+ */
+export function GhostToolbar(props: GhostToolbarProps) {
+  const {
+    completionProvider,
+    selectedModelId,
+    availableModels,
+    suggestionModelPolicy,
+    suggestionStyle,
+    contextMode,
+    suggestionLanguageChoice,
+    debugSuggestions,
+    agentDestination,
+    vsOpenCodeXExtensionInstalled,
+    compact,
+    providerStatuses,
+    statusLoading,
+    onCompletionProviderChange,
+    onSelectedModelChange,
+    onAgentDestinationChange,
+    onToggle,
+    onDebugToggle,
+    onStartProvider,
+    onStopProvider,
+  } = props;
   const [openChip, setOpenChip] = useState<string | null>(null);
 
   const toggleChip = (id: string) => setOpenChip((p) => (p === id ? null : id));
@@ -260,22 +296,16 @@ export function GhostToolbar({
           <div data-key="suggestionModelPolicy" className="flex flex-col gap-1">
             <span className={chipLabelClass(compact)}>Política de modelo</span>
             <div className="flex gap-1">
-              <button
-                type="button"
-                className={toggleBtn(suggestionModelPolicy === "nonPremiumOnly")}
-                onClick={() => handleToggle("suggestionModelPolicy", "nonPremiumOnly")}
-                aria-pressed={suggestionModelPolicy === "nonPremiumOnly" ? "true" : "false"}
-              >
-                No premium
-              </button>
-              <button
-                type="button"
-                className={toggleBtn(suggestionModelPolicy === "anyModel")}
-                onClick={() => handleToggle("suggestionModelPolicy", "anyModel")}
-                aria-pressed={suggestionModelPolicy === "anyModel" ? "true" : "false"}
-              >
-                Cualquiera
-              </button>
+              {renderToggleOption(
+                suggestionModelPolicy === "nonPremiumOnly",
+                () => handleToggle("suggestionModelPolicy", "nonPremiumOnly"),
+                "No premium",
+              )}
+              {renderToggleOption(
+                suggestionModelPolicy === "anyModel",
+                () => handleToggle("suggestionModelPolicy", "anyModel"),
+                "Cualquiera",
+              )}
             </div>
           </div>
           <hr className={separatorClass} />
@@ -323,88 +353,61 @@ export function GhostToolbar({
           <div data-key="suggestionStyle" className="flex flex-col gap-1">
             <span className={chipLabelClass(compact)}>Estilo</span>
             <div className="flex gap-1">
-              <button
-                type="button"
-                className={toggleBtn(suggestionStyle === "concise")}
-                onClick={() => handleToggle("suggestionStyle", "concise")}
-                aria-pressed={suggestionStyle === "concise" ? "true" : "false"}
-              >
-                Breve
-              </button>
-              <button
-                type="button"
-                className={toggleBtn(suggestionStyle === "balanced")}
-                onClick={() => handleToggle("suggestionStyle", "balanced")}
-                aria-pressed={suggestionStyle === "balanced" ? "true" : "false"}
-              >
-                Normal
-              </button>
-              <button
-                type="button"
-                className={toggleBtn(suggestionStyle === "detailed")}
-                onClick={() => handleToggle("suggestionStyle", "detailed")}
-                aria-pressed={suggestionStyle === "detailed" ? "true" : "false"}
-              >
-                Extenso
-              </button>
+              {renderToggleOption(
+                suggestionStyle === "concise",
+                () => handleToggle("suggestionStyle", "concise"),
+                "Breve",
+              )}
+              {renderToggleOption(
+                suggestionStyle === "balanced",
+                () => handleToggle("suggestionStyle", "balanced"),
+                "Normal",
+              )}
+              {renderToggleOption(
+                suggestionStyle === "detailed",
+                () => handleToggle("suggestionStyle", "detailed"),
+                "Extenso",
+              )}
             </div>
           </div>
           <div data-key="contextMode" className="flex flex-col gap-1">
             <span className={chipLabelClass(compact)}>Contexto</span>
             <div className="flex gap-1">
-              <button
-                type="button"
-                className={toggleBtn(contextMode === "basic")}
-                onClick={() => handleToggle("contextMode", "basic")}
-                aria-pressed={contextMode === "basic" ? "true" : "false"}
-              >
-                Básico
-              </button>
-              <button
-                type="button"
-                className={toggleBtn(contextMode === "project")}
-                onClick={() => handleToggle("contextMode", "project")}
-                aria-pressed={contextMode === "project" ? "true" : "false"}
-              >
-                Proyecto
-              </button>
-              <button
-                type="button"
-                className={toggleBtn(contextMode === "off")}
-                onClick={() => handleToggle("contextMode", "off")}
-                aria-pressed={contextMode === "off" ? "true" : "false"}
-              >
-                Off
-              </button>
+              {renderToggleOption(
+                contextMode === "basic",
+                () => handleToggle("contextMode", "basic"),
+                "Básico",
+              )}
+              {renderToggleOption(
+                contextMode === "project",
+                () => handleToggle("contextMode", "project"),
+                "Proyecto",
+              )}
+              {renderToggleOption(
+                contextMode === "off",
+                () => handleToggle("contextMode", "off"),
+                "Off",
+              )}
             </div>
           </div>
           <div data-key="suggestionLanguageChoice" className="flex flex-col gap-1">
             <span className={chipLabelClass(compact)}>Idioma</span>
             <div className="flex gap-1">
-              <button
-                type="button"
-                className={toggleBtn(suggestionLanguageChoice === "auto")}
-                onClick={() => handleToggle("suggestionLanguageChoice", "auto")}
-                aria-pressed={suggestionLanguageChoice === "auto" ? "true" : "false"}
-              >
-                Auto
-              </button>
-              <button
-                type="button"
-                className={toggleBtn(suggestionLanguageChoice === "es")}
-                onClick={() => handleToggle("suggestionLanguageChoice", "es")}
-                aria-pressed={suggestionLanguageChoice === "es" ? "true" : "false"}
-              >
-                ES
-              </button>
-              <button
-                type="button"
-                className={toggleBtn(suggestionLanguageChoice === "en")}
-                onClick={() => handleToggle("suggestionLanguageChoice", "en")}
-                aria-pressed={suggestionLanguageChoice === "en" ? "true" : "false"}
-              >
-                EN
-              </button>
+              {renderToggleOption(
+                suggestionLanguageChoice === "auto",
+                () => handleToggle("suggestionLanguageChoice", "auto"),
+                "Auto",
+              )}
+              {renderToggleOption(
+                suggestionLanguageChoice === "es",
+                () => handleToggle("suggestionLanguageChoice", "es"),
+                "ES",
+              )}
+              {renderToggleOption(
+                suggestionLanguageChoice === "en",
+                () => handleToggle("suggestionLanguageChoice", "en"),
+                "EN",
+              )}
             </div>
           </div>
         </div>

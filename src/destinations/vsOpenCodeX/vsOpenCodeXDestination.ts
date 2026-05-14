@@ -21,6 +21,11 @@ const FORWARD_MESSAGE_TYPES = new Set<string>([
   "languageEffective",
 ]);
 
+/**
+ * Reenvía mensajes de UI de GhostPrompt a VSOpenCodeX cuando el destino está activo.
+ * @param payloadWithBroadcast Payload con posibles datos de broadcast.
+ * @returns Void.
+ */
 export function forwardGhostPromptInlineUiToVsOpenCodeIfApplicable(
   payloadWithBroadcast: Record<string, unknown>,
 ): void {
@@ -46,6 +51,10 @@ export function forwardGhostPromptInlineUiToVsOpenCodeIfApplicable(
 
 let notifiedMissingVsxThisSession = false;
 
+/**
+ * Notifica al usuario cuando el destino VSOpenCodeX está activo pero la extensión no está instalada.
+ * @returns Void.
+ */
 export function notifyIfVsxAgentDestinationWithoutVsOpenCodeX(): void {
   if (getGhostPromptAgentDestination() !== "vsOpenCodeX") {
     notifiedMissingVsxThisSession = false;

@@ -42,7 +42,7 @@ export const PROJECT_BOOTSTRAP_ENTRY_KIND = "bootstrap" as const;
 /** Entrada tipo bootstrap persistida en `entries.json` (fase C+). */
 export interface ProjectMemoryBootstrapStoredItem {
   kind: typeof PROJECT_BOOTSTRAP_ENTRY_KIND;
-  /** Ruta relativa al workspace (p. ej. `README.md`, `package.json`). */
+  /** Ruta relativa al workspace (p. Ej. `README.md`, `package.json`). */
   relativePath: string;
   /** Línea enviada al LM (card fase A). */
   promptLine: string;

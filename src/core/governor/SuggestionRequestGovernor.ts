@@ -211,10 +211,21 @@ export class SuggestionRequestGovernor {
   }
 }
 
+/**
+ * Normaliza el texto de entrada para comparación y llave de caché.
+ * @param text Texto original de la solicitud.
+ * @returns Cadena trimmed, con espacios colapsados y en minúsculas.
+ */
 function normalizeInput(text: string): string {
   return text.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
+/**
+ * Construye una clave de caché única a partir del texto normalizado y el scope.
+ * @param normalizedInput Texto ya normalizado.
+ * @param scope Alcance opcional de la solicitud para diferenciar la clave.
+ * @returns Clave compuesta que incorpora scope y texto.
+ */
 function buildScopedKey(normalizedInput: string, scope?: GovernorRequestScope): string {
   if (!scope) {
     return normalizedInput;
@@ -231,10 +242,22 @@ function buildScopedKey(normalizedInput: string, scope?: GovernorRequestScope): 
   return parts.join("||");
 }
 
+/**
+ * Normaliza un valor de scope para uso en llaves compuestas.
+ * @param value Valor de scope opcional.
+ * @returns Cadena limpia en minúsculas o vacía si no existe valor.
+ */
 function normalizeScopeValue(value: string | undefined): string {
   return (value ?? "").trim().toLowerCase();
 }
 
+/**
+ * Restringe un número al rango entero entre min y max.
+ * @param value Valor original a ajustar.
+ * @param min Límite inferior permitido.
+ * @param max Límite superior permitido.
+ * @returns Valor entero ajustado dentro del rango.
+ */
 function clampNumber(value: number, min: number, max: number): number {
   if (!Number.isFinite(value)) {
     return min;

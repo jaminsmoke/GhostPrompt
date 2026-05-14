@@ -5,7 +5,7 @@ const workspaceConfigGetMock = vi.hoisted(() =>
   vi.fn((key: string, fallback: unknown) => fallback),
 );
 
-vi.mock("../src/debug/SuggestionDebug", () => ({
+vi.mock("../src/system/debug/SuggestionDebug", () => ({
   logSuggestionDebug: vi.fn(),
 }));
 

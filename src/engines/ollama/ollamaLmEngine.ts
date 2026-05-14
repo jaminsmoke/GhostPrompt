@@ -11,6 +11,11 @@ import {
 } from '../../core/types';
 import { listModels, generate } from "./ollamaApiClient";
 
+/**
+ * Describe un modelo Ollama para el pipeline de sugerencias.
+ * @param modelName Nombre del modelo Ollama.
+ * @returns Descriptor de modelo para sugerencias.
+ */
 function describeOllamaModel(modelName: string): SuggestionModelDescriptor {
   return {
     id: modelName,
@@ -20,6 +25,11 @@ function describeOllamaModel(modelName: string): SuggestionModelDescriptor {
   };
 }
 
+/**
+ * Resuelve el modelo Ollama a usar según preferencia y configuración.
+ * @param preferredModelId Modelo preferido o "auto".
+ * @returns Nombre del modelo seleccionado o undefined.
+ */
 async function resolveOllamaModel(
   preferredModelId: string | undefined,
 ): Promise<string | undefined> {
@@ -41,6 +51,12 @@ async function resolveOllamaModel(
   }
 }
 
+/**
+ * Solicita una completación a Ollama para un texto de usuario.
+ * @param userText Texto del usuario a completar.
+ * @param options Opciones de completion del pipeline.
+ * @returns Resultado de completion con sugerencia o error.
+ */
 export async function requestOllamaCompletion(
   userText: string,
   options: CompletionRequestOptions,
@@ -70,11 +86,20 @@ export async function requestOllamaCompletion(
 
   onLoadingPhase?.("ollama-generating");
 
+  const abortController = new AbortController();
+  const cancellationListener = token.onCancellationRequested(() => {
+    abortController.abort();
+  });
+
   try {
+    if (token.isCancellationRequested) {
+      abortController.abort();
+    }
+
     const completionText = await generate(instruction, modelName, {
       baseUrl,
       requestTimeoutMs,
-      signal: token.isCancellationRequested ? undefined : undefined,
+      signal: abortController.signal,
       onStreamPreview: onStreamPreview
         ? (text: string) => onStreamPreview(text)
         : undefined,
@@ -111,5 +136,7 @@ export async function requestOllamaCompletion(
       return { kind: "empty", reason: "no-model" };
     }
     return { kind: "error", message };
+  } finally {
+    cancellationListener.dispose();
   }
 }

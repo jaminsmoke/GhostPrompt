@@ -2,6 +2,13 @@ import * as vscode from "vscode";
 
 import { sha256HexBytes } from '../../context/projectBootstrapContext';
 
+/**
+ * Comprueba el estado actual de una lista de rutas relativas en el workspace.
+ * @param params Parámetros de la operación de sondeo.
+ * @param params.workspaceRootUri URI de la raíz del workspace.
+ * @param params.relativePaths Rutas relativas a inspeccionar.
+ * @returns Un mapeo parcial de rutas a metadatos de archivo (mtime y hash).
+ */
 export async function probeWorkspaceRelativePaths(params: {
   workspaceRootUri: vscode.Uri;
   relativePaths: readonly string[];

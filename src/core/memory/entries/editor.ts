@@ -3,6 +3,11 @@ import {
   type ProjectMemoryEditorIngestStoredItem,
 } from "../types";
 
+/**
+ * Comprueba si un valor coincide con el contrato de item editor-ingest de project memory.
+ * @param x Valor sin tipar a validar.
+ * @returns True si el valor es un item editor-ingest válido.
+ */
 export function isProjectMemoryEditorIngestStoredItem(
   x: unknown,
 ): x is ProjectMemoryEditorIngestStoredItem {
@@ -29,6 +34,12 @@ export function isProjectMemoryEditorIngestStoredItem(
   );
 }
 
+/**
+ * Filtra items editor-ingest que siguen siendo válidos según los probes de archivos.
+ * @param items Items editor-ingest almacenados a validar.
+ * @param probes Resultado de sondeo de rutas con mtime/hash actuales.
+ * @returns Items editor-ingest válidos tras la validación.
+ */
 export function pruneEditorIngestAgainstFileProbes(
   items: ProjectMemoryEditorIngestStoredItem[],
   probes: Readonly<
@@ -45,6 +56,12 @@ export function pruneEditorIngestAgainstFileProbes(
   });
 }
 
+/**
+ * Reemplaza todo el subconjunto editor-ingest por nextEditors; conserva otros items.
+ * @param existingItems Items existentes en el store, incluyendo editor-ingest y otros.
+ * @param nextEditors Nuevo conjunto de items editor-ingest a persistir.
+ * @returns Items con el subconjunto editor-ingest actualizado.
+ */
 export function mergeEntriesReplacingEditorSubset(
   existingItems: readonly unknown[],
   nextEditors: readonly ProjectMemoryEditorIngestStoredItem[],

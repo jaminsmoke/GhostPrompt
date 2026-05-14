@@ -11,6 +11,10 @@ import { removeIndexedEntriesForRelativePath } from "../entries/mutation";
 import type { ProjectMemoryStore } from "../Store";
 import { workspaceKeyFromRootUriString } from "../io/key";
 
+/**
+ * Lee la configuración de los watchers de archivos de project memory.
+ * @returns Objeto con el estado habilitado y el throttle en ms.
+ */
 export function readProjectMemoryFileWatcherConfig(): {
   enabled: boolean;
   throttleMs: number;
@@ -28,6 +32,11 @@ export function readProjectMemoryFileWatcherConfig(): {
   };
 }
 
+/**
+ * Obtiene rutas relativas únicas para archivos indexados en project memory.
+ * @param items Elementos indexados leídos desde entries.json.
+ * @returns Lista de rutas relativas normalizadas.
+ */
 function collectIndexedRelativePaths(items: readonly unknown[]): string[] {
   const set = new Set<string>();
   for (const item of items) {
@@ -49,6 +58,11 @@ let invalidateFlushTimer: ReturnType<typeof setTimeout> | undefined;
 
 let scheduleRefreshTimer: ReturnType<typeof setTimeout> | undefined;
 
+/**
+ * Enlaza el watcher de paths indexados de project memory al contexto de la extensión.
+ * @param context Contexto de la extensión de VS Code.
+ * @param store Instancia de almacenamiento del proyecto.
+ */
 export function bindProjectMemoryIndexedPathWatcher(
   context: vscode.ExtensionContext,
   store: ProjectMemoryStore,
@@ -64,6 +78,9 @@ export function bindProjectMemoryIndexedPathWatcher(
   });
 }
 
+/**
+ * Elimina todos los watchers activos de paths indexados.
+ */
 function disposeAllIndexedPathWatchers(): void {
   while (activeWatchDisposables.length) {
     const d = activeWatchDisposables.pop();
@@ -71,6 +88,12 @@ function disposeAllIndexedPathWatchers(): void {
   }
 }
 
+/**
+ * Persiste los elementos resultantes tras eliminar rutas indexadas inválidas.
+ * @param store Instancia de almacenamiento del proyecto.
+ * @param workspaceKey Clave del workspace para el store.
+ * @param items Elementos filtrados a persistir.
+ */
 async function persistEntriesAfterStrip(
   store: ProjectMemoryStore,
   workspaceKey: string,
@@ -89,6 +112,11 @@ async function persistEntriesAfterStrip(
   });
 }
 
+/**
+ * Invalida las entradas indexadas para un URI que cambió o se eliminó.
+ * @param store Instancia de almacenamiento del proyecto.
+ * @param uri URI del archivo que cambió o se eliminó.
+ */
 async function invalidateIndexedUri(store: ProjectMemoryStore, uri: vscode.Uri): Promise<void> {
   const folder = vscode.workspace.getWorkspaceFolder(uri);
   if (!folder || uri.scheme !== "file") {
@@ -108,6 +136,10 @@ async function invalidateIndexedUri(store: ProjectMemoryStore, uri: vscode.Uri):
   await persistEntriesAfterStrip(store, workspaceKey, next);
 }
 
+/**
+ * Añade un URI a la cola de invalidación para procesarlo de forma agrupada.
+ * @param uri URI del archivo que debe invalidarse.
+ */
 function queueInvalidate(uri: vscode.Uri): void {
   pendingInvalidateUris.set(uri.toString(), uri);
   const { throttleMs } = readProjectMemoryFileWatcherConfig();
@@ -120,6 +152,9 @@ function queueInvalidate(uri: vscode.Uri): void {
   }, throttleMs);
 }
 
+/**
+ * Procesa la cola de invalidación acumulada y refresca los watchers.
+ */
 async function flushInvalidateQueue(): Promise<void> {
   const store = boundStore;
   if (!store) {
@@ -136,6 +171,7 @@ async function flushInvalidateQueue(): Promise<void> {
 
 /**
  * Recrea watchers sólo para rutas presentes en `entries.json` de cada carpeta abierta.
+ * @returns Promise que se resuelve cuando los watchers han sido recreados.
  */
 export async function refreshProjectMemoryIndexedPathWatchers(): Promise<void> {
   disposeAllIndexedPathWatchers();

@@ -20,7 +20,7 @@ import { scheduleIndexedPathWatcherRefresh } from "./probes/watchers";
 import { workspaceKeyFromRootUriString } from "./io/key";
 import { probeWorkspaceRelativePaths } from "./probes/workspace";
 
-/** @deprecated usar {@link ProjectMemoryReconcileSnapshot} */
+/** @deprecated Usar {@link ProjectMemoryReconcileSnapshot} */
 export type ProjectBootstrapReconcileSnapshot = ProjectMemoryReconcileSnapshot;
 
 export interface ProjectMemoryReconcileSnapshot {
@@ -30,6 +30,11 @@ export interface ProjectMemoryReconcileSnapshot {
   promptLines: readonly string[];
 }
 
+/**
+ * Convierte un fragmento bootstrap en un item persistible para project memory.
+ * @param piece Fragmento de bootstrap extraído del proyecto.
+ * @returns Item almacenable en la memoria del proyecto.
+ */
 export function bootstrapPieceToStoredItem(
   piece: ProjectBootstrapPiece,
 ): ProjectMemoryBootstrapStoredItem {
@@ -42,6 +47,13 @@ export function bootstrapPieceToStoredItem(
   };
 }
 
+/**
+ * Sondea los paths relativos de bootstrap almacenados para el workspace actual.
+ * @param params Parámetros de sondeo de bootstrap.
+ * @param params.workspaceRootUri URI raíz del workspace.
+ * @param params.items Items bootstrap almacenados a sondear.
+ * @returns Un mapeo parcial de rutas a metadatos de archivos existentes.
+ */
 async function probesForStoredBootstrapAtWorkspace(params: {
   workspaceRootUri: vscode.Uri;
   items: readonly ProjectMemoryBootstrapStoredItem[];
@@ -53,13 +65,13 @@ async function probesForStoredBootstrapAtWorkspace(params: {
 }
 
 /**
- * Lee store + bootstrap vivos + validación editor-ingest → líneas LM + ítems persistibles.
- * @param params
- * @param params.store
- * @param params.workspaceRootUriString
- * @param params.workspaceFolderUri
- * @param params.livePieces
- * @returns Snapshot reconciliada con líneas LM e ítems persistibles.
+ * Lee el store y reconcilia bootstrap + editor-ingest con el estado actual del workspace.
+ * @param params Parámetros de reconciliación de la memoria del proyecto.
+ * @param params.store Instancia de almacenamiento del proyecto.
+ * @param params.workspaceRootUriString URI canónico del workspace como cadena.
+ * @param params.workspaceFolderUri URI de la carpeta del workspace.
+ * @param params.livePieces Fragmentos activos de bootstrap que deben considerarse.
+ * @returns Snapshot reconciliada con líneas de prompt y elementos persistibles.
  */
 export async function reconcileProjectMemoryForSuggest(params: {
   store: ProjectMemoryStore;
@@ -120,8 +132,8 @@ export async function reconcileProjectMemoryForSuggest(params: {
 
 /**
  * Reconciliación legacy de bootstrap. Usar {@link reconcileProjectMemoryForSuggest} en su lugar.
- * @param params
- * @deprecated usar {@link reconcileProjectMemoryForSuggest}
+ * @param params Parámetros de reconciliación de la memoria del proyecto.
+ * @deprecated Usar {@link reconcileProjectMemoryForSuggest}.
  * @returns Snapshot reconciliada (deprecated).
  */
 export async function reconcileProjectBootstrapForSuggest(
@@ -130,6 +142,13 @@ export async function reconcileProjectBootstrapForSuggest(
   return reconcileProjectMemoryForSuggest(params);
 }
 
+/**
+ * Escribe en disco el snapshot reconciliado de proyecto y actualiza el manifiesto.
+ * @param params Parámetros para persistir el snapshot.
+ * @param params.store Instancia de almacenamiento del proyecto.
+ * @param params.workspaceKey Clave del workspace usada en el store.
+ * @param params.mergedItems Elementos reconciliados que se deben persistir.
+ */
 export async function writeReconciledProjectBootstrapSnapshot(params: {
   store: ProjectMemoryStore;
   workspaceKey: string;
@@ -150,6 +169,14 @@ export async function writeReconciledProjectBootstrapSnapshot(params: {
   scheduleIndexedPathWatcherRefresh();
 }
 
+/**
+ * Persiste el snapshot de bootstrap del proyecto al store y reprograma watchers.
+ * @param params Parámetros para persistir el snapshot.
+ * @param params.store Instancia de almacenamiento del proyecto.
+ * @param params.workspaceRootUriString URI canónico del workspace como cadena.
+ * @param params.workspaceFolderUri URI de la carpeta del workspace.
+ * @param params.livePieces Fragmentos activos de bootstrap que se deben persistir.
+ */
 export async function persistProjectBootstrapSnapshot(params: {
   store: ProjectMemoryStore;
   workspaceRootUriString: string;

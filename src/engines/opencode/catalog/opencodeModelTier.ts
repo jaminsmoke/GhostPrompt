@@ -6,6 +6,11 @@
  */
 import type { SuggestionModelTier } from '../../../core/types';
 
+/**
+ * Extrae el multiplicador numérico de pricing del catálogo OpenCode.
+ * @param pricing Cadena de pricing como '0x' o '1x'.
+ * @returns Multiplicador si el formato es válido.
+ */
 function parsePricingMultiplier(pricing: string): number | undefined {
   const match = /^([0-9]+(?:\.[0-9]+)?)x$/i.exec(pricing.trim());
   if (!match) {
@@ -22,10 +27,10 @@ export type OpencodeTierResult = {
 
 /**
  * Orden: `pricing` multiplicador (`0x` / `1x`) → flag `free` → proveedor **opencode** → backends locales por **id de proveedor**.
- * @param providerID
- * @param _modelID
- * @param _modelDisplayName
- * @param raw
+ * @param providerID Identificador del proveedor OpenCode.
+ * @param _modelID ID del modelo OpenCode.
+ * @param _modelDisplayName Nombre visible del modelo.
+ * @param raw Registro completo de metadatos del modelo.
  * @returns Clasificación del modelo: included, premium o unknown.
  */
 export function classifyOpencodeModelTier(
