@@ -17,9 +17,10 @@ VsCodeExtension-InlineChatSuggestions/
 │   ├── completion/index.ts             # Barrel del dominio completion
 │   ├── governor/SuggestionRequestGovernor.ts
 │   ├── bridge/ChatBridge.ts
-│   ├── log/ConversationLog.ts
-│   ├── log/SuggestionLog.ts
-│   └── debug/SuggestionDebug.ts
+│   ├── system/contracts/webviewMessageSchemas.ts
+│   ├── system/log/ConversationLog.ts
+│   ├── system/log/SuggestionLog.ts
+│   └── system/log/LogManager.ts
 │
 ├── webview/                          # Assets del lado webview (sandboxed)
 │   ├── index.html                    # Plantilla HTML de la vista mini-input
@@ -91,7 +92,7 @@ VsCodeExtension-InlineChatSuggestions/
 
 ---
 
-### `src/log/ConversationLog.ts` — Log persistente
+### `src/system/log/ConversationLog.ts` — Log persistente
 
 - Lee y hace append al archivo `Docs/MyConversation/conversation.md`.
 - Cada entrada tiene timestamp y el texto del prompt.
@@ -176,7 +177,7 @@ node_modules/**
 extension/extension.ts
     ├── host/MiniInputViewProvider.ts
     │       ├── bridge/ChatBridge.ts
-    │       ├── log/ConversationLog.ts
+    │       ├── system/log/ConversationLog.ts
     │       ├── completion/index.ts
     │       └── …
     └── (comandos adicionales)

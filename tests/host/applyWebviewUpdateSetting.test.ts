@@ -45,4 +45,18 @@ describe('applyWebviewUpdateSetting', () => {
       vscode.ConfigurationTarget.Global,
     );
   });
+
+  it('persiste agentDestination cursorChat', async () => {
+    const vscode = await import('vscode');
+    await applyWebviewUpdateSetting({
+      type: 'updateSetting',
+      key: 'agentDestination',
+      value: 'cursorChat',
+    });
+    expect(updateMock).toHaveBeenCalledWith(
+      'agentDestination',
+      'cursorChat',
+      vscode.ConfigurationTarget.Global,
+    );
+  });
 });

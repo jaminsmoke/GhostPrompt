@@ -18,6 +18,8 @@ import { resetClient } from '../engines/opencode/opencodeApiClient';
 import { ollamaModelManager } from '../engines/ollama';
 import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from '../destinations/vsOpenCodeX/vsOpenCodeXDestination';
 import '../destinations/copilotChat/copilotChatDestination';
+import '../destinations/cursor/cursorChatDestination';
+import { registerDiscoverCursorChatCommandsCommand } from '../destinations/cursor/discoverCursorChatCommands';
 import { registerProjectMemory } from '../core/memory/activate';
 import { registerAllProviderModules } from '../system/status/registerModules';
 
@@ -68,6 +70,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
   notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
+  registerDiscoverCursorChatCommandsCommand(context);
 
   if (isSuggestionDebugEnabled()) {
     ensureSuggestionDebugChannel();

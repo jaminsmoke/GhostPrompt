@@ -16,7 +16,7 @@
     "url": "https://github.com/jaminsmoke/GhostPrompt.git"
   },
   "engines": {
-    "vscode": "^1.120.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
     "Other"
@@ -73,6 +73,10 @@
       {
         "command": "ghostPrompt.runSuggestPipeline",
         "title": "GhostPrompt: Run Suggest Pipeline (External / VSOpenCodeX API)"
+      },
+      {
+        "command": "ghostPrompt.discoverCursorChatCommands",
+        "title": "GhostPrompt: Discover Cursor Chat Commands (dev)"
       }
     ],
     "configuration": {
@@ -221,10 +225,11 @@
           "type": "string",
           "enum": [
             "copilotChat",
-            "vsOpenCodeX"
+            "vsOpenCodeX",
+            "cursorChat"
           ],
           "default": "copilotChat",
-          "markdownDescription": "Where the **full prompt** is sent from. `copilotChat` keeps GhostPrompt’s inline composer and **Send to Copilot**. `vsOpenCodeX` disables that inline surface in the webview (chips stay); VSOpenCodeX drives focus and calls `ghostPrompt.runSuggestPipeline` with `{ text }` for suggestions. Inline UI updates are forwarded to VSOpenCodeX via `vsopencodex.ghostPromptInlineUi` when this is `vsOpenCodeX`. **Effective default:** if **VSOpenCodeX** is installed and you have **never** saved this key (User/Workspace), GhostPrompt behaves as **`vsOpenCodeX`** until you set it explicitly (Settings or **Destino** dropdown in the GhostPrompt view)."
+          "markdownDescription": "Where the **full prompt** is sent from. `copilotChat` keeps GhostPrompt’s inline composer and **Send to Copilot**. `cursorChat` (Cursor IDE only) keeps the same GhostPrompt surface and sends to the native Cursor chat when the destination provider is registered. `vsOpenCodeX` disables that inline surface in the webview (chips stay); VSOpenCodeX drives focus and calls `ghostPrompt.runSuggestPipeline` with `{ text }` for suggestions. Inline UI updates are forwarded to VSOpenCodeX via `vsopencodex.ghostPromptInlineUi` when this is `vsOpenCodeX`. **Effective default:** if **VSOpenCodeX** is installed and you have **never** saved this key (User/Workspace), GhostPrompt behaves as **`vsOpenCodeX`** until you set it explicitly (Settings or **Destino** dropdown in the GhostPrompt view)."
         },
         "ghostPrompt.requestCooldownMs": {
           "type": "number",
@@ -361,7 +366,7 @@
     "@types/react": "^19.2.14",
     "dependency-cruiser": "^17.4.0",
     "@types/react-dom": "^19.2.3",
-    "@types/vscode": "^1.120.0",
+    "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^8.59.3",
     "@typescript-eslint/parser": "^8.59.3",
     "@vitejs/plugin-react": "^6.0.1",

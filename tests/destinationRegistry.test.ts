@@ -57,6 +57,14 @@ describe('destinationRegistry', () => {
       expect(active.sendPrompt).toBe(sendPrompt);
     });
 
+    it('devuelve provider cursorChat cuando está registrado y configurado', async () => {
+      await import('../src/destinations/cursor/cursorChatDestination');
+      configGetMock.mockReturnValue('cursorChat');
+      const active = mod.getActiveDestinationProvider();
+      expect(active.id).toBe('cursorChat');
+      expect(active.sendPrompt).toBeDefined();
+    });
+
     it('devuelve fallback con sendPrompt vacío si no hay provider para el destino activo', () => {
       configGetMock.mockReturnValue('vsOpenCodeX');
       const active = mod.getActiveDestinationProvider();
@@ -83,6 +91,21 @@ describe('destinationRegistry', () => {
     it('retorna vsOpenCodeX si está configurado explícitamente', () => {
       configGetMock.mockReturnValue('vsOpenCodeX');
       expect(mod.getGhostPromptAgentDestination()).toBe('vsOpenCodeX');
+    });
+
+    it('retorna cursorChat si está configurado explícitamente', () => {
+      configGetMock.mockReturnValue('cursorChat');
+      expect(mod.getGhostPromptAgentDestination()).toBe('cursorChat');
+    });
+  });
+
+  describe('parseGhostPromptAgentDestination', () => {
+    it('normaliza valores conocidos y desconocidos', () => {
+      expect(mod.parseGhostPromptAgentDestination('vsOpenCodeX')).toBe('vsOpenCodeX');
+      expect(mod.parseGhostPromptAgentDestination('cursorChat')).toBe('cursorChat');
+      expect(mod.parseGhostPromptAgentDestination('copilotChat')).toBe('copilotChat');
+      expect(mod.parseGhostPromptAgentDestination('other')).toBe('copilotChat');
+      expect(mod.parseGhostPromptAgentDestination(undefined)).toBe('copilotChat');
     });
   });
 

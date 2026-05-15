@@ -123,7 +123,7 @@ Función clave: `resolveCompletionSourceForRequest(selectedModelId, enabledSourc
 | `core/prompt/normalize`        | `normalizeSuggestion` para post-proceso               |
 | `core/streaming`               | `collectResponseText` (stream LM VS Code)             |
 | `core/presentation/loading`    | `SuggestionLoadingPhase`, textos de fase para la UI   |
-| `system/debug/SuggestionDebug` | Logging de debug y perf capture                       |
+| `system/log`                   | Logging estructurado y perf capture                    |
 
 ---
 

@@ -96,8 +96,8 @@ Los schemas canónicos viven en `system/contracts/webviewMessageSchemas.ts`. `ap
 | `core/state/GhostPromptSessionStore`     | Estado compartido (draft, language, model)                 |
 | `core/suggest`                           | `handleGhostPromptSuggest` para el mensaje `suggest`       |
 | `system/contracts/webviewMessageSchemas` | Schemas Zod canónicos                                      |
-| `system/log/*`                           | Logging de conversation y suggestions                      |
-| `system/debug/SuggestionDebug`           | Debug toggle check                                         |
+| `system/log`                             | Logging estructurado, conversation y suggestions           |
+| `system/log`                             | Debug toggle check                                          |
 | `destinations/destinationRegistry`       | Resolución de destino agente                               |
 
 ---

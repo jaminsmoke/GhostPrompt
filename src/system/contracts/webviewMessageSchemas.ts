@@ -28,10 +28,12 @@ export const webviewSettingsPayloadSchema = z.object({
   debugSuggestions: z.boolean(),
   /** Tiempo de inactividad tras teclear antes de pedir suggestion (webview debounce). */
   suggestionDebounceMs: z.number().min(150).max(2000),
-  /** Destino del agente: Copilot Chat vs superficie VSOpenCodeX (v0.5 Fase C). */
-  agentDestination: z.enum(['copilotChat', 'vsOpenCodeX']),
+  /** Destino del agente: Copilot Chat, VSOpenCodeX o Cursor Chat (v0.6). */
+  agentDestination: z.enum(['copilotChat', 'vsOpenCodeX', 'cursorChat']),
   /** Si la extensión VSOpenCodeX está instalada (control destino en webview). */
   vsOpenCodeXExtensionInstalled: z.boolean(),
+  /** Si el host es Cursor Desktop (`vscode.env.appName`); UI puede ocultar `cursorChat` si es false. */
+  cursorDesktopHost: z.boolean(),
 });
 
 export const webviewOutboundSettingsEnvelopeSchema = z.object({
@@ -182,9 +184,17 @@ export const webviewUpdateSettingSchema = z.discriminatedUnion('key', [
   z.object({
     type: z.literal('updateSetting'),
     key: z.literal('agentDestination'),
-    value: z.enum(['copilotChat', 'vsOpenCodeX']),
+    value: z.enum(['copilotChat', 'vsOpenCodeX', 'cursorChat']),
   }),
 ]);
+
+export const webviewInboundLogSchema = z.object({
+  type: z.literal('log'),
+  level: z.enum(['debug', 'info', 'warn', 'error']),
+  message: z.string(),
+  data: z.record(z.string(), z.unknown()).optional(),
+  captureId: z.number().optional(),
+});
 
 /** Mensajes recibidos desde el webview (webview → host); mismo contrato que salida del cliente. */
 export const webviewInboundMessageSchema = z.union([
@@ -208,6 +218,7 @@ export const webviewInboundMessageSchema = z.union([
     type: z.literal('send'),
     text: z.string(),
   }),
+  webviewInboundLogSchema,
   webviewUpdateSettingSchema,
   z.object({ type: z.literal('requestProviderStatus') }),
   z.object({ type: z.literal('startProvider'), provider: z.string() }),

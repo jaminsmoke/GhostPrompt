@@ -13,7 +13,9 @@ import type {
 export {
   type GhostPromptAgentDestination,
   getGhostPromptAgentDestination,
+  isCursorDesktopHost,
   isVsOpenCodeXExtensionInstalled,
+  parseGhostPromptAgentDestination,
 } from '../../destinations/destinationRegistry';
 
 /**

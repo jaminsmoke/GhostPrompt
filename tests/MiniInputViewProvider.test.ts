@@ -142,6 +142,7 @@ vi.mock('../src/api/settings/settingsPostMessage', async (importOriginal) => {
             suggestionDebounceMs: 800,
             agentDestination: 'copilotChat',
             vsOpenCodeXExtensionInstalled: false,
+            cursorDesktopHost: false,
           },
         });
       },

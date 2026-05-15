@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
+import { postToHost } from '../hooks/useGhostPrompt';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -21,7 +22,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error('[GP] React Error Boundary caught:', error, errorInfo.componentStack);
+    postToHost({
+      type: 'log',
+      level: 'error',
+      message: 'react-error-boundary',
+      data: {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack,
+      },
+    });
   }
 
   handleReload = () => {

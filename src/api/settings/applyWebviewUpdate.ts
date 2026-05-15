@@ -3,6 +3,7 @@
  */
 import * as vscode from 'vscode';
 import { ghostPromptSessionStore } from '../../core/state/GhostPromptSessionStore';
+import { parseGhostPromptAgentDestination } from '../../destinations/destinationRegistry';
 import type { WebviewInboundMessage } from '../protocols/webviewProtocols';
 
 /**
@@ -62,7 +63,9 @@ export async function applyWebviewUpdateSetting(
     return;
   }
   if (message.key === 'agentDestination') {
-    const value = message.value === 'vsOpenCodeX' ? 'vsOpenCodeX' : 'copilotChat';
+    const value = parseGhostPromptAgentDestination(
+      typeof message.value === 'string' ? message.value : undefined,
+    );
     await config.update('agentDestination', value, vscode.ConfigurationTarget.Global);
   }
 }

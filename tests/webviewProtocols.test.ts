@@ -47,6 +47,7 @@ const minimalSettingsPayload = {
   suggestionDebounceMs: 800,
   agentDestination: 'copilotChat' as const,
   vsOpenCodeXExtensionInstalled: false,
+  cursorDesktopHost: false,
 };
 
 describe('webviewProtocols (v0.3.1 Fase B)', () => {
@@ -68,6 +69,13 @@ describe('webviewProtocols (v0.3.1 Fase B)', () => {
     ).toMatchObject({ type: 'draftChanged' });
     expect(
       parseWebviewInboundMessage({
+        type: 'log',
+        level: 'debug',
+        message: 'test-log',
+      }),
+    ).toMatchObject({ type: 'log', level: 'debug', message: 'test-log' });
+    expect(
+      parseWebviewInboundMessage({
         type: 'updateSetting',
         key: 'debugSuggestions',
         value: true,
@@ -87,6 +95,13 @@ describe('webviewProtocols (v0.3.1 Fase B)', () => {
         value: 'vsOpenCodeX',
       }),
     ).toMatchObject({ key: 'agentDestination', value: 'vsOpenCodeX' });
+    expect(
+      parseWebviewInboundMessage({
+        type: 'updateSetting',
+        key: 'agentDestination',
+        value: 'cursorChat',
+      }),
+    ).toMatchObject({ key: 'agentDestination', value: 'cursorChat' });
   });
 
   it('rechaza mensajes entrantes inválidos', () => {

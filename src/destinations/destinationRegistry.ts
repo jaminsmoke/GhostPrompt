@@ -1,8 +1,17 @@
 import * as vscode from 'vscode';
+import { CURSOR_CHAT_DESTINATION_ID } from './cursor/cursorHost';
+
+export { CURSOR_CHAT_DESTINATION_ID, isCursorDesktopHost } from './cursor/cursorHost';
 
 export const VS_OPEN_CODE_X_EXTENSION_ID = 'jaminsmoke.vsopencodex';
 
-export type DestinationId = 'copilotChat' | 'vsOpenCodeX';
+export const GHOST_PROMPT_AGENT_DESTINATION_IDS = [
+  'copilotChat',
+  'vsOpenCodeX',
+  CURSOR_CHAT_DESTINATION_ID,
+] as const;
+
+export type DestinationId = (typeof GHOST_PROMPT_AGENT_DESTINATION_IDS)[number];
 
 export interface DestinationProvider {
   readonly id: DestinationId;
@@ -85,7 +94,26 @@ export function isVsOpenCodeXExtensionInstalled(): boolean {
 }
 
 /**
- * Determina el destino efectivo de GhostPrompt (copilotChat o vsOpenCodeX).
+ * Normaliza un valor crudo de `ghostPrompt.agentDestination` al enum soportado.
+ * Valores desconocidos → `copilotChat`.
+ * @param {string | undefined} raw Valor leído de configuración o webview.
+ * @returns {GhostPromptAgentDestination} Destino normalizado.
+ */
+export function parseGhostPromptAgentDestination(
+  raw: string | undefined,
+): GhostPromptAgentDestination {
+  if (raw === 'vsOpenCodeX') {
+    return 'vsOpenCodeX';
+  }
+  if (raw === CURSOR_CHAT_DESTINATION_ID) {
+    return CURSOR_CHAT_DESTINATION_ID;
+  }
+  return 'copilotChat';
+}
+
+/**
+ * Determina el destino efectivo de GhostPrompt (`copilotChat`, `vsOpenCodeX` o `cursorChat`).
+ * Con destino `cursorChat` no aplica gating VSX: suggest/send usan la webview GhostPrompt (como `copilotChat`).
  * @returns {GhostPromptAgentDestination} Destino seleccionado o inferido según configuración y disponibilidad.
  */
 export function getGhostPromptAgentDestination(): GhostPromptAgentDestination {
@@ -94,7 +122,7 @@ export function getGhostPromptAgentDestination(): GhostPromptAgentDestination {
   if (!isAgentDestinationExplicitlyConfigured() && isVsOpenCodeXExtensionInstalled()) {
     return 'vsOpenCodeX';
   }
-  return v === 'vsOpenCodeX' ? 'vsOpenCodeX' : 'copilotChat';
+  return parseGhostPromptAgentDestination(v);
 }
 
 /**

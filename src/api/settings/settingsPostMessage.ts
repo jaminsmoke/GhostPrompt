@@ -17,6 +17,7 @@ import { isSuggestionDebugEnabled } from '../../system/log';
 import { ghostPromptSessionStore } from '../../core/state/GhostPromptSessionStore';
 import {
   getGhostPromptAgentDestination,
+  isCursorDesktopHost,
   isVsOpenCodeXExtensionInstalled,
 } from '../getters/workspaceGetters';
 import { parseOutboundSettingsEnvelope } from '../protocols/webviewProtocols';
@@ -87,6 +88,7 @@ export async function buildAndPostGhostPromptSettings(
       suggestionDebounceMs,
       agentDestination: getGhostPromptAgentDestination(),
       vsOpenCodeXExtensionInstalled: isVsOpenCodeXExtensionInstalled(),
+      cursorDesktopHost: isCursorDesktopHost(),
     },
   };
   const validated = parseOutboundSettingsEnvelope(envelope);

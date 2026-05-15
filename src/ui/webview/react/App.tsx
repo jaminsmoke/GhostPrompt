@@ -21,6 +21,7 @@ export function App() {
     isLoading,
     vsxActive,
     vsOpenCodeXExtensionInstalled,
+    cursorDesktopHost,
     textareaRef,
     isGhostUiAllowed,
     canSend,
@@ -63,6 +64,7 @@ export function App() {
         debugSuggestions={debugSuggestions}
         agentDestination={agentDestination}
         vsOpenCodeXExtensionInstalled={vsOpenCodeXExtensionInstalled}
+        cursorDesktopHost={cursorDesktopHost}
         providerStatuses={providerStatuses}
         statusLoading={statusLoading}
         onCompletionProviderChange={handleCompletionProviderChange}

@@ -121,6 +121,7 @@ describe('webviewMessageSchemas (shared)', () => {
       suggestionDebounceMs: 800,
       agentDestination: 'copilotChat' as const,
       vsOpenCodeXExtensionInstalled: false,
+      cursorDesktopHost: false,
     });
     expect(r.success).toBe(true);
   });
@@ -142,6 +143,7 @@ describe('webviewMessageSchemas (shared)', () => {
         suggestionDebounceMs: 800,
         agentDestination: 'copilotChat' as const,
         vsOpenCodeXExtensionInstalled: false,
+        cursorDesktopHost: false,
       },
     };
     expect(webviewOutboundSettingsEnvelopeSchema.safeParse(envelope).success).toBe(true);

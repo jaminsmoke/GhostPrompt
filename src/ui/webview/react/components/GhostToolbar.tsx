@@ -18,6 +18,7 @@ interface GhostToolbarProps {
   debugSuggestions: boolean;
   agentDestination: AgentDestination;
   vsOpenCodeXExtensionInstalled: boolean;
+  cursorDesktopHost: boolean;
   compact: boolean;
   providerStatuses: ProviderStateRecord[];
   statusLoading: boolean;
@@ -111,6 +112,7 @@ export function GhostToolbar(props: GhostToolbarProps) {
     debugSuggestions,
     agentDestination,
     vsOpenCodeXExtensionInstalled,
+    cursorDesktopHost,
     compact,
     providerStatuses,
     statusLoading,
@@ -266,28 +268,34 @@ export function GhostToolbar(props: GhostToolbarProps) {
         </div>
       </ToolbarChip>
 
-      {vsOpenCodeXExtensionInstalled && (
-        <ToolbarChip
-          id="destino-chip"
-          label={agentDestination === 'copilotChat' ? 'Copilot Chat' : 'VSOpenCodeX'}
-          chipLabel="Destino"
-          tooltip="Destino del prompt: Copilot Chat o VSOpenCodeX"
-          isOpen={openChip === 'destino'}
-          onToggle={() => toggleChip('destino')}
-          onClose={closeChips}
-          compact={compact}
-        >
-          <div className="py-1" data-key="agentDestination">
-            <button
-              type="button"
-              className={itemClass}
-              onClick={() => handleDestino('copilotChat')}
-            >
-              <span>Copilot Chat</span>
-              {agentDestination === 'copilotChat' && (
-                <span className="text-(--vscode-badge-background)">✓</span>
-              )}
-            </button>
+      <ToolbarChip
+        id="destino-chip"
+        label={
+          agentDestination === 'copilotChat'
+            ? 'Copilot Chat'
+            : agentDestination === 'vsOpenCodeX'
+              ? 'VSOpenCodeX'
+              : 'Cursor Chat'
+        }
+        chipLabel="Destino"
+        tooltip="Destino del prompt: Copilot Chat, VSOpenCodeX o Cursor Chat"
+        isOpen={openChip === 'destino'}
+        onToggle={() => toggleChip('destino')}
+        onClose={closeChips}
+        compact={compact}
+      >
+        <div className="py-1" data-key="agentDestination">
+          <button
+            type="button"
+            className={itemClass}
+            onClick={() => handleDestino('copilotChat')}
+          >
+            <span>Copilot Chat</span>
+            {agentDestination === 'copilotChat' && (
+              <span className="text-(--vscode-badge-background)">✓</span>
+            )}
+          </button>
+          {vsOpenCodeXExtensionInstalled && (
             <button
               type="button"
               className={itemClass}
@@ -298,9 +306,21 @@ export function GhostToolbar(props: GhostToolbarProps) {
                 <span className="text-(--vscode-badge-background)">✓</span>
               )}
             </button>
-          </div>
-        </ToolbarChip>
-      )}
+          )}
+          {cursorDesktopHost && (
+            <button
+              type="button"
+              className={itemClass}
+              onClick={() => handleDestino('cursorChat')}
+            >
+              <span>Cursor Chat</span>
+              {agentDestination === 'cursorChat' && (
+                <span className="text-(--vscode-badge-background)">✓</span>
+              )}
+            </button>
+          )}
+        </div>
+      </ToolbarChip>
 
       <ToolbarChip
         id="modelo-chip"

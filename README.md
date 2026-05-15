@@ -199,9 +199,9 @@ _See **3 · Next to Copilot Chat** in [Preview](#preview)._
 ### Debug mode
 
 - Run command: `GhostPrompt: Toggle Debug`
-- Output channel: `GhostPrompt Suggestions`
-- Setting: `ghostPrompt.debugSuggestions`
-- With **`ghostPrompt.completionProvider`** set to **`opencode`** (or OpenCode-routed models when using multi-source mode), suggestion requests also emit timing lines prefixed **`[opencode-perf]`** in **GhostPrompt Suggestions**, tied to each webview `captureId`: providers snapshot (`providers`, `providers-network-fetch-ms`), pooled session reuse vs `session-create`, **`prompt`** round-trip, optional **`stream-first-delta`** / **`sse-consumer-settled`**, and **`opencode-lm-total`**. Only when **`ghostPrompt.debugSuggestions`** is on (`Toggle Debug` / chips). Same channel still shows **`[capture:…]`** stages for Copilot/OpenCode orchestration (`request-start`, `request-success`, etc.).
+- Output channel: `GhostPrompt Log`
+- Settings: `ghostPrompt.debugSuggestions`, `ghostPrompt.logLevel`
+- With **`ghostPrompt.completionProvider`** set to **`opencode`** (or OpenCode-routed models when using multi-source mode), suggestion requests also emit timing lines prefixed **`[opencode-perf]`** in **`GhostPrompt Log`**, tied to each webview `captureId`: providers snapshot (`providers`, `providers-network-fetch-ms`), pooled session reuse vs `session-create`, **`prompt`** round-trip, optional **`stream-first-delta`** / **`sse-consumer-settled`**, and **`opencode-lm-total`**. Only when **`ghostPrompt.debugSuggestions`** is on (`Toggle Debug` / chips). Same channel still shows **`[capture:…]`** stages for Copilot/OpenCode orchestration (`request-start`, `request-success`, etc.).
 
 Inside the webview mini-input, you can also change policy, style, context, and debug from the **control strip** (chips at the top). See **4 · Quick controls** in [Preview](#preview).
 
@@ -331,7 +331,7 @@ Full release history is maintained in [`CHANGELOG.md`](./CHANGELOG.md).
 ### 0.5.0 _(pendiente de publicación)_
 
 - **VSOpenCodeX:** coexistencia OpenCode (reintentos, sin servidor embebido en el puerto compartido si VSX está instalada y **prefer** activo), destino agente (`ghostPrompt.agentDestination`), comandos **`ghostPrompt.runSuggestPipeline`** / **`vsopencodex.ghostPromptInlineUi`**, selector **Destino** en webview, debounce suggestions por defecto **800 ms**.
-- **OpenCode observability:** con debug activo, líneas **`[opencode-perf]`** en **GhostPrompt Suggestions** — ver § [Debug mode](#debug-mode).
+- **OpenCode observability:** con debug activo, líneas **`[opencode-perf]`** en **GhostPrompt Log** — ver § [Debug mode](#debug-mode).
 - **VSIX:** `npm run vsix` para validar localmente; ver **`CHANGELOG.md`** sección **`[0.5.0]`**.
 
 ### 0.4.0

@@ -97,15 +97,27 @@ const vsCodeApi =
 
 /**
  * Envía un mensaje desde el webview React al host de VS Code.
- * @param message Payload outbound que se transmite al host.
- */
-/**
- * Envía un mensaje desde el webview React al host de VS Code.
  * @param {OutboundMessage} message Payload outbound que se transmite al host.
  * @returns {void}
  */
 export function postToHost(message: OutboundMessage): void {
   vsCodeApi?.postMessage(message);
+}
+
+/**
+ * Envía un evento de log estructurado desde el webview al host.
+ * @param {'debug' | 'info' | 'warn' | 'error'} level Nivel del log.
+ * @param {string} message Mensaje principal.
+ * @param {Record<string, unknown> | undefined} [data] Datos adicionales opcionales.
+ * @param {number | undefined} [captureId] ID de capture opcional para correlación.
+ */
+function logToHost(
+  level: 'debug' | 'info' | 'warn' | 'error',
+  message: string,
+  data?: Record<string, unknown>,
+  captureId?: number,
+): void {
+  postToHost({ type: 'log', level, message, data, captureId });
 }
 
 /**
@@ -123,6 +135,7 @@ export function useGhostPrompt() {
   const [agentDestination, setAgentDestination] = useState<AgentDestination>('copilotChat');
   const [vsxActive, setVsxActive] = useState(false);
   const [vsOpenCodeXExtensionInstalled, setVsOpenCodeXExtensionInstalled] = useState(false);
+  const [cursorDesktopHost, setCursorDesktopHost] = useState(false);
   const [completionProvider, setCompletionProvider] = useState<CompletionProvider>('copilot');
   const [selectedModelId, setSelectedModelId] = useState('auto');
   const [availableModels, setAvailableModels] = useState<SuggestionModel[]>([]);
@@ -253,10 +266,10 @@ export function useGhostPrompt() {
         }
         currentCaptureId.current += 1;
         const nextCaptureId = currentCaptureId.current;
-        console.log('[GP] requestSuggestion', {
+        logToHost('debug', 'requestSuggestion', {
           text: draftText.slice(0, 40),
           captureId: nextCaptureId,
-        });
+        }, nextCaptureId);
         setIsLoading(true);
         setStatus('Solicitando sugerencia...');
         postToHost({
@@ -265,7 +278,7 @@ export function useGhostPrompt() {
           captureId: nextCaptureId,
         });
       } catch (err) {
-        console.error('[GP] Error en requestSuggestion:', err);
+        logToHost('error', 'requestSuggestionFailed', { error: String(err) });
         setStatus('Error al solicitar sugerencia.');
         setIsLoading(false);
       }
@@ -287,7 +300,7 @@ export function useGhostPrompt() {
           return;
         }
 
-        console.log('[GP] inbound message', {
+        logToHost('debug', 'inboundMessage', {
           type: message.type,
           captureId: 'captureId' in message ? message.captureId : undefined,
         });
@@ -302,15 +315,15 @@ export function useGhostPrompt() {
             setSuggestionLanguageChoice(message.settings.suggestionLanguageChoice);
             setSuggestionDebounceMs(message.settings.suggestionDebounceMs);
             if (message.settings.suggestionDebounceMs < 150) {
-              console.warn(
-                '[GP] suggestionDebounceMs inválido (%d), corrigiendo a 800',
-                message.settings.suggestionDebounceMs,
-              );
+              logToHost('warn', 'invalidSuggestionDebounce', {
+                suggestionDebounceMs: message.settings.suggestionDebounceMs,
+              });
               setSuggestionDebounceMs(800);
             }
             setDebugSuggestions(message.settings.debugSuggestions);
             setAgentDestination(message.settings.agentDestination);
             setVsOpenCodeXExtensionInstalled(message.settings.vsOpenCodeXExtensionInstalled);
+            setCursorDesktopHost(message.settings.cursorDesktopHost);
             setVsxActive(message.settings.agentDestination === 'vsOpenCodeX');
             if (message.settings.agentDestination === 'vsOpenCodeX') {
               setStatus('Destino VSOpenCodeX: usa VSOpenCodeX para enviar prompts.');
@@ -378,7 +391,7 @@ export function useGhostPrompt() {
             break;
         }
       } catch (err) {
-        console.error('[GP] Error en handleMessage:', err);
+        logToHost('error', 'handleMessageFailed', { error: String(err) });
       }
     };
 
@@ -431,7 +444,7 @@ export function useGhostPrompt() {
   const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     try {
       const nextText = event.target.value;
-      console.log('[GP] text change', { length: nextText.length });
+      logToHost('debug', 'textChange', { length: nextText.length });
       skipSuggestionOnDraftSync.current = false;
       setSuggestion('');
       setText(nextText);
@@ -440,7 +453,7 @@ export function useGhostPrompt() {
       }
       syncTextareaHeight();
     } catch (err) {
-      console.error('[GP] Error en handleTextChange:', err);
+      logToHost('error', 'handleTextChangeFailed', { error: String(err) });
     }
   };
 
@@ -508,6 +521,7 @@ export function useGhostPrompt() {
     agentDestination,
     vsxActive,
     vsOpenCodeXExtensionInstalled,
+    cursorDesktopHost,
     completionProvider,
     selectedModelId,
     availableModels,

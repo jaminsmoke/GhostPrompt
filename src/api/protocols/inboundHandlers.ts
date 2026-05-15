@@ -202,6 +202,29 @@ export async function dispatchGhostPromptInboundMessage(
     case 'init':
       await handleGhostPromptInboundInit(dispatchServices.webview, dispatchServices.postSettings);
       return;
+    case 'log': {
+      const log = getLogger('ui');
+      const payload = {
+        message: message.message,
+        data: message.data,
+        captureId: message.captureId,
+      };
+      switch (message.level) {
+        case 'debug':
+          log.debug('webview-log', payload);
+          break;
+        case 'info':
+          log.info('webview-log', payload);
+          break;
+        case 'warn':
+          log.warn('webview-log', payload);
+          break;
+        case 'error':
+          log.error('webview-log', payload);
+          break;
+      }
+      return;
+    }
     case 'draftChanged':
       handleGhostPromptInboundDraftChanged(message, dispatchServices);
       return;

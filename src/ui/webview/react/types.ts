@@ -9,7 +9,7 @@ declare global {
   }
 }
 
-export type AgentDestination = 'copilotChat' | 'vsOpenCodeX';
+export type AgentDestination = 'copilotChat' | 'vsOpenCodeX' | 'cursorChat';
 
 export type CompletionProvider = 'copilot' | 'opencode' | 'ollama';
 
@@ -37,6 +37,7 @@ export type SettingsPayload = {
   suggestionDebounceMs: number;
   agentDestination: AgentDestination;
   vsOpenCodeXExtensionInstalled: boolean;
+  cursorDesktopHost: boolean;
 };
 
 export type InboundMessage =
@@ -139,6 +140,8 @@ export type UpdateSettingMessage =
   | { type: 'updateSetting'; key: 'completionProvider'; value: CompletionProvider }
   | { type: 'updateSetting'; key: 'agentDestination'; value: AgentDestination };
 
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
 export type OutboundMessage =
   | { type: 'init' }
   | { type: 'suggest'; text: string; captureId: number }
@@ -148,4 +151,5 @@ export type OutboundMessage =
   | { type: 'requestProviderStatus' }
   | { type: 'startProvider'; provider: string }
   | { type: 'stopProvider'; provider: string }
+  | { type: 'log'; level: LogLevel; message: string; data?: Record<string, unknown>; captureId?: number }
   | UpdateSettingMessage;

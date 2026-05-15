@@ -239,6 +239,247 @@ log.error('request-failed', { captureId: 1 }, err);
 
 ### Fase 2 — Reemplazar `SuggestionDebug.ts` (puntos de emisión host)
 
+| Call site | Reemplazo |
+| --- | --- |
+| `src/core/suggest/runSuggest.ts` — `logSuggestionDebug` en: `request-start`, `request-discarded`, `request-success`, `request-empty`, `request-error`, `request-cancelled` | `log.info` / `log.warn` / `log.error` según severidad del evento; mismo `captureId` en `data` |
+| `src/destinations/vsOpenCodeX/vsOpenCodeXDestination.ts` — `vsopencodex-inline-forward-failed` | `log.error(...)` |
+| `src/api/protocols/inboundHandlers.ts` — `logDebugInfo` | `log.debug(...)` |
+| `src/ui/provider/MiniInputViewProvider.ts` — `logDebugInfo` (3) | `log.debug(...)` |
+| `src/extension/extension.ts` — toggle / `ensureSuggestionDebugChannel` | Registrar `LogManager`, transports y `dispose` en `deactivate()`; mapear comando `Toggle debug` a nivel `debug` o flag shim según §6 |
+
+**Nota:** En el código actual **no** hay `logSuggestionDebug` para `request-cache-hit` ni `request-blocked` en `runSuggest`; si se reintroducen desde `system/policies` u motores, usar el mismo logger con `module` explícito.
+
+**OpenCode perf (`logOpenCodePerfCapture` / `logOpenCodeDebug`):** hoy solo están definidos en `SuggestionDebug.ts` y **no tienen call sites en `src/engines`** — decidir en esta fase: (a) eliminar como muertos en cleanup, o (b) reexpresar como `log.debug('opencode-perf', { captureId, stage, deltaMs })` cuando el motor vuelva a necesitar trazas. Los tests `logOpenCodePerfCapture.test.ts` deben apuntar al API final elegido.
+
+**Archivos a eliminar (tras migrar):**
+
+- `src/system/debug/SuggestionDebug.ts`
+
+**Pruebas a actualizar:**
+
+- `tests/logOpenCodePerfCapture.test.ts` → adaptar al nuevo Logger (o eliminar si se retira la API)
+- `tests/MiniInputViewProvider.test.ts` → actualizar mocks
+- `tests/host/ghostPromptSuggestPipeline.test.ts` → actualizar mocks
+
+---
+
+### Fase 3 — Reemplazar `SuggestionLog.ts` + `ConversationLog.ts` (2 call sites)
+
+- `src/api/protocols/inboundHandlers.ts` → `handleGhostPromptInboundAccept()` (`suggestion-accepted`)
+- `src/api/protocols/inboundHandlers.ts` → `handleGhostPromptInboundSend()` (`prompt-sent`)
+
+Reemplazar por `log.info('suggestion-accepted', { context, suggestion })` y `log.info('prompt-sent', { prompt })`, respectivamente.
+
+**Archivos a eliminar:**
+
+- `src/system/log/SuggestionLog.ts`
+- `src/system/log/ConversationLog.ts`
+
+**Migración de datos existentes (best-effort, no bloqueante):**
+
+- En la primera activación post-actualización, intentar leer `suggestions.md` y `conversation.md` y volcar entradas reconocibles en `events.ndjson`.
+- Persistir un flag `legacy-md-imported` para no repetir.
+- Si el parseo falla, continuar sin migración; los archivos legacy pueden dejarse para lectura manual.
+
+---
+
+### Fase 4 — Reemplazar `console.*` en host (5 calls)
+
+- `src/api/protocols/webviewProtocols.ts` — `console.warn` / `console.error`
+- `src/core/memory/activate.ts` — `console.error`
+- `src/system/build/verifyWebviewBundle.ts` — `console.error` opcional si el transporte no está disponible
+
+**Meta:** mantener `console.*` solo como fallback de bootstrap, y migrar los host logs estructurados al nuevo logger.
+
+---
+
+### Fase 5 — Cleanup
+
+- Eliminar `logOpenCodeDebug()` y `logOpenCodePerfCapture()` si se decide que son muertos.
+- Confirmar eliminación de `SuggestionDebug.ts`, `SuggestionLog.ts`, `ConversationLog.ts` si ya no hay imports.
+- Actualizar `src/system/README.md`.
+- Documentar el nuevo canal `GhostPrompt Log` y la política de `ghostPrompt.logLevel` / `debugSuggestions`.
+
+**NO se toca en esta fase:**
+
+- `console.*` en webview React (`src/ui/webview/react/hooks/useGhostPrompt.ts`, `ErrorBoundary.tsx`)
+- `system/build/verifyWebviewBundle.ts` salvo que el fallback de logging cambie explícitamente
+
+---
+
+## 6. Configuración
+
+Nueva setting `ghostPrompt.logLevel` (control principal de ruido en OutputChannel y filtrado, si aplica).
+
+```json
+{
+  "ghostPrompt.logLevel": {
+    "type": "string",
+    "enum": ["debug", "info", "warn", "error"],
+    "default": "info",
+    "markdownDescription": "Nivel mínimo de log. `debug` muestra todo (incluye detalle fino del pipeline), `error` solo errores."
+  }
+}
+```
+
+El shim `ghostPrompt.debugSuggestions` se mantiene como compatibilidad:
+
+- Si está `true` y **`ghostPrompt.logLevel` no está fijado por el usuario**, se comporta como `DEBUG`.
+- Si `ghostPrompt.logLevel` está definido explícitamente, ese valor manda.
+- El comando `ghostPrompt.toggleSuggestionDebug` alterna el shim y puede abrir el canal de salida.
+
+---
+
+## 7. Settings del FileTransport
+
+```json
+{
+  "ghostPrompt.logFileEnabled": {
+    "type": "boolean",
+    "default": true,
+    "markdownDescription": "Cuando está activo, GhostPrompt persiste logs estructurados (NDJSON + Markdown) en almacenamiento global."
+  },
+  "ghostPrompt.logFileMaxBytes": {
+    "type": "number",
+    "default": 5242880,
+    "minimum": 1048576,
+    "maximum": 104857600,
+    "markdownDescription": "Tamaño máximo del archivo NDJSON antes de rotación (bytes)."
+  }
+}
+```
+
+---
+
+## 8. Árbol de archivos resultante
+
+```text
+src/system/log/
+├── levels.ts
+├── types.ts
+├── breadcrumbs.ts
+├── Logger.ts
+├── LogManager.ts
+├── transports/
+│   ├── outputChannel.ts
+│   └── file.ts
+├── index.ts
+
+tests/system/log/
+├── Logger.test.ts
+├── LogManager.test.ts
+├── breadcrumbs.test.ts
+├── transports/
+│   ├── outputChannel.test.ts
+   └── file.test.ts
+
+{globalStorageUri}/ghostPrompt/logs/v1/
+├── events.ndjson
+├── events.2026-05-14.ndjson.gz
+└── session.md
+```
+
+---
+
+## 9. Criterios de aceptación
+
+1. ✅ Todos los `logSuggestionDebug()`, `logDebugInfo()`, `appendSuggestion()`, y `append()` existentes son reemplazados por llamadas al nuevo Logger.
+2. ✅ `events.ndjson` contiene un JSON por línea con la estructura completa de `LogEntry` (`level` como `LogLevelName` string).
+3. ✅ `session.md` contiene el mismo contenido en formato legible con secciones por sesión.
+4. ✅ Errores llevan breadcrumbs de su `captureId` y `flushCapture` se ejecuta en el flujo `suggest`.
+5. ✅ OutputChannel se crea bajo demanda con el nivel correcto y se `dispose()` en `deactivate()`.
+6. ✅ Migración best-effort desde `suggestions.md` / `conversation.md`.
+7. ✅ Fallos de I/O del FileTransport son visibles y no silenciosos.
+8. ✅ El hot path de `runSuggest` no hace `await` a escritura en disco por cada log.
+9. ✅ Settings `ghostPrompt.logLevel` y `ghostPrompt.debugSuggestions` funcionan según precedencia acordada.
+10. ✅ Tests unitarios para Logger, LogManager, breadcrumbs y ambos transports.
+11. ✅ TypeScript strict: `--noEmit` pasa sin errores.
+12. ✅ Tests existentes pasan con los mocks actualizados.
+
+---
+
+## 10. Prioridades de implementación
+
+| Fase | Descripción | Depende de | Esfuerzo est. |
+| --- | --- | --- | --- |
+| **1** | Core: Logger, LogManager, transports, cola (§3.4) | — | ⭐⭐⭐ |
+| **2** | SuggestionDebug → Logger | Fase 1 | ⭐⭐ |
+| **3** | SuggestionLog + ConversationLog | Fase 1 | ⭐ |
+| **4** | `console.*` en host | Fase 1 | ⭐ |
+| **5** | Cleanup + docs | Fases 2-4 | ⭐ |
+
+---
+
+## 11. Historial de revisiones del plan
+
+| Fecha | Cambios (resumen) |
+| --- | --- |
+| 2026-05-14 | Alineación v0.6+ (`runSuggest`), `LogLevelName`, `flushCapture`, I/O visible, cola FileTransport (§3.4), migración legacy best-effort, canal renombrado, precedencia settings, rutas en fases, OpenCode perf TBD. |
+
+---
+
+## 4. Uso en cada módulo
+
+### 4.1 Obtener logger
+
+```ts
+// Cada módulo pide un logger al inicio (nombre estable para filtrar en NDJSON)
+const log = getLogger('suggest');
+// En otro módulo:
+const log = getLogger('memory');
+```
+
+### 4.2 Loguear
+
+```ts
+// INFO — eventos normales del flujo
+log.info('request-start', { captureId: 1, chars: text.length, source: routedSource });
+
+// DEBUG — detalles finos (solo cuando debugSuggestions = true o logLevel = "debug")
+log.debug('emit-loading-phase', { captureId: 1, phase: 'opencode-start' });
+
+// WARN — cosas que funcionan pero no deberían pasar
+log.warn('cache-ttl-expired', { captureId: 1 });
+
+// ERROR — fallos recuperables o no
+log.error('request-failed', { captureId: 1 }, err);
+// Los breadcrumbs del captureId se adjuntan automáticamente
+```
+
+> Nota de inicialización: los primeros módulos de arranque que se cargan antes de que el logger esté listo pueden usar `console.error` como fallback. Una vez inicializado `LogManager`, el sistema debe emitir únicamente con el logger estructurado para mantener la consistencia.
+
+---
+
+## 5. Plan de migración (5 fases)
+
+### Fase 1 — Core del sistema (este PR)
+
+**Archivos a crear:**
+
+- `src/system/log/levels.ts`
+- `src/system/log/types.ts`
+- `src/system/log/breadcrumbs.ts`
+- `src/system/log/Logger.ts`
+- `src/system/log/LogManager.ts`
+- `src/system/log/transports/outputChannel.ts`
+- `src/system/log/transports/file.ts`
+- `src/system/log/index.ts`
+
+**Pruebas:**
+
+- `tests/system/log/Logger.test.ts`
+- `tests/system/log/LogManager.test.ts`
+- `tests/system/log/transports/outputChannel.test.ts`
+- `tests/system/log/transports/file.test.ts`
+- `tests/system/log/breadcrumbs.test.ts`
+- **Recomendado:** tests de **cola** (no bloqueo del caller) y de **fallo de escritura** (contador / degradación sin crash).
+
+**Dependencias:** Ninguna externa (solo VS Code API para OutputChannel y FileSystem). Valorar API `createOutputChannel(..., { log: true })` según `engines.vscode` del manifest (§3.2).
+
+---
+
+### Fase 2 — Reemplazar `SuggestionDebug.ts` (puntos de emisión host)
+
 | Call site                                                                                                                                                                  | Reemplazo                                                                                                                              |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/core/suggest/runSuggest.ts` — `logSuggestionDebug` en: `request-start`, `request-discarded`, `request-success`, `request-empty`, `request-error`, `request-cancelled` | `log.info` / `log.warn` / `log.error` según severidad del evento; mismo `captureId` en `data`                                          |

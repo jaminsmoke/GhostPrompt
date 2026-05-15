@@ -89,7 +89,7 @@ Pasos alineados con `runSuggest.ts`: preparar token y `captureId`, resolver fuen
 | Importa desde                             | Motivo                                    |
 | ----------------------------------------- | ----------------------------------------- |
 | `engines/engineRegistry`                  | Obtener el motor por `CompletionSourceId` |
-| `system/debug/SuggestionDebug`            | Logging opcional de performance           |
+| `system/log`                              | Logging opcional de performance           |
 | `ui/notifications/suggestionNotification` | Avisos host en vacío/error accionable     |
 | `api/protocols/webviewProtocols`          | Tipo del mensaje inbound `suggest`        |
 
