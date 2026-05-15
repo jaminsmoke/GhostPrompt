@@ -4,7 +4,7 @@
  *
  * Política de producto / routing (`nonPremiumOnly`), no "prompt" al LM. Ver `Docs/ARCHITECTURE.md` §3.
  */
-import type { SuggestionModelTier } from '../../../core/types';
+import type { SuggestionModelTier } from '../../../system/internals/protocols/types';
 
 /**
  * Extrae el multiplicador numérico de pricing del catálogo OpenCode.

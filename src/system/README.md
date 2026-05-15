@@ -10,7 +10,7 @@
 
 **No debe contener:**
 
-- Lógica del **pipeline suggest activo** (`core/suggest/runSuggest` y routing a motores)
+- Lógica del **pipeline suggest activo** (`system/runtime/suggest.ts` y routing a motores)
 - Protocolos de mensajes (eso es `api/`)
 - Integración con VS Code providers (eso es `vscode/`)
 

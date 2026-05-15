@@ -30,7 +30,6 @@ export function App() {
     availableModels,
     suggestionModelPolicy,
     suggestionStyle,
-    suggestionLanguageChoice,
     debugSuggestions,
     agentDestination,
     providerStatuses,
@@ -60,7 +59,6 @@ export function App() {
         availableModels={availableModels}
         suggestionModelPolicy={suggestionModelPolicy}
         suggestionStyle={suggestionStyle}
-        suggestionLanguageChoice={suggestionLanguageChoice}
         debugSuggestions={debugSuggestions}
         agentDestination={agentDestination}
         vsOpenCodeXExtensionInstalled={vsOpenCodeXExtensionInstalled}

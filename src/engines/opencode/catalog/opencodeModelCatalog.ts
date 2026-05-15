@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 
 import { normalizeOpencodeProviderModels } from './normalizeOpencodeProviderModels';
 import { classifyOpencodeModelTier } from './opencodeModelTier';
-import type { SuggestionModelDescriptor, SuggestionModelPolicy } from '../../../core/types';
+import type { SuggestionModelDescriptor, SuggestionModelPolicy } from '../../../system/internals/protocols/types';
 import { createOpenCodeClient } from '../opencodeApiClient';
 
 type OpencodeProvidersBundle = {

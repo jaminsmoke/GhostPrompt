@@ -4,7 +4,7 @@
  */
 import * as vscode from 'vscode';
 
-import type { CompletionResult } from '../../core/types';
+import type { CompletionResult } from '../../system/internals/protocols/types';
 
 const THROTTLE_MS = 90_000;
 const lastShownAt = new Map<string, number>();

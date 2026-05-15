@@ -77,11 +77,6 @@ describe('webviewMessageSchemas (shared)', () => {
       },
       {
         type: 'updateSetting' as const,
-        key: 'suggestionLanguageChoice' as const,
-        value: 'es' as const,
-      },
-      {
-        type: 'updateSetting' as const,
         key: 'debugSuggestions' as const,
         value: false,
       },
@@ -110,8 +105,6 @@ describe('webviewMessageSchemas (shared)', () => {
       selectedModelId: 'auto',
       availableModels: [],
       suggestionStyle: 'concise',
-      suggestionLanguageChoice: 'auto',
-      effectiveSuggestionLanguage: 'es',
       effectiveModel: {
         id: 'x',
         label: 'X',
@@ -137,8 +130,6 @@ describe('webviewMessageSchemas (shared)', () => {
         selectedModelId: 'auto',
         availableModels: [],
         suggestionStyle: 'balanced' as const,
-        suggestionLanguageChoice: 'auto' as const,
-        effectiveSuggestionLanguage: 'en' as const,
         debugSuggestions: false,
         suggestionDebounceMs: 800,
         agentDestination: 'copilotChat' as const,
@@ -147,16 +138,6 @@ describe('webviewMessageSchemas (shared)', () => {
       },
     };
     expect(webviewOutboundSettingsEnvelopeSchema.safeParse(envelope).success).toBe(true);
-  });
-
-  it('acepta el mensaje outbound languageEffective', () => {
-    const msg = {
-      type: 'languageEffective' as const,
-      language: 'es' as const,
-      captureId: 1,
-      broadcast: true,
-    };
-    expect(webviewOutboundMessageSchema.safeParse(msg).success).toBe(true);
   });
 
   it('acepta el mensaje outbound empty con reason válido', () => {

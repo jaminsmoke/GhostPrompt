@@ -22,8 +22,6 @@ export const webviewSettingsPayloadSchema = z.object({
   selectedModelId: z.string(),
   availableModels: z.array(suggestionModelDescriptorSchema),
   suggestionStyle: z.enum(['concise', 'balanced', 'detailed']),
-  suggestionLanguageChoice: z.enum(['auto', 'es', 'en']),
-  effectiveSuggestionLanguage: z.enum(['es', 'en']),
   effectiveModel: suggestionModelDescriptorSchema.optional(),
   debugSuggestions: z.boolean(),
   /** Tiempo de inactividad tras teclear antes de pedir suggestion (webview debounce). */
@@ -124,13 +122,6 @@ export const webviewOutboundDraftSyncSchema = z.object({
   broadcast: z.boolean().optional(),
 });
 
-export const webviewOutboundLanguageEffectiveSchema = z.object({
-  type: z.literal('languageEffective'),
-  language: z.enum(['es', 'en']),
-  captureId: z.number().optional(),
-  broadcast: z.boolean().optional(),
-});
-
 /** Union discriminada de todos los mensajes host → webview. */
 export const webviewOutboundMessageSchema = z.discriminatedUnion('type', [
   webviewOutboundSettingsEnvelopeSchema,
@@ -143,7 +134,6 @@ export const webviewOutboundMessageSchema = z.discriminatedUnion('type', [
   webviewOutboundClearSchema,
   webviewOutboundDraftHydrateSchema,
   webviewOutboundDraftSyncSchema,
-  webviewOutboundLanguageEffectiveSchema,
 ]);
 
 export type WebviewOutboundMessage = z.infer<typeof webviewOutboundMessageSchema>;
@@ -165,11 +155,6 @@ export const webviewUpdateSettingSchema = z.discriminatedUnion('key', [
     type: z.literal('updateSetting'),
     key: z.literal('suggestionStyle'),
     value: z.enum(['concise', 'balanced', 'detailed']),
-  }),
-  z.object({
-    type: z.literal('updateSetting'),
-    key: z.literal('suggestionLanguageChoice'),
-    value: z.enum(['auto', 'es', 'en']),
   }),
   z.object({
     type: z.literal('updateSetting'),

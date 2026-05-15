@@ -8,10 +8,10 @@ import {
   getGhostPromptAgentDestination,
 } from '../../destinations/destinationRegistry';
 import { getLogger } from '../../system/log';
-import { ghostPromptSessionStore } from '../../core/state/GhostPromptSessionStore';
+import { ghostPromptSessionStore } from '../../system/internals/states/session';
 import { applyWebviewUpdateSetting } from '../settings/applyWebviewUpdate';
-import { type GhostPromptSuggestDeps, handleGhostPromptSuggest } from '../../core/suggest';
-import { providerStatusManager } from '../../core/status';
+import { type GhostPromptSuggestDeps, handleGhostPromptSuggest } from '../../system/runtime/suggestRuntime';
+import { providerStatusManager } from '../../system/internals/states/provider';
 import { parseWebviewOutboundMessage } from './webviewProtocols';
 import type { WebviewInboundMessage } from './webviewProtocols';
 

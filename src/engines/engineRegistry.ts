@@ -1,5 +1,5 @@
-import type { CompletionRequestOptions, CompletionResult } from '../core/types';
-import { getEnabledCompletionSources } from '../core/routing/sources';
+import type { CompletionRequestOptions, CompletionResult } from '../system/internals/protocols/types';
+import { getEnabledCompletionSources } from '../system/internals/config/sources';
 
 import { requestCopilotLmCompletion } from './copilot/copilotLmEngine';
 import { requestOpencodeCompletion } from './opencode/opencodeLmEngine';

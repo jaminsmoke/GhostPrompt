@@ -30,8 +30,6 @@ export type SettingsPayload = {
   selectedModelId: string;
   availableModels: SuggestionModel[];
   suggestionStyle: 'concise' | 'balanced' | 'detailed';
-  suggestionLanguageChoice: 'auto' | 'es' | 'en';
-  effectiveSuggestionLanguage: 'es' | 'en';
   effectiveModel?: SuggestionModel;
   debugSuggestions: boolean;
   suggestionDebounceMs: number;
@@ -89,12 +87,6 @@ export type InboundMessage =
       broadcast?: boolean;
     }
   | {
-      type: 'languageEffective';
-      language: 'es' | 'en';
-      captureId?: number;
-      broadcast?: boolean;
-    }
-  | {
       type: 'draftSync';
       text: string;
       originViewId: string;
@@ -135,7 +127,6 @@ export type UpdateSettingMessage =
   | { type: 'updateSetting'; key: 'suggestionModelPolicy'; value: 'nonPremiumOnly' | 'anyModel' }
   | { type: 'updateSetting'; key: 'selectedModelId'; value: string }
   | { type: 'updateSetting'; key: 'suggestionStyle'; value: 'concise' | 'balanced' | 'detailed' }
-  | { type: 'updateSetting'; key: 'suggestionLanguageChoice'; value: 'auto' | 'es' | 'en' }
   | { type: 'updateSetting'; key: 'debugSuggestions'; value: boolean }
   | { type: 'updateSetting'; key: 'completionProvider'; value: CompletionProvider }
   | { type: 'updateSetting'; key: 'agentDestination'; value: AgentDestination };

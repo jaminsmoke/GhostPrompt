@@ -34,13 +34,12 @@ import { getLogger } from '../../system/log';
 import {
   getGhostPromptMaxSuggestionChars,
   getGhostPromptSelectedModelId,
-  getGhostPromptSuggestionLanguageChoice,
   getGhostPromptSuggestionModelPolicy,
   getGhostPromptSuggestionStyle,
 } from '../../api/getters/workspaceGetters';
-import { handleGhostPromptSuggest } from '../../core/suggest';
+import { handleGhostPromptSuggest } from '../../system/runtime/suggestRuntime';
 import { dispatchGhostPromptInboundMessage } from '../../api/protocols/inboundHandlers';
-import type { GhostPromptSuggestDeps } from '../../core/suggest';
+import type { GhostPromptSuggestDeps } from '../../system/runtime/suggestRuntime';
 import {
   parseWebviewInboundMessage,
   parseWebviewOutboundMessage,
@@ -48,8 +47,8 @@ import {
 import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from '../../destinations/vsOpenCodeX/vsOpenCodeXDestination';
 import { maybeNotifySuggestionIssue } from '../notifications/suggestionNotification';
 import { ollamaModelManager } from '../../engines/ollama';
-import { providerStatusManager } from '../../core/status';
-import { looksLikeOllamaModelId } from '../../core/routing/sources';
+import { providerStatusManager } from '../../system/internals/states/provider';
+import { looksLikeOllamaModelId } from '../../engines/modelIdChecks';
 
 export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /** View ID for the activity bar container. */
@@ -168,7 +167,6 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
       getSuggestionModelPolicy: () => getGhostPromptSuggestionModelPolicy(),
       getSelectedModelId: () => getGhostPromptSelectedModelId(),
       getSuggestionStyle: () => getGhostPromptSuggestionStyle(),
-      getSuggestionLanguageChoice: () => getGhostPromptSuggestionLanguageChoice(),
     });
   }
 

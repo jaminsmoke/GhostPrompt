@@ -2,19 +2,18 @@
  * Construye y envía el mensaje `settings` al webview (lista de modelos, chips, etc.).
  */
 import * as vscode from 'vscode';
-import { getCompletionUiKind, getEnabledCompletionSources } from '../../core/routing/sources';
+import { getCompletionUiKind, getEnabledCompletionSources } from '../../system/internals/config/sources';
+import type { SuggestionStyle } from '../../sugcore/sugstyle/styleLengthController';
 import type {
   SuggestionModelDescriptor,
   SuggestionModelPolicy,
-  SuggestionStyle,
-  SupportedSuggestionLanguage,
-} from '../../core/types';
+} from '../../system/internals/protocols/types';
 import { listSuggestionModels } from '../../engines/copilot/catalog/modelCatalog';
 import { listOpencodeSuggestionModels } from '../../engines/opencode/catalog/opencodeModelCatalog';
 import { listOllamaSuggestionModels } from '../../engines/ollama/catalog/ollamaModelCatalog';
 import { listMergedSuggestionModels } from '../../engines/catalog/mergedModelCatalog';
 import { isSuggestionDebugEnabled } from '../../system/log';
-import { ghostPromptSessionStore } from '../../core/state/GhostPromptSessionStore';
+import { ghostPromptSessionStore } from '../../system/internals/states/session';
 import {
   getGhostPromptAgentDestination,
   isCursorDesktopHost,
@@ -26,7 +25,6 @@ export type GhostPromptSettingsGetters = {
   getSuggestionModelPolicy: () => SuggestionModelPolicy;
   getSelectedModelId: () => string;
   getSuggestionStyle: () => SuggestionStyle;
-  getSuggestionLanguageChoice: () => 'auto' | SupportedSuggestionLanguage;
 };
 
 /**
@@ -80,9 +78,6 @@ export async function buildAndPostGhostPromptSettings(
       selectedModelId: getters.getSelectedModelId(),
       availableModels,
       suggestionStyle: getters.getSuggestionStyle(),
-      suggestionLanguageChoice: getters.getSuggestionLanguageChoice(),
-      effectiveSuggestionLanguage:
-        ghostPromptSessionStore.getSnapshot().lastEffectiveSuggestionLanguage,
       effectiveModel: ghostPromptSessionStore.getSnapshot().lastEffectiveModel,
       debugSuggestions: isSuggestionDebugEnabled(),
       suggestionDebounceMs,

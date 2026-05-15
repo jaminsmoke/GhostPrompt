@@ -10,7 +10,7 @@
 
 **No debe contener:**
 
-- Lógica de orquestación del pipeline (eso es `core/suggest/`)
+- Lógica de orquestación del pipeline (eso es `system/runtime/`)
 - Gestión de vistas VS Code (eso es `vscode/`)
 - Protocolos de mensajes webview (eso es `api/`)
 
@@ -80,7 +80,7 @@ getCompletionProviderForSource('ollama'); // → ollamaLm provider
 | `providerID/modelID` | `opencodeLm` | `openai/gpt-4`                |
 | `model:tag`          | `ollamaLm`   | `mistral:latest`, `llama3:7b` |
 
-Función clave: `resolveCompletionSourceForRequest(selectedModelId, enabledSources)` en `core/routing/sources.ts`.
+Función clave: `resolveCompletionSourceForRequest(selectedModelId, enabledSources)` en `sugcore/routing/sources.ts`.
 
 ---
 
@@ -118,11 +118,10 @@ Función clave: `resolveCompletionSourceForRequest(selectedModelId, enabledSourc
 
 | Importa de                  | Por qué                                               |
 | --------------------------- | ----------------------------------------------------- |
-| `core/types`                | `SuggestionModelDescriptor`, `CompletionResult`, etc. |
-| `core/prompt/instruction`   | `buildCompletionInstruction` para el prompt del LM    |
-| `core/prompt/normalize`     | `normalizeSuggestion` para post-proceso               |
-| `core/streaming`            | `collectResponseText` (stream LM VS Code)             |
-| `core/presentation/loading` | `SuggestionLoadingPhase`, textos de fase para la UI   |
+| `sugcore/types`                | `SuggestionModelDescriptor`, `CompletionResult`, etc. |
+| `sugcore/rules/instruction`    | `buildCompletionInstruction` para el prompt del LM    |
+| `system/internals/streaming/collect` | `collectResponseText` (stream LM VS Code)       |
+| `system/internals/states/loading`    | `SuggestionLoadingPhase`, textos de fase para la UI |
 | `system/log`                | Logging estructurado y perf capture                   |
 
 ---

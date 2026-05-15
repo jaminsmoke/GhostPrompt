@@ -29,7 +29,7 @@ import {
   selectModelByPolicy,
 } from './catalog/modelCatalog';
 import { requestCopilotLmCompletion as requestCompletion } from './copilotLmEngine';
-import { buildCompletionInstruction } from '../../core/prompt/instruction';
+import { buildCompletionInstruction } from '../../sugcore/rules/instruction';
 
 function createTextStream(chunks: string[]): AsyncIterable<string> {
   return {
@@ -214,7 +214,7 @@ describe('CopilotCompletion', () => {
   it('buildCompletionInstruction genera instruccion simple', () => {
     const instruction = buildCompletionInstruction('Escribe una propuesta');
 
-    expect(instruction).toContain('Complete the following text as a natural continuation.');
+    expect(instruction).toContain('Complete the following text as a natural continuation');
     expect(instruction).toContain('Only output the continuation itself');
     expect(instruction).toContain('Escribe una propuesta');
     expect(instruction).not.toContain('STYLE_');

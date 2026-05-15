@@ -10,7 +10,7 @@
 
 **No debe contener:**
 
-- Lógica de suggestion (eso es `core/`)
+- Lógica de suggestion (eso es `sugcore/`)
 - Providers de vistas VS Code (eso es `vscode/`)
 - HTML/CSP generation (eso es `vscode/`)
 - Lógica de negocio de motores (eso es `engines/`)
@@ -47,7 +47,7 @@ Webview.postMessage({ type: 'suggest', text, captureId })
     ▼ (si válido)
 `api/protocols/inboundHandlers.ts` — dispatchGhostPromptInboundMessage
     ├── init → handleGhostPromptInboundInit
-    ├── suggest → core/suggest → handleGhostPromptSuggest
+    ├── suggest → system/runtime → handleGhostPromptSuggest
     ├── draftChanged → handleGhostPromptInboundDraftChanged
     ├── updateSetting → api/settings → applyWebviewUpdateSetting
     ├── accept → handleGhostPromptInboundAccept (log suggestion)
@@ -92,9 +92,10 @@ Los schemas canónicos viven en `api/contracts/webviewMessageSchemas.ts`. `api/p
 
 | Importa de                               | Por qué                                                    |
 | ---------------------------------------- | ---------------------------------------------------------- |
-| `core/`                                  | Types, `listSuggestionModels`, `getCompletionUiKind`, etc. |
-| `core/state/GhostPromptSessionStore`     | Estado compartido (draft, language, model)                 |
-| `core/suggest`                           | `handleGhostPromptSuggest` para el mensaje `suggest`       |
+| `sugcore/`                               | Types, `listSuggestionModels`, `getCompletionUiKind`, etc. |
+| `system/internals/states/session`        | Estado compartido (draft, model, captureId)                |
+| `system/internals/states/provider`       | ProviderStatusManager (start/stop providers)               |
+| `system/runtime`                         | `handleGhostPromptSuggest` para el mensaje `suggest`       |
 | `system/contracts/webviewMessageSchemas` | Schemas Zod canónicos                                      |
 | `system/log`                             | Logging estructurado, conversation y suggestions           |
 | `system/log`                             | Debug toggle check                                         |

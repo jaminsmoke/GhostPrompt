@@ -183,8 +183,6 @@ _See **3 · Next to Copilot Chat** in [Preview](#preview)._
 - `ghostPrompt.maxSuggestionChars` (default `180`)
 - `ghostPrompt.suggestionStyle` (`concise` | `balanced` | `detailed`, default `balanced`)
 - `ghostPrompt.contextMode` (`off` | `basic` | `project`, default `basic`)
-- `ghostPrompt.suggestionLanguageMode` (`auto` | `manual`, default `auto`)
-- `ghostPrompt.suggestionLanguage` (`es` | `en`, used when `suggestionLanguageMode=manual`)
 
 ### Request governor (cost/frequency protection)
 

@@ -191,24 +191,6 @@
           "default": "balanced",
           "markdownDescription": "Controls how specific and long inline suggestions should be. `concise` keeps short continuations, `balanced` keeps practical context-rich responses, `detailed` allows richer multi-sentence continuations."
         },
-        "ghostPrompt.suggestionLanguageMode": {
-          "type": "string",
-          "enum": [
-            "auto",
-            "manual"
-          ],
-          "default": "auto",
-          "markdownDescription": "Language mode for suggestions. `auto` detects language from current input, `manual` forces the configured suggestion language."
-        },
-        "ghostPrompt.suggestionLanguage": {
-          "type": "string",
-          "enum": [
-            "es",
-            "en"
-          ],
-          "default": "en",
-          "markdownDescription": "Suggestion output language used when `ghostPrompt.suggestionLanguageMode` is `manual`."
-        },
         "ghostPrompt.minCharsForSuggestion": {
           "type": "number",
           "default": 6,
@@ -285,6 +267,7 @@
     "validate": "npm run lint && npm run deps:circular && npm run typecheck && npm run compile && npm run build:webview && npm run verify:webview-bundle",
     "test": "vitest run",
     "test:integration": "vitest run tests/opencodeSuggestions.integration.test.ts",
+    "test:e2e": "npm run build:webview && npm run compile && node ./tests/e2e/runTest.js",
     "deps:graph": "depcruise --config .dependency-cruiser.js --output-type dot src/extension/extension.ts > dependency-graph.dot",
     "deps:circular": "depcruise --config .dependency-cruiser.js src/extension/extension.ts",
     "check": "npm run validate && npm run test",
@@ -297,14 +280,15 @@
     "@tailwindcss/vite": "^4.3.0",
     "@types/node": "^25.7.0",
     "@types/react": "^19.2.14",
-    "dependency-cruiser": "^17.4.0",
     "@types/react-dom": "^19.2.3",
     "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^8.59.3",
     "@typescript-eslint/parser": "^8.59.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
     "clsx": "^2.1.1",
+    "dependency-cruiser": "^17.4.0",
     "esbuild": "^0.28.0",
     "eslint": "^9.39.4",
     "eslint-plugin-import": "^2.32.0",

@@ -3,8 +3,8 @@
  * Vive bajo `engines/` porque compone los listados de cada motor; no forma parte del
  * hot path de `suggest`. Ver `Docs/ARCHITECTURE.md` y `Docs/Plans/Roadmaps/v0.6/`.
  */
-import type { SuggestionModelDescriptor, SuggestionModelPolicy } from '../../core/types';
-import type { CompletionSourceId } from '../../core/routing/sources';
+import type { SuggestionModelDescriptor, SuggestionModelPolicy } from '../../system/internals/protocols/types';
+import type { CompletionSourceId } from '../../system/internals/protocols/routing';
 import { listSuggestionModels } from '../copilot/catalog/modelCatalog';
 import { listOpencodeSuggestionModels } from '../opencode/catalog/opencodeModelCatalog';
 import { listOllamaSuggestionModels } from '../ollama/catalog/ollamaModelCatalog';

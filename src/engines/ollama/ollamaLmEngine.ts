@@ -1,13 +1,15 @@
 import * as vscode from 'vscode';
 
-import { buildCompletionInstruction } from '../../core/prompt/instruction';
+import { buildCompletionInstruction } from '../../sugcore/rules/instruction';
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
-  type CompletionRequestOptions,
-  type CompletionResult,
-  type SuggestionModelDescriptor,
-} from '../../core/types';
+} from '../../system/internals/protocols/params';
+import type {
+  CompletionRequestOptions,
+  CompletionResult,
+  SuggestionModelDescriptor,
+} from '../../system/internals/protocols/types';
 import { listModels, generate } from './ollamaApiClient';
 
 /**

@@ -43,12 +43,14 @@ vi.mock('../../engines/engineRegistry', () => ({
   getCompletionProviderKind: () => 'copilot' as const,
 }));
 
-vi.mock('../../core/routing/sources', () => ({
-  getEnabledCompletionSources: () => ['copilot'],
-  resolveCompletionSourceForRequest: () => 'copilot' as const,
-  getCompletionUiKind: () => 'copilot' as const,
-  looksLikeOpencodeModelId: () => false,
+vi.mock('../../engines/modelIdChecks', () => ({
   looksLikeOllamaModelId: () => false,
+  looksLikeOpencodeModelId: () => false,
+}));
+
+vi.mock('../../system/internals/config/sources', () => ({
+  getEnabledCompletionSources: () => ['copilot'],
+  getCompletionUiKind: () => 'copilot' as const,
 }));
 
 vi.mock('../../engines/catalog/mergedModelCatalog', () => ({
@@ -78,7 +80,7 @@ vi.mock('../../api/protocols/inboundHandlers', async (importOriginal) => {
         'type' in message &&
         (message as { type: string }).type === 'suggest'
       ) {
-        const { handleGhostPromptSuggest } = await import('../../core/suggest');
+        const { handleGhostPromptSuggest } = await import('../../system/runtime/suggestRuntime');
         const deps = (services as { suggestDeps: unknown }).suggestDeps;
         return handleGhostPromptSuggest(message as never, deps as never);
       }
@@ -129,8 +131,6 @@ vi.mock('../../api/settings/settingsPostMessage', async (importOriginal) => {
             selectedModelId: 'auto',
             availableModels: models,
             suggestionStyle: 'balanced',
-            suggestionLanguageChoice: 'auto',
-            effectiveSuggestionLanguage: 'en',
             effectiveModel: undefined,
             debugSuggestions: false,
             suggestionDebounceMs: 800,
@@ -148,9 +148,6 @@ vi.mock('../../api/getters/workspaceGetters', () => ({
   collectGhostPromptProjectContext: () => ({}),
   getGhostPromptMaxSuggestionChars: () => 180,
   getGhostPromptSelectedModelId: () => 'auto',
-  getGhostPromptSuggestionLanguage: () => 'en',
-  getGhostPromptSuggestionLanguageChoice: () => 'auto',
-  getGhostPromptSuggestionLanguageMode: () => 'auto',
   getGhostPromptSuggestionModelPolicy: () => 'nonPremiumOnly',
   getGhostPromptSuggestionStyle: () => 'balanced',
   getGhostPromptAgentDestination: () => 'copilotChat',
@@ -195,8 +192,8 @@ vi.mock('vscode', () => ({
 }));
 /* eslint-enable @typescript-eslint/naming-convention */
 
-import { suggestionLoadingStatusText } from '../../core/presentation/loading';
-import { ghostPromptSessionStore } from '../../core/state/GhostPromptSessionStore';
+import { suggestionLoadingStatusText } from '../../system/internals/states/loading';
+import { ghostPromptSessionStore } from '../../system/internals/states/session';
 import { MiniInputViewProvider } from './MiniInputViewProvider';
 
 function createView() {

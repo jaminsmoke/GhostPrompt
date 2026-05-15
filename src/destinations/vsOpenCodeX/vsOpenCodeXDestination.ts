@@ -17,7 +17,6 @@ const FORWARD_MESSAGE_TYPES = new Set<string>([
   'empty',
   'error',
   'clear',
-  'languageEffective',
 ]);
 
 /**

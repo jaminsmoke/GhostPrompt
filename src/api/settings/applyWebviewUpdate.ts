@@ -2,7 +2,6 @@
  * Aplica cambios de configuración originados en el webview (`updateSetting`).
  */
 import * as vscode from 'vscode';
-import { ghostPromptSessionStore } from '../../core/state/GhostPromptSessionStore';
 import { parseGhostPromptAgentDestination } from '../../destinations/destinationRegistry';
 import type { WebviewInboundMessage } from '../protocols/webviewProtocols';
 
@@ -36,22 +35,6 @@ export async function applyWebviewUpdateSetting(
     const value =
       message.value === 'concise' || message.value === 'detailed' ? message.value : 'balanced';
     await config.update('suggestionStyle', value, vscode.ConfigurationTarget.Global);
-    return;
-  }
-  if (message.key === 'suggestionLanguageChoice') {
-    const choice =
-      message.value === 'auto' || message.value === 'es' || message.value === 'en'
-        ? message.value
-        : 'auto';
-    if (choice === 'auto') {
-      await config.update('suggestionLanguageMode', 'auto', vscode.ConfigurationTarget.Global);
-    } else {
-      await config.update('suggestionLanguageMode', 'manual', vscode.ConfigurationTarget.Global);
-      await config.update('suggestionLanguage', choice, vscode.ConfigurationTarget.Global);
-      ghostPromptSessionStore.patchState({
-        lastEffectiveSuggestionLanguage: choice,
-      });
-    }
     return;
   }
   if (message.key === 'debugSuggestions') {

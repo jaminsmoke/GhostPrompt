@@ -146,10 +146,6 @@ export function useGhostPrompt() {
   const [suggestionStyle, setSuggestionStyle] = useState<'concise' | 'balanced' | 'detailed'>(
     'balanced',
   );
-  const [suggestionLanguageChoice, setSuggestionLanguageChoice] = useState<'auto' | 'es' | 'en'>(
-    'auto',
-  );
-  const [_effectiveLanguage, setEffectiveLanguage] = useState<'es' | 'en'>('es');
   const [debugSuggestions, setDebugSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const currentCaptureId = useRef(0);
@@ -322,7 +318,6 @@ export function useGhostPrompt() {
             setAvailableModels(message.settings.availableModels);
             setSuggestionModelPolicy(message.settings.suggestionModelPolicy);
             setSuggestionStyle(message.settings.suggestionStyle);
-            setSuggestionLanguageChoice(message.settings.suggestionLanguageChoice);
             setSuggestionDebounceMs(message.settings.suggestionDebounceMs);
             if (message.settings.suggestionDebounceMs < 150) {
               logToHost('warn', 'invalidSuggestionDebounce', {
@@ -383,9 +378,6 @@ export function useGhostPrompt() {
               skipSuggestionOnDraftSync.current = true;
             }
             setText(message.text);
-            break;
-          case 'languageEffective':
-            setEffectiveLanguage(message.language);
             break;
           case 'draftSync':
             if (!shouldSkipSuggestionOnRemoteDraft(message, viewId)) {
@@ -537,7 +529,6 @@ export function useGhostPrompt() {
     availableModels,
     suggestionModelPolicy,
     suggestionStyle,
-    suggestionLanguageChoice,
     debugSuggestions,
     isLoading,
     statusLoading,

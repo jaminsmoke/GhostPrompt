@@ -27,8 +27,6 @@ const webviewSettingsPayloadSchema = z.object({
   selectedModelId: z.string(),
   availableModels: z.array(suggestionModelDescriptorSchema),
   suggestionStyle: z.enum(['concise', 'balanced', 'detailed']),
-  suggestionLanguageChoice: z.enum(['auto', 'es', 'en']),
-  effectiveSuggestionLanguage: z.enum(['es', 'en']),
   effectiveModel: z
     .object({
       id: z.string(),
@@ -80,7 +78,6 @@ const webviewInboundMessageSchema = z.discriminatedUnion('type', [
   }),
   z.object({ type: z.literal('error'), message: z.string(), captureId: z.number().optional(), broadcast: z.boolean().optional() }),
   z.object({ type: z.literal('clear'), captureId: z.number().optional(), broadcast: z.boolean().optional() }),
-  z.object({ type: z.literal('languageEffective'), language: z.enum(['es', 'en']), captureId: z.number().optional(), broadcast: z.boolean().optional() }),
   z.object({ type: z.literal('draftSync'), text: z.string(), originViewId: z.string(), captureId: z.number().optional(), broadcast: z.boolean().optional() }),
   z.object({ type: z.literal('draftHydrate'), text: z.string(), captureId: z.number().optional(), broadcast: z.boolean().optional() }),
   z.object({ type: z.literal('providerStatus'), providers: z.array(providerStateRecordSchema), captureId: z.number().optional(), broadcast: z.boolean().optional() }),

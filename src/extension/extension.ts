@@ -20,7 +20,7 @@ import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from '../destinations/v
 import '../destinations/copilotChat/copilotChatDestination';
 import '../destinations/cursor/cursorChatDestination';
 import { registerDiscoverCursorChatCommandsCommand } from '../destinations/cursor/discoverCursorChatCommands';
-import { registerAllProviderModules } from '../core/status/registerModules';
+import { registerAllProviderModules } from '../system/internals/states/register-modules';
 
 /**
  * Activa la extensión GhostPrompt.

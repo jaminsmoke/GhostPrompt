@@ -91,7 +91,7 @@ getGhostPromptAgentDestination(); // → "copilotChat" | "vsOpenCodeX"
 | ---------- | ------------------------ |
 | `vscode`   | Commands, extensions API |
 
-**No importa de:** `host/`, `api/`, `core/` (los destinos son independientes del pipeline)
+**No importa de:** `host/`, `api/`, `sugcore/` (los destinos son independientes del pipeline)
 
 ---
 

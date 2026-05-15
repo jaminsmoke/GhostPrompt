@@ -1,5 +1,5 @@
 import { exec } from 'node:child_process';
-import type { ProviderStatusModule, ProviderStateRecord } from '../../core/status/types';
+import type { ProviderStatusModule, ProviderStateRecord } from '../../system/internals/states/provider-types';
 import { ollamaModelManager } from './ollamaModelManager';
 
 /**

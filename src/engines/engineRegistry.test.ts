@@ -17,7 +17,7 @@ vi.mock('vscode', () => ({
   },
 }));
 
-vi.mock('../core/routing/sources', () => ({
+vi.mock('../system/internals/config/sources', () => ({
   getEnabledCompletionSources: getEnabledCompletionSourcesMock,
 }));
 

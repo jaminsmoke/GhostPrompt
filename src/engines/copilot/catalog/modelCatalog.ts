@@ -4,7 +4,7 @@ import type {
   SuggestionModelDescriptor,
   SuggestionModelPolicy,
   SuggestionModelTier,
-} from '../../../core/types';
+} from '../../../system/internals/protocols/types';
 
 /**
  * Selecciona el modelo Copilot adecuado según la política y preferencia.

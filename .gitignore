@@ -25,6 +25,8 @@ Thumbs.db
 
 # Test
 *.snap
+.vscode-test/
+.vscode-test-profile/
 
 # Extension packaging
 *.vsix

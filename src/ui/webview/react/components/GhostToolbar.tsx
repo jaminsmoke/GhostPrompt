@@ -14,7 +14,6 @@ interface GhostToolbarProps {
   availableModels: SuggestionModel[];
   suggestionModelPolicy: 'nonPremiumOnly' | 'anyModel';
   suggestionStyle: 'concise' | 'balanced' | 'detailed';
-  suggestionLanguageChoice: 'auto' | 'es' | 'en';
   debugSuggestions: boolean;
   agentDestination: AgentDestination;
   vsOpenCodeXExtensionInstalled: boolean;
@@ -108,7 +107,6 @@ export function GhostToolbar(props: GhostToolbarProps) {
     availableModels,
     suggestionModelPolicy,
     suggestionStyle,
-    suggestionLanguageChoice,
     debugSuggestions,
     agentDestination,
     vsOpenCodeXExtensionInstalled,
@@ -163,9 +161,8 @@ export function GhostToolbar(props: GhostToolbarProps) {
 
   const styleLabel =
     suggestionStyle === 'concise' ? 'Breve' : suggestionStyle === 'balanced' ? 'Normal' : 'Extenso';
-  const langLabel =
-    suggestionLanguageChoice === 'auto' ? 'Auto' : suggestionLanguageChoice === 'es' ? 'ES' : 'EN';
-  const compLabel = `${styleLabel} · ${langLabel}`;
+
+  const compLabel = styleLabel;
 
   const handleProvider = (v: CompletionProvider) => {
     onCompletionProviderChange(v);
@@ -377,7 +374,7 @@ export function GhostToolbar(props: GhostToolbarProps) {
         id="composicion-chip"
         label={compLabel}
         chipLabel="Composición"
-        tooltip="Estilo e idioma de las sugerencias"
+        tooltip="Estilo de las sugerencias"
         isOpen={openChip === 'composicion'}
         onToggle={() => toggleChip('composicion')}
         onClose={closeChips}
@@ -401,26 +398,6 @@ export function GhostToolbar(props: GhostToolbarProps) {
                 suggestionStyle === 'detailed',
                 () => handleToggle('suggestionStyle', 'detailed'),
                 'Extenso',
-              )}
-            </div>
-          </div>
-          <div data-key="suggestionLanguageChoice" className="flex flex-col gap-1">
-            <span className={chipLabelClass(compact)}>Idioma</span>
-            <div className="flex gap-1">
-              {renderToggleOption(
-                suggestionLanguageChoice === 'auto',
-                () => handleToggle('suggestionLanguageChoice', 'auto'),
-                'Auto',
-              )}
-              {renderToggleOption(
-                suggestionLanguageChoice === 'es',
-                () => handleToggle('suggestionLanguageChoice', 'es'),
-                'ES',
-              )}
-              {renderToggleOption(
-                suggestionLanguageChoice === 'en',
-                () => handleToggle('suggestionLanguageChoice', 'en'),
-                'EN',
               )}
             </div>
           </div>

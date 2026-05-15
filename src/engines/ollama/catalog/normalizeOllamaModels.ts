@@ -1,4 +1,4 @@
-import type { SuggestionModelDescriptor } from '../../../core/types';
+import type { SuggestionModelDescriptor } from '../../../system/internals/protocols/types';
 
 export type OllamaApiModelRecord = {
   name: string;

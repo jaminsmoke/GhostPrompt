@@ -88,8 +88,6 @@ describe('webview inbound message validation', () => {
         selectedModelId: 'auto',
         availableModels: [],
         suggestionStyle: 'balanced',
-        suggestionLanguageChoice: 'auto',
-        effectiveSuggestionLanguage: 'en',
         debugSuggestions: false,
         suggestionDebounceMs: 800,
         agentDestination: 'copilotChat',

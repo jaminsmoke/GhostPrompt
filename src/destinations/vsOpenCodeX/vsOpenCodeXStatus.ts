@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { ProviderStatusModule, ProviderStateRecord } from '../../core/status/types';
+import type { ProviderStatusModule, ProviderStateRecord } from '../../system/internals/states/provider-types';
 
 /**
  * Comprueba si la extensión VSOpenCodeX está instalada.

@@ -3,12 +3,8 @@
  * Extraído de `MiniInputViewProvider` (roadmap v0.3.2 fase A).
  */
 import * as vscode from 'vscode';
-import type {
-  SuggestionLanguageMode,
-  SuggestionModelPolicy,
-  SuggestionStyle,
-  SupportedSuggestionLanguage,
-} from '../../core/types';
+import { SuggestionStyle } from '../../sugcore/sugstyle/styleLengthController';
+import type { SuggestionModelPolicy } from '../../system/internals/protocols/types';
 
 export {
   type GhostPromptAgentDestination,
@@ -80,40 +76,6 @@ export function getGhostPromptSuggestionStyle(): SuggestionStyle {
     return value;
   }
   return 'balanced';
-}
-
-/**
- * Obtiene el modo de idioma para sugerencias desde la configuración.
- * @returns {SuggestionLanguageMode} Modo de idioma válido: auto o manual.
- */
-export function getGhostPromptSuggestionLanguageMode(): SuggestionLanguageMode {
-  const value = vscode.workspace
-    .getConfiguration('ghostPrompt')
-    .get<string>('suggestionLanguageMode', 'auto');
-  return value === 'manual' ? 'manual' : 'auto';
-}
-
-/**
- * Obtiene el idioma de sugerencia seleccionado en la configuración.
- * @returns {SupportedSuggestionLanguage} Idioma válido: es o en.
- */
-export function getGhostPromptSuggestionLanguage(): SupportedSuggestionLanguage {
-  const value = vscode.workspace
-    .getConfiguration('ghostPrompt')
-    .get<string>('suggestionLanguage', 'en');
-  return value === 'es' ? 'es' : 'en';
-}
-
-/**
- * Obtiene la elección de idioma de sugerencia mostrada en la UI.
- * @returns {{| "auto" | SupportedSuggestionLanguage |}} "auto" o el idioma manual seleccionado.
- */
-export function getGhostPromptSuggestionLanguageChoice(): 'auto' | SupportedSuggestionLanguage {
-  const mode = getGhostPromptSuggestionLanguageMode();
-  if (mode === 'auto') {
-    return 'auto';
-  }
-  return getGhostPromptSuggestionLanguage();
 }
 
 /**

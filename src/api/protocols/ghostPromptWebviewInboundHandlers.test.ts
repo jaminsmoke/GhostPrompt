@@ -68,12 +68,12 @@ vi.mock('../settings/applyWebviewUpdate', () => ({
   applyWebviewUpdateSetting: applyWebviewUpdateSettingMock,
 }));
 
-vi.mock('../../core/suggest', () => ({
+vi.mock('../../system/runtime/suggestRuntime', () => ({
   handleGhostPromptSuggest: (...args: unknown[]) => handleGhostPromptSuggestMock(...args),
 }));
 
 import type { Uri, Webview } from 'vscode';
-import { ghostPromptSessionStore } from '../../core/state/GhostPromptSessionStore';
+import { ghostPromptSessionStore } from '../../system/internals/states/session';
 import {
   dispatchGhostPromptInboundMessage,
   handleGhostPromptInboundDraftChanged,
@@ -81,7 +81,7 @@ import {
   handleGhostPromptInboundSend,
   type GhostPromptInboundDispatchServices,
 } from './inboundHandlers';
-import type { GhostPromptSuggestDeps } from '../../core/suggest';
+import type { GhostPromptSuggestDeps } from '../../system/runtime/suggestRuntime';
 
 function minimalSuggestDeps(): GhostPromptSuggestDeps {
   return {

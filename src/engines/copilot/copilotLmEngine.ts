@@ -1,14 +1,13 @@
 import * as vscode from 'vscode';
 
-import { buildCompletionInstruction } from '../../core/prompt/instruction';
+import { buildCompletionInstruction } from '../../sugcore/rules/instruction';
 import { describeModel, selectModelByPolicy } from './catalog/modelCatalog';
-import { collectResponseText } from '../../core/streaming';
+import { collectResponseText } from '../../system/internals/streaming/collect';
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
-  type CompletionRequestOptions,
-  type CompletionResult,
-} from '../../core/types';
+} from '../../system/internals/protocols/params';
+import type { CompletionRequestOptions, CompletionResult } from '../../system/internals/protocols/types';
 
 let premiumQuotaBlocked = false;
 
