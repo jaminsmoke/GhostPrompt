@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+/// <reference path="../globals.d.ts" />
 import './index.css';
 import { useGhostPrompt } from './hooks/useGhostPrompt';
 import { GhostToolbar } from './components/GhostToolbar';
@@ -8,10 +10,10 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 export { postToHost } from './hooks/useGhostPrompt';
 
 /**
- * Componente raíz del webview React de GhostPrompt.
- * @returns Elemento raíz del webview.
+ * Componente raíz del webview React de GhostPrompt (entrada principal de la UI React).
+ * @returns {import('react').JSX.Element} Elemento raíz del webview.
  */
-export function App(): JSX.Element {
+export function App() {
   const {
     text,
     suggestion,
@@ -75,7 +77,7 @@ export function App(): JSX.Element {
       {vsxActive ? (
         <p
           id="gp-vsx-surface-note"
-          className="rounded-md border border-[var(--vscode-widget-border)] bg-[var(--vscode-textBlockQuote-background)] px-3 py-2 mb-2 text-sm text-[var(--vscode-sideBar-foreground)]"
+          className="rounded-md border border-(--vscode-widget-border) bg-(--vscode-textBlockQuote-background) px-3 py-2 mb-2 text-sm text-(--vscode-sideBar-foreground)"
           role="status"
         >
           El chat inline está desactivado: el destino del agente es VSOpenCodeX. Usa el chat de

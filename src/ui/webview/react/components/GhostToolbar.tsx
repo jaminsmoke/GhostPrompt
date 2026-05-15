@@ -31,12 +31,12 @@ interface GhostToolbarProps {
 }
 
 const itemClass =
-  'flex w-full items-center justify-between px-3 py-1.5 text-sm text-[var(--vscode-sideBar-foreground)] hover:bg-[var(--vscode-list-hoverBackground)] transition';
+  'flex w-full items-center justify-between px-3 py-1.5 text-sm text-(--vscode-sideBar-foreground) hover:bg-(--vscode-list-hoverBackground) transition';
 
 const actionBtnClass =
   'rounded px-2 py-0.5 text-xs font-medium transition border ' +
-  'border-[var(--vscode-widget-border)] ' +
-  'hover:bg-[var(--vscode-list-hoverBackground)]';
+  'border-(--vscode-widget-border) ' +
+  'hover:bg-(--vscode-list-hoverBackground)';
 
 const statusIcon = (s: ProviderState): string => {
   switch (s) {
@@ -71,8 +71,8 @@ const statusColor = (s: ProviderState): string => {
 const toggleBtn = (active: boolean) =>
   `inline-flex items-center justify-center rounded-md border px-2 py-1 text-xs transition ${
     active
-      ? 'border-[var(--vscode-badge-background)] bg-[var(--vscode-badge-background)] text-[var(--vscode-badge-foreground)]'
-      : 'border-[var(--vscode-widget-border)] text-[var(--vscode-sideBar-foreground)] hover:bg-[var(--vscode-list-hoverBackground)]'
+      ? 'border-(--vscode-badge-background) bg-(--vscode-badge-background) text-(--vscode-badge-foreground)'
+      : 'border-(--vscode-widget-border) text-(--vscode-sideBar-foreground) hover:bg-(--vscode-list-hoverBackground)'
   }`;
 
 const renderToggleOption = (active: boolean, onClick: () => void, children: ReactNode) => {
@@ -91,14 +91,14 @@ const renderToggleOption = (active: boolean, onClick: () => void, children: Reac
   );
 };
 
-const separatorClass = 'my-1 border-t border-[var(--vscode-widget-border)]';
+const separatorClass = 'my-1 border-t border-(--vscode-widget-border)';
 
 const chipLabelClass = (compact: boolean) => (compact ? 'text-[10px]' : 'text-xs');
 
 /**
  * Toolbar de GhostPrompt con controles de modelo, sugerencia y proveedor.
- * @param props Propiedades del componente GhostToolbar.
- * @returns Elemento JSX del toolbar de GhostPrompt.
+ * @param {GhostToolbarProps} props Propiedades del componente GhostToolbar.
+ * @returns {import('react').JSX.Element} Elemento JSX del toolbar de GhostPrompt.
  */
 export function GhostToolbar(props: GhostToolbarProps) {
   const {
@@ -199,7 +199,7 @@ export function GhostToolbar(props: GhostToolbarProps) {
       >
         <div className="py-1" data-key="completionProvider">
           {statusLoading ? (
-            <div className="px-3 py-2 text-sm text-[var(--vscode-descriptionForeground)]">
+            <div className="px-3 py-2 text-sm text-(--vscode-descriptionForeground)">
               ◌ Comprobando estados...
             </div>
           ) : (
@@ -215,7 +215,7 @@ export function GhostToolbar(props: GhostToolbarProps) {
               return (
                 <div
                   key={p}
-                  className={`${itemClass} flex-col items-stretch gap-1 ${isActive ? 'bg-[var(--vscode-list-hoverBackground)]' : ''}`}
+                  className={`${itemClass} flex-col items-stretch gap-1 ${isActive ? 'bg-(--vscode-list-hoverBackground)' : ''}`}
                 >
                   <button
                     type="button"
@@ -240,11 +240,11 @@ export function GhostToolbar(props: GhostToolbarProps) {
                     </span>
                     <span className="flex items-center gap-2">
                       {pStatus?.statusText && (
-                        <span className="text-[10px] text-[var(--vscode-descriptionForeground)]">
+                        <span className="text-[10px] text-(--vscode-descriptionForeground)">
                           {pStatus.statusText}
                         </span>
                       )}
-                      {isActive && <span className="text-[var(--vscode-badge-background)]">✓</span>}
+                      {isActive && <span className="text-(--vscode-badge-background)">✓</span>}
                     </span>
                   </button>
                   {pStatus?.actions?.includes('stop') && isActive && p !== 'copilot' && (
@@ -285,7 +285,7 @@ export function GhostToolbar(props: GhostToolbarProps) {
             >
               <span>Copilot Chat</span>
               {agentDestination === 'copilotChat' && (
-                <span className="text-[var(--vscode-badge-background)]">✓</span>
+                <span className="text-(--vscode-badge-background)">✓</span>
               )}
             </button>
             <button
@@ -295,7 +295,7 @@ export function GhostToolbar(props: GhostToolbarProps) {
             >
               <span>VSOpenCodeX</span>
               {agentDestination === 'vsOpenCodeX' && (
-                <span className="text-[var(--vscode-badge-background)]">✓</span>
+                <span className="text-(--vscode-badge-background)">✓</span>
               )}
             </button>
           </div>
@@ -312,7 +312,7 @@ export function GhostToolbar(props: GhostToolbarProps) {
         onClose={closeChips}
         compact={compact}
       >
-        <div className="p-2 space-y-2 min-w-[200px]">
+        <div className="p-2 space-y-2 min-w-50">
           <div data-key="suggestionModelPolicy" className="flex flex-col gap-1">
             <span className={chipLabelClass(compact)}>Política de modelo</span>
             <div className="flex gap-1">
@@ -333,7 +333,7 @@ export function GhostToolbar(props: GhostToolbarProps) {
             <span className={chipLabelClass(compact)}>Modelo específico</span>
             <select
               id="model-chip-select"
-              className="rounded-md border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] px-2 py-1 text-sm text-[var(--vscode-input-foreground)] outline-none"
+              className="rounded-md border border-(--vscode-input-border) bg-(--vscode-input-background) px-2 py-1 text-sm text-(--vscode-input-foreground) outline-none"
               value={selectedModelId}
               onChange={(e) => handleModel(e.target.value)}
               aria-label="Modelo sugerencias"
@@ -352,7 +352,7 @@ export function GhostToolbar(props: GhostToolbarProps) {
             </select>
             <span
               id="model-chip-label"
-              className="text-xs text-[var(--vscode-descriptionForeground)]"
+              className="text-xs text-(--vscode-descriptionForeground)"
               aria-live="polite"
             >
               {currentModel?.label ?? '--'}
@@ -371,7 +371,7 @@ export function GhostToolbar(props: GhostToolbarProps) {
         onClose={closeChips}
         compact={compact}
       >
-        <div className="p-2 space-y-3 min-w-[220px]">
+        <div className="p-2 space-y-3 min-w-55">
           <div data-key="suggestionStyle" className="flex flex-col gap-1">
             <span className={chipLabelClass(compact)}>Estilo</span>
             <div className="flex gap-1">
@@ -424,11 +424,11 @@ export function GhostToolbar(props: GhostToolbarProps) {
         onClose={closeChips}
         compact={compact}
       >
-        <div className="py-1 min-w-[160px]">
+        <div className="py-1 min-w-40">
           <button
             id="debug-btn"
             type="button"
-            className={`${itemClass} ${debugSuggestions ? 'text-[var(--vscode-badge-foreground)]' : ''}`}
+            className={`${itemClass} ${debugSuggestions ? 'text-(--vscode-badge-foreground)' : ''}`}
             onClick={() => {
               onDebugToggle();
               closeChips();

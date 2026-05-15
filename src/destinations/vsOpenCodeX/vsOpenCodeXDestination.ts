@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { logSuggestionDebug } from '../../system/debug/SuggestionDebug';
+import { getLogger } from '../../system/log';
 import {
   type DestinationProvider,
   getGhostPromptAgentDestination,
@@ -22,8 +22,8 @@ const FORWARD_MESSAGE_TYPES = new Set<string>([
 
 /**
  * Reenvía mensajes de UI de GhostPrompt a VSOpenCodeX cuando el destino está activo.
- * @param payloadWithBroadcast Payload con posibles datos de broadcast.
- * @returns Void.
+ * @param {Record<string, unknown>} payloadWithBroadcast Payload con posibles datos de broadcast.
+ * @returns {void}
  */
 export function forwardGhostPromptInlineUiToVsOpenCodeIfApplicable(
   payloadWithBroadcast: Record<string, unknown>,
@@ -41,7 +41,7 @@ export function forwardGhostPromptInlineUiToVsOpenCodeIfApplicable(
     vscode.commands.executeCommand(VS_OPEN_CODE_X_GHOST_PROMPT_INLINE_UI, sanitized),
   ).catch((e: unknown) => {
     const msg = e instanceof Error ? e.message : String(e);
-    logSuggestionDebug(0, 'vsopencodex-inline-forward-failed', msg);
+    getLogger('vsOpenCodeX').error('vsopencodex-inline-forward-failed', { detail: msg }, e);
   });
 }
 
@@ -49,7 +49,7 @@ let notifiedMissingVsxThisSession = false;
 
 /**
  * Notifica al usuario cuando el destino VSOpenCodeX está activo pero la extensión no está instalada.
- * @returns Void.
+ * @returns {void}
  */
 export function notifyIfVsxAgentDestinationWithoutVsOpenCodeX(): void {
   if (getGhostPromptAgentDestination() !== 'vsOpenCodeX') {

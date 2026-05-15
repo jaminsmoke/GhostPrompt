@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildCompletionInstruction } from '../src/core/instruction';
-import { normalizeSuggestion } from '../src/core/normalize';
+import { buildCompletionInstruction } from '../src/core/prompt/instruction';
+import { normalizeSuggestion } from '../src/core/prompt/normalize';
 
 /**
  * Contrato Fase 1 v0.5: la instrucción pide comportamiento; normalize corrige

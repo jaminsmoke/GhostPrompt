@@ -61,7 +61,7 @@ describe('PromptInput ghost overlay', () => {
       ),
     );
 
-    expect(pre).toContain('inset-[1px]');
+    expect(pre).toContain('inset-px');
     expect(pre).toContain('px-3');
     expect(pre).toContain('py-2');
     expect(pre).toContain('overflow-auto');
@@ -74,7 +74,7 @@ describe('PromptInput ghost overlay', () => {
       ),
     );
 
-    expect(pre).toContain('text-[var(--vscode-input-foreground)]/70');
+    expect(pre).toContain('text-(--vscode-input-foreground)/70');
   });
 
   it('renders textarea with prompt-input id', () => {

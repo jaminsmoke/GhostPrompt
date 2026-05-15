@@ -5,6 +5,8 @@ import * as path from 'node:path';
 
 import * as vscode from 'vscode';
 
+import { getLogger } from '../../system/log';
+
 import { ingestActiveEditorDocument } from './ingest/document';
 import {
   bindProjectMemoryIndexedPathWatcher,
@@ -16,8 +18,8 @@ import { PROJECT_MEMORY_REL_SEGMENTS } from './types';
 
 /**
  * Normaliza la TTL de project memory eliminada en días.
- * @param raw Valor bruto leído de la configuración.
- * @returns Días válidos en el rango [1, 3650].
+ * @param {number} raw Valor bruto leído de la configuración.
+ * @returns {number} Días válidos en el rango [1, 3650].
  */
 function clampTtlDays(raw: number): number {
   if (!Number.isFinite(raw)) {
@@ -28,7 +30,7 @@ function clampTtlDays(raw: number): number {
 
 /**
  * Lee la configuración de TTL para stores desusados de project memory.
- * @returns Número de días antes de eliminar stores desusados.
+ * @returns {number} Número de días antes de eliminar stores desusados.
  */
 export function readProjectMemoryUnusedStoreTtlDays(): number {
   const v = vscode.workspace
@@ -39,8 +41,8 @@ export function readProjectMemoryUnusedStoreTtlDays(): number {
 
 /**
  * Construye la ruta base de project memory dentro del almacenamiento global.
- * @param globalStoragePath Ruta del almacenamiento global de la extensión.
- * @returns Ruta absoluta del directorio base de project memory.
+ * @param {string} globalStoragePath Ruta del almacenamiento global de la extensión.
+ * @returns {string} Ruta absoluta del directorio base de project memory.
  */
 export function getProjectMemoryBaseDir(globalStoragePath: string): string {
   return path.join(globalStoragePath, ...PROJECT_MEMORY_REL_SEGMENTS);
@@ -48,7 +50,7 @@ export function getProjectMemoryBaseDir(globalStoragePath: string): string {
 
 /**
  * Selecciona una carpeta de workspace adecuada para project memory.
- * @returns Carpeta activa del workspace o la primera carpeta abierta.
+ * @returns {vscode.WorkspaceFolder | undefined} Carpeta activa del workspace o la primera carpeta abierta.
  */
 export function pickWorkspaceFolderForProjectMemory(): vscode.WorkspaceFolder | undefined {
   const uri = vscode.window.activeTextEditor?.document.uri;
@@ -63,7 +65,7 @@ export function pickWorkspaceFolderForProjectMemory(): vscode.WorkspaceFolder | 
 
 /**
  * Actualiza la marca de acceso de todas las carpetas del workspace abiertas.
- * @param store Store de project memory usado para tocar las raíces.
+ * @param {ProjectMemoryStore} store Store de project memory usado para tocar las raíces.
  */
 async function touchOpenWorkspaceRoots(store: ProjectMemoryStore): Promise<void> {
   const folders = vscode.workspace.workspaceFolders;
@@ -78,8 +80,8 @@ async function touchOpenWorkspaceRoots(store: ProjectMemoryStore): Promise<void>
 
 /**
  * Registra la funcionalidad de project memory en el ciclo de activación.
- * @param context Contexto de la extensión de VS Code.
- * @returns Instancia del ProjectMemoryStore enlazada al contexto.
+ * @param {vscode.ExtensionContext} context Contexto de la extensión de VS Code.
+ * @returns {ProjectMemoryStore} Instancia del ProjectMemoryStore enlazada al contexto.
  */
 export function registerProjectMemory(context: vscode.ExtensionContext): ProjectMemoryStore {
   const baseDir = getProjectMemoryBaseDir(context.globalStorageUri.fsPath);
@@ -94,13 +96,14 @@ export function registerProjectMemory(context: vscode.ExtensionContext): Project
       await runGarbageCollect(store);
       await refreshProjectMemoryIndexedPathWatchers();
     } catch (e) {
-      console.error('[GhostPrompt] projectMemory lifecycle failed', e);
+      getLogger('memory').error('project-memory-lifecycle-failed', {}, e);
     }
   };
 
   /**
    * Ejecuta la recolección de basura de project memory.
-   * @param s Store de project memory donde se realizará la recolección.
+   * @param {ProjectMemoryStore} s Store de project memory donde se realizará la recolección.
+   * @returns {Promise<void>} Promise que se resuelve cuando la recolección termina.
    */
   async function runGarbageCollect(s: ProjectMemoryStore): Promise<void> {
     const ttlDays = readProjectMemoryUnusedStoreTtlDays();
@@ -135,7 +138,7 @@ export function registerProjectMemory(context: vscode.ExtensionContext): Project
           await runGarbageCollect(store);
           await refreshProjectMemoryIndexedPathWatchers();
         } catch (e) {
-          console.error('[GhostPrompt] projectMemory workspace-folder sync failed', e);
+          getLogger('memory').error('project-memory-workspace-folder-sync-failed', {}, e);
         }
       })();
     }),

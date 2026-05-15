@@ -3,23 +3,17 @@ import { describe, expect, it } from 'vitest';
 import {
   COMPLETION_PARTIAL_LABEL,
   buildCompletionInstruction,
-  buildCompletionInstructionParts,
-} from '../src/core/instruction';
+} from '../src/core/prompt/instruction';
 
 describe('buildCompletionInstruction', () => {
-  it('prefix + labeledPartial coincide con la instrucción completa (contrato Copilot 2× User)', () => {
-    const ctx = {
-      outputLanguage: 'en' as const,
-      workspaceName: 'demo',
-      projectBootstrapLines: ['README: x'],
-    };
-    const full = buildCompletionInstruction('hola', 'balanced', ctx);
-    const parts = buildCompletionInstructionParts('hola', 'balanced', ctx);
-    expect(parts.prefixInstruction + parts.labeledPartial).toBe(full);
-    expect(parts.labeledPartial).toBe(`${COMPLETION_PARTIAL_LABEL}hola`);
+  it('concatena directivas de estilo + partial etiquetado (prompt compacto)', () => {
+    const text = buildCompletionInstruction('hola', 'balanced');
+    expect(text).toContain('STYLE_BALANCED:');
+    expect(text).toContain(`${COMPLETION_PARTIAL_LABEL}hola`);
+    expect(text.endsWith(`${COMPLETION_PARTIAL_LABEL}hola`)).toBe(true);
   });
 
-  it('incluye projectBootstrapLines en Relevant project context', () => {
+  it('ignora el contexto opcional (sin bloque de proyecto en el prompt)', () => {
     const text = buildCompletionInstruction('hola', 'balanced', {
       outputLanguage: 'en',
       workspaceName: 'demo',
@@ -28,10 +22,8 @@ describe('buildCompletionInstruction', () => {
         'package.json: name=demo',
       ],
     });
-    expect(text).toContain('Relevant project context:');
-    expect(text).toContain('Workspace: demo');
-    expect(text).toContain('README excerpt (README.md): resumen corto');
-    expect(text).toContain('package.json: name=demo');
-    expect(text).toContain('Partial text to continue: hola');
+    expect(text).not.toContain('Relevant project context:');
+    expect(text).not.toContain('Workspace: demo');
+    expect(text).toContain(`${COMPLETION_PARTIAL_LABEL}hola`);
   });
 });

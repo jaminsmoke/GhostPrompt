@@ -9,10 +9,10 @@ export { normalizeWorkspaceRelativePath };
 
 /**
  * Lee la configuración de editor-ingest del workspace y normaliza los valores.
- * @returns Objeto de configuración de editor-ingest con valores válidos.
+ * @returns {{ includeEditorIngest: boolean; maxTotalBytes: number; maxEntryBytes: number; maxEditorSources: number; maxFileBytes: number; allowedExtensions: Set<string>; excludePathPatterns: readonly string[]; }} Objeto de configuración de editor-ingest con valores válidos.
  */
 export function readEditorIngestConfig(): {
-  /** `projectMemoryEnabled` && `projectMemoryEditorIngestEnabled` */
+  /** `projectMemoryEnabled` && `projectMemoryEditorIngestEnabled`. */
   includeEditorIngest: boolean;
   maxTotalBytes: number;
   maxEntryBytes: number;
@@ -72,10 +72,10 @@ export function readEditorIngestConfig(): {
 
 /**
  * Normaliza un número para que quede en el rango [min, max] y sea entero.
- * @param v Valor numérico a normalizar.
- * @param min Límite mínimo permitido.
- * @param max Límite máximo permitido.
- * @returns Valor entero dentro del rango permitido.
+ * @param {number} v Valor numérico a normalizar.
+ * @param {number} min Límite mínimo permitido.
+ * @param {number} max Límite máximo permitido.
+ * @returns {number} Valor entero dentro del rango permitido.
  */
 function clampInt(v: number, min: number, max: number): number {
   if (!Number.isFinite(v)) {
@@ -86,9 +86,9 @@ function clampInt(v: number, min: number, max: number): number {
 
 /**
  * Best-effort exclusión sin glob pesado (p. Ej. Segmentos `node_modules`, `.git`, `.env`).
- * @param normalizedRelativePath Ruta normalizada del archivo dentro del workspace.
- * @param extraPatterns Patrones extras de exclusión proporcionados por configuración.
- * @returns True si el path debería excluirse.
+ * @param {string} normalizedRelativePath Ruta normalizada del archivo dentro del workspace.
+ * @param {readonly string[]} extraPatterns Patrones extras de exclusión proporcionados por configuración.
+ * @returns {boolean} True si el path debería excluirse.
  */
 export function pathLikelyExcludedForEditorIngest(
   normalizedRelativePath: string,

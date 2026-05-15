@@ -7,15 +7,13 @@ import {
   getActiveDestinationProvider,
   getGhostPromptAgentDestination,
 } from '../../destinations/destinationRegistry';
-import { append as appendLog } from '../../system/log/ConversationLog';
-import { appendSuggestion } from '../../system/log/SuggestionLog';
-import { ghostPromptSessionStore } from '../../core/session/GhostPromptSessionStore';
+import { getLogger } from '../../system/log';
+import { ghostPromptSessionStore } from '../../core/state/GhostPromptSessionStore';
 import { applyWebviewUpdateSetting } from '../settings/applyWebviewUpdate';
-import { logDebugInfo } from '../../system/debug/SuggestionDebug';
-import { type GhostPromptSuggestDeps, handleGhostPromptSuggest } from '../../core/pipeline';
+import { type GhostPromptSuggestDeps, handleGhostPromptSuggest } from '../../core/suggest';
 import { providerStatusManager } from '../../system/status';
 import { ollamaModelManager } from '../../engines/ollama';
-import { looksLikeOllamaModelId } from '../../core/sources';
+import { looksLikeOllamaModelId } from '../../core/routing/sources';
 import { parseWebviewOutboundMessage } from './webviewProtocols';
 import type { WebviewInboundMessage } from './webviewProtocols';
 
@@ -39,7 +37,7 @@ export type GhostPromptInboundDispatchServices = GhostPromptInboundBroadcastServ
  * Inicializa la vista webview y envía el estado inicial a la UI.
  * @param {vscode.Webview} webview Webview que recibe el mensaje init.
  * @param {(w: vscode.Webview) => Promise<void>} postSettings Callback para enviar el payload de configuración.
- * @return {Promise<void>} Promise que se resuelve cuando la inicialización termina.
+ * @returns {Promise<void>} Promise que se resuelve cuando la inicialización termina.
  */
 export async function handleGhostPromptInboundInit(
   webview: vscode.Webview,
@@ -61,7 +59,7 @@ export async function handleGhostPromptInboundInit(
  * Maneja actualizaciones del borrador desde la UI del webview.
  * @param {WebviewInboundMessage} message Mensaje de tipo draftChanged.
  * @param {Pick<GhostPromptInboundDispatchServices, "viewContributionId" | "broadcastDraftSync">} services Servicios de broadcast para sincronizar borradores.
- * @return {void} Void.
+ * @returns {void} Void.
  */
 export function handleGhostPromptInboundDraftChanged(
   message: Extract<WebviewInboundMessage, { type: 'draftChanged' }>,
@@ -84,7 +82,7 @@ export function handleGhostPromptInboundDraftChanged(
  * @param {WebviewInboundMessage} message Mensaje `updateSetting` del webview.
  * @param {() => Promise<void>} broadcastSettingsToAllViews Callback para re-enviar settings a todas las vistas.
  * @param {GhostPromptInboundDispatchServices | undefined} [dispatchServices] Servicios de dispatch (broadcastUi, etc.), opcional.
- * @return {Promise<void>} Promise que se resuelve cuando la actualización termina.
+ * @returns {Promise<void>} Promise que se resuelve cuando la actualización termina.
  */
 export async function handleGhostPromptInboundUpdateSetting(
   message: Extract<WebviewInboundMessage, { type: 'updateSetting' }>,
@@ -123,16 +121,20 @@ export async function handleGhostPromptInboundUpdateSetting(
  * Maneja la aceptación de una sugerencia y la guarda en el historial.
  * @param {WebviewInboundMessage} message Mensaje de tipo accept con la sugerencia seleccionada.
  * @param {vscode.Uri} dataUri Ubicación de almacenamiento para el registro de sugerencias.
- * @return {Promise<void>} Promise que se resuelve cuando la sugerencia se registra.
+ * @returns {Promise<void>} Promise que se resuelve cuando la sugerencia se registra.
  */
 export async function handleGhostPromptInboundAccept(
   message: Extract<WebviewInboundMessage, { type: 'accept' }>,
   dataUri: vscode.Uri,
 ): Promise<void> {
+  void dataUri;
   ghostPromptSessionStore.patchState({
     lastAcceptedSuggestion: message.suggestion,
   });
-  await appendSuggestion(dataUri, message.context, message.suggestion);
+  getLogger('inbound').info('suggestion-accepted', {
+    context: message.context,
+    suggestion: message.suggestion,
+  });
 }
 
 /**
@@ -140,13 +142,14 @@ export async function handleGhostPromptInboundAccept(
  * @param {WebviewInboundMessage} message Mensaje de tipo send con el texto a enviar.
  * @param {vscode.Uri} dataUri URI de almacenamiento para registro de envíos.
  * @param {() => void} broadcastClearAll Callback para limpiar el estado de sugerencia en la UI.
- * @return {Promise<void>} Promise que se resuelve cuando el envío se procesa.
+ * @returns {Promise<void>} Promise que se resuelve cuando el envío se procesa.
  */
 export async function handleGhostPromptInboundSend(
   message: Extract<WebviewInboundMessage, { type: 'send' }>,
   dataUri: vscode.Uri,
   broadcastClearAll: () => void,
 ): Promise<void> {
+  void dataUri;
   if (getGhostPromptAgentDestination() === 'vsOpenCodeX') {
     return;
   }
@@ -179,7 +182,7 @@ export async function handleGhostPromptInboundSend(
     pendingSuggestion: '',
     draftText: '',
   });
-  await appendLog(dataUri, message.text);
+  getLogger('inbound').info('prompt-sent', { prompt: message.text });
   broadcastClearAll();
 }
 
@@ -187,14 +190,14 @@ export async function handleGhostPromptInboundSend(
  * Enruta un mensaje inbound del webview al handler correspondiente.
  * @param {WebviewInboundMessage} message Mensaje entrante parseado desde el webview.
  * @param {GhostPromptInboundDispatchServices} services Servicios de despacho y broadcasting.
- * @return {Promise<void>} Promise que se resuelve cuando el mensaje se procesa.
+ * @returns {Promise<void>} Promise que se resuelve cuando el mensaje se procesa.
  */
 export async function dispatchGhostPromptInboundMessage(
   message: WebviewInboundMessage,
   services: GhostPromptInboundDispatchServices,
 ): Promise<void> {
   const dispatchServices = services satisfies GhostPromptInboundDispatchServices;
-  logDebugInfo(`Dispatching inbound webview message type=${message.type}`);
+  getLogger('inbound').debug('dispatch', { type: message.type });
   switch (message.type) {
     case 'init':
       await handleGhostPromptInboundInit(dispatchServices.webview, dispatchServices.postSettings);
@@ -247,7 +250,7 @@ export async function dispatchGhostPromptInboundMessage(
  * Solicita y publica el estado de los providers al webview.
  * @param {vscode.Webview} webview Webview objetivo del mensaje de status.
  * @param {GhostPromptInboundDispatchServices} services Servicios de dispatch necesarios.
- * @return {Promise<void>} Promise que se resuelve cuando el status se envía.
+ * @returns {Promise<void>} Promise que se resuelve cuando el status se envía.
  */
 async function handleProviderStatusRequest(
   webview: vscode.Webview,
@@ -260,7 +263,7 @@ async function handleProviderStatusRequest(
  * Publica el estado actualizado de providers al webview y a las vistas relacionadas.
  * @param {vscode.Webview} webview Webview que recibe el mensaje de estado.
  * @param {GhostPromptInboundDispatchServices} services Servicios de broadcast y dispatch.
- * @return {Promise<void>} Promise que se resuelve cuando el mensaje se disparó.
+ * @returns {Promise<void>} Promise que se resuelve cuando el mensaje se disparó.
  */
 async function postProviderStatus(
   webview: vscode.Webview,

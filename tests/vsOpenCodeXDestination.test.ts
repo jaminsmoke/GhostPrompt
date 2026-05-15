@@ -27,8 +27,13 @@ vi.mock('vscode', () => ({
   },
 }));
 
-vi.mock('../src/system/debug/SuggestionDebug', () => ({
-  logSuggestionDebug: vi.fn(),
+vi.mock('../src/system/log', () => ({
+  getLogger: () => ({
+    error: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  }),
 }));
 
 describe('vsOpenCodeXDestination', () => {

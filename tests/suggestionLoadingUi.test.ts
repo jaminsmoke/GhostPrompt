@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { suggestionLoadingStatusText, type SuggestionLoadingPhase } from '../src/core/loading';
+import {
+  suggestionLoadingStatusText,
+  type SuggestionLoadingPhase,
+} from '../src/core/presentation/loading';
 
 describe('suggestionLoadingStatusText', () => {
   const cases: Array<[SuggestionLoadingPhase, string]> = [

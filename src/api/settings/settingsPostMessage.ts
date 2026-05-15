@@ -2,22 +2,19 @@
  * Construye y envía el mensaje `settings` al webview (lista de modelos, chips, etc.).
  */
 import * as vscode from 'vscode';
-import {
-  getCompletionUiKind,
-  getEnabledCompletionSources,
-  listMergedSuggestionModels,
-  listOpencodeSuggestionModels,
-  listOllamaSuggestionModels,
-  listSuggestionModels,
-} from '../../core';
+import { getCompletionUiKind, getEnabledCompletionSources } from '../../core/routing/sources';
 import type {
   SuggestionModelDescriptor,
   SuggestionModelPolicy,
   SuggestionStyle,
   SupportedSuggestionLanguage,
-} from '../../core';
-import { isSuggestionDebugEnabled } from '../../system/debug/SuggestionDebug';
-import { ghostPromptSessionStore } from '../../core/session/GhostPromptSessionStore';
+} from '../../core/types';
+import { listSuggestionModels } from '../../engines/copilot/catalog/modelCatalog';
+import { listOpencodeSuggestionModels } from '../../engines/opencode/catalog/opencodeModelCatalog';
+import { listOllamaSuggestionModels } from '../../engines/ollama/catalog/ollamaModelCatalog';
+import { listMergedSuggestionModels } from '../../engines/catalog/mergedModelCatalog';
+import { isSuggestionDebugEnabled } from '../../system/log';
+import { ghostPromptSessionStore } from '../../core/state/GhostPromptSessionStore';
 import {
   getGhostPromptAgentDestination,
   isVsOpenCodeXExtensionInstalled,
@@ -34,7 +31,7 @@ export type GhostPromptSettingsGetters = {
 /**
  * Normaliza el debounce de sugerencia al rango permitido.
  * @param {number} value Valor de debounce de configuración.
- * @return {number} Valor ajustado dentro del rango mínimo y máximo.
+ * @returns {number} Valor ajustado dentro del rango mínimo y máximo.
  */
 function clampSuggestionDebounceMs(value: number): number {
   return Math.min(2000, Math.max(150, Math.round(value)));
@@ -44,7 +41,7 @@ function clampSuggestionDebounceMs(value: number): number {
  * Construye y envía el payload de configuración al webview.
  * @param {vscode.Webview} webview Webview destinatario del mensaje de settings.
  * @param {GhostPromptSettingsGetters} getters Callbacks para obtener valores runtime de settings.
- * @return {Promise<void>} Promise que se resuelve cuando el mensaje se ha enviado.
+ * @returns {Promise<void>} Promise que se resuelve cuando el mensaje se ha enviado.
  */
 export async function buildAndPostGhostPromptSettings(
   webview: vscode.Webview,

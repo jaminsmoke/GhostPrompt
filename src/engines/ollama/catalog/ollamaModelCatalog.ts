@@ -6,8 +6,8 @@ import { normalizeOllamaModels, ollamaModelToDescriptor } from './normalizeOllam
 
 /**
  * Lista los modelos de Ollama disponibles y los convierte en descriptores.
- * @param _policy Política de modelo solicitada (actualmente no usada para Ollama).
- * @returns Lista de descriptores de modelos Ollama.
+ * @param {SuggestionModelPolicy} _policy Política de modelo solicitada (actualmente no usada para Ollama).
+ * @returns {Promise<SuggestionModelDescriptor[]>} Lista de descriptores de modelos Ollama.
  */
 export async function listOllamaSuggestionModels(
   _policy: SuggestionModelPolicy,

@@ -1,8 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
-  appendSuggestionMock,
-  appendLogMock,
   sendToChatMock,
   applyWebviewUpdateSettingMock,
   workspaceConfigGetMock,
@@ -11,8 +9,6 @@ const {
   windowShowErrorMessageMock,
   MockCancellationTokenSource,
 } = vi.hoisted(() => ({
-  appendSuggestionMock: vi.fn(),
-  appendLogMock: vi.fn(),
   sendToChatMock: vi.fn(),
   applyWebviewUpdateSettingMock: vi.fn(),
   workspaceConfigGetMock: vi.fn((key: string, fallback: unknown) => fallback),
@@ -62,14 +58,6 @@ vi.mock('vscode', () => ({
   },
 }));
 
-vi.mock('../../src/system/log/SuggestionLog', () => ({
-  appendSuggestion: appendSuggestionMock,
-}));
-
-vi.mock('../../src/system/log/ConversationLog', () => ({
-  append: appendLogMock,
-}));
-
 vi.mock('../../src/destinations/destinationRegistry', () => ({
   getGhostPromptAgentDestination: () =>
     workspaceConfigGetMock('agentDestination', 'copilotChat') as string,
@@ -80,12 +68,12 @@ vi.mock('../../src/api/settings/applyWebviewUpdate', () => ({
   applyWebviewUpdateSetting: applyWebviewUpdateSettingMock,
 }));
 
-vi.mock('../../src/core/pipeline', () => ({
+vi.mock('../../src/core/suggest', () => ({
   handleGhostPromptSuggest: (...args: unknown[]) => handleGhostPromptSuggestMock(...args),
 }));
 
 import type { Uri, Webview } from 'vscode';
-import { ghostPromptSessionStore } from '../../src/core/session/GhostPromptSessionStore';
+import { ghostPromptSessionStore } from '../../src/core/state/GhostPromptSessionStore';
 import {
   dispatchGhostPromptInboundMessage,
   handleGhostPromptInboundDraftChanged,
@@ -93,7 +81,7 @@ import {
   handleGhostPromptInboundSend,
   type GhostPromptInboundDispatchServices,
 } from '../../src/api/protocols/inboundHandlers';
-import type { GhostPromptSuggestDeps } from '../../src/core/pipeline';
+import type { GhostPromptSuggestDeps } from '../../src/core/suggest';
 
 function minimalSuggestDeps(): GhostPromptSuggestDeps {
   return {
@@ -175,7 +163,6 @@ describe('ghostPromptWebviewInboundHandlers', () => {
       await handleGhostPromptInboundSend({ type: 'send', text: 'prompt final' }, dataUri, clearAll);
 
       expect(ghostPromptSessionStore.getSnapshot().lastSentPrompt).toBe('prompt final');
-      expect(appendLogMock).toHaveBeenCalledWith(dataUri, 'prompt final');
       expect(sendToChatMock).toHaveBeenCalledWith('prompt final');
       expect(clearAll).toHaveBeenCalled();
     });
@@ -186,7 +173,6 @@ describe('ghostPromptWebviewInboundHandlers', () => {
         { fsPath: '/g' } as Uri,
         vi.fn(),
       );
-      expect(appendLogMock).not.toHaveBeenCalled();
       expect(sendToChatMock).not.toHaveBeenCalled();
     });
 
@@ -201,7 +187,6 @@ describe('ghostPromptWebviewInboundHandlers', () => {
         { fsPath: '/global-store' } as Uri,
         clearAll,
       );
-      expect(appendLogMock).not.toHaveBeenCalled();
       expect(sendToChatMock).not.toHaveBeenCalled();
       expect(windowShowErrorMessageMock).toHaveBeenCalledWith(
         "GhostPrompt: destino 'copilotChat' no tiene función de envío registrada.",
@@ -221,7 +206,6 @@ describe('ghostPromptWebviewInboundHandlers', () => {
         clearAll,
       );
 
-      expect(appendLogMock).not.toHaveBeenCalled();
       expect(sendToChatMock).not.toHaveBeenCalled();
       expect(clearAll).not.toHaveBeenCalled();
     });

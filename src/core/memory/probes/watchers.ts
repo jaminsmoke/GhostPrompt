@@ -13,7 +13,7 @@ import { workspaceKeyFromRootUriString } from '../io/key';
 
 /**
  * Lee la configuración de los watchers de archivos de project memory.
- * @returns Objeto con el estado habilitado y el throttle en ms.
+ * @returns {{ enabled: boolean; throttleMs: number; }} Objeto con el estado habilitado y el throttle en ms.
  */
 export function readProjectMemoryFileWatcherConfig(): {
   enabled: boolean;
@@ -32,8 +32,8 @@ export function readProjectMemoryFileWatcherConfig(): {
 
 /**
  * Obtiene rutas relativas únicas para archivos indexados en project memory.
- * @param items Elementos indexados leídos desde entries.json.
- * @returns Lista de rutas relativas normalizadas.
+ * @param {readonly unknown[]} items Elementos indexados leídos desde entries.json.
+ * @returns {string[]} Lista de rutas relativas normalizadas.
  */
 function collectIndexedRelativePaths(items: readonly unknown[]): string[] {
   const set = new Set<string>();
@@ -58,8 +58,9 @@ let scheduleRefreshTimer: ReturnType<typeof setTimeout> | undefined;
 
 /**
  * Enlaza el watcher de paths indexados de project memory al contexto de la extensión.
- * @param context Contexto de la extensión de VS Code.
- * @param store Instancia de almacenamiento del proyecto.
+ * @param {vscode.ExtensionContext} context Contexto de la extensión de VS Code.
+ * @param {ProjectMemoryStore} store Instancia de almacenamiento del proyecto.
+ * @returns {void}
  */
 export function bindProjectMemoryIndexedPathWatcher(
   context: vscode.ExtensionContext,
@@ -88,9 +89,10 @@ function disposeAllIndexedPathWatchers(): void {
 
 /**
  * Persiste los elementos resultantes tras eliminar rutas indexadas inválidas.
- * @param store Instancia de almacenamiento del proyecto.
- * @param workspaceKey Clave del workspace para el store.
- * @param items Elementos filtrados a persistir.
+ * @param {ProjectMemoryStore} store Instancia de almacenamiento del proyecto.
+ * @param {string} workspaceKey Clave del workspace para el store.
+ * @param {unknown[]} items Elementos filtrados a persistir.
+ * @returns {Promise<void>} Promise que se resuelve cuando la persistencia finaliza.
  */
 async function persistEntriesAfterStrip(
   store: ProjectMemoryStore,
@@ -112,8 +114,9 @@ async function persistEntriesAfterStrip(
 
 /**
  * Invalida las entradas indexadas para un URI que cambió o se eliminó.
- * @param store Instancia de almacenamiento del proyecto.
- * @param uri URI del archivo que cambió o se eliminó.
+ * @param {ProjectMemoryStore} store Instancia de almacenamiento del proyecto.
+ * @param {vscode.Uri} uri URI del archivo que cambió o se eliminó.
+ * @returns {Promise<void>} Promise que se resuelve cuando la invalidación termina.
  */
 async function invalidateIndexedUri(store: ProjectMemoryStore, uri: vscode.Uri): Promise<void> {
   const folder = vscode.workspace.getWorkspaceFolder(uri);
@@ -136,7 +139,8 @@ async function invalidateIndexedUri(store: ProjectMemoryStore, uri: vscode.Uri):
 
 /**
  * Añade un URI a la cola de invalidación para procesarlo de forma agrupada.
- * @param uri URI del archivo que debe invalidarse.
+ * @param {vscode.Uri} uri URI del archivo que debe invalidarse.
+ * @returns {void}
  */
 function queueInvalidate(uri: vscode.Uri): void {
   pendingInvalidateUris.set(uri.toString(), uri);
@@ -152,6 +156,7 @@ function queueInvalidate(uri: vscode.Uri): void {
 
 /**
  * Procesa la cola de invalidación acumulada y refresca los watchers.
+ * @returns {Promise<void>} Promise que se resuelve cuando la cola ha sido procesada.
  */
 async function flushInvalidateQueue(): Promise<void> {
   const store = boundStore;
@@ -169,7 +174,7 @@ async function flushInvalidateQueue(): Promise<void> {
 
 /**
  * Recrea watchers sólo para rutas presentes en `entries.json` de cada carpeta abierta.
- * @returns Promise que se resuelve cuando los watchers han sido recreados.
+ * @returns {Promise<void>} Promise que se resuelve cuando los watchers han sido recreados.
  */
 export async function refreshProjectMemoryIndexedPathWatchers(): Promise<void> {
   disposeAllIndexedPathWatchers();
@@ -210,7 +215,10 @@ export async function refreshProjectMemoryIndexedPathWatchers(): Promise<void> {
   }
 }
 
-/** Tras persistir entradas nuevas, reprogramar watchers (debounce corto). */
+/**
+ * Tras persistir entradas nuevas, reprogramar watchers (debounce corto).
+ * @returns {void}
+ */
 export function scheduleIndexedPathWatcherRefresh(): void {
   if (!watcherContext) {
     return;

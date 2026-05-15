@@ -2,7 +2,7 @@
   "name": "ghost-prompt",
   "displayName": "GhostPrompt",
   "description": "Ghost-text completions for your Copilot prompts — write faster, think clearer.",
-  "version": "0.5.5",
+  "version": "0.6.0",
   "publisher": "jaminsmoke",
   "author": "JaminSmoke",
   "icon": "media/img/icon.png",
@@ -138,7 +138,30 @@
         "ghostPrompt.debugSuggestions": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Enable structured debug logs for suggestion lifecycle in the `GhostPrompt Suggestions` output channel."
+          "markdownDescription": "Compatibility shim: when **on** and `ghostPrompt.logLevel` has never been set in User/Workspace/Folder settings, effective log level is **debug** (verbose pipeline + `GhostPrompt Log` channel). If `logLevel` is set explicitly, it wins. Prefer `ghostPrompt.logLevel` for new setups."
+        },
+        "ghostPrompt.logLevel": {
+          "type": "string",
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
+          "default": "info",
+          "markdownDescription": "Minimum verbosity for **GhostPrompt Log** and structured file logs. `error` shows only errors; `debug` includes fine-grained host traces. When this key is unset at all scopes, `debugSuggestions` may still elevate to debug (see its description)."
+        },
+        "ghostPrompt.logFileEnabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "When enabled, append NDJSON + Markdown session logs under global storage `ghostPrompt/logs/v1/`."
+        },
+        "ghostPrompt.logFileMaxBytes": {
+          "type": "number",
+          "default": 5242880,
+          "minimum": 1048576,
+          "maximum": 104857600,
+          "markdownDescription": "Maximum size in bytes of `events.ndjson` before it is rotated (gzipped archive + new file)."
         },
         "ghostPrompt.showSuggestionIssueNotifications": {
           "type": "boolean",
@@ -321,7 +344,7 @@
     "build:webview": "vite build --config vite.config.ts",
     "dev:webview": "vite --config vite.config.ts",
     "verify:webview-bundle": "node out/system/build/verifyWebviewBundle.js",
-    "validate": "npm run lint && npm run deps:circular && npm run typecheck && npm run build:webview && npm run verify:webview-bundle",
+    "validate": "npm run lint && npm run deps:circular && npm run typecheck && npm run compile && npm run build:webview && npm run verify:webview-bundle",
     "test": "vitest run",
     "test:integration": "vitest run tests/opencodeSuggestions.integration.test.ts",
     "deps:graph": "depcruise --config .dependency-cruiser.js --output-type dot src/extension/extension.ts > dependency-graph.dot",

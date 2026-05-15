@@ -16,7 +16,7 @@ export function resetSuggestionHostNotificationThrottleForTests(): void {
 
 /**
  * Comprueba si las notificaciones de issue de sugerencias están habilitadas.
- * @returns True si deben mostrarse avisos de sugerencia en el host.
+ * @returns {boolean} True si deben mostrarse avisos de sugerencia en el host.
  */
 function notificationsEnabled(): boolean {
   return (
@@ -28,8 +28,8 @@ function notificationsEnabled(): boolean {
 
 /**
  * Determina si se puede mostrar una notificación con throttle.
- * @param key Clave de evento para evitar repetición rápida.
- * @returns True si la notificación puede mostrarse.
+ * @param {string} key Clave de evento para evitar repetición rápida.
+ * @returns {boolean} True si la notificación puede mostrarse.
  */
 function shouldShow(key: string): boolean {
   const now = Date.now();
@@ -43,8 +43,9 @@ function shouldShow(key: string): boolean {
 
 /**
  * Muestra un aviso en el host cuando procede y pasa el throttle.
- * @param text Texto de notificación mostrado al usuario.
- * @param key Clave de notificación para el throttle.
+ * @param {string} text Texto de notificación mostrado al usuario.
+ * @param {string} key Clave de notificación para el throttle.
+ * @returns {void}
  */
 function notify(text: string, key: string): void {
   if (!shouldShow(key)) {
@@ -57,8 +58,8 @@ type EmptyReason = Extract<CompletionResult, { kind: 'empty' }>['reason'];
 
 /**
  * Obtiene un hint de UI para razones de resultado vacío.
- * @param reason Motivo de resultado vacío.
- * @returns Mensaje de ayuda o null si no hay hint aplicable.
+ * @param {EmptyReason} reason Motivo de resultado vacío.
+ * @returns {string | null} Mensaje de ayuda o null si no hay hint aplicable.
  */
 function hostHintForEmptyReason(reason: EmptyReason): string | null {
   switch (reason) {
@@ -75,8 +76,8 @@ function hostHintForEmptyReason(reason: EmptyReason): string | null {
 
 /**
  * Traduce mensajes de error técnicos a hints de usuario.
- * @param message Mensaje de error recibido de la sugerencia.
- * @returns Texto de hint o null si no se reconoce el error.
+ * @param {string} message Mensaje de error recibido de la sugerencia.
+ * @returns {string | null} Texto de hint o null si no se reconoce el error.
  */
 function hostHintForErrorMessage(message: string): string | null {
   const lower = message.toLowerCase();
@@ -119,7 +120,8 @@ function hostHintForErrorMessage(message: string): string | null {
 
 /**
  * Tras emitir UI al webview: aviso opcional para fallos accionables (con throttle).
- * @param result Resultado del intento de sugerencia que puede generar un hint.
+ * @param {CompletionResult} result Resultado del intento de sugerencia que puede generar un hint.
+ * @returns {void}
  */
 export function maybeNotifySuggestionIssue(result: CompletionResult): void {
   if (!notificationsEnabled()) {

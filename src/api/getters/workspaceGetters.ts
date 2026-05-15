@@ -8,7 +8,7 @@ import type {
   SuggestionModelPolicy,
   SuggestionStyle,
   SupportedSuggestionLanguage,
-} from '../../core';
+} from '../../core/types';
 
 export {
   type GhostPromptAgentDestination,
@@ -20,7 +20,7 @@ export {
  * Normaliza y recorta un campo de contexto para el prompt.
  * @param {string} value Cadena original a normalizar.
  * @param {number} maxChars Límite máximo de caracteres en el campo.
- * @return {string} Texto limpio y recortado con elípsis si excede el límite.
+ * @returns {string} Texto limpio y recortado con elípsis si excede el límite.
  */
 function trimContextField(value: string, maxChars: number): string {
   const normalized = value.replace(/\s+/g, ' ').trim();

@@ -6,11 +6,7 @@ const {
   requestCompletionMock,
   resolveSuggestionLanguageMock,
   listSuggestionModelsMock,
-  appendSuggestionMock,
-  appendLogMock,
   sendToChatMock,
-  logSuggestionDebugMock,
-  logDebugInfoMock,
   readFileSyncMock,
   cancellationTokenSourceMock,
 } = vi.hoisted(() => {
@@ -25,11 +21,7 @@ const {
     requestCompletionMock: vi.fn(),
     resolveSuggestionLanguageMock: vi.fn(() => 'en'),
     listSuggestionModelsMock: vi.fn(async (): Promise<TestSuggestionModel[]> => []),
-    appendSuggestionMock: vi.fn(),
-    appendLogMock: vi.fn(),
     sendToChatMock: vi.fn(),
-    logSuggestionDebugMock: vi.fn(),
-    logDebugInfoMock: vi.fn(),
     readFileSyncMock: vi.fn(
       () => '<html>{{nonce}} {{cspSource}} {{styleUri}} {{scriptUri}}</html>',
     ),
@@ -53,7 +45,7 @@ vi.mock('../src/engines/engineRegistry', () => ({
   getCompletionProviderKind: () => 'copilot' as const,
 }));
 
-vi.mock('../src/core/sources', () => ({
+vi.mock('../src/core/routing/sources', () => ({
   getEnabledCompletionSources: () => ['copilot'],
   resolveCompletionSourceForRequest: () => 'copilot' as const,
   getCompletionUiKind: () => 'copilot' as const,
@@ -65,7 +57,7 @@ vi.mock('../src/core/language', () => ({
   resolveSuggestionLanguage: resolveSuggestionLanguageMock,
 }));
 
-vi.mock('../src/core/catalog/mergedModelCatalog', () => ({
+vi.mock('../src/engines/catalog/mergedModelCatalog', () => ({
   listMergedSuggestionModels: listSuggestionModelsMock,
 }));
 
@@ -92,7 +84,7 @@ vi.mock('../src/api/protocols/inboundHandlers', async (importOriginal) => {
         'type' in message &&
         (message as { type: string }).type === 'suggest'
       ) {
-        const { handleGhostPromptSuggest } = await import('../src/core/pipeline');
+        const { handleGhostPromptSuggest } = await import('../src/core/suggest');
         const deps = (services as { suggestDeps: unknown }).suggestDeps;
         return handleGhostPromptSuggest(message as never, deps as never);
       }
@@ -173,22 +165,8 @@ vi.mock('../src/api/getters/workspaceGetters', () => ({
   getGhostPromptOllamaExcludedModelIds: () => [],
 }));
 
-vi.mock('../src/system/log/SuggestionLog', () => ({
-  appendSuggestion: appendSuggestionMock,
-}));
-
-vi.mock('../src/system/log/ConversationLog', () => ({
-  append: appendLogMock,
-}));
-
 vi.mock('../src/destinations/copilotChat/copilotChatDestination', () => ({
   sendToChat: sendToChatMock,
-}));
-
-vi.mock('../src/system/debug/SuggestionDebug', () => ({
-  logSuggestionDebug: logSuggestionDebugMock,
-  logDebugInfo: logDebugInfoMock,
-  isSuggestionDebugEnabled: () => false,
 }));
 
 /* eslint-disable @typescript-eslint/naming-convention -- mock del módulo `vscode` (API PascalCase) */
@@ -223,8 +201,8 @@ vi.mock('vscode', () => ({
 }));
 /* eslint-enable @typescript-eslint/naming-convention */
 
-import { suggestionLoadingStatusText } from '../src/core/loading';
-import { ghostPromptSessionStore } from '../src/core/session/GhostPromptSessionStore';
+import { suggestionLoadingStatusText } from '../src/core/presentation/loading';
+import { ghostPromptSessionStore } from '../src/core/state/GhostPromptSessionStore';
 import { MiniInputViewProvider } from '../src/ui/provider/MiniInputViewProvider';
 
 function createView() {
@@ -280,11 +258,6 @@ describe('MiniInputViewProvider', () => {
       broadcast: true,
     });
     expect(postMessageMock).toHaveBeenNthCalledWith(2, {
-      type: 'languageEffective',
-      language: 'en',
-      broadcast: true,
-    });
-    expect(postMessageMock).toHaveBeenNthCalledWith(3, {
       type: 'suggestion',
       suggestion: 'continuacion',
       model: { id: 'gpt-4o-mini', label: 'GPT-4o mini', tier: 'included' },
@@ -312,7 +285,7 @@ describe('MiniInputViewProvider', () => {
     provider.resolveWebviewView(view as never, {} as never, {} as never);
     await suggestHandler?.({ type: 'suggest', text: 'texto distinto', captureId: 2 });
 
-    expect(postMessageMock).toHaveBeenNthCalledWith(3, {
+    expect(postMessageMock).toHaveBeenNthCalledWith(2, {
       type: 'empty',
       reason: 'no-model',
       captureId: 2,
@@ -357,11 +330,6 @@ describe('MiniInputViewProvider', () => {
       broadcast: true,
     });
     expect(postMessageMock).toHaveBeenNthCalledWith(3, {
-      type: 'languageEffective',
-      language: 'en',
-      broadcast: true,
-    });
-    expect(postMessageMock).toHaveBeenNthCalledWith(4, {
       type: 'suggestion',
       suggestion: 'continuacion valida',
       model: { id: 'gpt-4o-mini', label: 'GPT-4o mini', tier: 'included' },

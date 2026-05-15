@@ -3,7 +3,7 @@ import type { ProviderStatusModule, ProviderStateRecord } from '../../system/sta
 
 /**
  * Comprueba si la extensión VSOpenCodeX está instalada.
- * @returns True si la extensión está disponible en el editor.
+ * @returns {boolean} True si la extensión está disponible en el editor.
  */
 function isVsOpenCodeXExtensionInstalled(): boolean {
   return vscode.extensions.getExtension('jaminsmoke.vsopencodex') !== undefined;

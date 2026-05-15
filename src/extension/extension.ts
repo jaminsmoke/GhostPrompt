@@ -8,10 +8,12 @@
 import * as vscode from 'vscode';
 import { MiniInputViewProvider } from '../ui/provider/MiniInputViewProvider';
 import {
-  isSuggestionDebugEnabled,
+  disposeGhostPromptLogging,
   ensureSuggestionDebugChannel,
+  initGhostPromptLogging,
+  isSuggestionDebugEnabled,
   toggleSuggestionDebug,
-} from '../system/debug/SuggestionDebug';
+} from '../system/log';
 import { resetClient } from '../engines/opencode/opencodeApiClient';
 import { ollamaModelManager } from '../engines/ollama';
 import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from '../destinations/vsOpenCodeX/vsOpenCodeXDestination';
@@ -21,9 +23,10 @@ import { registerAllProviderModules } from '../system/status/registerModules';
 
 /**
  * Activa la extensión GhostPrompt.
- * @param context Contexto de la extensión proporcionado por VS Code.
+ * @param {vscode.ExtensionContext} context Contexto de la extensión proporcionado por VS Code.
  */
 export function activate(context: vscode.ExtensionContext): void {
+  initGhostPromptLogging(context);
   registerAllProviderModules();
   registerProjectMemory(context);
   const sidebarProvider = new MiniInputViewProvider(context, MiniInputViewProvider.viewId);
@@ -42,7 +45,7 @@ export function activate(context: vscode.ExtensionContext): void {
     async () => {
       const enabled = await toggleSuggestionDebug();
       const message = enabled
-        ? 'GhostPrompt debug activado (Suggestions output channel).'
+        ? 'GhostPrompt debug activado (canal de salida «GhostPrompt Log»).'
         : 'GhostPrompt debug desactivado.';
       void vscode.window.showInformationMessage(message);
     },
@@ -83,6 +86,7 @@ export function activate(context: vscode.ExtensionContext): void {
  * Limpia los recursos de la extensión al desactivarse.
  */
 export function deactivate(): void {
+  void disposeGhostPromptLogging();
   resetClient();
   ollamaModelManager.stopAll();
 }

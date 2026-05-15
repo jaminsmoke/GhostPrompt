@@ -5,8 +5,8 @@ const OPENCODE_DEFAULT_PORT = 4096;
 
 /**
  * Verifica si el servidor OpenCode responde al endpoint health.
- * @param baseUrl URL base de OpenCode.
- * @returns True si el servidor responde correctamente.
+ * @param {string} baseUrl URL base de OpenCode.
+ * @returns {Promise<boolean>} True si el servidor responde correctamente.
  */
 async function pingOpenCode(baseUrl: string): Promise<boolean> {
   try {
@@ -19,7 +19,7 @@ async function pingOpenCode(baseUrl: string): Promise<boolean> {
 
 /**
  * Obtiene la base URL de OpenCode desde la configuración.
- * @returns URL de OpenCode para las comprobaciones de estado.
+ * @returns {Promise<string>} URL de OpenCode para las comprobaciones de estado.
  */
 async function getOpenCodeBaseUrl(): Promise<string> {
   const cfg = vscode.workspace.getConfiguration('ghostPrompt');
@@ -33,7 +33,7 @@ export const opencodeStatusModule: ProviderStatusModule = {
 
   /**
    * Comprueba el estado del servidor OpenCode.
-   * @returns Registro de estado del proveedor OpenCode.
+   * @returns {Promise<ProviderStateRecord>} Registro de estado del proveedor OpenCode.
    */
   async check(): Promise<ProviderStateRecord> {
     const baseUrl = await getOpenCodeBaseUrl();
@@ -62,7 +62,7 @@ export const opencodeStatusModule: ProviderStatusModule = {
 
   /**
    * Inicia el servidor OpenCode en un terminal local.
-   * @returns Promise que se resuelve cuando OpenCode se inicia satisfactoriamente.
+   * @returns {Promise<void>} Promise que se resuelve cuando OpenCode se inicia satisfactoriamente.
    */
   async start(): Promise<void> {
     const baseUrl = await getOpenCodeBaseUrl();
@@ -84,7 +84,7 @@ export const opencodeStatusModule: ProviderStatusModule = {
 
   /**
    * Detiene el servidor OpenCode usando su endpoint de salida o cerrando terminales.
-   * @returns Promise que se resuelve cuando se detiene OpenCode.
+   * @returns {Promise<void>} Promise que se resuelve cuando se detiene OpenCode.
    */
   async stop(): Promise<void> {
     const baseUrl = await getOpenCodeBaseUrl();

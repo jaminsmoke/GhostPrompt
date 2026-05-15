@@ -9,6 +9,7 @@ import {
   type WebviewInboundMessage,
   type WebviewOutboundMessage,
 } from '../../system/contracts/webviewMessageSchemas';
+import { getLogger } from '../../system/log';
 import type { z } from 'zod';
 
 export type {
@@ -34,7 +35,7 @@ export {
 export function parseWebviewInboundMessage(raw: unknown): WebviewInboundMessage | undefined {
   const r = webviewInboundMessageSchema.safeParse(raw);
   if (!r.success) {
-    console.warn('[GhostPrompt] Mensaje webview inválido:', r.error.flatten(), raw);
+    getLogger('protocols').warn('webview-inbound-invalid', { issues: r.error.flatten(), raw });
     return undefined;
   }
   return r.data;
@@ -50,7 +51,7 @@ export function parseOutboundSettingsEnvelope(
 ): z.infer<typeof webviewOutboundSettingsEnvelopeSchema> | undefined {
   const r = webviewOutboundSettingsEnvelopeSchema.safeParse(raw);
   if (!r.success) {
-    console.error('[GhostPrompt] Payload `settings` inválido (host):', r.error.flatten(), raw);
+    getLogger('protocols').error('settings-envelope-invalid', { issues: r.error.flatten(), raw });
     return undefined;
   }
   return r.data;
@@ -65,7 +66,7 @@ export function parseOutboundSettingsEnvelope(
 export function parseWebviewOutboundMessage(raw: unknown): WebviewOutboundMessage | undefined {
   const r = webviewOutboundMessageSchema.safeParse(raw);
   if (!r.success) {
-    console.warn('[GhostPrompt] Mensaje saliente inválido:', r.error.flatten(), raw);
+    getLogger('protocols').warn('webview-outbound-invalid', { issues: r.error.flatten(), raw });
     return undefined;
   }
   return r.data;

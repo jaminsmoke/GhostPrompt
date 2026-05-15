@@ -2,8 +2,8 @@
 
 /**
  * Normaliza una ruta de workspace a formato de barra normalizada.
- * @param rel Ruta relativa al workspace.
- * @returns Ruta con barras `/` y sin espacios en los extremos.
+ * @param {string} rel Ruta relativa al workspace.
+ * @returns {string} Ruta con barras `/` y sin espacios en los extremos.
  */
 export function normalizeWorkspaceRelativePath(rel: string): string {
   return rel.replace(/\\/g, '/').trim();
@@ -11,9 +11,9 @@ export function normalizeWorkspaceRelativePath(rel: string): string {
 
 /**
  * Compara dos rutas de workspace normalizadas respetando mayúsculas en Unix.
- * @param a Primera ruta relativa.
- * @param b Segunda ruta relativa.
- * @returns True si las rutas coinciden tras normalizar y aplicar sensibilidad según plataforma.
+ * @param {string} a Primera ruta relativa.
+ * @param {string} b Segunda ruta relativa.
+ * @returns {boolean} True si las rutas coinciden tras normalizar y aplicar sensibilidad según plataforma.
  */
 export function workspaceRelativePathsMatch(a: string, b: string): boolean {
   const na = normalizeWorkspaceRelativePath(a);

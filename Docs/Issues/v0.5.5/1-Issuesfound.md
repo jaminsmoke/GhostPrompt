@@ -123,7 +123,7 @@ Referencias a rutas que ya no existen:
 
 **Archivo:** `tests/completionProvider.test.ts`
 
-Se agregaron casos para `enabledCompletionSources` explícito y multi-fuente, cubriendo el path actual de `src/core/sources.ts`.
+Se agregaron casos para `enabledCompletionSources` explícito y multi-fuente, cubriendo el path actual de `src/core/routing/sources.ts` (antes `src/core/sources.ts`).
 
 ---
 

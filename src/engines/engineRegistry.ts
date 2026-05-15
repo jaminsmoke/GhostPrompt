@@ -1,5 +1,5 @@
 import type { CompletionRequestOptions, CompletionResult } from '../core/types';
-import { getEnabledCompletionSources } from '../core/sources';
+import { getEnabledCompletionSources } from '../core/routing/sources';
 
 import { requestCopilotLmCompletion } from './copilot/copilotLmEngine';
 import { requestOpencodeCompletion } from './opencode/opencodeLmEngine';
@@ -27,8 +27,8 @@ const ollamaProvider: CompletionProvider = {
 
 /**
  * Obtiene el proveedor de completado para una fuente concreta.
- * @param source Fuente de completado solicitada.
- * @returns Proveedor de completado correspondiente a la fuente.
+ * @param {'copilot' | 'opencode' | 'ollama'} source Fuente de completado solicitada.
+ * @returns {CompletionProvider} Proveedor de completado correspondiente a la fuente.
  */
 export function getCompletionProviderForSource(
   source: 'copilot' | 'opencode' | 'ollama',
@@ -44,7 +44,7 @@ export function getCompletionProviderForSource(
 
 /**
  * Devuelve el proveedor de completado activo según la configuración.
- * @returns Proveedor de completado seleccionado.
+ * @returns {CompletionProvider} Proveedor de completado seleccionado.
  */
 export function getActiveCompletionProvider(): CompletionProvider {
   const sources = getEnabledCompletionSources();
@@ -54,7 +54,7 @@ export function getActiveCompletionProvider(): CompletionProvider {
 
 /**
  * Devuelve el tipo de proveedor de completado activo.
- * @returns Identificador de fuente activa de completado.
+ * @returns {'copilot' | 'opencode' | 'ollama'} Identificador de fuente activa de completado.
  */
 export function getCompletionProviderKind(): 'copilot' | 'opencode' | 'ollama' {
   const s = getEnabledCompletionSources();

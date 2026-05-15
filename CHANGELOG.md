@@ -2,6 +2,40 @@
 
 All notable changes to this project are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- **Sistema de logging unificado** (`src/system/log/`): `Logger` por módulo, canal **GhostPrompt Log**, persistencia NDJSON + Markdown bajo `globalStorageUri/ghostPrompt/logs/v1/` con cola asíncrona y rotación gzip de `events.ndjson`; settings `ghostPrompt.logLevel`, `ghostPrompt.logFileEnabled`, `ghostPrompt.logFileMaxBytes`; shim `ghostPrompt.debugSuggestions` + `flushLogCapture` en el pipeline `suggest`. Sustituye `SuggestionDebug`, `SuggestionLog` y `ConversationLog`.
+
+### Changed
+
+- **`src/core/routing/sources.ts`:** movido desde `src/core/sources.ts` (Fase G — routing); actualizar imports a `core/routing/sources` o seguir usando el barrel `core/index.ts`.
+- **`src/core/contracts/completion.ts` + `types.ts`:** tipos y contratos de completion viven en `contracts/`; `types.ts` reexporta para compatibilidad.
+- **`src/core/suggest/`** (antes `core/pipeline/`): orquestación del mensaje `suggest` en `runSuggest.ts` (antes `suggestPipeline.ts`), barrel `suggest/index.ts`; consumidores importan `core/suggest` o el barrel `core/index.ts`.
+- **`src/core/prompt/`** (`instruction.ts`, `normalize.ts`, barrel `prompt/index.ts`): prompt LM y post-proceso defensivo; el barrel `core/index.ts` reexporta vía `./prompt`.
+- **`src/core/presentation/`** (`loading.ts`, barrel `presentation/index.ts`): fases de carga host↔webview y textos de estado; el barrel `core/index.ts` reexporta `SuggestionLoadingPhase` / `suggestionLoadingStatusText` vía `./presentation`.
+- **`src/core/streaming/`** (`collect.ts`, barrel `streaming/index.ts`): `collectResponseText` para el stream del LM de VS Code; el barrel `core/index.ts` reexporta vía `./streaming`.
+- **`src/core/state/`** (`GhostPromptSessionStore.ts`): singleton host Sidebar+Panel (antes `core/session/`).
+- **`src/core/language/`** (`index.ts`): detección y resolución de idioma (antes `language.ts` en raíz).
+- **Limpieza `core/`:** eliminadas carpetas vacías `catalog/`, `pipeline/`, `session/` (restos previos a Fase G).
+- **`projectBootstrapContext`:** movido de `src/core/context/` a `src/core/memory/projectBootstrapContext.ts`; carpeta `core/context/` eliminada.
+- **`SuggestionRequestGovernor`:** movido de `src/core/governor/` a `src/system/policies/SuggestionRequestGovernor.ts`; carpeta `core/governor/` eliminada; importar desde `system/policies/...` (tests y referencia legacy).
+- **`npm run validate` / `check`:** incluye `compile` antes de `verify:webview-bundle`, de modo que tras `npm run clean` (borra `out/`) la verificación del bundle no falle por falta de `out/system/build/verifyWebviewBundle.js`.
+
+## [0.6.0] - 2026-05-14
+
+Versión **0.6.0**: reorganización de owners del dominio **suggestion** (roadmap v0.6) — el barrel `core` deja de reexportar motores y catálogos; catálogo merged multi-motor bajo `engines/catalog/`; pipeline con umbral mínimo de entrada; governor legacy fuera del API público del barrel; documentación (`Owners`, `core/README`, `ARCHITECTURE`) y tests alineados.
+
+### Changed
+
+- **Catálogo merged de modelos** (`listMergedSuggestionModels`): de `src/core/catalog/` a `src/engines/catalog/mergedModelCatalog.ts`. Ya no se reexporta desde `src/core/index.ts`; importar desde `src/engines/...` o el barrel `engines`.
+- **`api/settings/settingsPostMessage`**: listas por motor (`listSuggestionModels`, OpenCode, Ollama) importadas desde `engines/.../catalog`; tipos y routing de fuentes desde `core/types` y `core/routing/sources` (sin barrel `core/index`).
+- **`api/getters/workspaceGetters`**: tipos desde `core/types` (sin barrel `core/index`).
+- **Pipeline `suggest`** (`suggestPipeline.ts`): si el texto `trim` tiene menos de 3 caracteres, se emite `empty` con razón `too-short` sin llamar al LM ni fase `loading`.
+- **Barrel `src/core/index.ts`**: deja de reexportar catálogo Copilot (`modelCatalog`), `requestCompletion`, tipo `CompletionProvider` y funciones del registry, listas OpenCode/Ollama, y `SuggestionRequestGovernor`. Consumidores: rutas explícitas `engines/...` o `system/policies/SuggestionRequestGovernor` (legacy).
+- **`SuggestionRequestGovernor`**: en `src/system/policies/` para tests y referencia legacy; **no** participa en el pipeline `suggest` ni en el barrel `core/index.ts`.
+
 ## [0.5.3] - 2026-05-13
 
 Versión **0.5.3**: `host/` desmantelado en dominios canónicos `api/` + `vscode/` + `core/pipeline/`. `projectMemory/` movido a `core/memory/` con subcarpetas.

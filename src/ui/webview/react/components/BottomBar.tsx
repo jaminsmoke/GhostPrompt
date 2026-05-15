@@ -10,9 +10,9 @@ const successPatterns = /Modelo listo|Suggestion aceptada|Sugerencia recibida/i;
 
 /**
  * Devuelve el icono de estado para el mensaje de estado.
- * @param status Texto de estado.
- * @param isLoading Indica si el estado es de carga.
- * @returns Icono de estado o `null` si no hay icono.
+ * @param {string} status Texto de estado.
+ * @param {boolean} isLoading Indica si el estado es de carga.
+ * @returns {string | null} Icono de estado o `null` si no hay icono.
  */
 function statusIcon(status: string, isLoading: boolean): string | null {
   if (isLoading) {
@@ -29,8 +29,8 @@ function statusIcon(status: string, isLoading: boolean): string | null {
 
 /**
  * Barra inferior de estado y botón de envío para el webview.
- * @param props Propiedades del componente BottomBar.
- * @returns Elemento JSX con estado y botón de envío.
+ * @param {BottomBarProps} props Propiedades del componente BottomBar.
+ * @returns {import('react').JSX.Element} Elemento JSX con estado y botón de envío.
  */
 export function BottomBar(props: BottomBarProps) {
   const { status, isLoading, canSend, onSend } = props;
@@ -44,9 +44,9 @@ export function BottomBar(props: BottomBarProps) {
       : 'text-[var(--vscode-descriptionForeground)]';
 
   return (
-    <div className="flex flex-col gap-1 mt-2 pt-2 border-t border-[var(--vscode-widget-border)]">
+    <div className="flex flex-col gap-1 mt-2 pt-2 border-t border-(--vscode-widget-border)">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 min-h-[20px]">
+        <div className="flex items-center gap-2 min-h-5">
           {icon !== null && (
             <span className={`text-xs ${isLoading ? 'animate-spin' : ''}`} aria-hidden="true">
               {icon}
@@ -63,7 +63,7 @@ export function BottomBar(props: BottomBarProps) {
         </div>
         <button
           id="send-btn"
-          className="inline-flex items-center justify-center rounded-md bg-[var(--vscode-button-background)] px-4 py-1.5 text-sm font-semibold text-[var(--vscode-button-foreground)] shadow-sm transition hover:bg-[var(--vscode-button-hoverBackground)] disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center justify-center rounded-md bg-(--vscode-button-background) px-4 py-1.5 text-sm font-semibold text-(--vscode-button-foreground) shadow-sm transition hover:bg-(--vscode-button-hoverBackground) disabled:cursor-not-allowed disabled:opacity-50"
           type="button"
           onClick={onSend}
           disabled={!canSend}
@@ -71,7 +71,7 @@ export function BottomBar(props: BottomBarProps) {
           Enviar ↵
         </button>
       </div>
-      <span className="text-[10px] text-[var(--vscode-descriptionForeground)]">
+      <span className="text-[10px] text-(--vscode-descriptionForeground)">
         Tab: aceptar sugerencia · Enter: enviar · Shift+Enter: nueva línea
       </span>
     </div>

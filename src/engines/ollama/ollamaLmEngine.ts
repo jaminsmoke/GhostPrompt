@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-import { buildCompletionInstruction } from '../../core/instruction';
-import { normalizeSuggestion } from '../../core/normalize';
+import { buildCompletionInstruction } from '../../core/prompt/instruction';
+import { normalizeSuggestion } from '../../core/prompt/normalize';
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
@@ -13,8 +13,8 @@ import { listModels, generate } from './ollamaApiClient';
 
 /**
  * Describe un modelo Ollama para el pipeline de sugerencias.
- * @param modelName Nombre del modelo Ollama.
- * @returns Descriptor de modelo para sugerencias.
+ * @param {string} modelName Nombre del modelo Ollama.
+ * @returns {SuggestionModelDescriptor} Descriptor de modelo para sugerencias.
  */
 function describeOllamaModel(modelName: string): SuggestionModelDescriptor {
   return {
@@ -27,8 +27,8 @@ function describeOllamaModel(modelName: string): SuggestionModelDescriptor {
 
 /**
  * Resuelve el modelo Ollama a usar según preferencia y configuración.
- * @param preferredModelId Modelo preferido o "auto".
- * @returns Nombre del modelo seleccionado o undefined.
+ * @param {string | undefined} preferredModelId Modelo preferido o "auto".
+ * @returns {Promise<string | undefined>} Nombre del modelo seleccionado o undefined.
  */
 async function resolveOllamaModel(
   preferredModelId: string | undefined,
@@ -51,9 +51,9 @@ async function resolveOllamaModel(
 
 /**
  * Solicita una completación a Ollama para un texto de usuario.
- * @param userText Texto del usuario a completar.
- * @param options Opciones de completion del pipeline.
- * @returns Resultado de completion con sugerencia o error.
+ * @param {string} userText Texto del usuario a completar.
+ * @param {CompletionRequestOptions} options Opciones de completion del pipeline.
+ * @returns {Promise<CompletionResult>} Resultado de completion con sugerencia o error.
  */
 export async function requestOllamaCompletion(
   userText: string,

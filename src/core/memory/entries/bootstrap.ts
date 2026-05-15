@@ -2,8 +2,8 @@ import { PROJECT_BOOTSTRAP_ENTRY_KIND, type ProjectMemoryBootstrapStoredItem } f
 
 /**
  * Comprueba si un valor coincide con el contrato de item bootstrap de project memory.
- * @param x Valor sin tipar a validar.
- * @returns True si el valor es un item bootstrap válido.
+ * @param {unknown} x Valor sin tipar a validar.
+ * @returns {x is ProjectMemoryBootstrapStoredItem} True si el valor es un item bootstrap válido.
  */
 export function isProjectMemoryBootstrapStoredItem(
   x: unknown,
@@ -29,9 +29,9 @@ export function isProjectMemoryBootstrapStoredItem(
 
 /**
  * Elimina ítems bootstrap obsoletos (fichero borrado o contenido tocado vs mtime/hash).
- * @param items Ítems bootstrap almacenados a validar.
- * @param probes Resultado de sondeo de rutas con mtime/hash actuales.
- * @returns Ítems bootstrap que siguen siendo válidos según probes.
+ * @param {ProjectMemoryBootstrapStoredItem[]} items Ítems bootstrap almacenados a validar.
+ * @param {Readonly<Partial<Record<string, { readonly mtimeMs: number; readonly sha256: string }>>>} probes Resultado de sondeo de rutas con mtime/hash actuales.
+ * @returns {ProjectMemoryBootstrapStoredItem[]} Ítems bootstrap que siguen siendo válidos según probes.
  */
 export function pruneBootstrapStoredAgainstFileProbes(
   items: ProjectMemoryBootstrapStoredItem[],
@@ -49,10 +49,10 @@ export function pruneBootstrapStoredAgainstFileProbes(
 
 /**
  * Supervivientes validados contra `probes` + piezas vivas (`live` gana si comparten `relativePath`).
- * @param prevBootstrap Items bootstrap previos almacenados.
- * @param probes Resultado de sondeo de rutas para los ítems previos.
- * @param liveAsStored Piezas bootstrap vivas convertidas a item persistible.
- * @returns Bootstrap mergeado con prioridad de piezas vivas.
+ * @param {readonly ProjectMemoryBootstrapStoredItem[]} prevBootstrap Items bootstrap previos almacenados.
+ * @param {Readonly<Partial<Record<string, { readonly mtimeMs: number; readonly sha256: string }>>>} probes Resultado de sondeo de rutas para los ítems previos.
+ * @param {readonly ProjectMemoryBootstrapStoredItem[]} liveAsStored Piezas bootstrap vivas convertidas a item persistible.
+ * @returns {ProjectMemoryBootstrapStoredItem[]} Bootstrap mergeado con prioridad de piezas vivas.
  */
 export function mergeValidatedBootstrapWithLive(
   prevBootstrap: readonly ProjectMemoryBootstrapStoredItem[],
@@ -68,9 +68,9 @@ export function mergeValidatedBootstrapWithLive(
 
 /**
  * Compara rutas bootstrap para orden estable en project memory.
- * @param a Primera ruta relativa de bootstrap.
- * @param b Segunda ruta relativa de bootstrap.
- * @returns Valor de comparación para ordenar las rutas.
+ * @param {string} a Primera ruta relativa de bootstrap.
+ * @param {string} b Segunda ruta relativa de bootstrap.
+ * @returns {number} Valor de comparación para ordenar las rutas.
  */
 function bootstrapStoredSortComparison(a: string, b: string): number {
   const d = bootstrapRelativePathBucketStable(a) - bootstrapRelativePathBucketStable(b);
@@ -82,8 +82,8 @@ function bootstrapStoredSortComparison(a: string, b: string): number {
 
 /**
  * Calcula un bucket estable para ordenar rutas bootstrap con prioridad a README/package.
- * @param rel Ruta relativa de bootstrap.
- * @returns Bucket numérico para orden estable.
+ * @param {string} rel Ruta relativa de bootstrap.
+ * @returns {number} Bucket numérico para orden estable.
  */
 function bootstrapRelativePathBucketStable(rel: string): number {
   const lower = rel.toLowerCase();
@@ -96,9 +96,9 @@ function bootstrapRelativePathBucketStable(rel: string): number {
 
 /**
  * Reemplaza todo el subconjunto `bootstrap` por `nextBootstrap`; conserva otros `items`.
- * @param existingItems Items existentes en el store, incluyendo bootstrap y otros tipos.
- * @param nextBootstrap Nuevo conjunto de items bootstrap a persistir.
- * @returns Items con bootstrap reemplazado.
+ * @param {readonly unknown[]} existingItems Items existentes en el store, incluyendo bootstrap y otros tipos.
+ * @param {readonly ProjectMemoryBootstrapStoredItem[]} nextBootstrap Nuevo conjunto de items bootstrap a persistir.
+ * @returns {unknown[]} Items con bootstrap reemplazado.
  */
 export function mergeEntriesReplacingBootstrapSubset(
   existingItems: readonly unknown[],

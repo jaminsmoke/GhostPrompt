@@ -2,7 +2,7 @@
  * Aplica cambios de configuración originados en el webview (`updateSetting`).
  */
 import * as vscode from 'vscode';
-import { ghostPromptSessionStore } from '../../core/session/GhostPromptSessionStore';
+import { ghostPromptSessionStore } from '../../core/state/GhostPromptSessionStore';
 import type { WebviewInboundMessage } from '../protocols/webviewProtocols';
 
 /**

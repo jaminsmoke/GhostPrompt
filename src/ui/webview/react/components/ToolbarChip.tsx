@@ -48,8 +48,8 @@ const renderToggleButton = (
             ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
             ${
               isOpen
-                ? 'border-[var(--vscode-badge-background)] bg-[var(--vscode-badge-background)] text-[var(--vscode-badge-foreground)]'
-                : 'border-[var(--vscode-widget-border)] bg-[var(--vscode-sideBar-background)] text-[var(--vscode-sideBar-foreground)] hover:bg-[var(--vscode-list-hoverBackground)]'
+                ? 'border-(--vscode-badge-background) bg-(--vscode-badge-background) text-(--vscode-badge-foreground)'
+                : 'border-(--vscode-widget-border) bg-(--vscode-sideBar-background) text-(--vscode-sideBar-foreground) hover:bg-(--vscode-list-hoverBackground)'
             }
             ${compact ? 'text-xs px-1.5 py-0.5' : ''}`;
 
@@ -64,7 +64,7 @@ const renderToggleButton = (
         disabled={disabled}
         aria-expanded="true"
       >
-        <span className={`truncate ${compact ? 'max-w-[80px]' : 'max-w-[140px]'}`}>{label}</span>
+        <span className={`truncate ${compact ? 'max-w-20' : 'max-w-35'}`}>{label}</span>
         <span className={`transition-transform text-[10px] ${isOpen ? 'rotate-180' : ''}`}>▾</span>
       </button>
     );
@@ -80,7 +80,7 @@ const renderToggleButton = (
       disabled={disabled}
       aria-expanded="false"
     >
-      <span className={`truncate ${compact ? 'max-w-[80px]' : 'max-w-[140px]'}`}>{label}</span>
+      <span className={`truncate ${compact ? 'max-w-20' : 'max-w-35'}`}>{label}</span>
       <span className={`transition-transform text-[10px] ${isOpen ? 'rotate-180' : ''}`}>▾</span>
     </button>
   );
@@ -88,8 +88,8 @@ const renderToggleButton = (
 
 /**
  * Chip de la barra superior que gestiona estados abiertos y eventos de cierre.
- * @param props Propiedades del componente ToolbarChip.
- * @returns Elemento JSX para el chip de la barra superior.
+ * @param {ToolbarChipProps} props Propiedades del componente ToolbarChip.
+ * @returns {import('react').JSX.Element} Elemento JSX para el chip de la barra superior.
  */
 export function ToolbarChip(props: ToolbarChipProps) {
   const { label, chipLabel, tooltip, isOpen, onToggle, onClose, children, id, compact, disabled } =
@@ -132,7 +132,7 @@ export function ToolbarChip(props: ToolbarChipProps) {
         {renderToggleButton(isOpen, id, tooltip, disabled, compact, onToggle, label)}
 
         {isOpen && (
-          <div className="absolute top-full left-0 z-50 mt-0.5 min-w-[180px] rounded-md border border-[var(--vscode-dropdown-border)] bg-[var(--vscode-dropdown-background)] shadow-lg">
+          <div className="absolute top-full left-0 z-50 mt-0.5 min-w-45 rounded-md border border-(--vscode-dropdown-border) bg-(--vscode-dropdown-background) shadow-lg">
             {children}
           </div>
         )}

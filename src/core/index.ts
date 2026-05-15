@@ -1,19 +1,18 @@
 /**
  * @file Punto de entrada público del dominio "core" (barrel).
  *
- * Lógica pura de suggestions: tipos, instrucción, normalización, streaming,
- * governor, session, catálogo merged, context bootstrap, y resolución de fuentes.
+ * Contiene la lógica central de suggestions, incluyendo tipos, prompt, presentation, streaming,
+ * lenguaje, estado compartido host, context bootstrap, resolución de fuentes y sugerencias.
+ * El `SuggestionRequestGovernor` se mantiene como legacy en `system/policies/` y no se reexporta desde aquí.
  *
- * El **host** enruta por modelo y fuentes: `getCompletionProviderForSource` +
- * `resolveCompletionSourceForRequest` (`sources.ts`). Con una sola fuente,
- * `getActiveCompletionProvider()` sigue siendo válido; con varias fuentes y `auto`,
- * el UI puede seguir mostrando Copilot como "primario" para el kind legacy.
+ * Motores y catálogos (`listSuggestionModels`, registry, `requestCopilotLmCompletion`, …)
+ * viven en `engines/` y no se reexportan aquí para evitar que `core` sea pasarela hacia Copilot/OpenCode/Ollama.
  *
- * **Alias:** `requestCompletion` reexporta solo `requestCopilotLmCompletion` por
- * compatibilidad histórica; el flujo webview usa los proveedores registrados en engines.
+ * Rutado de fuentes: `getEnabledCompletionSources`, `resolveCompletionSourceForRequest`.
+ * Invocación al LM: `getCompletionProviderForSource` en `engines/engineRegistry.ts`.
  */
 export * from './types';
-export { suggestionLoadingStatusText, type SuggestionLoadingPhase } from './loading';
+export { suggestionLoadingStatusText, type SuggestionLoadingPhase } from './presentation';
 export {
   buildProjectBootstrapCardLines,
   collectProjectBootstrapPieces,
@@ -27,21 +26,10 @@ export {
   summarizePackageJsonForProjectCard,
   truncateProjectCardText,
   type ProjectBootstrapPiece,
-} from './context/projectBootstrapContext';
-export * from './instruction';
-export * from './normalize';
+} from './memory/projectBootstrapContext';
+export * from './prompt';
 export * from './language';
 export * from './streaming';
-export * from '../engines/copilot/catalog/modelCatalog';
-
-export { requestCopilotLmCompletion as requestCompletion } from '../engines/copilot/copilotLmEngine';
-
-export type { CompletionProvider } from '../engines/engineRegistry';
-export {
-  getActiveCompletionProvider,
-  getCompletionProviderForSource,
-  getCompletionProviderKind,
-} from '../engines/engineRegistry';
 export {
   getCompletionUiKind,
   getEnabledCompletionSources,
@@ -49,11 +37,7 @@ export {
   looksLikeOllamaModelId,
   resolveCompletionSourceForRequest,
   type CompletionSourceId,
-} from './sources';
-export { listMergedSuggestionModels } from './catalog/mergedModelCatalog';
-export { listOpencodeSuggestionModels } from '../engines/opencode/catalog/opencodeModelCatalog';
-export { listOllamaSuggestionModels } from '../engines/ollama/catalog/ollamaModelCatalog';
-export { SuggestionRequestGovernor } from './governor/SuggestionRequestGovernor';
-export { GhostPromptSessionStore } from './session/GhostPromptSessionStore';
-export type { GhostPromptSuggestDeps } from './pipeline';
-export { runGhostPromptSuggestPipeline, handleGhostPromptSuggest } from './pipeline';
+} from './routing/sources';
+export { GhostPromptSessionStore } from './state/GhostPromptSessionStore';
+export type { GhostPromptSuggestDeps } from './suggest';
+export { runGhostPromptSuggestPipeline, handleGhostPromptSuggest } from './suggest';

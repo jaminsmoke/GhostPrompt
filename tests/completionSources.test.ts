@@ -24,7 +24,7 @@ import {
   looksLikeOllamaModelId,
   looksLikeOpencodeModelId,
   resolveCompletionSourceForRequest,
-} from '../src/core/sources';
+} from '../src/core/routing/sources';
 
 describe('completionSources', () => {
   beforeEach(() => {

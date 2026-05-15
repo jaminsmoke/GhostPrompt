@@ -1,0 +1,1 @@
+export { collectResponseText } from './collect';

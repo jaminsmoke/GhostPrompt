@@ -47,7 +47,7 @@ Webview.postMessage({ type: 'suggest', text, captureId })
     ▼ (si válido)
 `api/protocols/inboundHandlers.ts` — dispatchGhostPromptInboundMessage
     ├── init → handleGhostPromptInboundInit
-    ├── suggest → core/pipeline → handleGhostPromptSuggest
+    ├── suggest → core/suggest → handleGhostPromptSuggest
     ├── draftChanged → handleGhostPromptInboundDraftChanged
     ├── updateSetting → api/settings → applyWebviewUpdateSetting
     ├── accept → handleGhostPromptInboundAccept (log suggestion)
@@ -93,8 +93,8 @@ Los schemas canónicos viven en `system/contracts/webviewMessageSchemas.ts`. `ap
 | Importa de                               | Por qué                                                    |
 | ---------------------------------------- | ---------------------------------------------------------- |
 | `core/`                                  | Types, `listSuggestionModels`, `getCompletionUiKind`, etc. |
-| `core/session/GhostPromptSessionStore`   | Estado compartido (draft, language, model)                 |
-| `core/pipeline`                          | `handleGhostPromptSuggest` para el mensaje `suggest`       |
+| `core/state/GhostPromptSessionStore`     | Estado compartido (draft, language, model)                 |
+| `core/suggest`                           | `handleGhostPromptSuggest` para el mensaje `suggest`       |
 | `system/contracts/webviewMessageSchemas` | Schemas Zod canónicos                                      |
 | `system/log/*`                           | Logging de conversation y suggestions                      |
 | `system/debug/SuggestionDebug`           | Debug toggle check                                         |

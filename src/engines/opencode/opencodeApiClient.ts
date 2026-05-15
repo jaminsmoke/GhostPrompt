@@ -19,8 +19,8 @@ let sessionPool: PoolEntry[] = [];
 
 /**
  * Construye la URL base del cliente OpenCode.
- * @param options Opciones de cliente que incluyen host y puerto.
- * @returns URL base HTTP.
+ * @param {OpenCodeClientOptions} options Opciones de cliente que incluyen host y puerto.
+ * @returns {string} URL base HTTP.
  */
 function buildBaseUrl(options: OpenCodeClientOptions): string {
   const hostname = options.hostname ?? '127.0.0.1';
@@ -30,8 +30,8 @@ function buildBaseUrl(options: OpenCodeClientOptions): string {
 
 /**
  * Construye las cabeceras HTTP para el cliente OpenCode.
- * @param options Opciones que pueden incluir token de autenticación.
- * @returns Cabeceras de petición.
+ * @param {OpenCodeClientOptions} options Opciones que pueden incluir token de autenticación.
+ * @returns {Record<string, string>} Cabeceras de petición.
  */
 function buildHeaders(options: OpenCodeClientOptions): Record<string, string> {
   const headers: Record<string, string> = {};
@@ -43,8 +43,8 @@ function buildHeaders(options: OpenCodeClientOptions): Record<string, string> {
 
 /**
  * Crea e inicializa el cliente OpenCode SDK.
- * @param options Opciones de configuración de cliente.
- * @returns Instancia de cliente OpenCode.
+ * @param {OpenCodeClientOptions} options Opciones de configuración de cliente.
+ * @returns {Promise<unknown>} Instancia de cliente OpenCode.
  */
 export async function createOpenCodeClient(options: OpenCodeClientOptions): Promise<unknown> {
   const baseUrl = buildBaseUrl(options);
@@ -57,7 +57,7 @@ export async function createOpenCodeClient(options: OpenCodeClientOptions): Prom
 /**
  * Devuelve la instancia global del cliente OpenCode.
  * @throws Error Si el cliente no está inicializado.
- * @returns Cliente global previamente inicializado.
+ * @returns {unknown} Cliente global previamente inicializado.
  */
 export function getGlobalClient(): unknown {
   if (!globalClient) {
@@ -68,8 +68,8 @@ export function getGlobalClient(): unknown {
 
 /**
  * Verifica la salud de la conexión OpenCode.
- * @param client Cliente OpenCode opcional; usa el global si no se pasa.
- * @returns True si la conexión es válida.
+ * @param {unknown} [client] Cliente OpenCode opcional; usa el global si no se pasa.
+ * @returns {Promise<boolean>} True si la conexión es válida.
  */
 export async function healthCheck(client?: unknown): Promise<boolean> {
   const c = client ?? getGlobalClient();
@@ -83,8 +83,8 @@ export async function healthCheck(client?: unknown): Promise<boolean> {
 
 /**
  * Crea una sesión OpenCode interna usando el cliente proporcionado.
- * @param client Cliente OpenCode.
- * @returns ID de sesión creado.
+ * @param {unknown} client Cliente OpenCode.
+ * @returns {Promise<string>} ID de sesión creado.
  */
 async function createSessionInternal(client: unknown): Promise<string> {
   const result = await (
@@ -95,8 +95,9 @@ async function createSessionInternal(client: unknown): Promise<string> {
 
 /**
  * Elimina una sesión OpenCode interna.
- * @param sessionId ID de sesión a eliminar.
- * @param client Cliente OpenCode.
+ * @param {string} sessionId ID de sesión a eliminar.
+ * @param {unknown} client Cliente OpenCode.
+ * @returns {Promise<void>} Promise que indica cuando la sesión se ha eliminado.
  */
 async function deleteSessionInternal(sessionId: string, client: unknown): Promise<void> {
   await (client as { session: { delete: (opts: unknown) => Promise<unknown> } }).session.delete({
@@ -106,13 +107,13 @@ async function deleteSessionInternal(sessionId: string, client: unknown): Promis
 
 /**
  * Envía un prompt de OpenCode a una sesión existente.
- * @param sessionId ID de la sesión de OpenCode.
- * @param model Modelo objetivo con providerID y modelID.
- * @param model.providerID Identificador del proveedor OpenCode.
- * @param model.modelID Identificador del modelo OpenCode.
- * @param parts Partes del mensaje a enviar.
- * @param client Cliente OpenCode opcional.
- * @returns Texto generado por la petición.
+ * @param {string} sessionId ID de la sesión de OpenCode.
+ * @param {{ providerID: string; modelID: string }} model Modelo objetivo con providerID y modelID.
+ * @param {string} model.providerID Identificador del proveedor OpenCode.
+ * @param {string} model.modelID Identificador del modelo OpenCode.
+ * @param {Array<{ type: string; text: string }>} parts Partes del mensaje a enviar.
+ * @param {unknown} [client] Cliente OpenCode opcional.
+ * @returns {Promise<string>} Texto generado por la petición.
  */
 export async function promptOpenCode(
   sessionId: string,
@@ -132,10 +133,10 @@ export async function promptOpenCode(
 
 /**
  * Crea un stream de texto para una sesión OpenCode.
- * @param _sessionId ID de sesión de OpenCode.
- * @param signal Señal de abort para cancelar el stream.
- * @param client Cliente OpenCode opcional.
- * @returns Generador asíncrono de texto incremental.
+ * @param {string} _sessionId ID de sesión de OpenCode.
+ * @param {globalThis.AbortSignal} signal Señal de abort para cancelar el stream.
+ * @param {unknown} [client] Cliente OpenCode opcional.
+ * @returns {AsyncGenerator<string>} Generador asíncrono de texto incremental.
  */
 export async function* promptStreamOpenCode(
   _sessionId: string,
@@ -160,8 +161,8 @@ export async function* promptStreamOpenCode(
 
 /**
  * Obtiene una sesión OpenCode reutilizando una existente o creando una nueva.
- * @param client Cliente OpenCode opcional.
- * @returns ID de sesión disponible.
+ * @param {unknown} [client] Cliente OpenCode opcional.
+ * @returns {Promise<string>} ID de sesión disponible.
  */
 export async function getSession(client?: unknown): Promise<string> {
   evictStaleSessions();
@@ -183,7 +184,8 @@ export async function getSession(client?: unknown): Promise<string> {
 
 /**
  * Cierra todas las sesiones OpenCode activas en la piscina.
- * @param client Cliente OpenCode opcional.
+ * @param {unknown} [client] Cliente OpenCode opcional.
+ * @returns {Promise<void>} Promise que indica cuando se han cerrado las sesiones.
  */
 export async function closeAllSessions(client?: unknown): Promise<void> {
   const c = client ?? getGlobalClient();
@@ -201,8 +203,8 @@ export function resetClient(): void {
 
 /**
  * Determina si una sesión de OpenCode ha caducado.
- * @param entry Entrada de sesión con la última vez usada.
- * @returns True si la sesión excedió el TTL.
+ * @param {PoolEntry} entry Entrada de sesión con la última vez usada.
+ * @returns {boolean} True si la sesión excedió el TTL.
  */
 function isSessionStale(entry: PoolEntry): boolean {
   return Date.now() - entry.lastUsed > POOL_TTL_MS;
@@ -210,7 +212,7 @@ function isSessionStale(entry: PoolEntry): boolean {
 
 /**
  * Elimina sesiones caducadas de la piscina de OpenCode.
- * @returns Void.
+ * @returns {void}
  */
 function evictStaleSessions(): void {
   sessionPool = sessionPool.filter((e) => {
@@ -224,8 +226,8 @@ function evictStaleSessions(): void {
 
 /**
  * Extrae el ID de sesión del resultado de la API OpenCode.
- * @param result Resultado bruto devuelto por la API.
- * @returns ID de sesión o cadena vacía si no se encuentra.
+ * @param {unknown} result Resultado bruto devuelto por la API.
+ * @returns {string} ID de sesión o cadena vacía si no se encuentra.
  */
 function extractSessionId(result: unknown): string {
   if (!result || typeof result !== 'object') {
@@ -237,8 +239,8 @@ function extractSessionId(result: unknown): string {
 
 /**
  * Extrae el texto generado del resultado de prompt OpenCode.
- * @param result Resultado bruto de la API.
- * @returns Texto concatenado del prompt.
+ * @param {unknown} result Resultado bruto de la API.
+ * @returns {string} Texto concatenado del prompt.
  */
 function extractPromptText(result: unknown): string {
   if (!result || typeof result !== 'object') {
@@ -257,8 +259,8 @@ function extractPromptText(result: unknown): string {
 
 /**
  * Extrae texto delta de un evento de stream OpenCode.
- * @param data Evento bruto de stream.
- * @returns Texto delta o undefined si no hay texto.
+ * @param {unknown} data Evento bruto de stream.
+ * @returns {string | undefined} Texto delta o undefined si no hay texto.
  */
 function extractDeltaText(data: unknown): string | undefined {
   if (!data || typeof data !== 'object') {

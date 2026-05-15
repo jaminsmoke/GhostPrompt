@@ -13,6 +13,12 @@ import type {
   UpdateSettingMessage,
 } from '../types';
 
+/**
+ * Determina si un mensaje de borrador remoto proviene de otra vista GhostPrompt.
+ * @param {InboundMessage} message Mensaje entrante desde el host.
+ * @param {string} viewId Identificador de la vista actual.
+ * @returns {message is Extract<InboundMessage, { type: 'draftSync' }>} True si es borrador sincronizado de otra vista.
+ */
 export function isDraftSyncForAnotherView(
   message: InboundMessage,
   viewId: string,
@@ -20,6 +26,12 @@ export function isDraftSyncForAnotherView(
   return message.type === 'draftSync' && Boolean(viewId) && message.originViewId !== viewId;
 }
 
+/**
+ * Comprueba si la sugerencia debe saltarse porque el mensaje es un borrador remoto.
+ * @param {InboundMessage} message Mensaje entrante desde el host.
+ * @param {string} viewId Identificador de la vista actual.
+ * @returns {boolean} True si debe saltarse la sugerencia.
+ */
 export function shouldSkipSuggestionOnRemoteDraft(
   message: InboundMessage,
   viewId: string,
@@ -36,6 +48,12 @@ export type GhostPromptInboundCaptureCarrier = {
 /**
  * Actualiza el ref de correlación y decide si el mensaje debe ignorarse (respuestas obsoletas).
  * Expuesto para tests unitarios del filtro.
+ */
+/**
+ * Actualiza el ref de correlación y decide si el mensaje entrante debe descartar la respuesta obsoleta.
+ * @param {number} refBefore Ref anterior de captura.
+ * @param {GhostPromptInboundCaptureCarrier} message Mensaje entrante con posible captureId/broadcast.
+ * @returns {{ refAfter: number; drop: boolean }} Ref actualizado y bandera de descarte.
  */
 export function ghostPromptApplyInboundCaptureRef(
   refBefore: number,
@@ -81,6 +99,11 @@ const vsCodeApi =
  * Envía un mensaje desde el webview React al host de VS Code.
  * @param message Payload outbound que se transmite al host.
  */
+/**
+ * Envía un mensaje desde el webview React al host de VS Code.
+ * @param {OutboundMessage} message Payload outbound que se transmite al host.
+ * @returns {void}
+ */
 export function postToHost(message: OutboundMessage): void {
   vsCodeApi?.postMessage(message);
 }
@@ -88,7 +111,7 @@ export function postToHost(message: OutboundMessage): void {
 /**
  * Hook principal de GhostPrompt para el webview React.
  * Gestiona estado local, comunicación con el host y sugerencias.
- * @returns API y estado de GhostPrompt para el componente.
+ * @returns {object} API y estado de GhostPrompt para el componente.
  */
 export function useGhostPrompt() {
   const [viewId] = useState(getInitialViewId);
@@ -199,10 +222,7 @@ export function useGhostPrompt() {
   }, []);
 
   const makeToggle = useCallback(
-    <K extends UpdateSettingMessage['key']>(
-      key: K,
-      value: Extract<UpdateSettingMessage, { key: K }>['value'],
-    ) => {
+    (key: string, value: string) => {
       sendUpdateSetting({ type: 'updateSetting', key, value } as UpdateSettingMessage);
     },
     [sendUpdateSetting],
@@ -396,7 +416,7 @@ export function useGhostPrompt() {
         window.clearTimeout(debounceTimer.current);
       }
     };
-  }, [requestSuggestion, suggestionDebounceMs, text]);
+  }, [requestSuggestion, suggestionDebounceMs, text, isGhostUiAllowed]);
 
   useEffect(() => {
     syncTextareaHeight();

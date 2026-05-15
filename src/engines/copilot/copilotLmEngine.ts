@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 
-import { buildCompletionInstruction } from '../../core/instruction';
+import { buildCompletionInstruction } from '../../core/prompt/instruction';
 import { describeModel, selectModelByPolicy } from './catalog/modelCatalog';
-import { normalizeSuggestion } from '../../core/normalize';
+import { normalizeSuggestion } from '../../core/prompt/normalize';
 import { collectResponseText } from '../../core/streaming';
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
@@ -15,9 +15,9 @@ let premiumQuotaBlocked = false;
 
 /**
  * Solicita una sugerencia a Copilot LM y normaliza el resultado para GhostPrompt.
- * @param userText Texto de usuario actual que debe completarse.
- * @param options Configuración de la petición, incluyendo modelo, timeout y contexto.
- * @returns Resultado de la petición de completado, con sugerencia o razón vacía.
+ * @param {string} userText Texto de usuario actual que debe completarse.
+ * @param {CompletionRequestOptions} options Configuración de la petición, incluyendo modelo, timeout y contexto.
+ * @returns {Promise<CompletionResult>} Resultado de la petición de completado, con sugerencia o razón vacía.
  * @throws Cuando la petición se cancela mientras se procesa la respuesta.
  */
 export async function requestCopilotLmCompletion(
@@ -101,8 +101,8 @@ export async function requestCopilotLmCompletion(
 
 /**
  * Detecta si el mensaje de error coincide con el bloqueo de cuota premium de Copilot.
- * @param message Mensaje devuelto por la API de Copilot.
- * @returns True cuando el error indica que se alcanzó cuota premium.
+ * @param {string} message Mensaje devuelto por la API de Copilot.
+ * @returns {boolean} True cuando el error indica que se alcanzó cuota premium.
  */
 function isPremiumQuotaError(message: string): boolean {
   const normalized = message.toLowerCase();
@@ -113,6 +113,11 @@ function isPremiumQuotaError(message: string): boolean {
   );
 }
 
+/**
+ * Comprueba si el texto devuelto por Copilot parece una negativa de asistencia.
+ * @param {string} text Texto de respuesta del modelo.
+ * @returns {boolean} True si el texto se interpreta como una negativa de servicio.
+ */
 function looksLikeCopilotRefusal(text: string): boolean {
   const normalized = text.trim().toLowerCase();
   if (!normalized) {

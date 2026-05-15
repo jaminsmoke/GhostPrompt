@@ -1,151 +1,110 @@
-# `core/` — Lógica pura de suggestions
+# `core/` — Dominio de suggestions
 
-> Dominio canónico que contiene toda la lógica de negocio independiente de VS Code, webview UI y motores específicos.
+> Valor central del producto: **cómo se pide, correlaciona, cancela y entrega** una suggestion, más contratos compartidos con los motores. No infra genérica de VS Code ni composición de listas solo para chips de UI.
 
----
-
-## Rol
-
-`core/` es el **corazón** de GhostPrompt. Contiene la lógica pura de suggestions: tipos, instrucción del LM, normalización, streaming, resolución de idioma, estados de loading, fuentes de completion, catálogo unificado, gobernador de peticiones, sesión compartida y orquestación del pipeline.
-
-**No debe contener:**
-
-- Integración con VS Code API (`vscode.workspace`, `vscode.window`, `WebviewViewProvider`)
-- HTML/CSP generation
-- Protocolos de mensajes webview↔host (eso es `api/`)
-- Implementaciones de motores específicos (eso es `engines/`)
+**Roadmap de reorganización:** [`Docs/Plans/Roadmaps/v0.6/01-core-domain-reorganization.md`](../../Docs/Plans/Roadmaps/v0.6/01-core-domain-reorganization.md)  
+**Ownership global:** [`Docs/Owners.md`](../../Docs/Owners.md)
 
 ---
 
-## Estructura
+## Qué sí entra en `core/`
+
+- Tipos y resultados de completion (`types.ts` → `contracts/completion.ts`).
+- Instrucción y post-proceso del texto devuelto (`prompt/instruction.ts`, `prompt/normalize.ts`) — en v0.6 se pretende **adelgazar** heurísticas; ver roadmap fase E.
+- Streaming de texto LM (`streaming/collect.ts` + barrel `streaming/index.ts`), idioma de suggestion (`language/index.ts`), fases de carga UI (`presentation/loading.ts`).
+- Resolución de **fuentes** y routing a motor (`routing/sources.ts`).
+- Estado compartido host del ciclo suggestion (`state/GhostPromptSessionStore.ts`).
+- Orquestación del mensaje webview `suggest` (`suggest/`).
+- Contexto bootstrap de proyecto (`memory/projectBootstrapContext.ts`) y memoria persistente (`memory/`) mientras sigan en el producto (decisión v0.6 fase D).
+- `SuggestionRequestGovernor` (**legacy** en `system/policies/`; **no** en el hot path; **no** en el barrel `index.ts`).
+
+## Qué no debe vivir aquí
+
+- **Lista unificada multi-motor para el selector** → `engines/catalog/mergedModelCatalog.ts` (`listMergedSuggestionModels`).
+- Integración VS Code de vistas/HTML/CSP → `ui/provider/`.
+- Protocolos Zod webview ↔ host → `api/`.
+- **El barrel `index.ts` no reexporta** catálogos ni registry de `engines/` — importar desde `engines/...` según capa.
+
+---
+
+## Estructura actual
 
 ```
 core/
-├── types.ts                          # Tipos canónicos: SuggestionModelDescriptor, CompletionResult, etc.
-├── instruction.ts                    # Construcción de instrucciones para el LM (style, context, language)
-├── normalize.ts                      # Normalización de texto de suggestion (overlap, spacing, boundaries)
-├── streaming.ts                      # Utility para consumir streams de texto async
-├── language.ts                       # Detección y resolución de idioma de suggestion
-├── loading.ts                        # Fases de loading y status text (`SuggestionLoadingPhase`)
-├── sources.ts                        # Resolución de fuentes: enabled, routing, UI kind
-├── index.ts                          # Barrel público (re-exports de todo el dominio)
-├── catalog/
-│   └── mergedModelCatalog.ts         # Catálogo unificado: Copilot + OpenCode + Ollama
-├── governor/
-│   └── SuggestionRequestGovernor.ts  # Governor: dedupe, cache, cooldown, rate limit, budget
-├── session/
-│   └── GhostPromptSessionStore.ts    # Estado compartido: draft, pending suggestion, captureId, cancel token
-├── context/
-│   └── projectBootstrapContext.ts    # Contexto del proyecto: README, package.json, bootstrap lines
-├── pipeline/
-│   ├── suggestPipeline.ts            # Orquestación completa: governor → LM → broadcast
-│   └── index.ts                      # Barrel del pipeline
-└── memory/                           # Memoria persistente del proyecto
-    ├── types.ts                      # Tipos de almacenamiento (RegistryEntry, BootstrapEntry, EditorEntry)
-    ├── Store.ts                      # Store principal: reconcile, LRU, persistencia
-    ├── activate.ts                   # Registro en activate: layout, GC, comando clear
-    ├── persist.ts                    # Snapshot reconcile para suggest pipeline
-    ├── io/                           # Storage IO
-    │   ├── fs.ts                     # Adaptador Node FS (ProjectMemoryFsAdapter)
-    │   ├── json.ts                   # Lectura/escritura de JSON en globalStorageUri
-    │   ├── key.ts                    # Generación de clave SHA-256 por workspace
-    │   └── path.ts                   # Paths relativos al workspace
-    ├── entries/                      # Operaciones sobre entradas
-    │   ├── mutation.ts               # Eliminación de entradas por path
-    │   ├── bootstrap.ts              # Helpers de entradas bootstrap
-    │   └── editor.ts                 # Helpers de entradas editor-ingest
-    ├── ingest/                       # Editor ingest
-    │   ├── document.ts               # Ingest del documento activo del editor
-    │   ├── settings.ts               # Settings de editor ingest
-    │   └── lru.ts                    # LRU pool de editor sources
-    ├── probes/                       # Contexto del workspace
-    │   ├── workspace.ts              # Probing de archivos (README*, package.json)
-    │   └── watchers.ts               # FileSystemWatcher para paths indexados
-    └── index.ts                      # Barrel de memory/
+├── types.ts                    # barrel → contracts/completion.ts
+├── contracts/
+│   └── completion.ts
+├── prompt/
+│   ├── instruction.ts
+│   ├── normalize.ts
+│   └── index.ts
+├── presentation/
+│   ├── loading.ts
+│   └── index.ts
+├── streaming/
+│   ├── collect.ts
+│   └── index.ts
+├── language/
+│   └── index.ts
+├── routing/
+│   └── sources.ts
+├── suggest/
+│   ├── runSuggest.ts
+│   └── index.ts
+├── index.ts
+├── state/
+│   └── GhostPromptSessionStore.ts
+└── memory/
+    ├── projectBootstrapContext.ts
+    └── …
 ```
+
+Un **layout** más granular (p. ej. más módulos bajo `presentation/`) está descrito como objetivo en [`Docs/Plans/Roadmaps/v0.6/01-core-domain-reorganization.md`](../../Docs/Plans/Roadmaps/v0.6/01-core-domain-reorganization.md) (**Fase G**). Ya existen `routing/`, `contracts/`, `suggest/`, `prompt/`, `presentation/`, `streaming/`, `language/` y `state/`.
 
 ---
 
-## Flujo del pipeline
+## Flujo del pipeline (`suggest`)
 
+```mermaid
+sequenceDiagram
+  participant W as Webview
+  participant A as api (handlers)
+  participant P as core/suggest
+  participant S as core/state
+  participant E as engines
+  W->>A: suggest(text, captureId)
+  A->>P: runGhostPromptSuggestPipeline
+  P->>S: prepareSuggestionRequest
+  P->>E: requestCompletion (motor resuelto)
+  E-->>P: CompletionResult
+  P->>W: broadcast loading / suggestion / empty / error
 ```
-User types → debounce → `suggest` message
-    │
-    ▼
-`core/pipeline/suggestPipeline.ts`
-    ├── Governor.decide (cache hit / block / proceed)
-    ├── Resolve completion source (copilot / opencode / ollama)
-    ├── Collect project context (if contextMode=project)
-    ├── GetCompletionProviderForSource(source).requestCompletion(...)
-    │       ├── Copilot: vscode.lm → sendRequest
-    │       ├── OpenCode: API client → session.prompt
-    │       └── Ollama: HTTP POST /api/generate
-    └── Broadcast UI: loading → suggestion | empty | error
-```
+
+Pasos alineados con `runSuggest.ts`: preparar token y `captureId`, resolver fuente (`routing/sources` + registry), llamar al `CompletionProvider`, broadcast a la UI.
 
 ---
 
-## Contratos clave
+## Dependencias típicas
 
-### `CompletionResult`
-
-```ts
-type CompletionResult =
-  | { kind: 'suggestion'; suggestion: string; model?: SuggestionModelDescriptor }
-  | { kind: 'empty'; reason: EmptyReason }
-  | { kind: 'error'; message: string };
-```
-
-### `SuggestionLoadingPhase`
-
-```ts
-type SuggestionLoadingPhase =
-  | 'copilot'
-  | 'opencode-start'
-  | 'opencode-stream'
-  | 'opencode-done'
-  | 'ollama-start'
-  | 'ollama-generating';
-```
-
-### `CompletionProvider` (definido en `engines/`, consumido aquí)
-
-```ts
-interface CompletionProvider {
-  id: string;
-  requestCompletion(text: string, opts: CompletionOptions): Promise<CompletionResult>;
-}
-```
-
----
-
-## Dependencias
-
-| Importa de                       | Por qué                                                       |
-| -------------------------------- | ------------------------------------------------------------- |
-| `engines/engineRegistry`         | `getCompletionProviderForSource` para obtener el motor activo |
-| `engines/*/catalog/*`            | Listados de modelos (Copilot, OpenCode, Ollama)               |
-| `system/debug/SuggestionDebug`   | Logging de debug para perf capture                            |
-| `vscode/suggestionNotification`  | Notificaciones host para fallos accionables                   |
-| `api/protocols/webviewProtocols` | Tipo `WebviewInboundMessage`                                  |
+| Importa desde                             | Motivo                                    |
+| ----------------------------------------- | ----------------------------------------- |
+| `engines/engineRegistry`                  | Obtener el motor por `CompletionSourceId` |
+| `system/debug/SuggestionDebug`            | Logging opcional de performance           |
+| `ui/notifications/suggestionNotification` | Avisos host en vacío/error accionable     |
+| `api/protocols/webviewProtocols`          | Tipo del mensaje inbound `suggest`        |
 
 ---
 
 ## Tests relevantes
 
-| Test                                      | Qué cubre                                    |
-| ----------------------------------------- | -------------------------------------------- |
-| `CopilotCompletion.test.ts`               | Flujo completo de suggestion con Copilot LM  |
-| `SuggestionRequestGovernor.test.ts`       | Cache, cooldown, rate limit, budget          |
-| `GhostPromptSessionStore.test.ts`         | Estado compartido, cancel tokens, captureId  |
-| `completionInstruction.test.ts`           | Construcción de instrucciones LM             |
-| `instructionNormalizeContract.test.ts`    | Contrato instruction → normalize             |
-| `loading.test.ts`                         | Status text por fase de loading              |
-| `completionSources.test.ts`               | Routing de fuentes, `looksLikeOllamaModelId` |
-| `mergedModelCatalog.test.ts`              | Merge + dedup de catálogos multi-fuente      |
-| `projectBootstrapContext.test.ts`         | Bootstrap lines, fingerprint                 |
-| `host/ghostPromptSuggestPipeline.test.ts` | Pipeline completo con mocks                  |
-| `projectMemoryStore.test.ts`              | Store: reconcile, LRU, registry, GC          |
-| `bootstrapStoredHelpers.test.ts`          | Merge/prune de entradas bootstrap            |
-| `entriesMutation.test.ts`                 | Eliminación de entradas, path normalization  |
-| `editorIngestLru.test.ts`                 | LRU eviction de editor sources               |
+| Test                                                            | Cubre                            |
+| --------------------------------------------------------------- | -------------------------------- |
+| `host/ghostPromptSuggestPipeline.test.ts`                       | Pipeline suggest con mocks       |
+| `GhostPromptSessionStore.test.ts`                               | Estado, cancelación, captureId   |
+| `CopilotCompletion.test.ts` / `opencodeLmEngine` tests          | Vía engines, contratos con core  |
+| `instructionNormalizeContract.test.ts`                          | Contrato instruction ↔ normalize |
+| `completionSources.test.ts`                                     | Routing de fuentes               |
+| `loading.test.ts`                                               | Textos de fase                   |
+| `projectBootstrapContext.test.ts`, `projectMemoryStore.test.ts` | Contexto / memoria si aplica     |
+
+El merge de catálogos multi-motor se cubre en **`tests/mergedModelCatalog.test.ts`** (módulo bajo `engines/catalog/`).

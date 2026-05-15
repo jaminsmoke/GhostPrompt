@@ -26,14 +26,15 @@ vi.mock('vscode', () => ({
 
 import {
   listSuggestionModels,
-  normalizeSuggestion,
-  requestCompletion,
-  buildCompletionInstruction,
-  detectSuggestionLanguageFromInput,
-  resolveSuggestionLanguage,
   selectModelByPolicy,
+} from '../src/engines/copilot/catalog/modelCatalog';
+import { requestCopilotLmCompletion as requestCompletion } from '../src/engines/copilot/copilotLmEngine';
+import {
+  buildCompletionInstruction,
   suggestionStyleDirective,
-} from '../src/core';
+} from '../src/core/prompt/instruction';
+import { normalizeSuggestion } from '../src/core/prompt/normalize';
+import { detectSuggestionLanguageFromInput, resolveSuggestionLanguage } from '../src/core/language';
 
 function createTextStream(chunks: string[]): AsyncIterable<string> {
   return {

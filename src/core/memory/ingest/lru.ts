@@ -2,8 +2,8 @@ import type { ProjectMemoryEditorIngestStoredItem } from '../types';
 
 /**
  * Calcula el tamaño aproximado en bytes de una entrada editor-ingest.
- * @param e Entrada editor-ingest a medir.
- * @returns Tamaño aproximado en bytes de la entrada.
+ * @param {ProjectMemoryEditorIngestStoredItem} e Entrada editor-ingest a medir.
+ * @returns {number} Tamaño aproximado en bytes de la entrada.
  */
 function entryApproxByteSize(e: ProjectMemoryEditorIngestStoredItem): number {
   return Buffer.byteLength(JSON.stringify(e), 'utf8');
@@ -12,10 +12,10 @@ function entryApproxByteSize(e: ProjectMemoryEditorIngestStoredItem): number {
 /**
  * Reduce entradas editor-ingest por **recuento** y **bytes** totales aproximados.
  * Descarta primero por `lastUsedAtMs` ascendente (LRU).
- * @param entries Entradas editor-ingest candidatas para evicción.
- * @param maxEntries Límite máximo de entradas a conservar.
- * @param maxTotalBytes Límite máximo de bytes aproximados a conservar.
- * @returns Entradas supervivientes tras evicción LRU.
+ * @param {readonly ProjectMemoryEditorIngestStoredItem[]} entries Entradas editor-ingest candidatas para evicción.
+ * @param {number} maxEntries Límite máximo de entradas a conservar.
+ * @param {number} maxTotalBytes Límite máximo de bytes aproximados a conservar.
+ * @returns {ProjectMemoryEditorIngestStoredItem[]} Entradas supervivientes tras evicción LRU.
  */
 export function applyEditorIngestLruEviction(
   entries: readonly ProjectMemoryEditorIngestStoredItem[],

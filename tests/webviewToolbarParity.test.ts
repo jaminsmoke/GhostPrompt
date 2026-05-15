@@ -53,9 +53,9 @@ describe('React webview toolbar parity', () => {
 
   it('webviewHtml loads the React built index document', () => {
     const src = read('src/ui/provider/webviewHtml.ts');
-    expect(src).toContain('"dist",');
-    expect(src).toContain('"react",');
-    expect(src).toContain('"index.html"');
+    expect(src).toContain("'dist'");
+    expect(src).toContain("'react'");
+    expect(src).toContain("'index.html'");
   });
 
   it('MiniInputViewProvider usa el builder de HTML compartido', () => {

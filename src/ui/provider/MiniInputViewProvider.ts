@@ -1,14 +1,15 @@
 /**
- * @file WebviewViewProvider para el input de GhostPrompt.
+ * WebviewViewProvider para el input de GhostPrompt.
  *
- * **Composición (v0.5.3):**
- * - Contratos Zod y parseo: `api/protocols/webviewProtocols.ts`
- * - HTML/CSP y plantilla: `ui/provider/webviewHtml.ts`
- * - Mensaje `settings` → webview: `api/settings/settingsPostMessage.ts`
- * - Mensaje `suggest`: `core/pipeline/suggestPipeline.ts`
- * - Router/handlers webview → host (`init`, `draftChanged`, `updateSetting`, `send`, `accept`): `api/protocols/inboundHandlers.ts`
- * - Lectura de workspace / contexto editor: `api/getters/workspaceGetters.ts`
- * - Actualización desde chips (`updateSetting`): `api/settings/applyWebviewUpdate.ts`
+ * Composición de dependencias y flujos para GhostPrompt input v0.5.3.
+ *
+ * - Contratos Zod y parseo: `api/protocols/webviewProtocols.ts`.
+ * - HTML/CSP y plantilla: `ui/provider/webviewHtml.ts`.
+ * - Mensaje `settings` → webview: `api/settings/settingsPostMessage.ts`.
+ * - Mensaje `suggest`: `core/suggest/runSuggest.ts`.
+ * - Router/handlers webview → host (`init`, `draftChanged`, `updateSetting`, `send`, `accept`): `api/protocols/inboundHandlers.ts`.
+ * - Lectura de workspace / contexto editor: `api/getters/workspaceGetters.ts`.
+ * - Actualización desde chips (`updateSetting`): `api/settings/applyWebviewUpdate.ts`.
  *
  * Registra la vista en el activity bar y el panel inferior (C2).
  * Protocolo host↔webview:
@@ -29,7 +30,7 @@
 import * as vscode from 'vscode';
 import { buildAndPostGhostPromptSettings } from '../../api/settings/settingsPostMessage';
 import { buildGhostPromptWebviewHtml } from './webviewHtml';
-import { logDebugInfo } from '../../system/debug/SuggestionDebug';
+import { getLogger } from '../../system/log';
 import {
   getGhostPromptMaxSuggestionChars,
   getGhostPromptSelectedModelId,
@@ -37,9 +38,9 @@ import {
   getGhostPromptSuggestionModelPolicy,
   getGhostPromptSuggestionStyle,
 } from '../../api/getters/workspaceGetters';
-import { handleGhostPromptSuggest } from '../../core/pipeline';
+import { handleGhostPromptSuggest } from '../../core/suggest';
 import { dispatchGhostPromptInboundMessage } from '../../api/protocols/inboundHandlers';
-import type { GhostPromptSuggestDeps } from '../../core/pipeline';
+import type { GhostPromptSuggestDeps } from '../../core/suggest';
 import {
   parseWebviewInboundMessage,
   parseWebviewOutboundMessage,
@@ -77,8 +78,9 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * (sidebar + panel inferior), añadiendo `broadcast: true` para que cada webview
    * pueda sincronizar su `captureId`. También forwardea a VSOpenCodeX si aplica.
    *
-   * @param payload - Mensaje a emitir (se le añade `{ broadcast: true }`).
+   * @param {Record<string, unknown>} payload - Mensaje a emitir (se le añade `{ broadcast: true }`).
    *                 Se valida con `parseWebviewOutboundMessage` en desarrollo.
+   * @returns {void}
    */
   private static _broadcastUi(payload: Record<string, unknown>): void {
     const message = { ...payload, broadcast: true };
@@ -94,8 +96,9 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
 
   /**
    * Propaga borrador a la otra vista GhostPrompt (Sidebar ↔ Panel).
-   * @param originViewId Identificador de la vista origen que no debe recibir el sync.
-   * @param text Texto del borrador que se sincroniza.
+   * @param {string} originViewId Identificador de la vista origen que no debe recibir el sync.
+   * @param {string} text Texto del borrador que se sincroniza.
+   * @returns {void}
    */
   private static _broadcastDraftSync(originViewId: string, text: string): void {
     for (const instance of MiniInputViewProvider._instances) {
@@ -140,7 +143,8 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /**
    * API para VSOpenCodeX (executeCommand): ejecuta el pipeline de suggestion con el texto actual del chat VSX.
    * Ignorar cuando el usuario usa destino Copilot (sigue usando la webview).
-   * @param text Texto que se debe sugerir desde el host externo.
+   * @param {string} text Texto que se debe sugerir desde el host externo.
+   * @returns {Promise<void>} Promise que indica cuando el proceso de suggest se completa.
    */
   public static async runSuggestFromExternalHost(text: string): Promise<void> {
     const trimmed = text.trim();
@@ -191,7 +195,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * distinto de controles por vista.
    *
    * Por defecto vacío: misma UX en ambas superficies.
-   * @returns Payload de capacidades para el webview.
+   * @returns {Record<string, unknown>} Payload de capacidades para el webview.
    */
   private _webviewCapabilitiesPayload(): Record<string, unknown> {
     return {};
@@ -217,13 +221,14 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
 
     webviewView.webview.onDidReceiveMessage(async (raw: unknown) => {
-      logDebugInfo('Received raw webview message.');
+      const uiLog = getLogger('ui');
+      uiLog.debug('webview-raw-message', {});
       const message = parseWebviewInboundMessage(raw);
       if (!message) {
-        logDebugInfo('Webview inbound message failed validation.');
+        uiLog.debug('webview-inbound-invalid', {});
         return;
       }
-      logDebugInfo(`Parsed webview message type=${message.type}`);
+      uiLog.debug('webview-inbound-parsed', { type: message.type });
       await dispatchGhostPromptInboundMessage(message, {
         viewContributionId: this.viewContributionId,
         webview: webviewView.webview,
@@ -241,8 +246,8 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /**
    * Builds HTML from the React webview bundle and injects secure asset URIs and the CSP nonce.
    *
-   * @param webview - The webview instance to generate HTML for.
-   * @returns HTML string for the webview.
+   * @param {vscode.Webview} webview - The webview instance to generate HTML for.
+   * @returns {string} HTML string for the webview.
    */
   private _getHtmlForWebview(webview: vscode.Webview): string {
     return buildGhostPromptWebviewHtml({

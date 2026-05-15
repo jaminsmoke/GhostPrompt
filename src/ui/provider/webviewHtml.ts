@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 /**
  * Nonce aleatorio para Content-Security-Policy del webview.
  *
- * @returns Un nonce aleatorio seguro para inyección de scripts.
+ * @returns {string} Un nonce aleatorio seguro para inyección de scripts.
  */
 export function generateGhostPromptWebviewNonce(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -25,8 +25,8 @@ export type GhostPromptWebviewHtmlParams = {
  * Construye el HTML del webview a partir del bundle React generado por Vite,
  * reemplazando placeholders por URIs seguras y CSP.
  *
- * @param params Parámetros de construcción del webview.
- * @returns HTML final para cargar en el webview.
+ * @param {GhostPromptWebviewHtmlParams} params Parámetros de construcción del webview.
+ * @returns {string} HTML final para cargar en el webview.
  * @throws Si falta el bundle React compilado en `src/ui/webview/dist/react/index.html`.
  */
 export function buildGhostPromptWebviewHtml(params: GhostPromptWebviewHtmlParams): string {
@@ -54,8 +54,7 @@ export function buildGhostPromptWebviewHtml(params: GhostPromptWebviewHtmlParams
   });
   // Vite emite el <meta CSP> en varias líneas; si no coincide el reemplazo, VS Code deja
   // script-src 'unsafe-inline' y bloquea los bundles servidos vía asWebviewUri (vscode-cdn).
-  const cspMetaPattern =
-    /<meta\s[^>]*?http-equiv\s*=\s*["']Content-Security-Policy["'][^>]*>/gis;
+  const cspMetaPattern = /<meta\s[^>]*?http-equiv\s*=\s*["']Content-Security-Policy["'][^>]*>/gis;
   const htmlWithCsp = htmlWithAssets.replace(
     cspMetaPattern,
     `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src ${webview.cspSource} 'nonce-${nonce}'; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource}; connect-src https:; img-src ${webview.cspSource} data: https:;" />`,

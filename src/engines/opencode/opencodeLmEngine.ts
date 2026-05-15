@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-import { buildCompletionInstruction } from '../../core/instruction';
-import { normalizeSuggestion } from '../../core/normalize';
+import { buildCompletionInstruction } from '../../core/prompt/instruction';
+import { normalizeSuggestion } from '../../core/prompt/normalize';
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
@@ -20,8 +20,8 @@ import {
 
 /**
  * Describe un modelo OpenCode para el pipeline de sugerencias.
- * @param modelId Identificador del modelo OpenCode.
- * @returns Descriptor de modelo adecuado para la UI.
+ * @param {string} modelId Identificador del modelo OpenCode.
+ * @returns {SuggestionModelDescriptor} Descriptor de modelo adecuado para la UI.
  */
 function describeOpenCodeModel(modelId: string): SuggestionModelDescriptor {
   return {
@@ -34,8 +34,8 @@ function describeOpenCodeModel(modelId: string): SuggestionModelDescriptor {
 
 /**
  * Resuelve el modelo OpenCode a usar según la preferencia y configuración.
- * @param preferredModelId ID de modelo preferido o "auto".
- * @returns Modelo seleccionado o undefined si no se encuentra ninguno.
+ * @param {string | undefined} preferredModelId ID de modelo preferido o "auto".
+ * @returns {Promise<string | undefined>} Modelo seleccionado o undefined si no se encuentra ninguno.
  */
 async function resolveOpenCodeModel(
   preferredModelId: string | undefined,
@@ -48,7 +48,7 @@ async function resolveOpenCodeModel(
 
 /**
  * Asegura que el cliente OpenCode esté inicializado y disponible.
- * @returns True si el cliente es válido y responde.
+ * @returns {Promise<boolean>} True si el cliente es válido y responde.
  */
 async function ensureClient(): Promise<boolean> {
   const cfg = vscode.workspace.getConfiguration('ghostPrompt');
@@ -68,9 +68,9 @@ async function ensureClient(): Promise<boolean> {
 
 /**
  * Envía una solicitud de completado a OpenCode y normaliza la respuesta.
- * @param userText Texto de usuario usado para construir el prompt.
- * @param options Opciones de solicitud de completado.
- * @returns Resultado de completado o un motivo vacío.
+ * @param {string} userText Texto de usuario usado para construir el prompt.
+ * @param {CompletionRequestOptions} options Opciones de solicitud de completado.
+ * @returns {Promise<CompletionResult>} Resultado de completado o un motivo vacío.
  */
 export async function requestOpencodeCompletion(
   userText: string,

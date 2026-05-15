@@ -2,7 +2,7 @@ import * as path from 'node:path';
 
 import * as vscode from 'vscode';
 
-import { sha256HexBytes, truncateProjectCardText } from '../../context/projectBootstrapContext';
+import { sha256HexBytes, truncateProjectCardText } from '../projectBootstrapContext';
 import {
   readEditorIngestConfig,
   PROJECT_EDITOR_CARD_MAX_CHARS,
@@ -24,9 +24,9 @@ import { workspaceKeyFromRootUriString } from '../io/key';
 
 /**
  * Ingierir el documento activo del editor en project memory si aplica.
- * @param store Store de project memory donde se guardarán los datos.
- * @param editor Editor activo de VS Code o undefined.
- * @returns Promise que se resuelve cuando la ingestión termina.
+ * @param {ProjectMemoryStore} store Store de project memory donde se guardarán los datos.
+ * @param {vscode.TextEditor | undefined} editor Editor activo de VS Code o undefined.
+ * @returns {Promise<void>} Promise que se resuelve cuando la ingestión termina.
  */
 export async function ingestActiveEditorDocument(
   store: ProjectMemoryStore,
@@ -144,9 +144,10 @@ export async function ingestActiveEditorDocument(
 
 /**
  * Actualiza el manifiesto del workspace con el nuevo recuento de entradas.
- * @param store Store de project memory donde se encuentra el manifiesto.
- * @param workspaceKey Clave del workspace cuyo manifiesto se actualiza.
- * @param entryCount Número de entradas persistidas tras la operación.
+ * @param {ProjectMemoryStore} store Store de project memory donde se encuentra el manifiesto.
+ * @param {string} workspaceKey Clave del workspace cuyo manifiesto se actualiza.
+ * @param {number} entryCount Número de entradas persistidas tras la operación.
+ * @returns {Promise<void>} Promise que se resuelve cuando el manifiesto se actualiza.
  */
 async function bumpManifest(
   store: ProjectMemoryStore,

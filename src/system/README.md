@@ -10,7 +10,7 @@
 
 **No debe contener:**
 
-- Lógica de suggestion (eso es `core/`)
+- Lógica del **pipeline suggest activo** (`core/suggest/runSuggest` y routing a motores)
 - Protocolos de mensajes (eso es `api/`)
 - Integración con VS Code providers (eso es `vscode/`)
 
@@ -27,6 +27,8 @@ system/
 │   └── SuggestionLog.ts         # suggestions.md: suggestions aceptadas con Tab
 ├── contracts/
 │   └── webviewMessageSchemas.ts # Schemas Zod canónicos host ↔ webview
+├── policies/
+│   └── SuggestionRequestGovernor.ts  # Legacy: límites/caché; no en hot path suggest
 └── build/
     └── verifyWebviewBundle.ts   # Verificación del bundle webview en CI/dev
 ```

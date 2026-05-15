@@ -8,7 +8,7 @@ import {
 
 /**
  * Devuelve el registro de project memory por defecto.
- * @returns Registro vacío con la versión de esquema actual.
+ * @returns {ProjectMemoryRegistryFile} Registro vacío con la versión de esquema actual.
  */
 export function defaultRegistry(): ProjectMemoryRegistryFile {
   return { schemaVersion: PROJECT_MEMORY_SCHEMA_VERSION, entries: [] };
@@ -16,8 +16,8 @@ export function defaultRegistry(): ProjectMemoryRegistryFile {
 
 /**
  * Parse a project memory registry JSON string and valida su esquema.
- * @param text Contenido JSON del registro.
- * @returns Registro parseado o el valor por defecto si es inválido.
+ * @param {string} text Contenido JSON del registro.
+ * @returns {ProjectMemoryRegistryFile} Registro parseado o el valor por defecto si es inválido.
  */
 export function parseRegistryJson(text: string): ProjectMemoryRegistryFile {
   try {
@@ -47,9 +47,9 @@ export function parseRegistryJson(text: string): ProjectMemoryRegistryFile {
 
 /**
  * Devuelve el manifiesto de project memory por defecto para un workspace.
- * @param workspaceKey Clave del workspace para el manifiesto.
- * @param now Marca de tiempo actual en milisegundos.
- * @returns Manifiesto por defecto del workspace.
+ * @param {string} workspaceKey Clave del workspace para el manifiesto.
+ * @param {number} now Marca de tiempo actual en milisegundos.
+ * @returns {ProjectMemoryManifestFile} Manifiesto por defecto del workspace.
  */
 export function defaultManifest(workspaceKey: string, now: number): ProjectMemoryManifestFile {
   return {
@@ -68,9 +68,9 @@ export function defaultManifest(workspaceKey: string, now: number): ProjectMemor
 
 /**
  * Parsea un manifiesto JSON de project memory y lo normaliza según el esquema.
- * @param text Contenido JSON del manifiesto.
- * @param workspaceKey Clave del workspace usada si el manifiesto es inválido o faltante.
- * @returns Manifiesto parseado o el manifiesto por defecto.
+ * @param {string} text Contenido JSON del manifiesto.
+ * @param {string} workspaceKey Clave del workspace usada si el manifiesto es inválido o faltante.
+ * @returns {ProjectMemoryManifestFile} Manifiesto parseado o el manifiesto por defecto.
  */
 export function parseManifestJson(text: string, workspaceKey: string): ProjectMemoryManifestFile {
   try {
@@ -104,7 +104,7 @@ export function parseManifestJson(text: string, workspaceKey: string): ProjectMe
 
 /**
  * Devuelve el archivo de entradas de project memory por defecto.
- * @returns Archivo de entradas vacío con la versión de esquema actual.
+ * @returns {ProjectMemoryEntriesFile} Archivo de entradas vacío con la versión de esquema actual.
  */
 export function defaultEntries(): ProjectMemoryEntriesFile {
   return { schemaVersion: PROJECT_MEMORY_SCHEMA_VERSION, items: [] };
@@ -112,8 +112,8 @@ export function defaultEntries(): ProjectMemoryEntriesFile {
 
 /**
  * Parse a project memory entries JSON string y valida su esquema.
- * @param text Contenido JSON del archivo de entradas.
- * @returns Archivo de entradas parseado o el valor por defecto si es inválido.
+ * @param {string} text Contenido JSON del archivo de entradas.
+ * @returns {ProjectMemoryEntriesFile} Archivo de entradas parseado o el valor por defecto si es inválido.
  */
 export function parseEntriesJson(text: string): ProjectMemoryEntriesFile {
   try {

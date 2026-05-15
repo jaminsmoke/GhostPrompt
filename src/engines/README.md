@@ -10,7 +10,7 @@
 
 **No debe contener:**
 
-- Lógica de orquestación del pipeline (eso es `core/pipeline/`)
+- Lógica de orquestación del pipeline (eso es `core/suggest/`)
 - Gestión de vistas VS Code (eso es `vscode/`)
 - Protocolos de mensajes webview (eso es `api/`)
 
@@ -21,6 +21,8 @@
 ```
 engines/
 ├── engineRegistry.ts            # Registro de motores + getCompletionProviderForSource
+├── catalog/
+│   └── mergedModelCatalog.ts    # Lista unificada multi-motor (settings/UI; no hot path suggest)
 ├── copilot/
 │   ├── copilotLmEngine.ts       # Motor Copilot LM (vscode.lm)
 │   └── catalog/
@@ -78,7 +80,7 @@ getCompletionProviderForSource('ollama'); // → ollamaLm provider
 | `providerID/modelID` | `opencodeLm` | `openai/gpt-4`                |
 | `model:tag`          | `ollamaLm`   | `mistral:latest`, `llama3:7b` |
 
-Función clave: `resolveCompletionSourceForRequest(selectedModelId, enabledSources)` en `core/sources.ts`.
+Función clave: `resolveCompletionSourceForRequest(selectedModelId, enabledSources)` en `core/routing/sources.ts`.
 
 ---
 
@@ -117,10 +119,10 @@ Función clave: `resolveCompletionSourceForRequest(selectedModelId, enabledSourc
 | Importa de                     | Por qué                                               |
 | ------------------------------ | ----------------------------------------------------- |
 | `core/types`                   | `SuggestionModelDescriptor`, `CompletionResult`, etc. |
-| `core/instruction`             | `buildCompletionInstruction` para el prompt del LM    |
-| `core/normalize`               | `normalizeSuggestion` para post-proceso               |
-| `core/streaming`               | `consumeTextStream` para streaming                    |
-| `core/loading`                 | `SuggestionLoadingPhase` para feedback UI             |
+| `core/prompt/instruction`      | `buildCompletionInstruction` para el prompt del LM    |
+| `core/prompt/normalize`        | `normalizeSuggestion` para post-proceso               |
+| `core/streaming`               | `collectResponseText` (stream LM VS Code)             |
+| `core/presentation/loading`    | `SuggestionLoadingPhase`, textos de fase para la UI   |
 | `system/debug/SuggestionDebug` | Logging de debug y perf capture                       |
 
 ---

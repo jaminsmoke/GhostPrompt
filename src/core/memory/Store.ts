@@ -43,8 +43,8 @@ export class ProjectMemoryStore {
 
   /**
    * Crea `stores/<key>/` sin tocar registry (persistencia rápida en caliente del suggest).
-   * @param workspaceRootUriString URI canónico de la raíz del workspace.
-   * @returns Clave del workspace derivada del URI.
+   * @param {string} workspaceRootUriString URI canónico de la raíz del workspace.
+   * @returns {string} Clave del workspace derivada del URI.
    */
   public async ensureStoresDirExistsForWorkspaceRoot(
     workspaceRootUriString: string,
@@ -107,9 +107,9 @@ export class ProjectMemoryStore {
 
   /**
    * Crea manifest + entries placeholder y actualiza `lastSeenAt` del registro.
-   * @param workspaceRootUriString URI canónico del workspace.
-   * @param nowMs Fecha/hora actual en milisegundos.
-   * @returns Clave del workspace del directorio creado.
+   * @param {string} workspaceRootUriString URI canónico del workspace.
+   * @param {number} nowMs Fecha/hora actual en milisegundos.
+   * @returns {string} Clave del workspace del directorio creado.
    */
   public async touchWorkspaceRoot(workspaceRootUriString: string, nowMs: number): Promise<string> {
     const workspaceKey = workspaceKeyFromRootUriString(workspaceRootUriString);
@@ -154,8 +154,8 @@ export class ProjectMemoryStore {
 
   /**
    * Borra carpeta del store y quita la fila del registro (si existía).
-   * @param workspaceRootUriString URI canónico del workspace a limpiar.
-   * @returns `true` si existía entrada o directorio persistido.
+   * @param {string} workspaceRootUriString URI canónico del workspace a limpiar.
+   * @returns {boolean} `true` si existía entrada o directorio persistido.
    */
   public async clearWorkspaceRoot(workspaceRootUriString: string): Promise<boolean> {
     const workspaceKey = workspaceKeyFromRootUriString(workspaceRootUriString);
@@ -177,9 +177,9 @@ export class ProjectMemoryStore {
   /**
    * Elimina árboles antiguos cuyo `lastSeenAt` supera el TTL. Devuelve nº eliminados.
    * Conviene llamar **después** de `touchOpenWorkspaceRoots` para no borrar el repo abierto.
-   * @param ttlMs Tiempo de vida en milisegundos para considerar un store inactivo.
-   * @param nowMs Marca de tiempo actual en milisegundos.
-   * @returns Número de árboles eliminados.
+   * @param {number} ttlMs Tiempo de vida en milisegundos para considerar un store inactivo.
+   * @param {number} nowMs Marca de tiempo actual en milisegundos.
+   * @returns {number} Número de árboles eliminados.
    */
   public async garbageCollectUnusedStores(ttlMs: number, nowMs: number): Promise<number> {
     const registry = await this.loadRegistry();

@@ -68,7 +68,7 @@ ui/webview/react/main.tsx (corre en el navegador)
     └── App.tsx → maneja UI, comunicación host y lógica de sugerencias
     │
     ▼
-postMessage → api/protocols/inboundHandlers.ts → core/pipeline/
+postMessage → api/protocols/inboundHandlers.ts → core/suggest/
 ```
 
 ---

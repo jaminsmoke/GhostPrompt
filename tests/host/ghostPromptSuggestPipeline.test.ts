@@ -37,10 +37,10 @@ import * as vscode from 'vscode';
 import {
   runGhostPromptSuggestPipeline,
   type GhostPromptSuggestDeps,
-} from '../../src/core/pipeline/suggestPipeline';
-import { resolveCompletionSourceForRequest } from '../../src/core/sources';
+} from '../../src/core/suggest/runSuggest';
+import { resolveCompletionSourceForRequest } from '../../src/core/routing/sources';
 import { resetSuggestionHostNotificationThrottleForTests } from '../../src/ui/notifications/suggestionNotification';
-import { ghostPromptSessionStore } from '../../src/core/session/GhostPromptSessionStore';
+import { ghostPromptSessionStore } from '../../src/core/state/GhostPromptSessionStore';
 
 const requestCompletion = vi.fn();
 
@@ -52,7 +52,7 @@ vi.mock('../../src/engines/engineRegistry', () => ({
   getCompletionProviderKind: () => 'copilot' as const,
 }));
 
-vi.mock('../../src/core/sources', () => ({
+vi.mock('../../src/core/routing/sources', () => ({
   getEnabledCompletionSources: () => ['copilot'] as const,
   resolveCompletionSourceForRequest: vi.fn(() => 'copilot' as const),
   getCompletionUiKind: () => 'copilot' as const,
