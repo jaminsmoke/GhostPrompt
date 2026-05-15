@@ -8,6 +8,8 @@
 
 `engines/` expone adaptadores LM por proveedor (`EngineProvider`: `id` + `requestCompletion`). El routing elige fuente (`resolveCompletionSourceForRequest`) y adaptador (`resolveProvider`). Por modelo: `model:tag` → Ollama, `providerID/modelID` → OpenCode, id de chat Copilot → LM.
 
+Las sugerencias con `kind: 'suggestion'` salen **del motor como texto crudo** del LM (salvo respuestas vacías factuales en algunos proveedores). La acotación (`ghostPrompt.maxSuggestionChars`) y la heurística de rechazo (`content-blocked`) se aplican en `system/runtime/finalizeEngineCompletionResult`, llamado desde `runGhostPromptSuggestPipeline`.
+
 **No debe contener:**
 
 - Lógica de orquestación del pipeline (eso es `system/runtime/`)
@@ -30,9 +32,9 @@ engines/
 │   └── resolveProvider.ts          # resolveProvider (fuente → adaptador LM)
 └── provider/
     ├── mergedModelCatalog.ts    # Lista unificada multi-proveedor (settings/UI)
-    ├── copilot/                 # LM Copilot (vscode.lm)
-    ├── opencode/                # server/, opencodeCompletion, opencodeLmEngine
-    └── ollama/                  # Ollama HTTP /api/generate
+    ├── copilot/                 # completion/, lm/, host/, catalog/, vscode.lm
+    ├── opencode/                # server/, client/, opencodeSdkBootstrap, opencodeCompletionFetch, opencodeCompletionEngine, routingModelId
+    └── ollama/                  # http/, host/, completion/, routing/, catalog/
 ```
 
 ---
@@ -75,7 +77,10 @@ Configuración de fuentes habilitadas: `config/completionSources.ts` (`ghostProm
 
 - **API:** `vscode.lm.selectChatModels` + `sendRequest`
 - **Requisitos:** GitHub Copilot instalado y signed in
-- **Catálogo:** `modelCatalog.ts` lista modelos disponibles via `vscode.lm`
+- **`completion/`** — `requestCopilotLmCompletion` (`copilotCompletionEngine.ts`)
+- **`lm/`** — `collectLmResponse` (stream LM VS Code)
+- **`host/`** — `copilotHostStatusModule` → `ProviderStatusModule`
+- **Catálogo:** `catalog/modelCatalog.ts` lista modelos disponibles via `vscode.lm`
 - **Sin configuración adicional:** usa la sesión activa de Copilot
 
 ### OpenCode (`opencode/`)
@@ -90,12 +95,11 @@ Configuración de fuentes habilitadas: `config/completionSources.ts` (`ghostProm
 
 ### Ollama (`ollama/`)
 
-- **API:** HTTP REST directo (sin SDK)
-- **Endpoints:** `GET /api/tags` (list models), `POST /api/generate` (completion)
-- **Base URL:** `ghostPrompt.ollamaBaseUrl` (default `http://localhost:11434`)
-- **Offline-first:** no requiere API key ni cloud dependency
-- **Streaming:** soporte SSE en `/api/generate` con `stream: true`
-- **Catálogo:** `/api/tags` con normalización de metadatos
+- **`http/`** — REST `/api/tags`, `/api/generate`, tipos y validadores Zod (`ollamaApiClient`, `ollamaValidators`, `ollamaTypes`).
+- **`host/`** — CLI y proceso (`ollamaModelManager`, `ollamaHostStatusModule` → `ProviderStatusModule`).
+- **`completion/`** — `requestOllamaCompletion` → `CompletionResult`.
+- **`routing/`** — heurística `model:tag` para `resolveCompletionSource`.
+- **`catalog/`** — lista y normalización para el selector webview.
 
 ---
 
@@ -105,7 +109,7 @@ Configuración de fuentes habilitadas: `config/completionSources.ts` (`ghostProm
 | --------------------------- | ----------------------------------------------------- |
 | `sugcore/types`                | `SuggestionModelDescriptor`, `CompletionResult`, etc. |
 | `sugcore/rules/instruction`    | `buildCompletionInstruction` para el prompt del LM    |
-| `copilot/collectLmResponse`          | `collectLmResponse` (stream LM VS Code)         |
+| `copilot/lm/collectLmResponse`       | `collectLmResponse` (stream LM VS Code)         |
 | `system/internals/protocols/state/loading` | `SuggestionLoadingPhase`, textos de fase    |
 | `engines/runtime/providerStatusRegistry` | Registro de módulos *Status en el host |
 | `system/internals/protocols/state`   | Tipos de sesión y loading                         |
@@ -117,11 +121,16 @@ Configuración de fuentes habilitadas: `config/completionSources.ts` (`ghostProm
 
 | Test                                      | Qué cubre                                                          |
 | ----------------------------------------- | ------------------------------------------------------------------ |
-| `engineRegistry.test.ts`                  | Registro y resolución de proveedores                               |
-| `ollamaApiClient.test.ts`                 | Mock fetch, listModels, generate (éxito, error, custom baseUrl)    |
-| `ollamaLmEngine.test.ts`                  | Modelo explícito, auto-resolve, exclusión, errores, loading phases |
+| `http/ollamaApiClient.test.ts`           | Mock fetch, listModels, generate                                   |
+| `http/ollamaValidators.test.ts`          | Esquemas Zod respuestas Ollama                                     |
+| `host/ollamaHostStatusModule.test.ts`    | Estado CLI (`ProviderStatusModule`)                                |
+| `completion/ollamaCompletionEngine.test.ts` | Modelo explícito, auto-resolve, exclusiones, errores, fases |
+| `completion/copilotCompletionEngine.test.ts` | Copilot LM: modelo vacío, timeout, políticas, catálogo |
+| `copilot/lm/collectLmResponse.test.ts`       | Stream texto LM VS Code (Copilot)                                  |
+| `routing/routingModelId.test.ts`        | Heurística `model:tag`                                             |
+| `catalog/ollamaModelCatalog.test.ts`    | Lista modelos UI, fallback no disponible                           |
 | `client/opencodeClient.test.ts`           | Session pool, health check, prompt, promptStream                   |
-| `opencodeLmCompletion.test.ts`            | Request completion con OpenCode, streaming preview                 |
+| `opencodeCompletionEngine.test.ts`        | Request completion con OpenCode                                      |
 | `opencodeModelCatalog.test.ts`            | Lista modelos, snapshot cache, exclusión                           |
 | `opencodeModelTier.test.ts`               | Clasificación de tiers por pricing metadata                        |
 | `normalizeOpencodeProviderModels.test.ts` | Normalización array vs mapa de modelos                             |

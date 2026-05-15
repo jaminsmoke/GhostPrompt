@@ -44,7 +44,6 @@ export interface CompletionRequestOptions {
   token: CancellationToken;
   policy: SuggestionModelPolicy;
   preferredModelId?: string;
-  maxSuggestionChars?: number;
   style?: SuggestionStyle;
   context?: SuggestionContext;
   requestTimeoutMs?: number;

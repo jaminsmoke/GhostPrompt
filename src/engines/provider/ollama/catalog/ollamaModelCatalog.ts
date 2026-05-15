@@ -3,7 +3,7 @@
  */
 import * as vscode from 'vscode';
 
-import { listModels } from '../ollamaApiClient';
+import { listModels } from '../http/ollamaApiClient';
 
 import { normalizeOllamaModels, ollamaModelToDescriptor } from './normalizeOllamaModels';
 

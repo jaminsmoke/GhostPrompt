@@ -1,15 +1,8 @@
 /**
- * @file Orquestación de completado OpenCode → CompletionResult.
+ * @file Motor de completions OpenCode: `CompletionResult` a partir del SDK y reglas GhostPrompt.
  */
-import { boundSuggestionText } from '../../../system/internals/protocols/types/boundSuggestionText';
-import { DEFAULT_MAX_SUGGESTION_CHARS } from '../../../system/internals/protocols/types/params';
-
-import {
-  ensureOpenCodeClient,
-  fetchOpenCodeCompletionText,
-  resetOpenCodeClient,
-  resolveOpenCodeModelId,
-} from './opencodeCompletion';
+import { fetchOpenCodeCompletionText, resolveOpenCodeModelId } from './opencodeCompletionFetch';
+import { ensureOpenCodeClient, resetOpenCodeClient } from './opencodeSdkBootstrap';
 
 import type {
   CompletionRequestOptions,
@@ -44,7 +37,6 @@ export async function requestOpencodeCompletion(
   const {
     token,
     preferredModelId,
-    maxSuggestionChars = DEFAULT_MAX_SUGGESTION_CHARS,
     requestTimeoutMs,
     onLoadingPhase,
   } = options;
@@ -71,14 +63,13 @@ export async function requestOpencodeCompletion(
       return { kind: 'empty', reason: 'request-timeout' };
     }
 
-    const suggestion = boundSuggestionText(completionText, maxSuggestionChars);
-    if (!suggestion) {
+    if (!completionText) {
       return { kind: 'empty', reason: 'empty-response' };
     }
 
     return {
       kind: 'suggestion',
-      suggestion,
+      suggestion: completionText,
       model: describeOpenCodeModel(modelId),
     };
   } catch (err) {

@@ -15,6 +15,7 @@ import {
 import { flushLogCapture, getLogger } from '../../system/log';
 import { DEFAULT_MIN_SUGGEST_INPUT_CHARS } from '../internals/protocols/types';
 
+import { finalizeEngineCompletionResult } from './finalizeEngineCompletionResult';
 import { setLastEffectiveSuggestionModel } from './lastEffectiveSuggestionModel';
 import { suggestionRequestCoordinator } from './suggestionRequestCoordinator';
 
@@ -96,12 +97,11 @@ export async function runGhostPromptSuggestPipeline(
   });
 
   try {
-    const result = await resolveProvider(routedSource).requestCompletion(text, {
+    const rawResult = await resolveProvider(routedSource).requestCompletion(text, {
       perfCaptureId: captureId,
       token: tokenSource.token,
       policy,
       preferredModelId: selectedModelId === 'auto' ? undefined : selectedModelId,
-      maxSuggestionChars: deps.getMaxSuggestionChars(),
       style,
       onLoadingPhase: emitLoadingPhase,
       ...(routedSource === 'opencode' || routedSource === 'ollama'
@@ -119,6 +119,8 @@ export async function runGhostPromptSuggestPipeline(
           }
         : {}),
     });
+
+    const result = finalizeEngineCompletionResult(rawResult, deps.getMaxSuggestionChars());
 
     if (
       tokenSource.token.isCancellationRequested ||

@@ -1,9 +1,9 @@
 /**
- * @file Pruebas de estado de la fuente Copilot LM.
+ * @file Pruebas del módulo de estado host Copilot LM.
  */
 import { describe, expect, it } from 'vitest';
 
-import { copilotStatusModule } from './copilotStatus';
+import { copilotStatusModule } from './copilotHostStatusModule';
 
 describe('copilotStatusModule', () => {
   it('retorna siempre running', async () => {

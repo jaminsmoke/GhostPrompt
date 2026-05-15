@@ -1,11 +1,11 @@
 /**
- * @file Pruebas del completor OpenCode.
+ * @file Pruebas del motor de completions OpenCode (`requestOpencodeCompletion`).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 
 import { resetClient } from './client';
-import { requestOpencodeCompletion } from './opencodeLmEngine';
+import { requestOpencodeCompletion } from './opencodeCompletionEngine';
 
 import type { OpenCodeSdkClient } from '../../../system/internals/protocols/types/opencodeClient';
 
@@ -13,9 +13,9 @@ const sessionCreateMock = vi.fn<(...args: [unknown?]) => Promise<unknown>>();
 const sessionPromptMock = vi.fn<(...args: [unknown]) => Promise<unknown>>();
 const sessionDeleteMock = vi.fn<(...args: [unknown]) => Promise<unknown>>();
 const configGetMock = vi.fn<(...args: []) => Promise<unknown>>();
-const eventSubscribeMock = vi.fn<(
-  opts: { signal: AbortSignal },
-) => Promise<{ stream: AsyncIterable<unknown> }>>();
+const eventSubscribeMock = vi.fn<
+  (opts: { signal: AbortSignal }) => Promise<{ stream: AsyncIterable<unknown> }>
+>();
 
 const fakeSdkClient: OpenCodeSdkClient = {
   config: { get: configGetMock },
@@ -92,7 +92,6 @@ describe('requestOpencodeCompletion', () => {
       token: token as unknown as import('vscode').CancellationToken,
       policy: 'anyModel',
       preferredModelId: 'anthropic/claude-3',
-      maxSuggestionChars: 180,
       style: 'balanced',
     });
 
@@ -174,7 +173,6 @@ describe('requestOpencodeCompletion', () => {
       token: token as unknown as import('vscode').CancellationToken,
       policy: 'anyModel' as const,
       preferredModelId: 'anthropic/claude-3',
-      maxSuggestionChars: 180,
       style: 'balanced' as const,
     };
 

@@ -53,11 +53,11 @@ vi.mock('../../engines/routing/resolveProvider', () => ({
   }),
 }));
 
-vi.mock('../../engines/provider/ollama/modelId', () => ({
+vi.mock('../../engines/provider/ollama/routing/routingModelId', () => ({
   looksLikeOllamaModelId: () => false,
 }));
 
-vi.mock('../../engines/provider/opencode/modelId', () => ({
+vi.mock('../../engines/provider/opencode/routingModelId', () => ({
   looksLikeOpencodeModelId: () => false,
 }));
 

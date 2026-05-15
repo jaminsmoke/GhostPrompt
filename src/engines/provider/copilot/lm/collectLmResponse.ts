@@ -3,7 +3,7 @@
  */
 import * as vscode from 'vscode';
 
-import { DEFAULT_MODEL_REQUEST_TIMEOUT_MS } from '../../../system/internals/protocols/types/params';
+import { DEFAULT_MODEL_REQUEST_TIMEOUT_MS } from '../../../../system/internals/protocols/types/params';
 
 /**
  * Recompone el texto completo de la respuesta de Copilot LM a partir del stream de VS Code.

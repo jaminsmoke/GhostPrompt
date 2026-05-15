@@ -1,19 +1,19 @@
 /**
  * @file Exportaciones públicas del engine Ollama.
  */
-export { listModels, generate } from './ollamaApiClient';
-export { requestOllamaCompletion } from './ollamaLmEngine';
+export { listModels, generate } from './http/ollamaApiClient';
+export { requestOllamaCompletion } from './completion/ollamaCompletionEngine';
 export { listOllamaSuggestionModels } from './catalog/ollamaModelCatalog';
 export {
   normalizeOllamaModels,
   ollamaModelToDescriptor,
   type OllamaApiModelRecord,
 } from './catalog/normalizeOllamaModels';
-export { ollamaModelManager } from './ollamaModelManager';
-export type { OllamaManagerState } from './ollamaModelManager';
+export { ollamaModelManager } from './host/ollamaModelManager';
+export type { OllamaManagerState } from './host/ollamaModelManager';
 export type {
   OllamaModel,
   OllamaGenerateRequest,
   OllamaGenerateResponse,
   OllamaClientOptions,
-} from './ollamaTypes';
+} from './http/ollamaTypes';

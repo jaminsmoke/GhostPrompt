@@ -1,5 +1,5 @@
 /**
- * @file Pruebas del engine de completado Ollama.
+ * @file Pruebas del motor de completions Ollama.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -16,12 +16,12 @@ vi.mock('vscode', () => ({
 const mockListModels = vi.hoisted(() => vi.fn());
 const mockGenerate = vi.hoisted(() => vi.fn());
 
-vi.mock('./ollamaApiClient', () => ({
+vi.mock('../http/ollamaApiClient', () => ({
   listModels: mockListModels,
   generate: mockGenerate,
 }));
 
-import { requestOllamaCompletion } from './ollamaLmEngine';
+import { requestOllamaCompletion } from './ollamaCompletionEngine';
 
 /**
  * Creates a minimal cancellation token-like object for tests.
@@ -52,9 +52,9 @@ describe('requestOllamaCompletion', () => {
 
     const token = makeToken();
     const result = await requestOllamaCompletion('Write a function', {
+      policy: 'anyModel',
       token: token as unknown as import('vscode').CancellationToken,
       preferredModelId: 'mistral:latest',
-      maxSuggestionChars: 200,
       style: 'balanced',
     });
 
@@ -78,6 +78,7 @@ describe('requestOllamaCompletion', () => {
 
     const token = makeToken();
     const result = await requestOllamaCompletion('hello', {
+      policy: 'anyModel',
       token: token as unknown as import('vscode').CancellationToken,
       preferredModelId: 'auto',
     });
@@ -95,6 +96,7 @@ describe('requestOllamaCompletion', () => {
 
     const token = makeToken();
     const result = await requestOllamaCompletion('hello', {
+      policy: 'anyModel',
       token: token as unknown as import('vscode').CancellationToken,
       preferredModelId: 'auto',
     });
@@ -107,6 +109,7 @@ describe('requestOllamaCompletion', () => {
 
     const token = makeToken();
     const result = await requestOllamaCompletion('hello', {
+      policy: 'anyModel',
       token: token as unknown as import('vscode').CancellationToken,
       preferredModelId: 'auto',
     });
@@ -129,6 +132,7 @@ describe('requestOllamaCompletion', () => {
 
     const token = makeToken();
     const result = await requestOllamaCompletion('hello', {
+      policy: 'anyModel',
       token: token as unknown as import('vscode').CancellationToken,
       preferredModelId: 'auto',
     });
@@ -155,6 +159,7 @@ describe('requestOllamaCompletion', () => {
 
     const token = makeToken();
     const result = await requestOllamaCompletion('hello', {
+      policy: 'anyModel',
       token: token as unknown as import('vscode').CancellationToken,
       preferredModelId: 'auto',
     });
@@ -169,6 +174,7 @@ describe('requestOllamaCompletion', () => {
     mockGenerate.mockResolvedValue(' some text');
 
     const result = await requestOllamaCompletion('hello', {
+      policy: 'anyModel',
       token: token as unknown as import('vscode').CancellationToken,
       preferredModelId: 'mistral:latest',
     });
@@ -181,6 +187,7 @@ describe('requestOllamaCompletion', () => {
 
     const token = makeToken();
     const result = await requestOllamaCompletion('hello', {
+      policy: 'anyModel',
       token: token as unknown as import('vscode').CancellationToken,
       preferredModelId: 'mistral:latest',
     });
@@ -193,6 +200,7 @@ describe('requestOllamaCompletion', () => {
 
     const token = makeToken();
     const result = await requestOllamaCompletion('hello', {
+      policy: 'anyModel',
       token: token as unknown as import('vscode').CancellationToken,
       preferredModelId: 'mistral:latest',
     });
@@ -205,6 +213,7 @@ describe('requestOllamaCompletion', () => {
 
     const token = makeToken();
     const result = await requestOllamaCompletion('hello', {
+      policy: 'anyModel',
       token: token as unknown as import('vscode').CancellationToken,
       preferredModelId: 'mistral:latest',
     });
@@ -218,6 +227,7 @@ describe('requestOllamaCompletion', () => {
     const phases: string[] = [];
     const token = makeToken();
     await requestOllamaCompletion('hello', {
+      policy: 'anyModel',
       token: token as unknown as import('vscode').CancellationToken,
       preferredModelId: 'mistral:latest',
       onLoadingPhase: (p) => phases.push(p),

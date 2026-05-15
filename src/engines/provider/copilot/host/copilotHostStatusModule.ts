@@ -1,7 +1,7 @@
 /**
- * @file Estado de la fuente de completado Copilot LM.
+ * @file Host I/O Copilot LM: estado fijo como `ProviderStatusModule` (Copilot viene del IDE).
  */
-import type { ProviderStateRecord, ProviderStatusModule } from '../../../system/internals/protocols/state/provider';
+import type { ProviderStateRecord, ProviderStatusModule } from '../../../../system/internals/protocols/state/provider';
 
 export const copilotStatusModule: ProviderStatusModule = {
   id: 'copilot',

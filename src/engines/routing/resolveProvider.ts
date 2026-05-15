@@ -1,9 +1,9 @@
 /**
  * @file Resuelve el adaptador LM de un proveedor (copilot, opencode, ollama).
  */
-import { requestCopilotLmCompletion } from '../provider/copilot/copilotLmEngine';
-import { requestOllamaCompletion } from '../provider/ollama/ollamaLmEngine';
-import { requestOpencodeCompletion } from '../provider/opencode/opencodeLmEngine';
+import { requestCopilotLmCompletion } from '../provider/copilot/completion/copilotCompletionEngine';
+import { requestOllamaCompletion } from '../provider/ollama/completion/ollamaCompletionEngine';
+import { requestOpencodeCompletion } from '../provider/opencode/opencodeCompletionEngine';
 
 import type { ProviderId } from '../../system/internals/protocols/state/provider';
 import type { CompletionRequestOptions, CompletionResult } from '../../system/internals/protocols/types';

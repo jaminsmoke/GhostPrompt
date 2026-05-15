@@ -78,9 +78,9 @@ Pasos alineados con `system/runtime/suggestRuntime.ts`: preparar token y `captur
 | `system/runtime/suggest.test.ts`              | Pipeline suggest con mocks       |
 | `system/runtime/suggestionRequestCoordinator.test.ts` | Cancelación y captureId      |
 | `system/runtime/lastEffectiveSuggestionModel.test.ts` | Modelo efectivo              |
-| `CopilotCompletion.test.ts` / `opencodeLmEngine` tests | Vía engines, contratos con sugcore |
+| `engines/provider/copilot/completion/copilotCompletionEngine.test.ts` / OpenCode tests | Vía engines, contratos con sugcore |
 | `engines/routing/resolveCompletionSource.test.ts` | Routing de fuentes           |
 | `protocols/state/loading/loadingLabels.test.ts` | Textos por fase                |
-| `engines/provider/copilot/collectLmResponse.test.ts` | Stream LM VS Code (Copilot) |
+| `engines/provider/copilot/lm/collectLmResponse.test.ts` | Stream LM VS Code (Copilot) |
 
 El merge de catálogos multi-motor se cubre en **`tests/mergedModelCatalog.test.ts`** (módulo bajo `engines/catalog/`).

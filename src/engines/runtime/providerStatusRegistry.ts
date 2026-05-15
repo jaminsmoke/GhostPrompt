@@ -2,9 +2,9 @@
  * @file Registro de módulos de estado de proveedores LM en el manager del host.
  */
 import { providerStatusManager } from '../../system/runtime/providerStatusManager';
-import { copilotStatusModule } from '../provider/copilot/copilotStatus';
-import { ollamaStatusModule } from '../provider/ollama/ollamaStatus';
-import { opencodeStatusModule } from '../provider/opencode/opencodeProviderStatus';
+import { copilotStatusModule } from '../provider/copilot/host/copilotHostStatusModule';
+import { ollamaStatusModule } from '../provider/ollama/host/ollamaHostStatusModule';
+import { opencodeStatusModule } from '../provider/opencode/server/opencodeServerStatusModule';
 
 /**
  * Registra los módulos de estado de copilot, opencode y ollama.

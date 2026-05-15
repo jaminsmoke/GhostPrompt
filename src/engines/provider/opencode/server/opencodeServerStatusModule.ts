@@ -1,13 +1,16 @@
 /**
- * @file Adaptador ProviderStatusModule para OpenCode (delega en opencodeServerManager).
+ * @file Adaptador `ProviderStatusModule` para OpenCode — I/O del servidor HTTP local.
+ *
+ * Delega en `opencodeServerManager` (ping /health, arranque/parada). Es capa de
+ * disponibilidad del proceso en el host, no el runtime de sugerencias ni el cliente SDK.
  */
 import {
   pingOpenCodeServer,
   startOpenCodeServer,
   stopOpenCodeServer,
-} from './server/opencodeServerManager';
+} from './opencodeServerManager';
 
-import type { ProviderStateRecord, ProviderStatusModule } from '../../../system/internals/protocols/state/provider';
+import type { ProviderStateRecord, ProviderStatusModule } from '../../../../system/internals/protocols/state/provider';
 
 export const opencodeStatusModule: ProviderStatusModule = {
   id: 'opencode',

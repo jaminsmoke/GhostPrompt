@@ -9,6 +9,7 @@
 | Archivo | Descripción |
 |---|---|
 | `suggestRuntime.ts` | Pipeline `suggest` (LM + broadcast UI) |
+| `finalizeEngineCompletionResult.ts` | Acotación `maxSuggestionChars` y rechazo LM antes del broadcast |
 | `suggestionRequestCoordinator.ts` | `captureId` activo y cancelación in-flight |
 | `lastEffectiveSuggestionModel.ts` | Último modelo usado en suggestion exitosa (settings UI) |
 | `providerStatusManager.ts` | Registry + refresh/start/stop de proveedores LM |
@@ -22,6 +23,7 @@
 | Archivo | Cubre |
 |---|---|
 | `suggestRuntime.test.ts` | Pipeline de suggestion |
+| `finalizeEngineCompletionResult.test.ts` | Post-procesado sugerencia cruda → UI |
 | `suggestionRequestCoordinator.test.ts` | Cancelación y capture obsoleto |
 | `lastEffectiveSuggestionModel.test.ts` | Modelo efectivo en settings |
 | `providerStatusManager.test.ts` | Estado de proveedores LM |

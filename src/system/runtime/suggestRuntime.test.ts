@@ -130,6 +130,44 @@ describe('runGhostPromptSuggestPipeline', () => {
     );
   });
 
+  it('post-procesado: negativa del LM se emite como empty content-blocked', async () => {
+    requestCompletion.mockResolvedValue({
+      kind: 'suggestion',
+      suggestion: "I'm sorry, I can't assist with that.",
+      model: { id: 'gpt', label: 'GPT', tier: 'included' },
+    });
+    const deps = minimalDeps();
+    const text = 'long enough phrase for finalize refusal unique-fr';
+    await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 51 }, deps);
+    expect(deps.broadcastUi).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'empty',
+        reason: 'content-blocked',
+        captureId: 51,
+      }),
+    );
+  });
+
+  it('post-procesado: acota suggestion según getMaxSuggestionChars', async () => {
+    requestCompletion.mockResolvedValue({
+      kind: 'suggestion',
+      suggestion: 'abcdefghijklmnopqrstuvwxyz',
+      model: { id: 'gpt', label: 'GPT', tier: 'included' },
+    });
+    const deps = minimalDeps({
+      getMaxSuggestionChars: () => 10,
+    });
+    const text = 'long enough phrase for finalize bound unique-bd';
+    await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 52 }, deps);
+    expect(deps.broadcastUi).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'suggestion',
+        suggestion: 'abcdefghij',
+        captureId: 52,
+      }),
+    );
+  });
+
   it('ruta OpenCode: loading inicial opencode-start y onStreamPreview en opciones', async () => {
     vi.mocked(resolveCompletionSourceForRequest).mockReturnValue('opencode');
     try {

@@ -1,9 +1,9 @@
 /**
- * @file Pruebas de formato de ID de modelo Ollama.
+ * @file Pruebas de heurística de id Ollama para enrutado.
  */
 import { describe, expect, it } from 'vitest';
 
-import { looksLikeOllamaModelId } from './modelId';
+import { looksLikeOllamaModelId } from './routingModelId';
 
 describe('looksLikeOllamaModelId', () => {
   it('detecta formato model:tag', () => {

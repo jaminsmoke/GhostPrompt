@@ -1,5 +1,5 @@
 /**
- * @file Heurística de formato de ID de modelo OpenCode (`provider/model`).
+ * @file Heurística de forma de id de modelo para enrutado OpenCode (`provider/model`).
  */
 
 /**

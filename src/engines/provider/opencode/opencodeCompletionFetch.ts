@@ -1,32 +1,11 @@
 /**
- * @file I/O de completado OpenCode (cliente, sesión, prompt).
+ * @file Fetch de texto bruto de completion OpenCode vía SDK (instrucción GhostPrompt + sesión + timeout).
  */
 import { buildCompletionInstruction } from '../../../sugcore/rules/instruction';
 
-import {
-  createOpenCodeClient,
-  getGlobalClient,
-  getSession,
-  healthCheck,
-  promptOpenCode,
-  resetClient,
-} from './client';
-import { getOpenCodeClientOptions } from './server/opencodeServerManager';
+import { getGlobalClient, getSession, promptOpenCode } from './client';
 
 import type { CompletionRequestOptions } from '../../../system/internals/protocols/types';
-
-/**
- * Asegura cliente OpenCode inicializado y saludable.
- * @returns {Promise<boolean>} True si el cliente responde al health check.
- */
-export async function ensureOpenCodeClient(): Promise<boolean> {
-  try {
-    const client = await createOpenCodeClient(getOpenCodeClientOptions());
-    return await healthCheck(client);
-  } catch {
-    return false;
-  }
-}
 
 /**
  * Resuelve el id de modelo a usar (sin auto-selección por ahora).
@@ -79,11 +58,4 @@ export async function fetchOpenCodeCompletionText(
       }
     }),
   ]);
-}
-
-/**
- * Reinicia cliente y sesiones tras error de conexión.
- */
-export function resetOpenCodeClient(): void {
-  resetClient();
 }

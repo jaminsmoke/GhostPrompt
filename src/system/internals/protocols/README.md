@@ -8,6 +8,9 @@
 
 ```text
 protocols/
+├── guards/             # Heurísticas puras sobre errores/respuestas LM (sin estado)
+│   ├── copilotLm.ts
+│   └── copilotLm.test.ts
 ├── types/              # Contratos de completado (CompletionResult, modelos, params)
 │   ├── completion.ts
 │   ├── params.ts
@@ -29,6 +32,7 @@ protocols/
 
 ## Qué entra aquí
 
+- Heurísticas sin estado sobre errores o texto del modelo (`guards/*`)
 - Tipos de request/result de motores LM (`types/completion.ts`)
 - Constantes por defecto del pipeline (`types/params.ts`)
 - Unions e interfaces de estado (`state/*`)

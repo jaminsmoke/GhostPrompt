@@ -1,22 +1,19 @@
 /**
- * @file Engine de completado para Ollama.
+ * @file Motor de completions Ollama — integración GhostPrompt (`CompletionResult`).
+ *
+ * HTTP vía `../http/ollamaApiClient`; políticas en `vscode.workspace`.
  */
 import * as vscode from 'vscode';
 
-import { buildCompletionInstruction } from '../../../sugcore/rules/instruction';
-import { boundSuggestionText } from '../../../system/internals/protocols/types/boundSuggestionText';
-import {
-  DEFAULT_MAX_SUGGESTION_CHARS,
-  DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
-} from '../../../system/internals/protocols/types/params';
-
-import { listModels, generate } from './ollamaApiClient';
+import { buildCompletionInstruction } from '../../../../sugcore/rules/instruction';
+import { DEFAULT_MODEL_REQUEST_TIMEOUT_MS } from '../../../../system/internals/protocols/types/params';
+import { listModels, generate } from '../http/ollamaApiClient';
 
 import type {
   CompletionRequestOptions,
   CompletionResult,
   SuggestionModelDescriptor,
-} from '../../../system/internals/protocols/types';
+} from '../../../../system/internals/protocols/types';
 
 /**
  * Describe un modelo Ollama para el pipeline de sugerencias.
@@ -69,7 +66,6 @@ export async function requestOllamaCompletion(
   const {
     token,
     preferredModelId,
-    maxSuggestionChars = DEFAULT_MAX_SUGGESTION_CHARS,
     style: _style,
     context: _context,
     requestTimeoutMs = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
@@ -114,15 +110,13 @@ export async function requestOllamaCompletion(
       return { kind: 'empty', reason: 'request-timeout' };
     }
 
-    const suggestion = boundSuggestionText(completionText, maxSuggestionChars);
-
-    if (!suggestion) {
+    if (!completionText) {
       return { kind: 'empty', reason: 'empty-response' };
     }
 
     return {
       kind: 'suggestion',
-      suggestion,
+      suggestion: completionText,
       model: describeOllamaModel(modelName),
     };
   } catch (err) {

@@ -1,5 +1,5 @@
 /**
- * @file Pruebas del adaptador de estado OpenCode.
+ * @file Pruebas del módulo de estado I/O del servidor OpenCode (`ProviderStatusModule`).
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -18,7 +18,7 @@ vi.mock('vscode', () => ({
   },
 }));
 
-import { opencodeStatusModule } from './opencodeProviderStatus';
+import { opencodeStatusModule } from './opencodeServerStatusModule';
 
 describe('opencodeStatusModule', () => {
   beforeEach(() => {

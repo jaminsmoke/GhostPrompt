@@ -1,11 +1,11 @@
 /**
- * @file Estado de proveedor Ollama y verificación de salud.
+ * @file Host I/O Ollama: instalación CLI, modelos disponibles y sesión (`ollama ps`) como `ProviderStatusModule`.
  */
 import { exec } from 'node:child_process';
 
 import { ollamaModelManager } from './ollamaModelManager';
 
-import type { ProviderStateRecord, ProviderStatusModule } from '../../../system/internals/protocols/state/provider';
+import type { ProviderStateRecord, ProviderStatusModule } from '../../../../system/internals/protocols/state/provider';
 
 /**
  * Ejecuta un comando de shell y devuelve su salida estándar.

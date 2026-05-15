@@ -14,10 +14,6 @@ afterEach(() => {
 import { listModels, generate } from './ollamaApiClient';
 
 /**
- * @param data
- * @param status
- */
-/**
  * Creates a mock fetch Response containing JSON.
  * @param {unknown} data The body payload to serialize.
  * @param {number} status The HTTP status code.

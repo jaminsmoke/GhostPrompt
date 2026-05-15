@@ -1,5 +1,5 @@
 /**
- * @file Pruebas de la integración CopilotCompletion.
+ * @file Pruebas del motor Copilot LM (`completion/copilotCompletionEngine`).
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -27,13 +27,13 @@ vi.mock('vscode', () => ({
   },
 }));
 
-import { buildCompletionInstruction } from '../../../sugcore/rules/instruction';
-
+import { buildCompletionInstruction } from '../../../../sugcore/rules/instruction';
 import {
   listSuggestionModels,
   selectModelByPolicy,
-} from './catalog/modelCatalog';
-import { requestCopilotLmCompletion as requestCompletion } from './copilotLmEngine';
+} from '../catalog/modelCatalog';
+
+import { requestCopilotLmCompletion as requestCompletion } from './copilotCompletionEngine';
 
 /**
  * Creates a mock async iterable that yields the provided chunks sequentially.
@@ -101,7 +101,6 @@ describe('CopilotCompletion', () => {
     const result = await requestCompletion('Escribe', {
       token: createToken(),
       policy: 'anyModel',
-      maxSuggestionChars: 50,
     });
 
     expect(result).toEqual(
@@ -123,7 +122,6 @@ describe('CopilotCompletion', () => {
     await requestCompletion('Hola', {
       token: createToken(),
       policy: 'anyModel',
-      maxSuggestionChars: 20,
     });
     expect(userMessageMock.mock.calls[0][0]).toContain('Complete the following text');
     expect(userMessageMock.mock.calls[0][0]).toContain('Hola');
@@ -145,9 +143,10 @@ describe('CopilotCompletion', () => {
     expect(result).toEqual({ kind: 'empty', reason: 'request-timeout' });
   });
 
-  it('devuelve content-blocked cuando Copilot rechaza la petición con un mensaje de negativa', async () => {
+  it('devuelve el texto crudo del modelo incluso si parece una negativa (post-procesado en runtime)', async () => {
+    const refusal = "I'm sorry, I can't assist with that.";
     const sendRequest = vi.fn().mockResolvedValue({
-      text: createTextStream(["I'm sorry, I can't assist with that."]),
+      text: createTextStream([refusal]),
     });
     selectChatModelsMock.mockResolvedValueOnce([{ sendRequest }]);
 
@@ -156,7 +155,12 @@ describe('CopilotCompletion', () => {
       policy: 'anyModel',
     });
 
-    expect(result).toEqual({ kind: 'empty', reason: 'content-blocked' });
+    expect(result).toEqual(
+      expect.objectContaining({
+        kind: 'suggestion',
+        suggestion: refusal,
+      }),
+    );
   });
 
   it('selectModelByPolicy prioriza modelo no premium en modo seguro', () => {

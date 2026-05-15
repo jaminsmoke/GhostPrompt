@@ -25,7 +25,7 @@ vi.mock('vscode', () => ({
   },
 }));
 
-vi.mock('../ollamaApiClient', () => ({
+vi.mock('../http/ollamaApiClient', () => ({
   listModels: listModelsMock,
 }));
 

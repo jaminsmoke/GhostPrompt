@@ -1,5 +1,5 @@
 /**
- * @file Heurística de formato de ID de modelo Ollama (`model:tag`).
+ * @file Heurística de forma de id de modelo para enrutado Ollama (`model:tag`).
  */
 
 /**

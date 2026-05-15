@@ -1,5 +1,5 @@
 /**
- * @file Pruebas de estado de proveedor Ollama.
+ * @file Pruebas del módulo de estado host Ollama.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -13,7 +13,7 @@ vi.mock('vscode', () => ({
   },
 }));
 
-import { ollamaStatusModule } from './ollamaStatus';
+import { ollamaStatusModule } from './ollamaHostStatusModule';
 
 describe('ollamaStatusModule', () => {
   beforeEach(() => {
@@ -95,4 +95,3 @@ describe('ollamaStatusModule', () => {
     expect(state.statusText).toContain('sin modelos');
   });
 });
-

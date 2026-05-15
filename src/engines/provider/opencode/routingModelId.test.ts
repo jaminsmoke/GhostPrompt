@@ -1,9 +1,9 @@
 /**
- * @file Pruebas de formato de ID de modelo OpenCode.
+ * @file Pruebas de heurística de id OpenCode para enrutado.
  */
 import { describe, expect, it } from 'vitest';
 
-import { looksLikeOpencodeModelId } from './modelId';
+import { looksLikeOpencodeModelId } from './routingModelId';
 
 describe('looksLikeOpencodeModelId', () => {
   it('detecta formato provider/model', () => {
