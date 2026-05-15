@@ -16,6 +16,15 @@ export type AgentDestination = 'copilotChat' | 'vsOpenCodeX' | 'cursorChat';
 
 export type CompletionProvider = 'copilot' | 'opencode' | 'ollama';
 
+import type {
+  ProviderState,
+  ProviderStateRecord,
+} from '../../../system/internals/protocols/state/provider';
+
+/** Alias webview del contrato en `protocols/state/provider`. */
+export type CompletionSourceState = ProviderState;
+export type CompletionSourceStateRecord = ProviderStateRecord;
+
 export type SuggestionModel = {
   id: string;
   label: string;
@@ -114,17 +123,6 @@ export type InboundMessage =
       captureId?: number;
       broadcast?: boolean;
     };
-
-/** Estado de salud de una fuente de completado (copilot, opencode, ollama). */
-export type CompletionSourceState = 'running' | 'stopped' | 'starting' | 'unavailable' | 'error';
-
-export interface CompletionSourceStateRecord {
-  id: CompletionProvider;
-  status: CompletionSourceState;
-  label: string;
-  statusText?: string;
-  actions?: ('start' | 'stop')[];
-}
 
 export type UpdateSettingMessage =
   | { type: 'updateSetting'; key: 'suggestionModelPolicy'; value: 'nonPremiumOnly' | 'anyModel' }

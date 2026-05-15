@@ -20,7 +20,7 @@
 - Protocolos Zod webview ↔ host → `api/`.
 - **Estado interno** (session store, provider status) → `system/internals/state/`; contratos → `system/internals/protocols/state/`.
 - **Runtime / orquestación** del pipeline suggest → `system/runtime/`.
-- Stream LM Copilot, config de fuentes → `engines/copilot/`, `engines/config/`.
+- Stream LM Copilot, config de fuentes → `engines/provider/copilot/`, `engines/config/`.
 
 ---
 
@@ -42,11 +42,12 @@ sequenceDiagram
   participant W as Webview
   participant A as api (handlers)
   participant P as system/runtime
-  participant S as system/internals/state/sessionStore
+  participant C as system/runtime/suggestionRequestCoordinator
+  participant H as system/runtime/suggestionHostState
   participant E as engines
   W->>A: suggest(text, captureId)
   A->>P: runGhostPromptSuggestPipeline
-  P->>S: prepareSuggestionRequest
+  P->>C: prepareRequest(captureId)
   P->>E: requestCompletion (motor resuelto)
   E-->>P: CompletionResult
   P->>W: broadcast loading / suggestion / empty / error
@@ -61,7 +62,8 @@ Pasos alineados con `system/runtime/suggestRuntime.ts`: preparar token y `captur
 | Importa desde                             | Motivo                                    |
 | ----------------------------------------- | ----------------------------------------- |
 | `engines/engineRegistry`                  | Obtener el motor por `CompletionSourceId` |
-| `system/internals/state/sessionStore`    | Session store (captureId, cancelación)    |
+| `system/runtime/suggestionRequestCoordinator` | Capture activo y cancelación in-flight |
+| `system/runtime/lastEffectiveSuggestionModel` | Modelo efectivo para settings UI      |
 | `system/internals/protocols/state/loading` | Fases y textos de carga                  |
 | `system/runtime`                          | Pipeline de orquestación suggest          |
 | `system/log`                              | Logging opcional de performance           |
@@ -74,10 +76,11 @@ Pasos alineados con `system/runtime/suggestRuntime.ts`: preparar token y `captur
 | Test                                          | Cubre                            |
 | --------------------------------------------- | -------------------------------- |
 | `system/runtime/suggest.test.ts`              | Pipeline suggest con mocks       |
-| `system/internals/state/sessionStore.test.ts` | Estado, cancelación, captureId   |
+| `system/runtime/suggestionRequestCoordinator.test.ts` | Cancelación y captureId      |
+| `system/runtime/lastEffectiveSuggestionModel.test.ts` | Modelo efectivo              |
 | `CopilotCompletion.test.ts` / `opencodeLmEngine` tests | Vía engines, contratos con sugcore |
 | `engines/routing/resolveCompletionSource.test.ts` | Routing de fuentes           |
 | `protocols/state/loading/loadingLabels.test.ts` | Textos por fase                |
-| `engines/copilot/collectLmResponse.test.ts`   | Stream LM VS Code (Copilot)      |
+| `engines/provider/copilot/collectLmResponse.test.ts` | Stream LM VS Code (Copilot) |
 
 El merge de catálogos multi-motor se cubre en **`tests/mergedModelCatalog.test.ts`** (módulo bajo `engines/catalog/`).

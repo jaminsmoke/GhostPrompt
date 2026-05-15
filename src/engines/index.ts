@@ -1,22 +1,13 @@
 /**
- * @file Exportaciones públicas del módulo engines.
+ * @file API pública del dominio engines (barrel delgado).
  */
-export type { CompletionSourceId } from './completionSourceId';
-
-export {
-  CompletionProvider,
-  getCompletionProviderForSource,
-  getActiveCompletionProvider,
-  getCompletionProviderKind,
-} from './engineRegistry';
+export type { ProviderId } from '../system/internals/protocols/state/provider';
 
 export { getCompletionUiKind, getEnabledCompletionSources } from './config/completionSources';
 
 export { resolveCompletionSourceForRequest } from './routing/resolveCompletionSource';
+export { resolveProvider, type EngineProvider } from './routing/resolveProvider';
 
-export { listMergedSuggestionModels } from './catalog/mergedModelCatalog';
+export { listMergedSuggestionModels } from './provider/mergedModelCatalog';
 
-export * from './status';
-export * from './copilot/index';
-export * from './ollama/index';
-export * from './opencode/index';
+export { registerProviderStatusRegistry } from './runtime/providerStatusRegistry';

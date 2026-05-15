@@ -5,16 +5,18 @@
  * Invocado desde `suggest/index.ts` (alias `handleGhostPromptSuggest` para imports existentes).
  */
 import { getEnabledCompletionSources } from '../../engines/config/completionSources';
-import { getCompletionProviderForSource } from '../../engines/engineRegistry';
 import { resolveCompletionSourceForRequest } from '../../engines/routing/resolveCompletionSource';
+import { resolveProvider } from '../../engines/routing/resolveProvider';
 import { SuggestionStyle } from '../../sugcore/sugstyle/styleLengthController';
 import {
   suggestionLoadingStatusText,
   type SuggestionLoadingPhase,
 } from '../../system/internals/protocols/state/loading';
-import { ghostPromptSessionStore } from '../../system/internals/state/sessionStore';
 import { flushLogCapture, getLogger } from '../../system/log';
 import { DEFAULT_MIN_SUGGEST_INPUT_CHARS } from '../internals/protocols/types';
+
+import { setLastEffectiveSuggestionModel } from './lastEffectiveSuggestionModel';
+import { suggestionRequestCoordinator } from './suggestionRequestCoordinator';
 
 import type { WebviewInboundMessage } from '../../api/protocols/webviewProtocols';
 import type { CompletionResult, SuggestionModelPolicy } from '../../system/internals/protocols/types';
@@ -58,7 +60,7 @@ export async function runGhostPromptSuggestPipeline(
 
   const log = getLogger('suggest');
 
-  const tokenSource = ghostPromptSessionStore.prepareSuggestionRequest(captureId);
+  const tokenSource = suggestionRequestCoordinator.prepareRequest(captureId);
 
   const enabledSources = getEnabledCompletionSources();
   const routedSource = resolveCompletionSourceForRequest(selectedModelId, enabledSources);
@@ -94,7 +96,7 @@ export async function runGhostPromptSuggestPipeline(
   });
 
   try {
-    const result = await getCompletionProviderForSource(routedSource).requestCompletion(text, {
+    const result = await resolveProvider(routedSource).requestCompletion(text, {
       perfCaptureId: captureId,
       token: tokenSource.token,
       policy,
@@ -105,7 +107,7 @@ export async function runGhostPromptSuggestPipeline(
       ...(routedSource === 'opencode' || routedSource === 'ollama'
         ? {
             onStreamPreview: (accumulated: string) => {
-              if (captureId !== ghostPromptSessionStore.getSnapshot().activeCaptureId) {
+              if (!suggestionRequestCoordinator.isActiveCapture(captureId)) {
                 return;
               }
               deps.broadcastUi({
@@ -120,18 +122,14 @@ export async function runGhostPromptSuggestPipeline(
 
     if (
       tokenSource.token.isCancellationRequested ||
-      captureId !== ghostPromptSessionStore.getSnapshot().activeCaptureId
+      !suggestionRequestCoordinator.isActiveCapture(captureId)
     ) {
       log.warn('request-discarded', { captureId, reason: 'stale-or-cancel' });
       return;
     }
 
     if (result.kind === 'suggestion') {
-      ghostPromptSessionStore.patchState({
-        pendingSuggestion: result.suggestion,
-        suggestionFlowStatus: 'success',
-        lastEffectiveModel: result.model,
-      });
+      setLastEffectiveSuggestionModel(result.model);
       log.info('request-success', {
         captureId,
         suggestionChars: result.suggestion.length,
@@ -145,7 +143,6 @@ export async function runGhostPromptSuggestPipeline(
         captureId,
       });
     } else if (result.kind === 'empty') {
-      ghostPromptSessionStore.patchState({ suggestionFlowStatus: 'empty' });
       log.info('request-empty', { captureId, reason: result.reason });
       deps.broadcastUi({
         type: 'empty',
@@ -154,10 +151,6 @@ export async function runGhostPromptSuggestPipeline(
       });
       deps.notifyIssue?.(result);
     } else {
-      ghostPromptSessionStore.patchState({
-        suggestionFlowStatus: 'error',
-        lastSuggestionError: result.message,
-      });
       log.error('request-error', { captureId, detail: result.message });
       deps.broadcastUi({
         type: 'error',
@@ -170,8 +163,7 @@ export async function runGhostPromptSuggestPipeline(
     log.warn('request-cancelled', { captureId });
   } finally {
     flushLogCapture(captureId);
-    ghostPromptSessionStore.disposeActiveSuggestionToken(tokenSource);
-    ghostPromptSessionStore.patchState({ suggestionFlowStatus: 'idle' });
+    suggestionRequestCoordinator.disposeTokenIfActive(tokenSource);
   }
 }
 

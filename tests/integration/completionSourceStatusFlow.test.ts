@@ -1,5 +1,5 @@
 /**
- * @file Tests de integración del flujo de estado de fuentes de completado.
+ * @file Tests de integración del flujo de estado de proveedores LM.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -10,14 +10,14 @@ vi.mock('vscode', () => ({
   workspace: { getConfiguration: () => ({ get: vi.fn() }) },
 }));
 
-import { CompletionSourceStatusManager } from '../../src/engines/status/completionSourceStatusManager';
+import { ProviderStatusManager } from '../../src/system/runtime/providerStatusManager';
 
-import type { CompletionSourceStatusModule } from '../../src/engines/status/completionSourceStatusTypes';
+import type { ProviderStatusModule } from '../../src/system/internals/protocols/state/provider';
 
-describe('completionSourceStatus flow - integration', () => {
-  let manager: CompletionSourceStatusManager;
+describe('providerStatus flow - integration', () => {
+  let manager: ProviderStatusManager;
 
-  const mockCopilot: CompletionSourceStatusModule = {
+  const mockCopilot: ProviderStatusModule = {
     id: 'copilot',
     label: 'Copilot LM',
     check: vi.fn().mockResolvedValue({
@@ -31,7 +31,7 @@ describe('completionSourceStatus flow - integration', () => {
     stop: vi.fn().mockResolvedValue(undefined),
   };
 
-  const mockOllama: CompletionSourceStatusModule = {
+  const mockOllama: ProviderStatusModule = {
     id: 'ollama',
     label: 'Ollama',
     check: vi.fn().mockResolvedValue({
@@ -43,7 +43,7 @@ describe('completionSourceStatus flow - integration', () => {
   };
 
   beforeEach(() => {
-    manager = new CompletionSourceStatusManager();
+    manager = new ProviderStatusManager();
     vi.clearAllMocks();
   });
 
@@ -90,4 +90,3 @@ describe('completionSourceStatus flow - integration', () => {
     expect(result[1].status).toBe('unavailable');
   });
 });
-

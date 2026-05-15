@@ -8,10 +8,14 @@ import {
   getActiveDestinationProvider,
   getGhostPromptAgentDestination,
 } from '../../destinations/destinationRegistry';
-import { completionSourceStatusManager } from '../../engines/status/completionSourceStatusManager';
-import { ghostPromptSessionStore } from '../../system/internals/state/sessionStore';
 import { getLogger } from '../../system/log';
+import { providerStatusManager } from '../../system/runtime/providerStatusManager';
 import { type GhostPromptSuggestDeps, handleGhostPromptSuggest } from '../../system/runtime/suggestRuntime';
+import {
+  getMultiViewDraftText,
+  resetMultiViewDraftText,
+  setMultiViewDraftText,
+} from '../../ui/provider/multiViewDraft';
 import { applyWebviewUpdateSetting } from '../settings/applyWebviewUpdate';
 
 import { parseWebviewOutboundMessage } from './webviewProtocols';
@@ -49,7 +53,7 @@ export async function handleGhostPromptInboundInit(
   await postSettings(webview);
   const draftPayload = {
     type: 'draftHydrate' as const,
-    text: ghostPromptSessionStore.getSnapshot().draftText,
+    text: getMultiViewDraftText(),
   };
   const validated = parseWebviewOutboundMessage(draftPayload);
   if (!validated) {
@@ -71,7 +75,7 @@ export function handleGhostPromptInboundDraftChanged(
   if (message.originViewId !== services.viewContributionId) {
     return;
   }
-  ghostPromptSessionStore.patchState({ draftText: message.text });
+  setMultiViewDraftText(message.text);
   services.broadcastDraftSync(message.originViewId, message.text);
 }
 
@@ -112,9 +116,6 @@ export function handleGhostPromptInboundAccept(
   dataUri: vscode.Uri,
 ): Promise<void> {
   void dataUri;
-  ghostPromptSessionStore.patchState({
-    lastAcceptedSuggestion: message.suggestion,
-  });
   getLogger('inbound').info('suggestion-accepted', {
     context: message.context,
     suggestion: message.suggestion,
@@ -157,16 +158,7 @@ export async function handleGhostPromptInboundSend(
     );
     return;
   }
-  const recent = [message.text, ...ghostPromptSessionStore.getSnapshot().recentSentPrompts].slice(
-    0,
-    5,
-  );
-  ghostPromptSessionStore.patchState({
-    lastSentPrompt: message.text,
-    recentSentPrompts: recent,
-    pendingSuggestion: '',
-    draftText: '',
-  });
+  resetMultiViewDraftText();
   getLogger('inbound').info('prompt-sent', { prompt: message.text });
   broadcastClearAll();
 }
@@ -240,11 +232,11 @@ export async function dispatchGhostPromptInboundMessage(
       await handleProviderStatusRequest(dispatchServices.webview, dispatchServices);
       return;
     case 'startProvider':
-      await completionSourceStatusManager.start(message.provider);
+      await providerStatusManager.start(message.provider);
       await postProviderStatus(dispatchServices.webview, dispatchServices);
       return;
     case 'stopProvider':
-      await completionSourceStatusManager.stop(message.provider);
+      await providerStatusManager.stop(message.provider);
       await postProviderStatus(dispatchServices.webview, dispatchServices);
       return;
     default: {
@@ -277,7 +269,7 @@ async function postProviderStatus(
   webview: vscode.Webview,
   services: GhostPromptInboundDispatchServices,
 ): Promise<void> {
-  const providers = await completionSourceStatusManager.refreshAll();
+  const providers = await providerStatusManager.refreshAll();
   const msg = { type: 'providerStatus' as const, providers };
   const validated = parseWebviewOutboundMessage(msg);
   if (!validated) {

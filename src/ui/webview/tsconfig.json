@@ -18,7 +18,8 @@
     "./**/*.ts",
     "./**/*.tsx",
     "./globals.d.ts",
-    "../../api/contracts/webviewMessageSchemas.ts"
+    "../../api/contracts/webviewMessageSchemas.ts",
+    "../../system/internals/protocols/state/provider/**/*.ts"
   ],
   "exclude": [
     "**/*.test.ts",

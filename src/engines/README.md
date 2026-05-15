@@ -6,7 +6,7 @@
 
 ## Rol
 
-`engines/` implementa el patrón **`CompletionProvider`**. Cada motor expone una interfaz común (`id` + `requestCompletion`) y se registra en el `engineRegistry`. El routing se resuelve por el modelo seleccionado: `model:tag` → Ollama, `providerID/modelID` → OpenCode, id de chat Copilot → LM.
+`engines/` expone adaptadores LM por proveedor (`EngineProvider`: `id` + `requestCompletion`). El routing elige fuente (`resolveCompletionSourceForRequest`) y adaptador (`resolveProvider`). Por modelo: `model:tag` → Ollama, `providerID/modelID` → OpenCode, id de chat Copilot → LM.
 
 **No debe contener:**
 
@@ -20,65 +20,38 @@
 
 ```text
 engines/
-├── completionSourceId.ts        # Tipo CompletionSourceId ('copilot' | 'opencode' | 'ollama')
-├── status/                      # Estado de salud de fuentes (UI motor: start/stop, refresh)
-│   ├── completionSourceStatusManager.ts
-│   ├── registerCompletionSourceStatusModules.ts
-│   └── completionSourceStatusTypes.ts
-├── engineRegistry.ts            # Registro de motores + getCompletionProviderForSource
+├── index.ts                     # Barrel público delgado
+├── runtime/
+│   └── providerStatusRegistry.ts  # Registro de *Status → `system/runtime/providerStatusManager`
 ├── config/
 │   └── completionSources.ts     # getEnabledCompletionSources, getCompletionUiKind (VS Code settings)
 ├── routing/
-│   └── resolveCompletionSource.ts  # resolveCompletionSourceForRequest (modelo → fuente)
-├── modelIdChecks.ts             # looksLikeOllamaModelId, looksLikeOpencodeModelId
-├── catalog/
-│   └── mergedModelCatalog.ts    # Lista unificada multi-motor (settings/UI; no hot path suggest)
-├── copilot/
-│   ├── copilotLmEngine.ts       # Motor Copilot LM (vscode.lm)
-│   ├── collectLmResponse.ts     # Recolecta texto del stream vscode.lm
-│   └── catalog/
-│       └── modelCatalog.ts      # Catálogo de modelos Copilot
-├── opencode/
-│   ├── opencodeApiClient.ts     # Cliente API: createOpenCodeClient, health check, session pool
-│   ├── opencodeLmEngine.ts      # Motor OpenCode (session.prompt)
-│   └── catalog/
-│       ├── opencodeModelCatalog.ts    # Lista modelos via config.providers()
-│       └── opencodeModelTier.ts       # Clasificación de tiers (included/premium/unknown)
-└── ollama/
-    ├── ollamaApiClient.ts       # Cliente HTTP REST: listModels, generate
-    ├── ollamaLmEngine.ts        # Motor Ollama (POST /api/generate)
-    ├── ollamaTypes.ts           # Tipos de respuesta de Ollama
-    └── catalog/
-        ├── ollamaModelCatalog.ts      # Lista modelos via /api/tags
-        └── normalizeOllamaModels.ts   # Normalización de metadatos Ollama
+│   ├── resolveCompletionSource.ts  # resolveCompletionSourceForRequest (modelo → fuente)
+│   └── resolveProvider.ts          # resolveProvider (fuente → adaptador LM)
+└── provider/
+    ├── mergedModelCatalog.ts    # Lista unificada multi-proveedor (settings/UI)
+    ├── copilot/                 # LM Copilot (vscode.lm)
+    ├── opencode/                # server/, opencodeCompletion, opencodeLmEngine
+    └── ollama/                  # Ollama HTTP /api/generate
 ```
 
 ---
 
-## Patrón `CompletionProvider`
+## Patrón `EngineProvider`
 
 ```ts
-interface CompletionProvider {
+interface EngineProvider {
   id: string;
-  requestCompletion(text: string, opts: CompletionOptions): Promise<CompletionResult>;
+  requestCompletion(text: string, opts: CompletionRequestOptions): Promise<CompletionResult>;
 }
-```
-
-### Registro
-
-```ts
-// En cada motor:
-registerCompletionProvider("copilotLm", { id: "copilotLm", requestCompletion: ... });
-registerCompletionProvider("opencodeLm", { id: "opencodeLm", requestCompletion: ... });
-registerCompletionProvider("ollamaLm", { id: "ollamaLm", requestCompletion: ... });
 ```
 
 ### Resolución
 
 ```ts
-getCompletionProviderForSource('copilot'); // → copilotLm provider
-getCompletionProviderForSource('opencode'); // → opencodeLm provider
-getCompletionProviderForSource('ollama'); // → ollamaLm provider
+resolveProvider('copilot'); // → copilotLm
+resolveProvider('opencode'); // → opencode
+resolveProvider('ollama'); // → ollama
 ```
 
 ---
@@ -134,7 +107,7 @@ Configuración de fuentes habilitadas: `config/completionSources.ts` (`ghostProm
 | `sugcore/rules/instruction`    | `buildCompletionInstruction` para el prompt del LM    |
 | `copilot/collectLmResponse`          | `collectLmResponse` (stream LM VS Code)         |
 | `system/internals/protocols/state/loading` | `SuggestionLoadingPhase`, textos de fase    |
-| `engines/status`                     | Estado de fuentes de completado (manager + tipos) |
+| `engines/runtime/providerStatusRegistry` | Registro de módulos *Status en el host |
 | `system/internals/protocols/state`   | Tipos de sesión y loading                         |
 | `system/log`                | Logging estructurado y perf capture                   |
 
@@ -147,7 +120,7 @@ Configuración de fuentes habilitadas: `config/completionSources.ts` (`ghostProm
 | `engineRegistry.test.ts`                  | Registro y resolución de proveedores                               |
 | `ollamaApiClient.test.ts`                 | Mock fetch, listModels, generate (éxito, error, custom baseUrl)    |
 | `ollamaLmEngine.test.ts`                  | Modelo explícito, auto-resolve, exclusión, errores, loading phases |
-| `opencodeApiClient.test.ts`               | Session pool, health check, prompt, promptStream                   |
+| `client/opencodeClient.test.ts`           | Session pool, health check, prompt, promptStream                   |
 | `opencodeLmCompletion.test.ts`            | Request completion con OpenCode, streaming preview                 |
 | `opencodeModelCatalog.test.ts`            | Lista modelos, snapshot cache, exclusión                           |
 | `opencodeModelTier.test.ts`               | Clasificación de tiers por pricing metadata                        |

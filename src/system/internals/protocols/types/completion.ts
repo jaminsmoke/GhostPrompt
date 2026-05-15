@@ -60,9 +60,6 @@ export interface CompletionRequestOptions {
 }
 
 export interface SuggestionContext {
-  lastAcceptedSuggestion?: string;
-  lastSentPrompt?: string;
-  recentSentPrompts?: string[];
   workspaceName?: string;
   activeFilePath?: string;
   activeLanguageId?: string;

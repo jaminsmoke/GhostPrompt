@@ -11,9 +11,9 @@ import '../destinations/copilotChat/copilotChatDestination';
 import '../destinations/cursor/cursorChatDestination';
 import { registerDiscoverCursorChatCommandsCommand } from '../destinations/cursor/discoverCursorChatCommands';
 import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from '../destinations/vsOpenCodeX/vsOpenCodeXDestination';
-import { ollamaModelManager } from '../engines/ollama';
-import { resetClient } from '../engines/opencode/opencodeApiClient';
-import { registerCompletionSourceStatusModules } from '../engines/status/registerCompletionSourceStatusModules';
+import { ollamaModelManager } from '../engines/provider/ollama';
+import { resetClient } from '../engines/provider/opencode/client';
+import { registerProviderStatusRegistry } from '../engines/runtime/providerStatusRegistry';
 import {
   disposeGhostPromptLogging,
   ensureSuggestionDebugChannel,
@@ -29,7 +29,7 @@ import { MiniInputViewProvider } from '../ui/provider/MiniInputViewProvider';
  */
 export function activate(context: vscode.ExtensionContext): void {
   initGhostPromptLogging(context);
-  registerCompletionSourceStatusModules();
+  registerProviderStatusRegistry();
   const sidebarProvider = new MiniInputViewProvider(context, MiniInputViewProvider.viewId);
   const panelProvider = new MiniInputViewProvider(context, MiniInputViewProvider.panelViewId);
   const openSuggestionPolicySettingsCommand = vscode.commands.registerCommand(

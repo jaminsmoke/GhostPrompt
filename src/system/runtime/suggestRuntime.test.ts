@@ -36,9 +36,9 @@ vi.mock('vscode', () => ({
 }));
 
 import { resolveCompletionSourceForRequest } from '../../engines/routing/resolveCompletionSource';
-import { ghostPromptSessionStore } from '../../system/internals/state/sessionStore';
 import { resetSuggestionHostNotificationThrottleForTests, maybeNotifySuggestionIssue } from '../../ui/notifications/suggestionNotification';
 
+import { resetGhostPromptHostRuntimeForTests } from './resetHostRuntimeForTests';
 import {
   runGhostPromptSuggestPipeline,
   type GhostPromptSuggestDeps,
@@ -46,12 +46,11 @@ import {
 
 const requestCompletion = vi.fn();
 
-vi.mock('../../engines/engineRegistry', () => ({
-  getCompletionProviderForSource: () => ({
+vi.mock('../../engines/routing/resolveProvider', () => ({
+  resolveProvider: () => ({
     id: 'copilotLm',
     requestCompletion,
   }),
-  getCompletionProviderKind: () => 'copilot' as const,
 }));
 
 vi.mock('../../engines/routing/resolveCompletionSource', () => ({
@@ -84,7 +83,7 @@ describe('runGhostPromptSuggestPipeline', () => {
     vi.clearAllMocks();
     wsConfigGetMock.mockImplementation((key: string, fallback: unknown) => fallback);
     resetSuggestionHostNotificationThrottleForTests();
-    ghostPromptSessionStore.resetSessionState();
+    resetGhostPromptHostRuntimeForTests();
     requestCompletion.mockResolvedValue({
       kind: 'suggestion',
       suggestion: 'mocked suggestion text',

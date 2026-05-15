@@ -12,12 +12,16 @@ protocols/
 │   ├── completion.ts
 │   ├── params.ts
 │   └── index.ts
-└── state/              # Contratos de estado (fases, sesión)
+└── state/              # Contratos de estado del host
     ├── loading/
     │   ├── loadingPhase.ts
     │   ├── loadingLabels.ts
     │   └── index.ts
-    ├── sessionTypes.ts
+    ├── provider/
+    │   ├── providerId.ts
+    │   ├── providerState.ts
+    │   ├── providerStatusModule.ts
+    │   └── index.ts
     └── index.ts
 ```
 
@@ -31,5 +35,5 @@ protocols/
 
 ## Qué NO entra aquí
 
-- Stores y managers → `../state/`
+- Estado mutable → `system/runtime/`, `ui/provider/`
 - Mensajes webview Zod → `api/contracts/`

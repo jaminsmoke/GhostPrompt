@@ -3,13 +3,13 @@
  */
 import * as vscode from 'vscode';
 
-import { listMergedSuggestionModels } from '../../engines/catalog/mergedModelCatalog';
 import { getCompletionUiKind, getEnabledCompletionSources } from '../../engines/config/completionSources';
-import { listSuggestionModels } from '../../engines/copilot/catalog/modelCatalog';
-import { listOllamaSuggestionModels } from '../../engines/ollama/catalog/ollamaModelCatalog';
-import { listOpencodeSuggestionModels } from '../../engines/opencode/catalog/opencodeModelCatalog';
-import { ghostPromptSessionStore } from '../../system/internals/state/sessionStore';
+import { listSuggestionModels } from '../../engines/provider/copilot/catalog/modelCatalog';
+import { listMergedSuggestionModels } from '../../engines/provider/mergedModelCatalog';
+import { listOllamaSuggestionModels } from '../../engines/provider/ollama/catalog/ollamaModelCatalog';
+import { listOpencodeSuggestionModels } from '../../engines/provider/opencode/catalog/opencodeModelCatalog';
 import { isSuggestionDebugEnabled } from '../../system/log';
+import { getLastEffectiveSuggestionModel } from '../../system/runtime/lastEffectiveSuggestionModel';
 import {
   getGhostPromptAgentDestination,
   isCursorDesktopHost,
@@ -80,7 +80,7 @@ export async function buildAndPostGhostPromptSettings(
       selectedModelId: getters.getSelectedModelId(),
       availableModels,
       suggestionStyle: getters.getSuggestionStyle(),
-      effectiveModel: ghostPromptSessionStore.getSnapshot().lastEffectiveModel,
+      effectiveModel: getLastEffectiveSuggestionModel(),
       debugSuggestions: isSuggestionDebugEnabled(),
       suggestionDebounceMs,
       agentDestination: getGhostPromptAgentDestination(),

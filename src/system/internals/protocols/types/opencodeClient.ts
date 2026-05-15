@@ -1,0 +1,29 @@
+/**
+ * @file Contratos del cliente SDK OpenCode (@opencode-ai/sdk).
+ */
+
+/** Puerto HTTP por defecto del servidor OpenCode headless. */
+export const OPENCODE_DEFAULT_PORT = 4096;
+
+export interface OpenCodeClientOptions {
+  port?: number;
+  hostname?: string;
+  authToken?: string;
+}
+
+/** Subconjunto tipado del cliente `@opencode-ai/sdk` usado por GhostPrompt. */
+export interface OpenCodeSdkClient {
+  config: {
+    get: () => Promise<unknown>;
+  };
+  session: {
+    create: (opts?: unknown) => Promise<unknown>;
+    prompt: (opts: unknown) => Promise<unknown>;
+    delete: (opts: unknown) => Promise<unknown>;
+  };
+  event: {
+    subscribe: (opts: {
+      signal: AbortSignal;
+    }) => Promise<{ stream: AsyncIterable<unknown> }>;
+  };
+}

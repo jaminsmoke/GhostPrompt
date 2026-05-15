@@ -73,7 +73,11 @@ vi.mock('../../system/runtime/suggestRuntime', () => ({
   handleGhostPromptSuggest: handleGhostPromptSuggestMock,
 }));
 
-import { ghostPromptSessionStore } from '../../system/internals/state/sessionStore';
+import { resetGhostPromptHostRuntimeForTests } from '../../system/runtime/resetHostRuntimeForTests';
+import {
+  getMultiViewDraftText,
+  setMultiViewDraftText,
+} from '../../ui/provider/multiViewDraft';
 
 import {
   dispatchGhostPromptInboundMessage,
@@ -106,7 +110,7 @@ describe('ghostPromptWebviewInboundHandlers', () => {
     workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) =>
       key === 'agentDestination' ? 'copilotChat' : fallback,
     );
-    ghostPromptSessionStore.resetSessionState();
+    resetGhostPromptHostRuntimeForTests();
   });
 
   describe('handleGhostPromptInboundDraftChanged', () => {
@@ -123,7 +127,7 @@ describe('ghostPromptWebviewInboundHandlers', () => {
           broadcastDraftSync: broadcast,
         },
       );
-      expect(ghostPromptSessionStore.getSnapshot().draftText).toBe('');
+      expect(getMultiViewDraftText()).toBe('');
       expect(broadcast).not.toHaveBeenCalled();
     });
 
@@ -140,14 +144,14 @@ describe('ghostPromptWebviewInboundHandlers', () => {
           broadcastDraftSync: broadcast,
         },
       );
-      expect(ghostPromptSessionStore.getSnapshot().draftText).toBe('texto');
+      expect(getMultiViewDraftText()).toBe('texto');
       expect(broadcast).toHaveBeenCalledWith('ghostPrompt.input', 'texto');
     });
   });
 
   describe('handleGhostPromptInboundInit', () => {
     it('publica settings y rehidrata el borrador del store', async () => {
-      ghostPromptSessionStore.patchState({ draftText: 'persistido' });
+      setMultiViewDraftText('persistido');
       const postSettings = vi.fn().mockResolvedValue(undefined);
       const postMessage = vi.fn();
       const webview = { postMessage } as unknown as Webview;
@@ -169,7 +173,6 @@ describe('ghostPromptWebviewInboundHandlers', () => {
 
       await handleGhostPromptInboundSend({ type: 'send', text: 'prompt final' }, dataUri, clearAll);
 
-      expect(ghostPromptSessionStore.getSnapshot().lastSentPrompt).toBe('prompt final');
       expect(sendToChatMock).toHaveBeenCalledWith('prompt final');
       expect(clearAll).toHaveBeenCalled();
     });

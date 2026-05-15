@@ -33,10 +33,11 @@ vi.mock('vscode', () => ({
 import * as engines from './index';
 
 describe('engines index exports', () => {
-  it('exports the engine registry helpers and catalog functions', () => {
-    expect(engines.getCompletionProviderForSource).toBeTypeOf('function');
-    expect(engines.getActiveCompletionProvider).toBeTypeOf('function');
-    expect(engines.getCompletionProviderKind).toBeTypeOf('function');
+  it('exports public engines API', () => {
+    expect(engines.resolveProvider).toBeTypeOf('function');
+    expect(engines.resolveCompletionSourceForRequest).toBeTypeOf('function');
+    expect(engines.getEnabledCompletionSources).toBeTypeOf('function');
     expect(engines.listMergedSuggestionModels).toBeTypeOf('function');
+    expect(engines.registerProviderStatusRegistry).toBeTypeOf('function');
   });
 });

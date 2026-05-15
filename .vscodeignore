@@ -6,6 +6,15 @@ dependency-graph.dot
 eslint.config.js
 tailwind.config.js
 
+# Local artefacts / dumps (often untracked; must not ship — vsce packs the working tree)
+.vscode-test/**
+.vscode-test-profile/**
+lint-report.json
+tmp-*.txt
+tmp-*.json
+tsconfig.eslint.json
+*.vsix
+
 # Build-only artifacts
 Scripts/**
 out/system/build/**

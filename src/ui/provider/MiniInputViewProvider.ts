@@ -44,10 +44,10 @@ import {
 } from '../../api/protocols/webviewProtocols';
 import { buildAndPostGhostPromptSettings } from '../../api/settings/settingsPostMessage';
 import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from '../../destinations/vsOpenCodeX/vsOpenCodeXDestination';
-import { looksLikeOllamaModelId } from '../../engines/modelIdChecks';
-import { ollamaModelManager } from '../../engines/ollama';
-import { completionSourceStatusManager } from '../../engines/status/completionSourceStatusManager';
+import { ollamaModelManager } from '../../engines/provider/ollama';
+import { looksLikeOllamaModelId } from '../../engines/provider/ollama/modelId';
 import { getLogger } from '../../system/log';
+import { providerStatusManager } from '../../system/runtime/providerStatusManager';
 import { handleGhostPromptSuggest } from '../../system/runtime/suggestRuntime';
 import { maybeNotifySuggestionIssue } from '../notifications/suggestionNotification';
 
@@ -211,13 +211,13 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
       } catch {
         // Best-effort: el status se refresca igual.
       }
-      const providers = await completionSourceStatusManager.refreshAll();
+      const providers = await providerStatusManager.refreshAll();
       MiniInputViewProvider._broadcastUi({ type: 'providerStatus', providers });
     }
 
     if (key === 'completionProvider' && value !== 'ollama') {
       void ollamaModelManager.stopAll();
-      const providers = await completionSourceStatusManager.refreshAll();
+      const providers = await providerStatusManager.refreshAll();
       MiniInputViewProvider._broadcastUi({ type: 'providerStatus', providers });
     }
   }

@@ -4,7 +4,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { suggestionLoadingStatusText } from '../../system/internals/protocols/state/loading';
-import { ghostPromptSessionStore } from '../../system/internals/state/sessionStore';
+import { resetGhostPromptHostRuntimeForTests } from '../../system/runtime/resetHostRuntimeForTests';
 
 import { MiniInputViewProvider } from './MiniInputViewProvider';
 
@@ -46,16 +46,18 @@ vi.mock('fs', () => ({
   existsSync: vi.fn(() => true),
 }));
 
-vi.mock('../../engines/engineRegistry', () => ({
-  getCompletionProviderForSource: () => ({
+vi.mock('../../engines/routing/resolveProvider', () => ({
+  resolveProvider: () => ({
     id: 'copilotLm',
     requestCompletion: requestCompletionMock,
   }),
-  getCompletionProviderKind: () => 'copilot' as const,
 }));
 
-vi.mock('../../engines/modelIdChecks', () => ({
+vi.mock('../../engines/provider/ollama/modelId', () => ({
   looksLikeOllamaModelId: () => false,
+}));
+
+vi.mock('../../engines/provider/opencode/modelId', () => ({
   looksLikeOpencodeModelId: () => false,
 }));
 
@@ -64,19 +66,19 @@ vi.mock('../../engines/config/completionSources', () => ({
   getCompletionUiKind: () => 'copilot' as const,
 }));
 
-vi.mock('../../engines/catalog/mergedModelCatalog', () => ({
+vi.mock('../../engines/provider/mergedModelCatalog', () => ({
   listMergedSuggestionModels: listSuggestionModelsMock,
 }));
 
-vi.mock('../../engines/copilot/catalog/modelCatalog', () => ({
+vi.mock('../../engines/provider/copilot/catalog/modelCatalog', () => ({
   listSuggestionModels: listSuggestionModelsMock,
 }));
 
-vi.mock('../../engines/opencode/catalog/opencodeModelCatalog', () => ({
+vi.mock('../../engines/provider/opencode/catalog/opencodeModelCatalog', () => ({
   listOpencodeSuggestionModels: vi.fn(() => Promise.resolve([])),
 }));
 
-vi.mock('../../engines/ollama/catalog/ollamaModelCatalog', () => ({
+vi.mock('../../engines/provider/ollama/catalog/ollamaModelCatalog', () => ({
   listOllamaSuggestionModels: vi.fn(() => Promise.resolve([])),
 }));
 
@@ -231,7 +233,7 @@ function createView() {
 describe('MiniInputViewProvider', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    ghostPromptSessionStore.resetSessionState();
+    resetGhostPromptHostRuntimeForTests();
     MiniInputViewProvider.clearWebviewRegistrationsForTests();
   });
 

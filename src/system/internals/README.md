@@ -1,6 +1,6 @@
-# `system/internals/` — Contratos y estado interno
+# `system/internals/` — Contratos internos
 
-> Contratos compartidos (`protocols/`) y estado mutable del host (`state/`).
+> Contratos compartidos (`protocols/`). Sin estado mutable: la implementación vive en `system/runtime/`, `engines/provider/*/*Status` y `ui/provider/`.
 
 ---
 
@@ -8,12 +8,9 @@
 
 ```text
 internals/
-├── protocols/
-│   ├── types/          # CompletionResult, modelos, DEFAULT_*
-│   └── state/          # Tipos: loading phases, session, provider
-└── state/              # Runtime: stores, managers
-    ├── sessionStore.ts
-    └── registerModules.ts
+└── protocols/
+    ├── types/          # CompletionResult, modelos, DEFAULT_*
+    └── state/          # Tipos: loading, suggestion host, prompt history
 ```
 
 ---
@@ -21,10 +18,10 @@ internals/
 ## Qué entra aquí
 
 - **Contratos** (`protocols/`) — formas de datos sin lógica de mutación
-- **Estado runtime** (`state/`) — singletons y managers del ciclo de vida de la extensión
 
 ## Qué NO entra aquí
 
+- Estado mutable del host → `system/runtime/`, `ui/provider/multiViewDraft.ts`
 - Lógica de suggestions → `sugcore/`
 - Configuración y routing de fuentes LM → `engines/`
 - Logging → `system/log/`

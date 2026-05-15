@@ -7,3 +7,8 @@ export {
   generateGhostPromptWebviewNonce,
   type GhostPromptWebviewHtmlParams,
 } from './webviewHtml';
+export {
+  getMultiViewDraftText,
+  resetMultiViewDraftText,
+  setMultiViewDraftText,
+} from './multiViewDraft';

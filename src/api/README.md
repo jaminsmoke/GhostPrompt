@@ -93,8 +93,9 @@ Los schemas canónicos viven en `api/contracts/webviewMessageSchemas.ts`. `api/p
 | Importa de                               | Por qué                                                    |
 | ---------------------------------------- | ---------------------------------------------------------- |
 | `sugcore/`                               | Types, `listSuggestionModels`, `getCompletionUiKind`, etc. |
-| `system/internals/state/sessionStore`   | Estado compartido (draft, model, captureId)                |
-| `engines/status/completionSourceStatusManager` | Estado de fuentes LM (start/stop, refresh)         |
+| `system/runtime/lastEffectiveSuggestionModel` | Último modelo de suggestion exitosa (settings)           |
+| `ui/provider/multiViewDraft`            | Borrador compartido Sidebar + Panel                        |
+| `system/runtime/providerStatusManager` | Estado de proveedores LM (start/stop, refresh)         |
 | `system/runtime`                         | `handleGhostPromptSuggest` para el mensaje `suggest`       |
 | `system/contracts/webviewMessageSchemas` | Schemas Zod canónicos                                      |
 | `system/log`                             | Logging estructurado, conversation y suggestions           |

@@ -3,8 +3,11 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('../modelIdChecks', () => ({
+vi.mock('../provider/ollama/modelId', () => ({
   looksLikeOllamaModelId: (id: string) => id.includes(':') && !id.includes('/'),
+}));
+
+vi.mock('../provider/opencode/modelId', () => ({
   looksLikeOpencodeModelId: (id: string) => {
     const t = id.trim();
     const slash = t.indexOf('/');
