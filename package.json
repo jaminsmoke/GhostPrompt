@@ -45,6 +45,7 @@
           "type": "webview",
           "id": "ghostPrompt.input",
           "name": "GhostPrompt",
+          "icon": "media/icon.svg",
           "when": "true"
         }
       ],
@@ -53,6 +54,7 @@
           "type": "webview",
           "id": "ghostPrompt.inputPanel",
           "name": "GhostPrompt",
+          "icon": "media/icon.svg",
           "when": "true"
         }
       ]
@@ -265,76 +267,6 @@
           "minimum": 1,
           "maximum": 2000,
           "markdownDescription": "Maximum number of suggestion model requests allowed per extension session."
-        },
-        "ghostPrompt.projectMemoryUnusedStoreTtlDays": {
-          "type": "number",
-          "default": 30,
-          "minimum": 1,
-          "maximum": 3650,
-          "markdownDescription": "Days since last GhostPrompt activity before **deleting on-disk project memory** for that workspace root (`registry.json` + `stores/` under extension global storage). Open workspace folders refresh `lastSeenAt` during extension activation."
-        },
-        "ghostPrompt.projectMemoryEnabled": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "When **true**, GhostPrompt **persists validated bootstrap excerpts** (`README*` / `package.json`) under extension global storage when `contextMode` is **project** and a real LM request runs (see roadmap v0.4 phase C)."
-        },
-        "ghostPrompt.projectMemoryEditorIngestEnabled": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Requires **projectMemoryEnabled**. When **true**, GhostPrompt **indexes short excerpts** from workspace files you focus in the editor (filtered by extension/size) into project memory and may include them in **project** mode suggestions (phase D)."
-        },
-        "ghostPrompt.projectMemoryMaxTotalBytes": {
-          "type": "number",
-          "default": 393216,
-          "minimum": 16384,
-          "maximum": 4194304,
-          "markdownDescription": "Soft cap on **serialized size** of **editor-ingest** entries per workspace root before LRU eviction (bytes)."
-        },
-        "ghostPrompt.projectMemoryMaxEntryBytes": {
-          "type": "number",
-          "default": 32768,
-          "minimum": 512,
-          "maximum": 512000,
-          "markdownDescription": "Maximum **raw file bytes** read from disk when indexing an editor-ingest excerpt (truncated UTF-8)."
-        },
-        "ghostPrompt.projectMemoryMaxEditorSources": {
-          "type": "number",
-          "default": 48,
-          "minimum": 1,
-          "maximum": 500,
-          "markdownDescription": "Maximum number of **editor-ingest** entries kept per workspace before LRU eviction."
-        },
-        "ghostPrompt.projectMemoryEditorMaxFileBytes": {
-          "type": "number",
-          "default": 512000,
-          "minimum": 1024,
-          "maximum": 10485760,
-          "markdownDescription": "Skip indexing files larger than this many bytes (stat size)."
-        },
-        "ghostPrompt.projectMemoryEditorAllowedExtensions": {
-          "type": "string",
-          "default": ".ts,.tsx,.js,.jsx,.mjs,.cjs,.json,.md,.css,.scss,.html,.vue,.py,.rs,.go,.java,.cs,.cpp,.c,.h,.yaml,.yml,.toml,.xml,.sql,.sh,.ps1",
-          "markdownDescription": "Comma-separated **file extensions** (with leading `.`) eligible for editor-ingest."
-        },
-        "ghostPrompt.projectMemoryEditorPathExcludeGlobs": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "markdownDescription": "Optional extra path fragments or simple patterns (best-effort; always excludes `node_modules`, `.git`, and `.env*` segments)."
-        },
-        "ghostPrompt.projectMemoryFileWatcherEnabled": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "When **true**, GhostPrompt watches **only indexed file paths** (from project memory) for changes/deletes and removes stale entries proactively (phase E). Disabling avoids extra file watchers (lower background activity). Requires **projectMemoryEnabled**."
-        },
-        "ghostPrompt.projectMemoryFileWatcherThrottleMs": {
-          "type": "number",
-          "default": 400,
-          "minimum": 50,
-          "maximum": 5000,
-          "markdownDescription": "Debounce for grouping filesystem invalidation events from **projectMemoryFileWatcherEnabled** (milliseconds)."
         }
       }
     }
@@ -347,6 +279,7 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p src/ui/webview/tsconfig.json",
     "typecheck:webview": "tsc -p src/ui/webview/tsconfig.json",
     "build:webview": "vite build --config vite.config.ts",
+    "bundle:extension": "npx esbuild src/extension/extension.ts --bundle --platform=node --target=node18 --outfile=out/extension/extension.js --external:vscode --format=cjs --tsconfig=tsconfig.json",
     "dev:webview": "vite --config vite.config.ts",
     "verify:webview-bundle": "node out/system/build/verifyWebviewBundle.js",
     "validate": "npm run lint && npm run deps:circular && npm run typecheck && npm run compile && npm run build:webview && npm run verify:webview-bundle",
@@ -357,7 +290,7 @@
     "check": "npm run validate && npm run test",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,css,scss,html,mdx}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md,css,scss,html,mdx}\"",
-    "vscode:prepublish": "npm run clean && npm run build:webview && npm run compile",
+    "vscode:prepublish": "npm run clean && npm run bundle:extension && npm run build:webview",
     "vsix": "npx vsce package"
   },
   "devDependencies": {

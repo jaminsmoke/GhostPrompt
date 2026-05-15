@@ -1,4 +1,4 @@
-import type { ProviderStatusModule, ProviderStateRecord } from '../../system/status/types';
+import type { ProviderStatusModule, ProviderStateRecord } from '../../core/status/types';
 
 export const copilotChatStatusModule: ProviderStatusModule = {
   id: 'copilotChat',

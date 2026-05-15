@@ -21,7 +21,7 @@
 
 ## 1. High-level overview
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │  VS Code Extension Host (Node.js)                               │
 │                                                                 │
@@ -77,7 +77,7 @@
 | `src/system/contracts/webviewMessageSchemas.ts`    | Schemas Zod canónicos host ↔ webview.                                                                                                                                                                                                                       |
 | `src/system/log/ConversationLog.ts`                | `conversation.md` bajo `storageUri`.                                                                                                                                                                                                                        |
 | `src/system/log/SuggestionLog.ts`                  | `suggestions.md` bajo `storageUri`.                                                                                                                                                                                                                         |
-| `src/system/log/LogManager.ts`                     | Logger estructurado con `GhostPrompt Log`, transporte OutputChannel y persistencia de logs en disco.                                                                                                                                                         |
+| `src/system/log/LogManager.ts`                     | Logger estructurado con `GhostPrompt Log`, transporte OutputChannel y persistencia de logs en disco.                                                                                                                                                        |
 | `src/system/status/`                               | Sistema de estados de proveedores (ProviderStatusManager + módulos por engine/destination).                                                                                                                                                                 |
 | `src/system/build/verifyWebviewBundle.ts`          | Verificación del bundle webview en CI/dev.                                                                                                                                                                                                                  |
 | `src/projectMemory/*`                              | _(obsoleto en árbol)_ — la memoria vive bajo `src/core/memory/`.                                                                                                                                                                                            |
@@ -89,7 +89,7 @@
 
 ## 3. Completion pipeline
 
-```
+```text
 User types in textarea
         │
         ▼

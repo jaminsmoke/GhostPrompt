@@ -1,6 +1,6 @@
 /**
  * Validación en límites del canal postMessage (host).
- * Schemas canónicos y tipos inferidos: `src/system/contracts/webviewMessageSchemas.ts`.
+ * Schemas canónicos y tipos inferidos: `src/api/contracts/webviewMessageSchemas.ts`.
  */
 import {
   webviewInboundMessageSchema,
@@ -8,7 +8,7 @@ import {
   webviewOutboundSettingsEnvelopeSchema,
   type WebviewInboundMessage,
   type WebviewOutboundMessage,
-} from '../../system/contracts/webviewMessageSchemas';
+} from '../contracts/webviewMessageSchemas';
 import { getLogger } from '../../system/log';
 import type { z } from 'zod';
 
@@ -16,7 +16,7 @@ export type {
   WebviewInboundMessage,
   WebviewOutboundMessage,
   WebviewSettingsPayload,
-} from '../../system/contracts/webviewMessageSchemas';
+} from '../contracts/webviewMessageSchemas';
 export {
   suggestionModelDescriptorSchema,
   webviewInboundMessageSchema,
@@ -24,7 +24,7 @@ export {
   webviewOutboundSettingsEnvelopeSchema,
   webviewSettingsPayloadSchema,
   webviewUpdateSettingSchema,
-} from '../../system/contracts/webviewMessageSchemas';
+} from '../contracts/webviewMessageSchemas';
 
 /**
  * Parsea un mensaje entrante del webview. Si falla el contrato, no debe procesarse

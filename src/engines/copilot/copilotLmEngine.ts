@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 
 import { buildCompletionInstruction } from '../../core/prompt/instruction';
 import { describeModel, selectModelByPolicy } from './catalog/modelCatalog';
-import { normalizeSuggestion } from '../../core/prompt/normalize';
 import { collectResponseText } from '../../core/streaming';
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
@@ -29,8 +28,8 @@ export async function requestCopilotLmCompletion(
     policy,
     preferredModelId,
     maxSuggestionChars = DEFAULT_MAX_SUGGESTION_CHARS,
-    style = 'balanced',
-    context,
+    style: _style,
+    context: _context,
     requestTimeoutMs = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
     onLoadingPhase,
   } = options;
@@ -49,7 +48,7 @@ export async function requestCopilotLmCompletion(
   }
 
   try {
-    const instruction = buildCompletionInstruction(userText, style, context);
+    const instruction = buildCompletionInstruction(userText);
     let requestTokenSource: vscode.CancellationTokenSource | undefined;
     let requestCancellation: vscode.Disposable | undefined;
     let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
@@ -73,7 +72,7 @@ export async function requestCopilotLmCompletion(
       if (looksLikeCopilotRefusal(completion)) {
         return { kind: 'empty', reason: 'content-blocked' };
       }
-      const suggestion = normalizeSuggestion(completion, userText, maxSuggestionChars);
+      const suggestion = completion.trimEnd().slice(0, maxSuggestionChars).trimEnd();
       if (!suggestion) {
         return { kind: 'empty', reason: 'empty-response' };
       }

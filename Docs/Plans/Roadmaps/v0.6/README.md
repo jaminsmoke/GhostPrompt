@@ -7,7 +7,7 @@ Planificación de la versión **0.6** centrada en la **reorganización de owners
 | Orden | Documento                                                              | Descripción                                                                                                           |
 | ----- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | 1     | [01-core-domain-reorganization.md](./01-core-domain-reorganization.md) | Taxonomía de capas, estructura objetivo de `core/`, fases de trabajo, criterios de aceptación y decisiones pendientes |
-| 2     | [Destinations/](./Destinations/)                                       | Nuevos destinos de agente (Send); ver [01-cursor-chat-destination.md](./Destinations/01-cursor-chat-destination.md) |
+| 2     | [Destinations/](./Destinations/)                                       | Nuevos destinos de agente (Send); ver [01-cursor-chat-destination.md](./Destinations/01-cursor-chat-destination.md)   |
 
 ## Contexto
 

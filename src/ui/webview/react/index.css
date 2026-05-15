@@ -16,3 +16,25 @@ body {
 #root {
   padding: 8px;
 }
+
+.error-boundary {
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+}
+
+.error-boundary__title {
+  color: var(--vscode-errorForeground);
+}
+
+.error-boundary__details {
+  background: var(--vscode-textBlockQuote-background);
+  border: 1px solid var(--vscode-widget-border);
+  overflow: auto;
+  max-height: 200px;
+  white-space: pre-wrap;
+}
+
+.error-boundary__retry {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}

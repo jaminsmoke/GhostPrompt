@@ -18,7 +18,7 @@
 
 ## Estructura
 
-```
+```text
 system/
 ├── log/
 │   ├── breadcrumbs.ts
@@ -50,14 +50,14 @@ system/
 
 ### Funciones principales
 
-| Función | Rol |
-| --- | --- |
-| `getLogger(moduleName)` | Devuelve un logger por módulo con `module` estable en `LogEntry` |
-| `toggleSuggestionDebug()` | Alterna el shim `debugSuggestions` y abre el canal de salida si se activa |
-| `isSuggestionDebugEnabled()` | Comprueba el estado del shim y la configuración efectiva |
-| `ensureSuggestionDebugChannel()` | Crea el canal de salida `GhostPrompt Log` bajo demanda |
-| `flushLogCapture(captureId)` | Vacía el buffer de breadcrumbs asociado a un `captureId` |
-| `disposeGhostPromptLogging()` | Cierra transports y libera el singleton |
+| Función                          | Rol                                                                       |
+| -------------------------------- | ------------------------------------------------------------------------- |
+| `getLogger(moduleName)`          | Devuelve un logger por módulo con `module` estable en `LogEntry`          |
+| `toggleSuggestionDebug()`        | Alterna el shim `debugSuggestions` y abre el canal de salida si se activa |
+| `isSuggestionDebugEnabled()`     | Comprueba el estado del shim y la configuración efectiva                  |
+| `ensureSuggestionDebugChannel()` | Crea el canal de salida `GhostPrompt Log` bajo demanda                    |
+| `flushLogCapture(captureId)`     | Vacía el buffer de breadcrumbs asociado a un `captureId`                  |
+| `disposeGhostPromptLogging()`    | Cierra transports y libera el singleton                                   |
 
 ---
 
@@ -142,29 +142,6 @@ Script de verificación CI/dev que:
 | ------------------------ | ----------------------------------- |
 | `WebviewInboundMessage`  | Union de todos los mensajes inbound |
 | `WebviewSettingsPayload` | Payload del envelope settings       |
-
----
-
-## `build/verifyWebviewBundle.ts`
-
-Script de verificación CI/dev que:
-
-1. Lee `src/ui/webview/dist/react/index.html`
-2. Verifica que existe y tiene contenido (>0 bytes)
-3. Loguea el tamaño del bundle
-
-**No se incluye en el VSIX** (excluido via `.vscodeignore`).
-
----
-
-## Dependencias
-
-| Subdominio   | Importa de   |
-| ------------ | ------------ |
-| `debug/`     | `vscode`     |
-| `log/`       | `vscode`, FS |
-| `contracts/` | `zod`        |
-| `build/`     | Node `fs`    |
 
 ---
 

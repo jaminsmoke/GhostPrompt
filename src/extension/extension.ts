@@ -20,8 +20,7 @@ import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from '../destinations/v
 import '../destinations/copilotChat/copilotChatDestination';
 import '../destinations/cursor/cursorChatDestination';
 import { registerDiscoverCursorChatCommandsCommand } from '../destinations/cursor/discoverCursorChatCommands';
-import { registerProjectMemory } from '../core/memory/activate';
-import { registerAllProviderModules } from '../system/status/registerModules';
+import { registerAllProviderModules } from '../core/status/registerModules';
 
 /**
  * Activa la extensión GhostPrompt.
@@ -30,7 +29,6 @@ import { registerAllProviderModules } from '../system/status/registerModules';
 export function activate(context: vscode.ExtensionContext): void {
   initGhostPromptLogging(context);
   registerAllProviderModules();
-  registerProjectMemory(context);
   const sidebarProvider = new MiniInputViewProvider(context, MiniInputViewProvider.viewId);
   const panelProvider = new MiniInputViewProvider(context, MiniInputViewProvider.panelViewId);
   const openSuggestionPolicySettingsCommand = vscode.commands.registerCommand(

@@ -151,5 +151,11 @@ export type OutboundMessage =
   | { type: 'requestProviderStatus' }
   | { type: 'startProvider'; provider: string }
   | { type: 'stopProvider'; provider: string }
-  | { type: 'log'; level: LogLevel; message: string; data?: Record<string, unknown>; captureId?: number }
+  | {
+      type: 'log';
+      level: LogLevel;
+      message: string;
+      data?: Record<string, unknown>;
+      captureId?: number;
+    }
   | UpdateSettingMessage;

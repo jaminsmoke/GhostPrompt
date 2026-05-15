@@ -1,9 +1,10 @@
+import { type OllamaClientOptions, type OllamaModel } from './ollamaTypes';
 import {
-  type OllamaClientOptions,
-  type OllamaGenerateResponse,
-  type OllamaModel,
-  type OllamaTagsResponse,
-} from './ollamaTypes';
+  ollamaGenerateResponseChunkSchema,
+  ollamaGenerateResponseSchema,
+  ollamaModelSchema,
+  ollamaTagsResponseSchema,
+} from './ollamaValidators';
 
 const DEFAULT_OLLAMA_BASE_URL = 'http://localhost:11434';
 const DEFAULT_REQUEST_TIMEOUT_MS = 30000;
@@ -98,12 +99,22 @@ function anySignal(signals: globalThis.AbortSignal[]): globalThis.AbortSignal {
 export async function listModels(opts: OllamaClientOptions = {}): Promise<OllamaModel[]> {
   const url = resolveUrl('/api/tags', opts.baseUrl);
   const { headers, signal } = buildOptions(opts);
-  const data = await fetchJson<OllamaTagsResponse>(
+  const data = await fetchJson<unknown>(
     url,
     { method: 'GET', headers, signal },
     opts.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
   );
-  return data.models ?? [];
+  const parsed = ollamaTagsResponseSchema.safeParse(data);
+  if (!parsed.success || !Array.isArray(parsed.data.models)) {
+    return [];
+  }
+  return parsed.data.models.reduce<OllamaModel[]>((validModels, candidate) => {
+    const modelParse = ollamaModelSchema.safeParse(candidate);
+    if (modelParse.success) {
+      validModels.push(modelParse.data);
+    }
+    return validModels;
+  }, []);
 }
 
 /**
@@ -142,7 +153,7 @@ export async function generate(
   }
 
   const { headers, signal } = buildOptions(opts);
-  const res = await fetchJson<OllamaGenerateResponse>(
+  const res = await fetchJson<unknown>(
     url,
     {
       method: 'POST',
@@ -153,7 +164,11 @@ export async function generate(
     timeoutMs,
   );
 
-  return res.response ?? '';
+  const parsed = ollamaGenerateResponseSchema.safeParse(res);
+  if (!parsed.success) {
+    return '';
+  }
+  return parsed.data.response ?? '';
 }
 
 /**
@@ -217,11 +232,13 @@ async function streamGenerate(
     let fullText = '';
     let buffer = '';
 
+    const decoder = new TextDecoder();
     while (true) {
       const { done, value: _value } = await reader.read();
       if (done) {
         break;
       }
+      buffer += decoder.decode(_value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop() ?? '';
 
@@ -230,11 +247,13 @@ async function streamGenerate(
           continue;
         }
         try {
-          const chunk = JSON.parse(line) as OllamaGenerateResponse;
-          if (chunk.response) {
-            fullText += chunk.response;
-            opts.onStreamPreview?.(fullText);
+          const chunk = JSON.parse(line);
+          const chunkParse = ollamaGenerateResponseChunkSchema.safeParse(chunk);
+          if (!chunkParse.success || !chunkParse.data.response) {
+            continue;
           }
+          fullText += chunkParse.data.response;
+          opts.onStreamPreview?.(fullText);
         } catch {
           // skip malformed lines
         }

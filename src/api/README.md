@@ -19,7 +19,7 @@
 
 ## Estructura
 
-```
+```text
 api/
 ├── protocols/
 │   ├── webviewProtocols.ts    # Validación Zod boundary postMessage (inbound + outbound)
@@ -38,7 +38,7 @@ api/
 
 ### Webview → Host (inbound)
 
-```
+```text
 Webview.postMessage({ type: 'suggest', text, captureId })
     │
     ▼
@@ -56,7 +56,7 @@ Webview.postMessage({ type: 'suggest', text, captureId })
 
 ### Host → Webview (outbound)
 
-```
+```text
 `api/settings/settingsPostMessage.ts` — buildAndPostGhostPromptSettings
     ├── Collect enabled sources, model list, policy, style, context, language, debug
     ├── Build envelope { type: 'settings', settings: {...} }
@@ -81,7 +81,7 @@ Webview.postMessage({ type: 'suggest', text, captureId })
 
 ## Contratos Zod
 
-Los schemas canónicos viven en `system/contracts/webviewMessageSchemas.ts`. `api/protocols/webviewProtocols.ts` los re-exporta y expone las funciones de parseo:
+Los schemas canónicos viven en `api/contracts/webviewMessageSchemas.ts`. `api/protocols/webviewProtocols.ts` los re-exporta y expone las funciones de parseo:
 
 - `parseWebviewInboundMessage(raw)` → `WebviewInboundMessage | undefined`
 - `parseOutboundSettingsEnvelope(raw)` → validated envelope
@@ -97,7 +97,7 @@ Los schemas canónicos viven en `system/contracts/webviewMessageSchemas.ts`. `ap
 | `core/suggest`                           | `handleGhostPromptSuggest` para el mensaje `suggest`       |
 | `system/contracts/webviewMessageSchemas` | Schemas Zod canónicos                                      |
 | `system/log`                             | Logging estructurado, conversation y suggestions           |
-| `system/log`                             | Debug toggle check                                          |
+| `system/log`                             | Debug toggle check                                         |
 | `destinations/destinationRegistry`       | Resolución de destino agente                               |
 
 ---
@@ -106,8 +106,8 @@ Los schemas canónicos viven en `system/contracts/webviewMessageSchemas.ts`. `ap
 
 | Test                                             | Qué cubre                      |
 | ------------------------------------------------ | ------------------------------ |
-| `webviewProtocols.test.ts`                       | Parseo Zod de mensajes inbound |
-| `host/ghostPromptWebviewInboundHandlers.test.ts` | Dispatch por tipo de mensaje   |
-| `host/applyWebviewUpdateSetting.test.ts`         | Aplicación de `updateSetting`  |
-| `shared/webviewMessageSchemas.test.ts`           | Validación de schemas Zod      |
-| `MiniInputViewProvider.test.ts`                  | Flujo end-to-end con mocks     |
+| `protocols/webviewProtocols.test.ts`             | Parseo Zod de mensajes inbound |
+| `protocols/inboundHandlers.test.ts`              | Dispatch por tipo de mensaje   |
+| `settings/applyWebviewUpdate.test.ts`            | Aplicación de `updateSetting`  |
+| `contracts/webviewMessageSchemas.test.ts`        | Validación de schemas Zod      |
+| `provider/MiniInputViewProvider.test.ts`         | Flujo end-to-end con mocks     |

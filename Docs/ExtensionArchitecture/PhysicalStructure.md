@@ -7,7 +7,7 @@
 
 ## Árbol de directorios
 
-```
+```text
 VsCodeExtension-InlineChatSuggestions/
 │
 ├── src/                              # Código fuente TypeScript (lado host)
@@ -60,9 +60,11 @@ VsCodeExtension-InlineChatSuggestions/
 
 - Exporta `activate(context)` y `deactivate()`.
 - Instancia `MiniInputViewProvider` y lo registra:
+
   ```ts
   vscode.window.registerWebviewViewProvider('inlineChatInput.miniInput', provider);
   ```
+
 - Registra cualquier comando adicional de la extensión.
 - No contiene lógica de negocio — solo wiring.
 
@@ -83,11 +85,13 @@ VsCodeExtension-InlineChatSuggestions/
 ### `src/bridge/ChatBridge.ts` — Puente al chat de Copilot
 
 - Única responsabilidad: enviar un prompt al chat oficial.
+
   ```ts
   export async function sendToChat(query: string): Promise<void> {
     await vscode.commands.executeCommand('workbench.action.chat.open', { query });
   }
   ```
+
 - Aislado en su propio módulo para facilitar el mock en tests y futuros cambios de API.
 
 ---
@@ -160,7 +164,7 @@ Secciones clave:
 
 Los siguientes directorios **no se incluyen** en el `.vsix` publicado:
 
-```
+```text
 Docs/**
 src/**          # Solo se empaqueta el output compilado en out/
 .vscode/**
@@ -173,7 +177,7 @@ node_modules/**
 
 ## Diagrama de dependencias entre módulos
 
-```
+```text
 extension/extension.ts
     ├── host/MiniInputViewProvider.ts
     │       ├── bridge/ChatBridge.ts

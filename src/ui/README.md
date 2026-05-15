@@ -88,4 +88,4 @@ Ambos paneles deben mantener **paridad funcional**: los chips, el protocolo de m
 | `MiniInputViewProvider.test.ts` | Flujo completo: init, suggest, accept, send, settings |
 | `webviewToolbarParity.test.ts`  | Paridad dual vista (sidebar + panel)                  |
 | `webviewThemeTokens.test.ts`    | Tokens CSS del webview                                |
-| `tests/webview/App.test.tsx`    | React webview render smoke test                       |
+| `src/ui/webview/react/App.test.tsx`    | React webview render smoke test                       |

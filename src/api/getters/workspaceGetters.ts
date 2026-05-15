@@ -83,16 +83,6 @@ export function getGhostPromptSuggestionStyle(): SuggestionStyle {
 }
 
 /**
- * Comprueba si el project memory está habilitado en la configuración.
- * @returns {boolean} True si project memory está activo.
- */
-export function getGhostPromptProjectMemoryEnabled(): boolean {
-  return vscode.workspace
-    .getConfiguration('ghostPrompt')
-    .get<boolean>('projectMemoryEnabled', true);
-}
-
-/**
  * Obtiene el modo de idioma para sugerencias desde la configuración.
  * @returns {SuggestionLanguageMode} Modo de idioma válido: auto o manual.
  */

@@ -285,11 +285,7 @@ export function GhostToolbar(props: GhostToolbarProps) {
         compact={compact}
       >
         <div className="py-1" data-key="agentDestination">
-          <button
-            type="button"
-            className={itemClass}
-            onClick={() => handleDestino('copilotChat')}
-          >
+          <button type="button" className={itemClass} onClick={() => handleDestino('copilotChat')}>
             <span>Copilot Chat</span>
             {agentDestination === 'copilotChat' && (
               <span className="text-(--vscode-badge-background)">✓</span>
@@ -308,11 +304,7 @@ export function GhostToolbar(props: GhostToolbarProps) {
             </button>
           )}
           {cursorDesktopHost && (
-            <button
-              type="button"
-              className={itemClass}
-              onClick={() => handleDestino('cursorChat')}
-            >
+            <button type="button" className={itemClass} onClick={() => handleDestino('cursorChat')}>
               <span>Cursor Chat</span>
               {agentDestination === 'cursorChat' && (
                 <span className="text-(--vscode-badge-background)">✓</span>

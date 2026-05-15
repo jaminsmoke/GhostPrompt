@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { ProviderStatusModule, ProviderStateRecord } from '../../system/status/types';
+import type { ProviderStatusModule, ProviderStateRecord } from '../../core/status/types';
 
 const OPENCODE_DEFAULT_PORT = 4096;
 

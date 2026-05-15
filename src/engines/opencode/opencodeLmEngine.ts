@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 
 import { buildCompletionInstruction } from '../../core/prompt/instruction';
-import { normalizeSuggestion } from '../../core/prompt/normalize';
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
@@ -80,8 +79,8 @@ export async function requestOpencodeCompletion(
     token,
     preferredModelId,
     maxSuggestionChars = DEFAULT_MAX_SUGGESTION_CHARS,
-    style = 'balanced',
-    context,
+    style: _style,
+    context: _context,
     requestTimeoutMs = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
     onLoadingPhase,
     onStreamPreview: _onStreamPreview,
@@ -100,7 +99,7 @@ export async function requestOpencodeCompletion(
   }
 
   const client = getGlobalClient();
-  const instruction = buildCompletionInstruction(userText, style, context);
+  const instruction = buildCompletionInstruction(userText);
 
   try {
     const sessionId = await getSession(client);
@@ -129,7 +128,7 @@ export async function requestOpencodeCompletion(
       return { kind: 'empty', reason: 'request-timeout' };
     }
 
-    const suggestion = normalizeSuggestion(completionText, userText, maxSuggestionChars);
+    const suggestion = completionText.trimEnd().slice(0, maxSuggestionChars).trimEnd();
 
     if (!suggestion) {
       return { kind: 'empty', reason: 'empty-response' };

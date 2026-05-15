@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { hostQuery } from '../utils/hostQuery';
+import { parseWebviewInboundMessage } from '../validators/webviewMessageSchemas';
 import type {
   AgentDestination,
   CompletionProvider,
@@ -266,10 +267,15 @@ export function useGhostPrompt() {
         }
         currentCaptureId.current += 1;
         const nextCaptureId = currentCaptureId.current;
-        logToHost('debug', 'requestSuggestion', {
-          text: draftText.slice(0, 40),
-          captureId: nextCaptureId,
-        }, nextCaptureId);
+        logToHost(
+          'debug',
+          'requestSuggestion',
+          {
+            text: draftText.slice(0, 40),
+            captureId: nextCaptureId,
+          },
+          nextCaptureId,
+        );
         setIsLoading(true);
         setStatus('Solicitando sugerencia...');
         postToHost({
@@ -289,7 +295,11 @@ export function useGhostPrompt() {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       try {
-        const message = event.data as InboundMessage;
+        const message = parseWebviewInboundMessage(event.data);
+        if (!message) {
+          logToHost('warn', 'invalidInboundMessage', { raw: event.data });
+          return;
+        }
 
         const { refAfter, drop } = ghostPromptApplyInboundCaptureRef(
           currentCaptureId.current,

@@ -1,13 +1,35 @@
+# Development docs and tooling
 Docs/**
+.github/**
+CHANGELOG.md
+dependency-graph.dot
+eslint.config.js
+tailwind.config.js
+
+# Build-only artifacts
 Scripts/**
-# Scripts de tooling compilados (smoke webview); no runtime del usuario
 out/system/build/**
+
+# Exclude source tree; keep webview bundle assets only
 src/**
-# Incluir assets estáticos del webview (cargados en runtime por webviewHtml.ts)
+!src/ui/webview/dist/
 !src/ui/webview/dist/**
+
+# Test sources
 tests/**
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Editor/dev config
 .gitignore
 .vscode/**
+.dependency-cruiser.js
+.prettierignore
+validate.out
+package-lock.json
+node_modules/**
 **/*.map
 **/*.ts
 .eslintrc.json

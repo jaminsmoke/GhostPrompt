@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 
 import { buildCompletionInstruction } from '../../core/prompt/instruction';
-import { normalizeSuggestion } from '../../core/prompt/normalize';
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
@@ -63,8 +62,8 @@ export async function requestOllamaCompletion(
     token,
     preferredModelId,
     maxSuggestionChars = DEFAULT_MAX_SUGGESTION_CHARS,
-    style = 'balanced',
-    context,
+    style: _style,
+    context: _context,
     requestTimeoutMs = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
     onLoadingPhase,
     onStreamPreview,
@@ -80,7 +79,7 @@ export async function requestOllamaCompletion(
   const baseUrl = vscode.workspace
     .getConfiguration('ghostPrompt')
     .get<string>('ollamaBaseUrl', 'http://localhost:11434');
-  const instruction = buildCompletionInstruction(userText, style, context);
+  const instruction = buildCompletionInstruction(userText);
 
   onLoadingPhase?.('ollama-loading');
 
@@ -107,7 +106,7 @@ export async function requestOllamaCompletion(
       return { kind: 'empty', reason: 'request-timeout' };
     }
 
-    const suggestion = normalizeSuggestion(completionText, userText, maxSuggestionChars);
+    const suggestion = completionText.trimEnd().slice(0, maxSuggestionChars).trimEnd();
 
     if (!suggestion) {
       return { kind: 'empty', reason: 'empty-response' };

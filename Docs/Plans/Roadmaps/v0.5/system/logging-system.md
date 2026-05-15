@@ -239,13 +239,13 @@ log.error('request-failed', { captureId: 1 }, err);
 
 ### Fase 2 — Reemplazar `SuggestionDebug.ts` (puntos de emisión host)
 
-| Call site | Reemplazo |
-| --- | --- |
-| `src/core/suggest/runSuggest.ts` — `logSuggestionDebug` en: `request-start`, `request-discarded`, `request-success`, `request-empty`, `request-error`, `request-cancelled` | `log.info` / `log.warn` / `log.error` según severidad del evento; mismo `captureId` en `data` |
-| `src/destinations/vsOpenCodeX/vsOpenCodeXDestination.ts` — `vsopencodex-inline-forward-failed` | `log.error(...)` |
-| `src/api/protocols/inboundHandlers.ts` — `logDebugInfo` | `log.debug(...)` |
-| `src/ui/provider/MiniInputViewProvider.ts` — `logDebugInfo` (3) | `log.debug(...)` |
-| `src/extension/extension.ts` — toggle / `ensureSuggestionDebugChannel` | Registrar `LogManager`, transports y `dispose` en `deactivate()`; mapear comando `Toggle debug` a nivel `debug` o flag shim según §6 |
+| Call site                                                                                                                                                                  | Reemplazo                                                                                                                            |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/core/suggest/runSuggest.ts` — `logSuggestionDebug` en: `request-start`, `request-discarded`, `request-success`, `request-empty`, `request-error`, `request-cancelled` | `log.info` / `log.warn` / `log.error` según severidad del evento; mismo `captureId` en `data`                                        |
+| `src/destinations/vsOpenCodeX/vsOpenCodeXDestination.ts` — `vsopencodex-inline-forward-failed`                                                                             | `log.error(...)`                                                                                                                     |
+| `src/api/protocols/inboundHandlers.ts` — `logDebugInfo`                                                                                                                    | `log.debug(...)`                                                                                                                     |
+| `src/ui/provider/MiniInputViewProvider.ts` — `logDebugInfo` (3)                                                                                                            | `log.debug(...)`                                                                                                                     |
+| `src/extension/extension.ts` — toggle / `ensureSuggestionDebugChannel`                                                                                                     | Registrar `LogManager`, transports y `dispose` en `deactivate()`; mapear comando `Toggle debug` a nivel `debug` o flag shim según §6 |
 
 **Nota:** En el código actual **no** hay `logSuggestionDebug` para `request-cache-hit` ni `request-blocked` en `runSuggest`; si se reintroducen desde `system/policies` u motores, usar el mismo logger con `module` explícito.
 
@@ -400,55 +400,22 @@ tests/system/log/
 
 ## 10. Prioridades de implementación
 
-| Fase | Descripción | Depende de | Esfuerzo est. |
-| --- | --- | --- | --- |
-| **1** | Core: Logger, LogManager, transports, cola (§3.4) | — | ⭐⭐⭐ |
-| **2** | SuggestionDebug → Logger | Fase 1 | ⭐⭐ |
-| **3** | SuggestionLog + ConversationLog | Fase 1 | ⭐ |
-| **4** | `console.*` en host | Fase 1 | ⭐ |
-| **5** | Cleanup + docs | Fases 2-4 | ⭐ |
+| Fase  | Descripción                                       | Depende de | Esfuerzo est. |
+| ----- | ------------------------------------------------- | ---------- | ------------- |
+| **1** | Core: Logger, LogManager, transports, cola (§3.4) | —          | ⭐⭐⭐        |
+| **2** | SuggestionDebug → Logger                          | Fase 1     | ⭐⭐          |
+| **3** | SuggestionLog + ConversationLog                   | Fase 1     | ⭐            |
+| **4** | `console.*` en host                               | Fase 1     | ⭐            |
+| **5** | Cleanup + docs                                    | Fases 2-4  | ⭐            |
 
 ---
 
 ## 11. Historial de revisiones del plan
 
-| Fecha | Cambios (resumen) |
-| --- | --- |
+| Fecha      | Cambios (resumen)                                                                                                                                                                                                 |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-05-14 | Alineación v0.6+ (`runSuggest`), `LogLevelName`, `flushCapture`, I/O visible, cola FileTransport (§3.4), migración legacy best-effort, canal renombrado, precedencia settings, rutas en fases, OpenCode perf TBD. |
 
----
-
-## 4. Uso en cada módulo
-
-### 4.1 Obtener logger
-
-```ts
-// Cada módulo pide un logger al inicio (nombre estable para filtrar en NDJSON)
-const log = getLogger('suggest');
-// En otro módulo:
-const log = getLogger('memory');
-```
-
-### 4.2 Loguear
-
-```ts
-// INFO — eventos normales del flujo
-log.info('request-start', { captureId: 1, chars: text.length, source: routedSource });
-
-// DEBUG — detalles finos (solo cuando debugSuggestions = true o logLevel = "debug")
-log.debug('emit-loading-phase', { captureId: 1, phase: 'opencode-start' });
-
-// WARN — cosas que funcionan pero no deberían pasar
-log.warn('cache-ttl-expired', { captureId: 1 });
-
-// ERROR — fallos recuperables o no
-log.error('request-failed', { captureId: 1 }, err);
-// Los breadcrumbs del captureId se adjuntan automáticamente
-```
-
-> Nota de inicialización: los primeros módulos de arranque que se cargan antes de que el logger esté listo pueden usar `console.error` como fallback. Una vez inicializado `LogManager`, el sistema debe emitir únicamente con el logger estructurado para mantener la consistencia.
-
----
 
 ## 5. Plan de migración (5 fases)
 

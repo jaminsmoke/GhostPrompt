@@ -7,8 +7,8 @@ vi.mock('vscode', () => ({
   workspace: { getConfiguration: () => ({ get: vi.fn() }) },
 }));
 
-import { ProviderStatusManager } from '../../src/system/status/ProviderStatusManager';
-import type { ProviderStatusModule } from '../../src/system/status/types';
+import { ProviderStatusManager } from '../../src/core/status/ProviderStatusManager';
+import type { ProviderStatusModule } from '../../src/core/status/types';
 
 describe('providerStatus flow - integration', () => {
   let manager: ProviderStatusManager;

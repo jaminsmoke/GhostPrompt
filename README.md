@@ -245,7 +245,7 @@ Edit webview behavior in **TypeScript** under `src/ui/webview/react/` (not hand-
 - **Host boundary:** [`src/host/webviewProtocols.ts`](./src/host/webviewProtocols.ts) re-exports those schemas and runs `parseWebviewInboundMessage` / `parseOutboundSettingsEnvelope` at the channel edge.
 - **Webview boundary:** The current React webview bundle validates outbound messages within `src/ui/webview/react/App.tsx` before calling `postMessage` to the host.
 
-**Checklist when you change message shapes:** edit `src/system/contracts/webviewMessageSchemas.ts` first; update protocol comments in `webview/src/main.ts` if needed; run **`npm run check`** (runs extension `tsc`, webview typecheck + esbuild bundle, and tests including `tests/system/contracts/webviewMessageSchemas.test.ts` and `tests/webviewProtocols.test.ts`).
+**Checklist when you change message shapes:** edit `src/system/contracts/webviewMessageSchemas.ts` first; update protocol comments in `webview/src/main.ts` if needed; run **`npm run check`** (runs extension `tsc`, webview typecheck + esbuild bundle, and tests including `src/api/contracts/webviewMessageSchemas.test.ts` and `src/api/protocols/webviewProtocols.test.ts`).
 
 ### Dual webview (sidebar + panel) — contributor checklist (v0.4.3)
 
@@ -256,7 +256,7 @@ GhostPrompt registers **two** `WebviewViewProvider` instances (`ghostPrompt.inpu
 | **Single bundle**    | HTML is built only in `src/ui/provider/webviewHtml.ts` → `src/ui/webview/dist/react/index.html` + React assets. Do not maintain separate templates per view.                                                               |
 | **Capabilities**     | `MiniInputViewProvider` passes `viewContributionId` into `window.__ghostPromptCapabilities`; use it for layout flags only—keep suggestion/settings behavior identical across views.                                        |
 | **Shared copy**      | User-visible empty/error strings for the status line live in **`webview/src/lib/userErrorMessage.ts`**. Optional host toasts (`src/host/suggestionHostNotification.ts`) should stay aligned for the same actionable cases. |
-| **Regression tests** | Before merging webview or toolbar edits, run **`npm run check`** (includes `tests/webviewToolbarParity.test.ts`, `tests/webviewProtocols.test.ts`, `tests/webview/userErrorMessage.test.ts`).                              |
+| **Regression tests** | Before merging webview or toolbar edits, run **`npm run check`** (includes `src/ui/webview/webviewToolbarParity.test.ts`, `src/api/protocols/webviewProtocols.test.ts`, `src/ui/webview/webviewThemeTokens.test.ts`).                              |
 
 ### Architecture and dependencies (v0.3.2)
 

@@ -157,8 +157,8 @@ export async function toggleSuggestionDebug(): Promise<boolean> {
  * Crea el canal de salida si hace falta, por ejemplo al arrancar con la depuración activa.
  * @returns {void} Sin valor de retorno.
  */
-export function ensureSuggestionDebugChannel(): void {
-  singleton?.ensureOutputChannel();
+export function ensureSuggestionDebugChannel(): vscode.OutputChannel | undefined {
+  return singleton?.ensureOutputChannel();
 }
 
 /**
@@ -311,8 +311,8 @@ class LogManager implements LogEmitSink {
    * Garantiza que exista el canal de salida GhostPrompt Log.
    * @returns {void} Sin valor de retorno.
    */
-  ensureOutputChannel(): void {
-    this.outputTransport.ensureChannel();
+  ensureOutputChannel(): vscode.OutputChannel {
+    return this.outputTransport.ensureChannel();
   }
 
   /**

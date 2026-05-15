@@ -5,11 +5,12 @@
 import { getCompletionProviderForSource } from '../../engines/engineRegistry';
 import { getEnabledCompletionSources, resolveCompletionSourceForRequest } from '../routing/sources';
 import { suggestionLoadingStatusText, type SuggestionLoadingPhase } from '../presentation/loading';
-import type { SuggestionModelPolicy, SuggestionStyle } from '../types';
+import type { CompletionResult, SuggestionModelPolicy, SuggestionStyle } from '../types';
 import { flushLogCapture, getLogger } from '../../system/log';
 import { ghostPromptSessionStore } from '../state/GhostPromptSessionStore';
-import { maybeNotifySuggestionIssue } from '../../ui/notifications/suggestionNotification';
 import type { WebviewInboundMessage } from '../../api/protocols/webviewProtocols';
+
+export type NotifyIssueCallback = (result: CompletionResult) => void;
 
 export type GhostPromptSuggestDeps = {
   broadcastUi: (payload: Record<string, unknown>) => void;
@@ -17,6 +18,7 @@ export type GhostPromptSuggestDeps = {
   getSelectedModelId: () => string;
   getSuggestionStyle: () => SuggestionStyle;
   getMaxSuggestionChars: () => number;
+  notifyIssue?: NotifyIssueCallback;
 };
 
 /** Mínimo de caracteres no vacíos tras `trim` para invocar al LM (evita ruido y coste). */
@@ -144,7 +146,7 @@ export async function runGhostPromptSuggestPipeline(
         reason: result.reason,
         captureId,
       });
-      maybeNotifySuggestionIssue(result);
+      deps.notifyIssue?.(result);
     } else {
       ghostPromptSessionStore.patchState({
         suggestionFlowStatus: 'error',
@@ -156,7 +158,7 @@ export async function runGhostPromptSuggestPipeline(
         message: result.message,
         captureId,
       });
-      maybeNotifySuggestionIssue(result);
+      deps.notifyIssue?.(result);
     }
   } catch {
     log.warn('request-cancelled', { captureId });

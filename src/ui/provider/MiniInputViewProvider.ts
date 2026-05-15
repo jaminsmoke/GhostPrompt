@@ -25,7 +25,7 @@
  *   - `draftChanged` (webview → host): texto del borrador para sincronizar vistas.
  *   - `draftSync` / `draftHydrate` (host → webview): aplicar borrador remoto o estado inicial.
  *   - Mensajes de suggestion pueden llevar `broadcast: true` para espejar Sidebar + Panel.
- *   - Contratos Zod (`system/contracts/webviewMessageSchemas.ts` / `api/protocols/webviewProtocols.ts`): entrada webview → host y salida `settings`.
+ *   - Contratos Zod (`api/contracts/webviewMessageSchemas.ts` / `api/protocols/webviewProtocols.ts`): entrada webview → host y salida `settings`.
  */
 import * as vscode from 'vscode';
 import { buildAndPostGhostPromptSettings } from '../../api/settings/settingsPostMessage';
@@ -46,6 +46,10 @@ import {
   parseWebviewOutboundMessage,
 } from '../../api/protocols/webviewProtocols';
 import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from '../../destinations/vsOpenCodeX/vsOpenCodeXDestination';
+import { maybeNotifySuggestionIssue } from '../notifications/suggestionNotification';
+import { ollamaModelManager } from '../../engines/ollama';
+import { providerStatusManager } from '../../core/status';
+import { looksLikeOllamaModelId } from '../../core/routing/sources';
 
 export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /** View ID for the activity bar container. */
@@ -137,6 +141,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
       getSelectedModelId: () => getGhostPromptSelectedModelId(),
       getSuggestionStyle: () => getGhostPromptSuggestionStyle(),
       getMaxSuggestionChars: () => getGhostPromptMaxSuggestionChars(),
+      notifyIssue: maybeNotifySuggestionIssue,
     };
   }
 
@@ -183,6 +188,35 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /** Actualiza chips + lista de modelos en Sidebar y Panel (tras cambiar Settings). */
   public static async refreshSettingsAllViews(): Promise<void> {
     await MiniInputViewProvider._broadcastSettingsToAllViews();
+  }
+
+  /**
+   * Maneja efectos secundarios de cambio de modelo/provider (Ollama lifecycle).
+   * Extraído de `inboundHandlers.ts` para separar lógica de negocio del protocol handler.
+   * @param {string} key Clave de configuración cambiada.
+   * @param {string} value Nuevo valor de la configuración.
+   * @returns {Promise<void>} Promise que se resuelve cuando el lifecycle termina.
+   */
+  private static async _onSettingChanged(
+    key: 'selectedModelId' | 'completionProvider',
+    value: string,
+  ): Promise<void> {
+    if (key === 'selectedModelId' && looksLikeOllamaModelId(value)) {
+      ollamaModelManager.stopAll();
+      try {
+        await ollamaModelManager.startModel(value);
+      } catch {
+        // Best-effort: el status se refresca igual.
+      }
+      const providers = await providerStatusManager.refreshAll();
+      MiniInputViewProvider._broadcastUi({ type: 'providerStatus', providers });
+    }
+
+    if (key === 'completionProvider' && value !== 'ollama') {
+      ollamaModelManager.stopAll();
+      const providers = await providerStatusManager.refreshAll();
+      MiniInputViewProvider._broadcastUi({ type: 'providerStatus', providers });
+    }
   }
 
   /**
@@ -239,6 +273,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         broadcastClearAll: MiniInputViewProvider._broadcastClearAll,
         broadcastUi: MiniInputViewProvider._broadcastUi,
         suggestDeps: MiniInputViewProvider.ghostPromptSuggestDeps(),
+        onSettingChanged: MiniInputViewProvider._onSettingChanged,
       });
     });
   }

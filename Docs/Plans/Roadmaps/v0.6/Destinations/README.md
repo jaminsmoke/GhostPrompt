@@ -4,9 +4,9 @@ Planificación de **nuevos destinos de agente** (`ghostPrompt.agentDestination`)
 
 ## Documentos
 
-| Orden | Documento | Descripción |
-| ----- | --------- | ----------- |
-| 1 | [01-cursor-chat-destination.md](./01-cursor-chat-destination.md) | Destino **Cursor Chat**: inyectar el texto del Send en el chat nativo de Cursor (mismo rol que `copilotChat`, no Cloud Agents API) |
+| Orden | Documento                                                        | Descripción                                                                                                                        |
+| ----- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | [01-cursor-chat-destination.md](./01-cursor-chat-destination.md) | Destino **Cursor Chat**: inyectar el texto del Send en el chat nativo de Cursor (mismo rol que `copilotChat`, no Cloud Agents API) |
 
 ## Contexto
 
@@ -16,11 +16,11 @@ Planificación de **nuevos destinos de agente** (`ghostPrompt.agentDestination`)
 
 ## Estado global
 
-| Hito | Estado |
-| ---- | ------ |
-| Roadmap Cursor (este folder) | En curso |
-| Fase A — contrato en código | Hecho |
-| Fase 0 — comando IDE | Hecho (v1 `workbench.action.chat.open`) |
-| Fase B — proveedor `cursorChat` | Hecho (QA manual fase F) |
-| Fase C+ — UI dropdown + matriz + QA release | Pendiente |
-| Release minor (p. ej. **0.6.x** / **0.7.0**) | Por definir al cerrar fases |
+| Hito                                         | Estado                                  |
+| -------------------------------------------- | --------------------------------------- |
+| Roadmap Cursor (este folder)                 | En curso                                |
+| Fase A — contrato en código                  | Hecho                                   |
+| Fase 0 — comando IDE                         | Hecho (v1 `workbench.action.chat.open`) |
+| Fase B — proveedor `cursorChat`              | Hecho (QA manual fase F)                |
+| Fase C+ — UI dropdown + matriz + QA release  | Pendiente                               |
+| Release minor (p. ej. **0.6.x** / **0.7.0**) | Por definir al cerrar fases             |

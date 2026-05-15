@@ -4,7 +4,7 @@
 > **Alcance:** añadir **`cursorChat`** como destino de agente — **no** sustituye motor ni webview GhostPrompt.  
 > **Fuera de alcance v1:** [Cursor Cloud Agents API](https://cursor.com/docs/api) (HTTP, API keys, agentes en la nube). Eso sería un destino distinto si se prioriza más adelante.
 
-**Matriz de producto:** situación nueva — *cualquier motor* · *destino Cursor* · *superficie GhostPrompt* (igual que Copilot Chat). Ver [`GhostPrompt-motor-destino-matrix.md`](../../../../Integrations/GhostPrompt-motor-destino-matrix.md).
+**Matriz de producto:** situación nueva — _cualquier motor_ · _destino Cursor_ · _superficie GhostPrompt_ (igual que Copilot Chat). Ver [`GhostPrompt-motor-destino-matrix.md`](../../../../Integrations/GhostPrompt-motor-destino-matrix.md).
 
 **Doc técnica IDE (comandos):** [`Docs/Integrations/APIS/Cursor.md`](../../../../Integrations/APIS/Cursor.md) — separar **IDE / extension API** vs **API HTTP**.
 
@@ -90,14 +90,14 @@ Fijar ID de destino, reglas de convivencia con `copilotChat` y `vsOpenCodeX`, y 
 
 - [x] Diseño cerrado
 
-| Decisión | Propuesta v1 |
-| -------- | ------------ |
-| ID destino | `cursorChat` |
-| Superficie | Webview GhostPrompt completa (como `copilotChat`) |
-| API HTTP Cursor | Fuera de v1 |
-| Auto-send tras inyectar | No (solo abrir/rellenar; usuario envía) |
-| Gating VSX | Solo `vsOpenCodeX` |
-| Host detection | `cursorDesktopHost` en settings al webview |
+| Decisión                | Propuesta v1                                      |
+| ----------------------- | ------------------------------------------------- |
+| ID destino              | `cursorChat`                                      |
+| Superficie              | Webview GhostPrompt completa (como `copilotChat`) |
+| API HTTP Cursor         | Fuera de v1                                       |
+| Auto-send tras inyectar | No (solo abrir/rellenar; usuario envía)           |
+| Gating VSX              | Solo `vsOpenCodeX`                                |
+| Host detection          | `cursorDesktopHost` en settings al webview        |
 
 **Código (fase A):** `src/destinations/cursor/cursorHost.ts`, `parseGhostPromptAgentDestination` / `DestinationId` en `destinationRegistry.ts`, schemas en `webviewMessageSchemas.ts`, tests `tests/destinations/cursorHost.test.ts` + ampliación `destinationRegistry` / `applyWebviewUpdateSetting`.
 
@@ -140,7 +140,7 @@ Exponer el destino en settings y en el dropdown **Destino** del webview.
 - [x] `src/ui/webview/react/types.ts`: `AgentDestination` + `cursorDesktopHost` en settings (dropdown en fase C).
 - [ ] Toolbar / selector destino: etiqueta legible («Cursor Chat» / «Cursor»); mostrar solo si `cursorDesktopHost`.
 - [x] `settingsPostMessage`: propagar `agentDestination` efectivo y `cursorDesktopHost`.
-- [ ] README / matriz motor-destino: fila *Motor X · Destino Cursor*.
+- [ ] README / matriz motor-destino: fila _Motor X · Destino Cursor_.
 
 ### Criterio de hecho
 
@@ -236,16 +236,16 @@ Validar E2E en **Cursor Desktop** con GhostPrompt instalado (VSIX o F5).
 
 ## Bitácora global
 
-| Fecha | Fase | Nota |
-| ----- | ---- | ---- |
-| 2026-05-15 | — | Roadmap creado en `v0.6/Destinations/`; alcance = Send al chat IDE Cursor, patrón `copilotChat`. |
-| 2026-05-15 | A | Contrato `cursorChat`: `destinationRegistry`, Zod, `package.json`, `cursorHost.ts`, `settingsPostMessage`, `Cursor.md`; enlaces del roadmap corregidos; tests host/registry. |
-| 2026-05-15 | 0 | Comando v1 `workbench.action.chat.open` + `{ query }` / fallback string; `ghostPrompt.discoverCursorChatCommands`; `Cursor.md` tabla fase 0. |
-| 2026-05-15 | B | `cursorChatDestination.ts`, `cursorChatCommands.ts`, registro en `extension.ts`; tests `cursorChatDestination` / `cursorChatCommands`. |
-| | C | |
-| | D | |
-| | E | |
-| | F | |
+| Fecha      | Fase | Nota                                                                                                                                                                         |
+| ---------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-05-15 | —    | Roadmap creado en `v0.6/Destinations/`; alcance = Send al chat IDE Cursor, patrón `copilotChat`.                                                                             |
+| 2026-05-15 | A    | Contrato `cursorChat`: `destinationRegistry`, Zod, `package.json`, `cursorHost.ts`, `settingsPostMessage`, `Cursor.md`; enlaces del roadmap corregidos; tests host/registry. |
+| 2026-05-15 | 0    | Comando v1 `workbench.action.chat.open` + `{ query }` / fallback string; `ghostPrompt.discoverCursorChatCommands`; `Cursor.md` tabla fase 0.                                 |
+| 2026-05-15 | B    | `cursorChatDestination.ts`, `cursorChatCommands.ts`, registro en `extension.ts`; tests `cursorChatDestination` / `cursorChatCommands`.                                       |
+|            | C    |                                                                                                                                                                              |
+|            | D    |                                                                                                                                                                              |
+|            | E    |                                                                                                                                                                              |
+|            | F    |                                                                                                                                                                              |
 
 ---
 

@@ -18,7 +18,7 @@
 
 ## Estructura
 
-```
+```text
 engines/
 ├── engineRegistry.ts            # Registro de motores + getCompletionProviderForSource
 ├── catalog/
@@ -116,14 +116,14 @@ Función clave: `resolveCompletionSourceForRequest(selectedModelId, enabledSourc
 
 ## Dependencias
 
-| Importa de                     | Por qué                                               |
-| ------------------------------ | ----------------------------------------------------- |
-| `core/types`                   | `SuggestionModelDescriptor`, `CompletionResult`, etc. |
-| `core/prompt/instruction`      | `buildCompletionInstruction` para el prompt del LM    |
-| `core/prompt/normalize`        | `normalizeSuggestion` para post-proceso               |
-| `core/streaming`               | `collectResponseText` (stream LM VS Code)             |
-| `core/presentation/loading`    | `SuggestionLoadingPhase`, textos de fase para la UI   |
-| `system/log`                   | Logging estructurado y perf capture                    |
+| Importa de                  | Por qué                                               |
+| --------------------------- | ----------------------------------------------------- |
+| `core/types`                | `SuggestionModelDescriptor`, `CompletionResult`, etc. |
+| `core/prompt/instruction`   | `buildCompletionInstruction` para el prompt del LM    |
+| `core/prompt/normalize`     | `normalizeSuggestion` para post-proceso               |
+| `core/streaming`            | `collectResponseText` (stream LM VS Code)             |
+| `core/presentation/loading` | `SuggestionLoadingPhase`, textos de fase para la UI   |
+| `system/log`                | Logging estructurado y perf capture                   |
 
 ---
 

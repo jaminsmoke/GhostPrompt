@@ -15,8 +15,6 @@
 - Resolución de **fuentes** y routing a motor (`routing/sources.ts`).
 - Estado compartido host del ciclo suggestion (`state/GhostPromptSessionStore.ts`).
 - Orquestación del mensaje webview `suggest` (`suggest/`).
-- Contexto bootstrap de proyecto (`memory/projectBootstrapContext.ts`) y memoria persistente (`memory/`) mientras sigan en el producto (decisión v0.6 fase D).
-- `SuggestionRequestGovernor` (**legacy** en `system/policies/`; **no** en el hot path; **no** en el barrel `index.ts`).
 
 ## Qué no debe vivir aquí
 
@@ -29,7 +27,7 @@
 
 ## Estructura actual
 
-```
+```text
 core/
 ├── types.ts                    # barrel → contracts/completion.ts
 ├── contracts/
@@ -52,11 +50,8 @@ core/
 │   ├── runSuggest.ts
 │   └── index.ts
 ├── index.ts
-├── state/
-│   └── GhostPromptSessionStore.ts
-└── memory/
-    ├── projectBootstrapContext.ts
-    └── …
+└── state/
+    └── GhostPromptSessionStore.ts
 ```
 
 Un **layout** más granular (p. ej. más módulos bajo `presentation/`) está descrito como objetivo en [`Docs/Plans/Roadmaps/v0.6/01-core-domain-reorganization.md`](../../Docs/Plans/Roadmaps/v0.6/01-core-domain-reorganization.md) (**Fase G**). Ya existen `routing/`, `contracts/`, `suggest/`, `prompt/`, `presentation/`, `streaming/`, `language/` y `state/`.
@@ -97,14 +92,14 @@ Pasos alineados con `runSuggest.ts`: preparar token y `captureId`, resolver fuen
 
 ## Tests relevantes
 
-| Test                                                            | Cubre                            |
-| --------------------------------------------------------------- | -------------------------------- |
-| `host/ghostPromptSuggestPipeline.test.ts`                       | Pipeline suggest con mocks       |
-| `GhostPromptSessionStore.test.ts`                               | Estado, cancelación, captureId   |
-| `CopilotCompletion.test.ts` / `opencodeLmEngine` tests          | Vía engines, contratos con core  |
-| `instructionNormalizeContract.test.ts`                          | Contrato instruction ↔ normalize |
-| `completionSources.test.ts`                                     | Routing de fuentes               |
-| `loading.test.ts`                                               | Textos de fase                   |
-| `projectBootstrapContext.test.ts`, `projectMemoryStore.test.ts` | Contexto / memoria si aplica     |
+| Test                                          | Cubre                            |
+| --------------------------------------------- | -------------------------------- |
+| `host/ghostPromptSuggestPipeline.test.ts`     | Pipeline suggest con mocks       |
+| `GhostPromptSessionStore.test.ts`             | Estado, cancelación, captureId   |
+| `CopilotCompletion.test.ts` / `opencodeLmEngine` tests | Vía engines, contratos con core  |
+| `instructionNormalizeContract.test.ts`        | Contrato instruction ↔ normalize |
+| `completionSources.test.ts`                   | Routing de fuentes               |
+| `loading.test.ts`                             | Textos de fase                   |
+| `collect.test.ts`                             | Streaming de respuesta LM        |
 
 El merge de catálogos multi-motor se cubre en **`tests/mergedModelCatalog.test.ts`** (módulo bajo `engines/catalog/`).

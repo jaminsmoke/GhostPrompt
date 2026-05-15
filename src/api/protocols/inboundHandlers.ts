@@ -11,9 +11,7 @@ import { getLogger } from '../../system/log';
 import { ghostPromptSessionStore } from '../../core/state/GhostPromptSessionStore';
 import { applyWebviewUpdateSetting } from '../settings/applyWebviewUpdate';
 import { type GhostPromptSuggestDeps, handleGhostPromptSuggest } from '../../core/suggest';
-import { providerStatusManager } from '../../system/status';
-import { ollamaModelManager } from '../../engines/ollama';
-import { looksLikeOllamaModelId } from '../../core/routing/sources';
+import { providerStatusManager } from '../../core/status';
 import { parseWebviewOutboundMessage } from './webviewProtocols';
 import type { WebviewInboundMessage } from './webviewProtocols';
 
@@ -31,6 +29,8 @@ export type GhostPromptInboundDispatchServices = GhostPromptInboundBroadcastServ
   dataUri: vscode.Uri;
   postSettings: (webview: vscode.Webview) => Promise<void>;
   suggestDeps: GhostPromptSuggestDeps;
+  /** Hook para efectos secundarios de cambio de modelo/provider (Ollama lifecycle, etc.). */
+  onSettingChanged?: (key: 'selectedModelId' | 'completionProvider', value: string) => Promise<void>;
 };
 
 /**
@@ -74,10 +74,8 @@ export function handleGhostPromptInboundDraftChanged(
 
 /**
  * Aplica un cambio de configuración originado en el webview y notifica a todas
- * las vistas. Efectos secundarios:
- * - Si se selecciona un modelo Ollama (`selectedModelId` con formato Ollama):
- *   detiene el modelo anterior, inicia el nuevo vía `ollamaModelManager`
- * - Si se cambia de motor (`completionProvider`) a != Ollama: detiene modelos Ollama.
+ * las vistas. Efectos secundarios delegados al callback `onSettingChanged` si
+ * está presente en los servicios de dispatch.
  *
  * @param {WebviewInboundMessage} message Mensaje `updateSetting` del webview.
  * @param {() => Promise<void>} broadcastSettingsToAllViews Callback para re-enviar settings a todas las vistas.
@@ -92,28 +90,12 @@ export async function handleGhostPromptInboundUpdateSetting(
   await applyWebviewUpdateSetting(message);
   await broadcastSettingsToAllViews();
 
-  if (message.key === 'selectedModelId' && message.value && dispatchServices) {
-    if (looksLikeOllamaModelId(message.value)) {
-      ollamaModelManager.stopAll();
-      ollamaModelManager
-        .startModel(message.value)
-        .then(async () => {
-          const providers = await providerStatusManager.refreshAll();
-          dispatchServices!.broadcastUi({ type: 'providerStatus', providers });
-        })
-        .catch(async () => {
-          const providers = await providerStatusManager.refreshAll();
-          dispatchServices!.broadcastUi({ type: 'providerStatus', providers });
-        });
-    }
-  }
-
-  if (message.key === 'completionProvider' && dispatchServices) {
-    if (message.value !== 'ollama') {
-      ollamaModelManager.stopAll();
-      const providers = await providerStatusManager.refreshAll();
-      dispatchServices.broadcastUi({ type: 'providerStatus', providers });
-    }
+  if (
+    dispatchServices?.onSettingChanged &&
+    (message.key === 'selectedModelId' || message.key === 'completionProvider') &&
+    typeof message.value === 'string'
+  ) {
+    void dispatchServices.onSettingChanged(message.key, message.value);
   }
 }
 
