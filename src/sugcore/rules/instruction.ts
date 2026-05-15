@@ -1,4 +1,8 @@
 /**
+ * @file Instrucción de completado enviada al modelo de sugerencias.
+ */
+
+/**
  * Construye la instrucción para el modelo a partir del texto del usuario.
  * Instrucción mínima: el modelo infiere idioma, estilo y espaciado por contexto.
  * @param {string} userText Texto que se debe continuar.

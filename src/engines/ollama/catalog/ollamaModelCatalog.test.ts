@@ -1,4 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+/**
+ * @file Pruebas del catálogo de modelos Ollama.
+ */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { listModelsMock, getConfigurationMock, configMock } = vi.hoisted(() => ({
   listModelsMock: vi.fn(),

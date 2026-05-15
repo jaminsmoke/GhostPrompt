@@ -40,7 +40,7 @@ function safeJson(data: Record<string, unknown>): string {
  * Crea el canal bajo demanda la primera vez que se escribe.
  */
 export class OutputChannelLogTransport {
-  /** @readonly Identificador estable del transporte. */
+  /** @readonly */
   readonly id = 'ghostPromptOutputChannel';
 
   private channel: vscode.OutputChannel | undefined;
@@ -50,9 +50,7 @@ export class OutputChannelLogTransport {
    * @returns {vscode.OutputChannel} Canal listo para `appendLine`.
    */
   ensureChannel(): vscode.OutputChannel {
-    if (!this.channel) {
-      this.channel = vscode.window.createOutputChannel(GHOSTPROMPT_LOG_CHANNEL_NAME);
-    }
+    this.channel ??= vscode.window.createOutputChannel(GHOSTPROMPT_LOG_CHANNEL_NAME);
     return this.channel;
   }
 
@@ -82,16 +80,18 @@ export class OutputChannelLogTransport {
    * @param {LogEntry} entry Entrada a volcar al canal.
    * @returns {Promise<void>} Promesa resuelta tras `appendLine`.
    */
-  async write(entry: LogEntry): Promise<void> {
+  write(entry: LogEntry): Promise<void> {
     this.ensureChannel().appendLine(this.formatLine(entry));
+    return Promise.resolve();
   }
 
   /**
    * Libera el canal de salida si se había creado.
    * @returns {Promise<void>} Promesa resuelta tras `dispose` del canal si existía.
    */
-  async dispose(): Promise<void> {
+  dispose(): Promise<void> {
     this.channel?.dispose();
     this.channel = undefined;
+    return Promise.resolve();
   }
 }

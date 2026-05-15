@@ -1,16 +1,21 @@
+/**
+ * @file Engine de completado para Ollama.
+ */
 import * as vscode from 'vscode';
 
 import { buildCompletionInstruction } from '../../sugcore/rules/instruction';
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
-} from '../../system/internals/protocols/params';
+} from '../../system/internals/protocols/types/params';
+
+import { listModels, generate } from './ollamaApiClient';
+
 import type {
   CompletionRequestOptions,
   CompletionResult,
   SuggestionModelDescriptor,
 } from '../../system/internals/protocols/types';
-import { listModels, generate } from './ollamaApiClient';
 
 /**
  * Describe un modelo Ollama para el pipeline de sugerencias.

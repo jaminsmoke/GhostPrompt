@@ -1,9 +1,11 @@
+/// <reference types="node" />
 /**
- * Regresión Fase D: colores del webview deben depender de tokens VS Code (sin hex sueltos).
+ * @file Pruebas de tokens de tema para el webview GhostPrompt.
  */
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '../../..');

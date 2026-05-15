@@ -1,3 +1,6 @@
+/**
+ * @file Pruebas unitarias del registro de destinos GhostPrompt.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const configGetMock = vi.hoisted(() => vi.fn());
@@ -26,19 +29,21 @@ beforeEach(async () => {
   vi.clearAllMocks();
   configGetMock.mockReturnValue('copilotChat');
   getExtensionMock.mockReturnValue(undefined);
-  mod = await import('./destinationRegistry');
+  mod = (await import('./destinationRegistry')) as TestModule;
 });
 
 describe('destinationRegistry', () => {
   describe('registerDestination / getDestinationProviderForId', () => {
     it('registra y resuelve un provider por id', () => {
-      const p1: ReturnType<typeof mod.registerDestination> = undefined!;
       mod.registerDestination({ id: 'copilotChat', sendPrompt: vi.fn() });
 
       const found = mod.getDestinationProviderForId('copilotChat');
       expect(found).toBeDefined();
-      expect(found!.id).toBe('copilotChat');
-      expect(found!.sendPrompt).toBeDefined();
+      if (!found) {
+        throw new Error('Expected provider to be registered');
+      }
+      expect(found.id).toBe('copilotChat');
+      expect(found.sendPrompt).toBeDefined();
     });
 
     it('devuelve undefined si no hay provider registrado', () => {
@@ -49,7 +54,7 @@ describe('destinationRegistry', () => {
 
   describe('getActiveDestinationProvider', () => {
     it('devuelve provider registrado si existe', () => {
-      const sendPrompt = vi.fn();
+      const sendPrompt = vi.fn<Promise<void>, [string]>();
       mod.registerDestination({ id: 'copilotChat', sendPrompt });
 
       const active = mod.getActiveDestinationProvider();

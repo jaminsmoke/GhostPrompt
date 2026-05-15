@@ -1,3 +1,6 @@
+/**
+ * @file Catálogo de modelos de sugerencia Copilot para GhostPrompt.
+ */
 import * as vscode from 'vscode';
 
 import type {
@@ -74,7 +77,7 @@ export function describeModel(model: unknown): SuggestionModelDescriptor {
     pricing?: string;
   };
   const id = getModelId(model);
-  const label = data.name?.trim() || data.family?.trim() || id;
+  const label = [data.name?.trim(), data.family?.trim(), id].find(Boolean) ?? id;
   const pricing = normalizePricing(data.pricing);
   const tier = classifyModelTier(model);
   const provider = inferModelProvider(model);
@@ -94,7 +97,9 @@ export function describeModel(model: unknown): SuggestionModelDescriptor {
  */
 function getModelId(model: unknown): string {
   const data = model as { id?: string; family?: string; name?: string };
-  return data.id?.trim() || data.family?.trim() || data.name?.trim() || 'unknown';
+  return (
+    [data.id?.trim(), data.family?.trim(), data.name?.trim()].find(Boolean) ?? 'unknown'
+  );
 }
 
 /**

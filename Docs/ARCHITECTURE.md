@@ -72,7 +72,7 @@
 | `src/core/state/GhostPromptSessionStore.ts`        | Estado compartido (borrador, suggestions, `activeCaptureId`, token de cancelación).                                                                                                                                                                         |
 | `src/core/memory/projectBootstrapContext.ts`       | Card bootstrap proyecto (README / `package.json`) para modo proyecto; compartido con ingest/persist de memoria.                                                                                                                                             |
 | `src/system/policies/SuggestionRequestGovernor.ts` | **Legacy** (cache / cooldown / bloqueo); **no** invocado por `runSuggest`; cubierto por `SuggestionRequestGovernor.test.ts`.                                                                                                                                |
-| `src/engines/`                                     | Motores de completion canónicos. `copilot/`, `opencode/` (apiClient + catalog), `ollama/`, y `engineRegistry.ts`.                                                                                                                                           |
+| `src/engines/`                                     | Motores de completion canónicos. `copilot/`, `opencode/` (apiClient + catalog), `ollama/`, `engineRegistry.ts`, `config/completionSources.ts` (fuentes habilitadas), `routing/resolveCompletionSource.ts` (modelo → motor).                                                                                                                                           |
 | `src/destinations/`                                | Destinos de prompt. `copilotChat/` (`sendToChat`), `vsOpenCodeX/` (forward UI, notify missing).                                                                                                                                                             |
 | `src/system/contracts/webviewMessageSchemas.ts`    | Schemas Zod canónicos host ↔ webview.                                                                                                                                                                                                                       |
 | `src/system/log/ConversationLog.ts`                | `conversation.md` bajo `storageUri`.                                                                                                                                                                                                                        |
@@ -265,12 +265,12 @@ Destinations (where the final prompt is sent) are logically distinct from comple
 
 ### v0.6 — Fase G: layout `core/` (`routing/`, `contracts/`, `suggest/`, `prompt/`, `presentation/`, `streaming/`, `state/`, `language/`)
 
-- **`core/routing/sources.ts`** — routing de fuentes (antes `core/sources.ts`).
+- **`engines/config/completionSources.ts`** + **`engines/routing/resolveCompletionSource.ts`** — configuración y routing de fuentes LM (antes `core/routing/sources.ts` → `system/internals/config/sources.ts`).
 - **`core/contracts/completion.ts`** — contratos de completion; `types.ts` reexporta.
 - **`core/suggest/`** — orquestación del mensaje `suggest` (sucesor de `core/pipeline/` en v0.5.3).
 - **`core/prompt/`** — instrucción LM y post-proceso (`instruction`, `normalize`).
 - **`core/presentation/loading.ts`** — fases de carga host↔webview.
-- **`core/streaming/collect.ts`** — reensamblado del texto del stream del LM de VS Code.
+- **`engines/copilot/collectLmResponse.ts`** — reensamblado del texto del stream del LM de VS Code (Copilot).
 - **`core/state/`** — `GhostPromptSessionStore` (singleton host Sidebar+Panel).
 - **`core/language/`** — detección y resolución de idioma de suggestion.
 - **`core/memory/projectBootstrapContext.ts`** — bootstrap README/package (antes `core/context/`); carpeta `core/context/` eliminada.

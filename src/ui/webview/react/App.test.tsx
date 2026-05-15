@@ -1,19 +1,30 @@
+/**
+ * @file Pruebas de integración del punto de entrada React del webview.
+ */
+type VsCodeApi = { postMessage: (message: unknown) => void };
+
 const { postMessageMock } = vi.hoisted(() => {
-  (globalThis as any).window = globalThis as any;
   const pm = vi.fn();
-  (globalThis as any).acquireVsCodeApi = () => ({ postMessage: pm });
+  const globalWithApi = globalThis as unknown as { window?: unknown; acquireVsCodeApi?: () => VsCodeApi };
+  globalWithApi.window = globalWithApi;
+  globalWithApi.acquireVsCodeApi = () => ({ postMessage: pm });
   return { postMessageMock: pm };
 });
 
-import { describe, expect, it, vi } from 'vitest';
-import { renderToStaticMarkup } from 'react-dom/server';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it, vi } from 'vitest';
+
 import { App, postToHost } from './App';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
 
+/**
+ * Renders the app to static HTML for snapshot-style verification.
+ * @returns {string} The rendered HTML output.
+ */
 function renderApp() {
   return renderToStaticMarkup(
     <QueryClientProvider client={queryClient}>

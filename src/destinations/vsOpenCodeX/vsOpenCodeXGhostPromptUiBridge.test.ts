@@ -1,3 +1,6 @@
+/**
+ * @file Pruebas de puente VSOpenCodeX para la transmisión de mensajes UI sin broadcast.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const executeCommandMock = vi.hoisted(() => vi.fn(() => Promise.resolve()));

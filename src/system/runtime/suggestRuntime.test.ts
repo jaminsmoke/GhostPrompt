@@ -1,3 +1,6 @@
+/**
+ * @file Tests del runtime de sugerencias del host.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { showWarningMessageMock, wsConfigGetMock } = vi.hoisted(() => ({
@@ -6,14 +9,14 @@ const { showWarningMessageMock, wsConfigGetMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('vscode', () => ({
-  CancellationTokenSource: class {
+  ['CancellationTokenSource']: class {
     public token = { isCancellationRequested: false };
     cancel(): void {
       this.token.isCancellationRequested = true;
     }
     dispose(): void {}
   },
-  Uri: {
+  ['Uri']: {
     file: (p: string) => ({ scheme: 'file', fsPath: p, path: p, toString: () => `file://${p}` }),
   },
   workspace: {
@@ -32,15 +35,14 @@ vi.mock('vscode', () => ({
   },
 }));
 
-import * as vscode from 'vscode';
+import { resolveCompletionSourceForRequest } from '../../engines/routing/resolveCompletionSource';
+import { ghostPromptSessionStore } from '../../system/internals/state/sessionStore';
+import { resetSuggestionHostNotificationThrottleForTests, maybeNotifySuggestionIssue } from '../../ui/notifications/suggestionNotification';
 
 import {
   runGhostPromptSuggestPipeline,
   type GhostPromptSuggestDeps,
 } from './suggestRuntime';
-import { resolveCompletionSourceForRequest } from '../internals/protocols/routing';
-import { resetSuggestionHostNotificationThrottleForTests, maybeNotifySuggestionIssue } from '../../ui/notifications/suggestionNotification';
-import { ghostPromptSessionStore } from '../../system/internals/states/session';
 
 const requestCompletion = vi.fn();
 
@@ -52,14 +54,19 @@ vi.mock('../../engines/engineRegistry', () => ({
   getCompletionProviderKind: () => 'copilot' as const,
 }));
 
-vi.mock('../internals/protocols/routing', () => ({
+vi.mock('../../engines/routing/resolveCompletionSource', () => ({
   resolveCompletionSourceForRequest: vi.fn(() => 'copilot' as const),
 }));
 
-vi.mock('../internals/config/sources', () => ({
+vi.mock('../../engines/config/completionSources', () => ({
   getEnabledCompletionSources: () => ['copilot'] as const,
 }));
 
+/**
+ * Creates a minimal runtime dependencies object for suggest pipeline tests.
+ * @param {Partial<GhostPromptSuggestDeps>} [overrides] Optional overrides to customize the returned dependencies.
+ * @returns {GhostPromptSuggestDeps} A GhostPromptSuggestDeps object with defaults suitable for tests.
+ */
 function minimalDeps(overrides?: Partial<GhostPromptSuggestDeps>): GhostPromptSuggestDeps {
   return {
     broadcastUi: vi.fn(),
@@ -140,7 +147,8 @@ describe('runGhostPromptSuggestPipeline', () => {
       const opts = requestCompletion.mock.calls[0]?.[1] as {
         onStreamPreview?: (s: string) => void;
       };
-      expect(typeof opts?.onStreamPreview).toBe('function');
+      expect(opts).toBeDefined();
+      expect(typeof opts.onStreamPreview).toBe('function');
     } finally {
       vi.mocked(resolveCompletionSourceForRequest).mockReturnValue('copilot');
     }

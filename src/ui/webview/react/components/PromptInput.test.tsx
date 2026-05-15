@@ -1,9 +1,19 @@
-(globalThis as any).window = globalThis as any;
+/**
+ * @file Pruebas unitarias del componente PromptInput del webview.
+ */
+const globalWithWindow = globalThis as unknown as { window?: unknown };
+globalWithWindow.window = globalWithWindow;
 
-import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it, vi } from 'vitest';
+
 import { PromptInput } from './PromptInput';
 
+/**
+ * Builds props for the PromptInput component used in tests.
+ * @param {Record<string, unknown>} [overrides] Partial prop values to override in the mock.
+ * @returns {Record<string, unknown>} Props suitable for rendering PromptInput in snapshot tests.
+ */
 function createMockProps(overrides: Record<string, unknown> = {}) {
   return {
     text: '',
@@ -20,6 +30,11 @@ function createMockProps(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/**
+ * Extracts the first <pre> element from rendered HTML.
+ * @param {string} html The rendered HTML string to inspect.
+ * @returns {string | null} The first <pre> element markup, or null if none exists.
+ */
 function extractPre(html: string): string | null {
   const match = /<pre[\s\S]*?<\/pre>/.exec(html);
   return match ? match[0] : null;

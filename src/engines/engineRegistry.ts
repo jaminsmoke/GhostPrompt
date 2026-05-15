@@ -1,9 +1,12 @@
-import type { CompletionRequestOptions, CompletionResult } from '../system/internals/protocols/types';
-import { getEnabledCompletionSources } from '../system/internals/config/sources';
-
+/**
+ * @file Registro de motores de sugerencia disponibles.
+ */
+import { getEnabledCompletionSources } from './config/completionSources';
 import { requestCopilotLmCompletion } from './copilot/copilotLmEngine';
-import { requestOpencodeCompletion } from './opencode/opencodeLmEngine';
 import { requestOllamaCompletion } from './ollama/ollamaLmEngine';
+import { requestOpencodeCompletion } from './opencode/opencodeLmEngine';
+
+import type { CompletionRequestOptions, CompletionResult } from '../system/internals/protocols/types';
 
 export interface CompletionProvider {
   readonly id: string;

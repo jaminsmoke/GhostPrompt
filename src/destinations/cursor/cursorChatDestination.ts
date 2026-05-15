@@ -1,7 +1,12 @@
-import type { DestinationProvider } from '../destinationRegistry';
+/**
+ * @file Destination provider for Cursor Chat, including sendPrompt integration.
+ */
 import { registerDestination } from '../destinationRegistry';
-import { CURSOR_CHAT_DESTINATION_ID } from './cursorHost';
+
 import { executeCursorChatOpen } from './cursorChatCommands';
+import { CURSOR_CHAT_DESTINATION_ID } from './cursorHost';
+
+import type { DestinationProvider } from '../destinationRegistry';
 
 /**
  * Envía el prompt al chat nativo de Cursor (rellena input; el usuario confirma el envío).

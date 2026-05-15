@@ -1,4 +1,13 @@
+/**
+ * @file Tests de migración de markdown legacy para VS Code.
+ */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vscode from 'vscode';
+
+import {
+  disposeGhostPromptLogging,
+  initGhostPromptLogging,
+} from './LogManager';
 
 const hoisted = vi.hoisted(() => ({
   files: new Map<string, Uint8Array>(),
@@ -15,32 +24,34 @@ vi.mock('vscode', () => {
   };
 
   return {
-    Uri: {
+    ['Uri']: {
       file: (p: string) => ({ scheme: 'file', fsPath: p, path: p, toString: () => `file://${p}` }),
       joinPath,
     },
     workspace: {
       fs: {
-        readFile: vi.fn(async (uri: { fsPath: string }) => {
+        readFile: vi.fn((uri: { fsPath: string }) => {
           const v = files.get(uri.fsPath);
           if (!v) {
-            throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+            return Promise.reject(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
           }
-          return new Uint8Array(v);
+          return Promise.resolve(new Uint8Array(v));
         }),
-        writeFile: vi.fn(async (uri: { fsPath: string }, content: Uint8Array) => {
+        writeFile: vi.fn((uri: { fsPath: string }, content: Uint8Array) => {
           files.set(uri.fsPath, new Uint8Array(content));
+          return Promise.resolve();
         }),
-        createDirectory: vi.fn(async () => {}),
-        stat: vi.fn(async (uri: { fsPath: string }) => {
+        createDirectory: vi.fn(() => Promise.resolve()),
+        stat: vi.fn((uri: { fsPath: string }) => {
           const v = files.get(uri.fsPath);
           if (!v) {
-            throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+            return Promise.reject(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
           }
-          return { type: 1 as const, ctime: 0, mtime: 0, size: v.byteLength };
+          return Promise.resolve({ type: 1 as const, ctime: 0, mtime: 0, size: v.byteLength });
         }),
-        delete: vi.fn(async (uri: { fsPath: string }) => {
+        delete: vi.fn((uri: { fsPath: string }) => {
           files.delete(uri.fsPath);
+          return Promise.resolve();
         }),
       },
       getConfiguration: vi.fn(() => ({
@@ -67,7 +78,7 @@ vi.mock('vscode', () => {
         dispose: vi.fn(),
       })),
     },
-    Disposable: class {
+    ['Disposable']: class {
       constructor(private readonly callback: () => void) {}
       dispose(): void {
         this.callback();
@@ -75,13 +86,6 @@ vi.mock('vscode', () => {
     },
   };
 });
-
-import * as vscode from 'vscode';
-
-import {
-  disposeGhostPromptLogging,
-  initGhostPromptLogging,
-} from './LogManager';
 
 describe('migración Markdown legacy (LogManager)', () => {
   beforeEach(async () => {
@@ -131,14 +135,26 @@ describe('migración Markdown legacy (LogManager)', () => {
       { timeout: 3000, interval: 5 },
     );
 
-    const flag = JSON.parse(Buffer.from(hoisted.files.get(flagPath)!).toString('utf-8'));
+    const flagBytes = hoisted.files.get(flagPath);
+    expect(flagBytes).toBeDefined();
+    const flag = JSON.parse(Buffer.from(flagBytes as Uint8Array).toString('utf-8')) as {
+      snapshots: number;
+    };
     expect(flag.snapshots).toBe(1);
 
     const nd = hoisted.files.get(ndPath);
     expect(nd).toBeDefined();
-    const lines = Buffer.from(nd!).toString('utf-8').trim().split('\n').filter(Boolean);
+    const lines = Buffer.from(nd as Uint8Array)
+      .toString('utf-8')
+      .trim()
+      .split('\n')
+      .filter(Boolean);
     expect(lines.length).toBeGreaterThanOrEqual(1);
-    const first = JSON.parse(lines[0]!);
+    const first = JSON.parse(lines[0]) as {
+      module: string;
+      message: string;
+      data: { preview: string };
+    };
     expect(first.module).toBe('migration');
     expect(first.message).toBe('legacy-md-snapshot');
     expect(first.data.preview).toContain('contenido legacy');

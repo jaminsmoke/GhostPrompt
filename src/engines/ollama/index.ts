@@ -1,3 +1,6 @@
+/**
+ * @file Exportaciones públicas del engine Ollama.
+ */
 export { listModels, generate } from './ollamaApiClient';
 export { requestOllamaCompletion } from './ollamaLmEngine';
 export { listOllamaSuggestionModels } from './catalog/ollamaModelCatalog';

@@ -1,12 +1,12 @@
 /**
- * Plantilla HTML del webview GhostPrompt (CSP nonce y URIs).
+ * @file Plantilla HTML del webview GhostPrompt (CSP nonce y URIs).
  */
 import * as fs from 'fs';
+
 import * as vscode from 'vscode';
 
 /**
  * Nonce aleatorio para Content-Security-Policy del webview.
- *
  * @returns {string} Un nonce aleatorio seguro para inyección de scripts.
  */
 export function generateGhostPromptWebviewNonce(): string {
@@ -24,10 +24,9 @@ export type GhostPromptWebviewHtmlParams = {
 /**
  * Construye el HTML del webview a partir del bundle React generado por Vite,
  * reemplazando placeholders por URIs seguras y CSP.
- *
  * @param {GhostPromptWebviewHtmlParams} params Parámetros de construcción del webview.
  * @returns {string} HTML final para cargar en el webview.
- * @throws Si falta el bundle React compilado en `src/ui/webview/dist/react/index.html`.
+ * @throws {Error} Si falta el bundle React compilado en `src/ui/webview/dist/react/index.html`.
  */
 export function buildGhostPromptWebviewHtml(params: GhostPromptWebviewHtmlParams): string {
   const { extensionUri, webview, viewContributionId, capabilitiesPayload } = params;
@@ -48,10 +47,13 @@ export function buildGhostPromptWebviewHtml(params: GhostPromptWebviewHtmlParams
 
   const rawHtml = fs.readFileSync(reactIndexHtmlPath, 'utf-8');
   const reactAssetRoot = vscode.Uri.joinPath(extensionUri, 'src', 'ui', 'webview', 'dist', 'react');
-  const htmlWithAssets = rawHtml.replace(/(src|href)="\.\/([^"\s]+)"/g, (_, attr, relativePath) => {
+  const htmlWithAssets = rawHtml.replace(
+    /(src|href)="\.\/([^"\s]+)"/g,
+    (_match: string, attr: string, relativePath: string) => {
     const assetUri = webview.asWebviewUri(vscode.Uri.joinPath(reactAssetRoot, relativePath));
-    return `${attr}="${assetUri.toString()}"`;
-  });
+      return `${attr}="${assetUri.toString()}"`;
+    },
+  );
   // Vite emite el <meta CSP> en varias líneas; si no coincide el reemplazo, VS Code deja
   // script-src 'unsafe-inline' y bloquea los bundles servidos vía asWebviewUri (vscode-cdn).
   const cspMetaPattern = /<meta\s[^>]*?http-equiv\s*=\s*["']Content-Security-Policy["'][^>]*>/gis;

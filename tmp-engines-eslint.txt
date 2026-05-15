@@ -1,0 +1,278 @@
+﻿
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\catalog\mergedModelCatalog.test.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\catalog\mergedModelCatalog.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\completionProvider.test.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\copilot\CopilotCompletion.test.ts
+   1:2  error  Missing @file                                     jsdoc/require-file-overview
+  42:5  error  Async generator method has no 'await' expression  @typescript-eslint/require-await
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\copilot\catalog\modelCatalog.ts
+   1:2   error  Missing @file                                                                                              jsdoc/require-file-overview
+  77:35  error  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  77:58  error  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  97:26  error  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  97:49  error  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  97:70  error  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\copilot\copilotLmEngine.ts
+   1:2  error  Missing @file                 jsdoc/require-file-overview
+  60:9  error  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+  63:9  error  Forbidden non-null assertion  @typescript-eslint/no-non-null-assertion
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\copilot\copilotStatus.test.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\copilot\copilotStatus.ts
+  1:2  error  Missing @file                                   jsdoc/require-file-overview
+  8:3  error  Async method 'check' has no 'await' expression  @typescript-eslint/require-await
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\copilot\index.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\engineRegistry.test.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\engineRegistry.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\index.test.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\index.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\modelIdChecks.test.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\modelIdChecks.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\catalog\normalizeOllamaModels.test.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\catalog\normalizeOllamaModels.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\catalog\ollamaModelCatalog.test.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\catalog\ollamaModelCatalog.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\index.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\ollamaApiClient.test.ts
+    1:2  error  Missing @file                        jsdoc/require-file-overview
+  109:9  error  Unsafe assignment of an `any` value  @typescript-eslint/no-unsafe-assignment
+  154:9  error  Unsafe assignment of an `any` value  @typescript-eslint/no-unsafe-assignment
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\ollamaApiClient.ts
+    1:2   error  Missing @file                                                                                              jsdoc/require-file-overview
+   19:25  error  Prefer using nullish coalescing operator (`??`) instead of a logical or (`||`), as it is a safer operator  @typescript-eslint/prefer-nullish-coalescing
+  236:12  error  Unnecessary conditional, value is always truthy                                                            @typescript-eslint/no-unnecessary-condition
+  237:28  error  Unsafe object destructuring of a property with an `any` value                                              @typescript-eslint/no-unsafe-assignment
+  241:32  error  Unsafe argument of type `any` assigned to a parameter of type `AllowSharedBufferSource | undefined`        @typescript-eslint/no-unsafe-argument
+  250:17  error  Unsafe assignment of an `any` value                                                                        @typescript-eslint/no-unsafe-assignment
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\ollamaLmEngine.test.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\ollamaLmEngine.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\ollamaModelManager.test.ts
+    1:2   error  Missing @file                                                        jsdoc/require-file-overview
+   55:12  error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
+   69:7   error  Unsafe call of an `any` typed value                                  @typescript-eslint/no-unsafe-call
+   80:7   error  Unsafe call of an `any` typed value                                  @typescript-eslint/no-unsafe-call
+   89:7   error  Unsafe call of an `any` typed value                                  @typescript-eslint/no-unsafe-call
+  100:7   error  Unsafe call of an `any` typed value                                  @typescript-eslint/no-unsafe-call
+  111:7   error  Unsafe call of an `any` typed value                                  @typescript-eslint/no-unsafe-call
+  121:7   error  Unsafe call of an `any` typed value                                  @typescript-eslint/no-unsafe-call
+  131:7   error  Unsafe call of an `any` typed value                                  @typescript-eslint/no-unsafe-call
+  141:13  error  Unsafe object destructuring of a property with an error typed value  @typescript-eslint/no-unsafe-assignment
+  152:13  error  Unsafe object destructuring of a property with an error typed value  @typescript-eslint/no-unsafe-assignment
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\ollamaModelManager.ts
+    1:2   error  Missing @file                                      jsdoc/require-file-overview
+  181:18  error  Unnecessary optional chain on a non-nullish value  @typescript-eslint/no-unnecessary-condition
+  183:18  error  Unnecessary optional chain on a non-nullish value  @typescript-eslint/no-unnecessary-condition
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\ollamaStatus.test.ts
+   1:2  error  Missing @file                            jsdoc/require-file-overview
+  22:7  error  Unsafe call of a `Function` typed value  @typescript-eslint/no-unsafe-call
+  33:9  error  Unsafe call of a `Function` typed value  @typescript-eslint/no-unsafe-call
+  36:9  error  Unsafe call of a `Function` typed value  @typescript-eslint/no-unsafe-call
+  43:9  error  Unsafe call of a `Function` typed value  @typescript-eslint/no-unsafe-call
+  55:9  error  Unsafe call of a `Function` typed value  @typescript-eslint/no-unsafe-call
+  58:9  error  Unsafe call of a `Function` typed value  @typescript-eslint/no-unsafe-call
+  61:9  error  Unsafe call of a `Function` typed value  @typescript-eslint/no-unsafe-call
+  73:9  error  Unsafe call of a `Function` typed value  @typescript-eslint/no-unsafe-call
+  76:9  error  Unsafe call of a `Function` typed value  @typescript-eslint/no-unsafe-call
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\ollamaStatus.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\ollamaTypes.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\ollamaValidators.test.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\ollama\ollamaValidators.ts
+   1:2  error  Missing @file                                                             jsdoc/require-file-overview
+  39:4  error  `passthrough` is deprecated. Use `z.looseObject()` or `.loose()` instead  @typescript-eslint/no-deprecated
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\opencode\catalog\normalizeOpencodeProviderModels.test.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\opencode\catalog\normalizeOpencodeProviderModels.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\opencode\catalog\opencodeModelCatalog.test.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\opencode\catalog\opencodeModelCatalog.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\opencode\catalog\opencodeModelTier.test.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\opencode\catalog\opencodeModelTier.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\opencode\index.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\opencode\opencodeApiClient.test.ts
+   34:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+   39:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+   40:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   40:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+   41:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+   41:26  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   41:30  error  Unsafe member access .createOpenCodeClient on an `any` value  @typescript-eslint/no-unsafe-member-access
+   43:12  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   43:16  error  Unsafe member access .getGlobalClient on an `any` value       @typescript-eslint/no-unsafe-member-access
+   44:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   44:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+   48:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+   49:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   49:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+   50:11  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   50:15  error  Unsafe member access .createOpenCodeClient on an `any` value  @typescript-eslint/no-unsafe-member-access
+   52:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+   52:26  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   52:30  error  Unsafe member access .healthCheck on an `any` value           @typescript-eslint/no-unsafe-member-access
+   52:42  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   52:46  error  Unsafe member access .getGlobalClient on an `any` value       @typescript-eslint/no-unsafe-member-access
+   54:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   54:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+   58:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+   59:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   59:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+   60:11  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   60:15  error  Unsafe member access .createOpenCodeClient on an `any` value  @typescript-eslint/no-unsafe-member-access
+   62:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+   62:26  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   62:30  error  Unsafe member access .healthCheck on an `any` value           @typescript-eslint/no-unsafe-member-access
+   62:42  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   62:46  error  Unsafe member access .getGlobalClient on an `any` value       @typescript-eslint/no-unsafe-member-access
+   64:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   64:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+   68:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+   69:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   69:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+   70:11  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   70:15  error  Unsafe member access .createOpenCodeClient on an `any` value  @typescript-eslint/no-unsafe-member-access
+   72:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+   72:22  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   72:26  error  Unsafe member access .getSession on an `any` value            @typescript-eslint/no-unsafe-member-access
+   72:37  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   72:41  error  Unsafe member access .getGlobalClient on an `any` value       @typescript-eslint/no-unsafe-member-access
+   74:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   74:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+   78:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+   79:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   79:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+   80:11  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   80:15  error  Unsafe member access .createOpenCodeClient on an `any` value  @typescript-eslint/no-unsafe-member-access
+   85:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+   85:22  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   85:26  error  Unsafe member access .getSession on an `any` value            @typescript-eslint/no-unsafe-member-access
+   85:37  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   85:41  error  Unsafe member access .getGlobalClient on an `any` value       @typescript-eslint/no-unsafe-member-access
+   86:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+   86:24  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   86:28  error  Unsafe member access .promptOpenCode on an `any` value        @typescript-eslint/no-unsafe-member-access
+   90:7   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   90:11  error  Unsafe member access .getGlobalClient on an `any` value       @typescript-eslint/no-unsafe-member-access
+   93:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   93:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+   97:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+   98:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   98:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+   99:11  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+   99:15  error  Unsafe member access .createOpenCodeClient on an `any` value  @typescript-eslint/no-unsafe-member-access
+  101:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+  101:23  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  101:27  error  Unsafe member access .getSession on an `any` value            @typescript-eslint/no-unsafe-member-access
+  101:38  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  101:42  error  Unsafe member access .getGlobalClient on an `any` value       @typescript-eslint/no-unsafe-member-access
+  102:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+  102:23  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  102:27  error  Unsafe member access .getSession on an `any` value            @typescript-eslint/no-unsafe-member-access
+  102:38  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  102:42  error  Unsafe member access .getGlobalClient on an `any` value       @typescript-eslint/no-unsafe-member-access
+  106:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  106:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+  110:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+  111:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  111:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+  112:11  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  112:15  error  Unsafe member access .createOpenCodeClient on an `any` value  @typescript-eslint/no-unsafe-member-access
+  114:11  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  114:15  error  Unsafe member access .getSession on an `any` value            @typescript-eslint/no-unsafe-member-access
+  114:26  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  114:30  error  Unsafe member access .getGlobalClient on an `any` value       @typescript-eslint/no-unsafe-member-access
+  115:11  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  115:15  error  Unsafe member access .closeAllSessions on an `any` value      @typescript-eslint/no-unsafe-member-access
+  115:32  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  115:36  error  Unsafe member access .getGlobalClient on an `any` value       @typescript-eslint/no-unsafe-member-access
+  117:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  117:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+  121:11  error  Unsafe assignment of an `any` value                           @typescript-eslint/no-unsafe-assignment
+  122:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  122:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+  123:11  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  123:15  error  Unsafe member access .createOpenCodeClient on an `any` value  @typescript-eslint/no-unsafe-member-access
+  124:5   error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  124:9   error  Unsafe member access .resetClient on an `any` value           @typescript-eslint/no-unsafe-member-access
+  125:18  error  Unsafe return of a value of type `any`                        @typescript-eslint/no-unsafe-return
+  125:18  error  Unsafe call of an `any` typed value                           @typescript-eslint/no-unsafe-call
+  125:22  error  Unsafe member access .getGlobalClient on an `any` value       @typescript-eslint/no-unsafe-member-access
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\opencode\opencodeLmCompletion.test.ts
+   1:2   error  Missing @file                           jsdoc/require-file-overview
+  27:49  error  Unsafe return of a value of type `any`  @typescript-eslint/no-unsafe-return
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\opencode\opencodeLmEngine.ts
+   1:2  error  Missing @file                                                    jsdoc/require-file-overview
+  43:1  error  Async function 'resolveOpenCodeModel' has no 'await' expression  @typescript-eslint/require-await
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\opencode\opencodeStatus.test.ts
+  1:2  error  Missing @file  jsdoc/require-file-overview
+
+C:\Users\TRENDINGPC\Documents\Proyectos de software propio\VsCodeExtension-InlineChatSuggestions\src\engines\opencode\opencodeStatus.ts
+   1:2  error  Missing @file                                                  jsdoc/require-file-overview
+  25:1  error  Async function 'getOpenCodeBaseUrl' has no 'await' expression  @typescript-eslint/require-await
+
+Ô£û 189 problems (189 errors, 0 warnings)
+

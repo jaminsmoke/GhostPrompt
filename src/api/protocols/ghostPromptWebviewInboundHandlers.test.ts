@@ -1,31 +1,32 @@
+/**
+ * @file Pruebas de handlers inbound del webview GhostPrompt.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const {
-  sendToChatMock,
-  applyWebviewUpdateSettingMock,
-  workspaceConfigGetMock,
-  handleGhostPromptSuggestMock,
-  getActiveDestinationProviderMock,
-  windowShowErrorMessageMock,
-  MockCancellationTokenSource,
-} = vi.hoisted(() => ({
-  sendToChatMock: vi.fn(),
-  applyWebviewUpdateSettingMock: vi.fn(),
-  workspaceConfigGetMock: vi.fn((key: string, fallback: unknown) => fallback),
-  handleGhostPromptSuggestMock: vi.fn().mockResolvedValue(undefined),
-  getActiveDestinationProviderMock: vi.fn(() => ({
-    id: 'copilotChat' as const,
-    sendPrompt: sendToChatMock,
-  })),
-  windowShowErrorMessageMock: vi.fn(),
-  MockCancellationTokenSource: class {
-    public token = { isCancellationRequested: false };
-    public cancel(): void {
-      this.token.isCancellationRequested = true;
-    }
-    public dispose(): void {}
-  },
-}));
+const sendToChatMock = vi.hoisted(() => vi.fn<(text: string) => Promise<void>>());
+const applyWebviewUpdateSettingMock = vi.hoisted(() => vi.fn());
+const workspaceConfigGetMock = vi.hoisted(() => vi.fn((key: string, fallback: unknown) => fallback));
+const handleGhostPromptSuggestMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const getActiveDestinationProviderMock = vi.hoisted(
+  () =>
+    vi.fn<
+      () => { id: 'copilotChat'; sendPrompt?: (text: string) => Promise<void> }
+    >(() => ({
+      id: 'copilotChat' as const,
+      sendPrompt: sendToChatMock,
+    })),
+);
+const windowShowErrorMessageMock = vi.hoisted(() => vi.fn());
+const MockCancellationTokenSource = vi.hoisted(
+  () =>
+    class {
+      public token = { isCancellationRequested: false };
+      public cancel(): void {
+        this.token.isCancellationRequested = true;
+      }
+      public dispose(): void {}
+    },
+);
 
 vi.mock('vscode', () => ({
   workspace: {
@@ -44,14 +45,14 @@ vi.mock('vscode', () => ({
   window: {
     showErrorMessage: windowShowErrorMessageMock,
   },
-  CancellationTokenSource: MockCancellationTokenSource,
-  Disposable: class {
+  ['CancellationTokenSource']: MockCancellationTokenSource,
+  ['Disposable']: class {
     constructor(private readonly _fn: () => void) {}
     dispose(): void {
       this._fn();
     }
   },
-  Uri: {
+  ['Uri']: {
     joinPath: (...parts: Array<{ fsPath?: string } | string>) => ({
       fsPath: parts.map((p) => (typeof p === 'string' ? p : (p.fsPath ?? ''))).join('/'),
     }),
@@ -69,11 +70,11 @@ vi.mock('../settings/applyWebviewUpdate', () => ({
 }));
 
 vi.mock('../../system/runtime/suggestRuntime', () => ({
-  handleGhostPromptSuggest: (...args: unknown[]) => handleGhostPromptSuggestMock(...args),
+  handleGhostPromptSuggest: handleGhostPromptSuggestMock,
 }));
 
-import type { Uri, Webview } from 'vscode';
-import { ghostPromptSessionStore } from '../../system/internals/states/session';
+import { ghostPromptSessionStore } from '../../system/internals/state/sessionStore';
+
 import {
   dispatchGhostPromptInboundMessage,
   handleGhostPromptInboundDraftChanged,
@@ -81,8 +82,14 @@ import {
   handleGhostPromptInboundSend,
   type GhostPromptInboundDispatchServices,
 } from './inboundHandlers';
-import type { GhostPromptSuggestDeps } from '../../system/runtime/suggestRuntime';
 
+import type { GhostPromptSuggestDeps } from '../../system/runtime/suggestRuntime';
+import type { Uri, Webview } from 'vscode';
+
+/**
+ * Returns minimal suggest runtime dependencies for inbound handler tests.
+ * @returns {GhostPromptSuggestDeps} A basic GhostPromptSuggestDeps instance with test-safe defaults.
+ */
 function minimalSuggestDeps(): GhostPromptSuggestDeps {
   return {
     broadcastUi: vi.fn(),
@@ -179,7 +186,7 @@ describe('ghostPromptWebviewInboundHandlers', () => {
     it('muestra error si el provider no tiene sendPrompt registrado', async () => {
       getActiveDestinationProviderMock.mockReturnValue({
         id: 'copilotChat' as const,
-        sendPrompt: undefined as any,
+        sendPrompt: undefined,
       });
       const clearAll = vi.fn();
       await handleGhostPromptInboundSend(
@@ -225,6 +232,7 @@ describe('ghostPromptWebviewInboundHandlers', () => {
         broadcastDraftSync: vi.fn(),
         broadcastSettingsToAllViews: broadcastSettings,
         broadcastClearAll: vi.fn(),
+        broadcastUi: vi.fn(),
         suggestDeps: minimalSuggestDeps(),
       };
 
@@ -260,6 +268,7 @@ describe('ghostPromptWebviewInboundHandlers', () => {
         broadcastDraftSync: vi.fn(),
         broadcastSettingsToAllViews: vi.fn(),
         broadcastClearAll: vi.fn(),
+        broadcastUi: vi.fn(),
         suggestDeps: {
           ...minimalSuggestDeps(),
           broadcastUi,

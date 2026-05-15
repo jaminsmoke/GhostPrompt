@@ -1,12 +1,17 @@
+/**
+ * @file Tests del cliente OpenCode (sesiones, health, prompt y stream).
+ */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const sessionCreateMock = vi.fn();
-const sessionPromptMock = vi.fn();
-const sessionDeleteMock = vi.fn();
-const configGetMock = vi.fn();
-const eventSubscribeMock = vi.fn();
+import type { OpenCodeSdkClient } from './opencodeApiClient';
 
-const fakeSdkClient = {
+const sessionCreateMock = vi.fn<Promise<unknown>, [unknown?]>();
+const sessionPromptMock = vi.fn<Promise<unknown>, [unknown]>();
+const sessionDeleteMock = vi.fn<Promise<unknown>, [unknown]>();
+const configGetMock = vi.fn<Promise<unknown>, []>();
+const eventSubscribeMock = vi.fn<Promise<{ stream: AsyncIterable<unknown> }>, [{ signal: AbortSignal }]>();
+
+const fakeSdkClient: OpenCodeSdkClient = {
   config: { get: configGetMock },
   session: {
     create: sessionCreateMock,
@@ -17,7 +22,7 @@ const fakeSdkClient = {
 };
 
 vi.mock('@opencode-ai/sdk', () => ({
-  createOpencodeClient: vi.fn(() => fakeSdkClient),
+  createOpencodeClient: vi.fn<OpenCodeSdkClient, [unknown]>(() => fakeSdkClient),
 }));
 
 afterEach(() => {
@@ -26,12 +31,12 @@ afterEach(() => {
 
 describe('opencodeApiClient', () => {
   it('OPENCODE_DEFAULT_PORT es 4096', async () => {
-    const { OPENCODE_DEFAULT_PORT } = await import('./opencodeApiClient');
-    expect(OPENCODE_DEFAULT_PORT).toBe(4096);
+    const mod = (await import('./opencodeApiClient')) as typeof import('./opencodeApiClient');
+    expect(mod.OPENCODE_DEFAULT_PORT).toBe(4096);
   });
 
   it('createOpenCodeClient devuelve un cliente y lo almacena como global', async () => {
-    const mod = await import('./opencodeApiClient');
+    const mod = (await import('./opencodeApiClient')) as typeof import('./opencodeApiClient');
     mod.resetClient();
     const client = await mod.createOpenCodeClient({});
     expect(client).toBe(fakeSdkClient);
@@ -40,7 +45,7 @@ describe('opencodeApiClient', () => {
   });
 
   it('healthCheck devuelve true si config.get resolves', async () => {
-    const mod = await import('./opencodeApiClient');
+    const mod = (await import('./opencodeApiClient')) as typeof import('./opencodeApiClient');
     mod.resetClient();
     await mod.createOpenCodeClient({});
     configGetMock.mockResolvedValue({ data: { status: 'ok' } });
@@ -50,7 +55,7 @@ describe('opencodeApiClient', () => {
   });
 
   it('healthCheck devuelve false si config.get rechaza', async () => {
-    const mod = await import('./opencodeApiClient');
+    const mod = (await import('./opencodeApiClient')) as typeof import('./opencodeApiClient');
     mod.resetClient();
     await mod.createOpenCodeClient({});
     configGetMock.mockRejectedValue(new Error('conn refused'));
@@ -60,7 +65,7 @@ describe('opencodeApiClient', () => {
   });
 
   it('createSessionInternal devuelve id de sesion', async () => {
-    const mod = await import('./opencodeApiClient');
+    const mod = (await import('./opencodeApiClient')) as typeof import('./opencodeApiClient');
     mod.resetClient();
     await mod.createOpenCodeClient({});
     sessionCreateMock.mockResolvedValue({ data: { id: 'sess-xyz' } });
@@ -70,7 +75,7 @@ describe('opencodeApiClient', () => {
   });
 
   it('promptOpenCode extrae texto de parts tipo text', async () => {
-    const mod = await import('./opencodeApiClient');
+    const mod = (await import('./opencodeApiClient')) as typeof import('./opencodeApiClient');
     mod.resetClient();
     await mod.createOpenCodeClient({});
     sessionCreateMock.mockResolvedValue({ data: { id: 'sess-prompt' } });
@@ -89,7 +94,7 @@ describe('opencodeApiClient', () => {
   });
 
   it('getSession reutiliza sesion del pool (no crea otra)', async () => {
-    const mod = await import('./opencodeApiClient');
+    const mod = (await import('./opencodeApiClient')) as typeof import('./opencodeApiClient');
     mod.resetClient();
     await mod.createOpenCodeClient({});
     sessionCreateMock.mockResolvedValue({ data: { id: 'pooled' } });
@@ -102,7 +107,7 @@ describe('opencodeApiClient', () => {
   });
 
   it('closeAllSessions hace delete de cada sesion del pool', async () => {
-    const mod = await import('./opencodeApiClient');
+    const mod = (await import('./opencodeApiClient')) as typeof import('./opencodeApiClient');
     mod.resetClient();
     await mod.createOpenCodeClient({});
     sessionCreateMock.mockResolvedValue({ data: { id: 'close-sess' } });
@@ -113,7 +118,7 @@ describe('opencodeApiClient', () => {
   });
 
   it('resetClient deja getGlobalClient sin inicializar', async () => {
-    const mod = await import('./opencodeApiClient');
+    const mod = (await import('./opencodeApiClient')) as typeof import('./opencodeApiClient');
     mod.resetClient();
     await mod.createOpenCodeClient({});
     mod.resetClient();

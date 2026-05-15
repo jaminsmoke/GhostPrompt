@@ -1,7 +1,10 @@
 /**
- * Validación en límites del canal postMessage (host).
+ * @file Validación en límites del canal postMessage (host).
  * Schemas canónicos y tipos inferidos: `src/api/contracts/webviewMessageSchemas.ts`.
  */
+import { z } from 'zod';
+
+import { getLogger } from '../../system/log';
 import {
   webviewInboundMessageSchema,
   webviewOutboundMessageSchema,
@@ -9,8 +12,6 @@ import {
   type WebviewInboundMessage,
   type WebviewOutboundMessage,
 } from '../contracts/webviewMessageSchemas';
-import { getLogger } from '../../system/log';
-import type { z } from 'zod';
 
 export type {
   WebviewInboundMessage,
@@ -35,7 +36,7 @@ export {
 export function parseWebviewInboundMessage(raw: unknown): WebviewInboundMessage | undefined {
   const r = webviewInboundMessageSchema.safeParse(raw);
   if (!r.success) {
-    getLogger('protocols').warn('webview-inbound-invalid', { issues: r.error.flatten(), raw });
+    getLogger('protocols').warn('webview-inbound-invalid', { issues: z.treeifyError(r.error), raw });
     return undefined;
   }
   return r.data;
@@ -51,7 +52,7 @@ export function parseOutboundSettingsEnvelope(
 ): z.infer<typeof webviewOutboundSettingsEnvelopeSchema> | undefined {
   const r = webviewOutboundSettingsEnvelopeSchema.safeParse(raw);
   if (!r.success) {
-    getLogger('protocols').error('settings-envelope-invalid', { issues: r.error.flatten(), raw });
+    getLogger('protocols').error('settings-envelope-invalid', { issues: z.treeifyError(r.error), raw });
     return undefined;
   }
   return r.data;
@@ -66,7 +67,7 @@ export function parseOutboundSettingsEnvelope(
 export function parseWebviewOutboundMessage(raw: unknown): WebviewOutboundMessage | undefined {
   const r = webviewOutboundMessageSchema.safeParse(raw);
   if (!r.success) {
-    getLogger('protocols').warn('webview-outbound-invalid', { issues: r.error.flatten(), raw });
+    getLogger('protocols').warn('webview-outbound-invalid', { issues: z.treeifyError(r.error), raw });
     return undefined;
   }
   return r.data;

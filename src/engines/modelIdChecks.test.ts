@@ -1,4 +1,8 @@
+/**
+ * @file Pruebas de validación de IDs de modelo.
+ */
 import { describe, expect, it } from 'vitest';
+
 import { looksLikeOllamaModelId, looksLikeOpencodeModelId } from './modelIdChecks';
 
 describe('looksLikeOllamaModelId', () => {

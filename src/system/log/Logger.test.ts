@@ -1,5 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+/**
+ * @file Tests para el logger principal y su registro de eventos.
+ */
+import { describe, expect, it } from 'vitest';
+
 import { Logger } from './Logger';
+
 import type { LogEmitSink, EmitPayload } from './emitContract';
 
 describe('Logger', () => {

@@ -1,13 +1,22 @@
+/**
+ * @file Pruebas de notificación del destino VSOpenCodeX cuando la extensión no está instalada.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const configGetMock = vi.hoisted(() => vi.fn());
-const getExtensionMock = vi.hoisted(() => vi.fn());
-const showInformationMessageMock = vi.hoisted(() => vi.fn(() => Promise.resolve(undefined)));
+const configGetMock = vi.hoisted(
+  () => vi.fn<(key: string, fallback: unknown) => unknown>((_key, fallback) => fallback),
+);
+const getExtensionMock = vi.hoisted(() => vi.fn<(id: string) => unknown>(() => undefined));
+const showInformationMessageMock = vi.hoisted(
+  () => vi.fn<(message: string, button: string) => Promise<unknown>>(
+    () => Promise.resolve(undefined),
+  ),
+);
 
-vi.mock('vscode', () => ({
+const mockedVscode = {
   workspace: {
     getConfiguration: () => ({
-      get: (key: string, fallback: unknown) => configGetMock(key, fallback),
+      get: (key: string, fallback: unknown): unknown => configGetMock(key, fallback),
       inspect: () => ({
         globalValue: undefined,
         workspaceValue: undefined,
@@ -16,19 +25,20 @@ vi.mock('vscode', () => ({
     }),
   },
   extensions: {
-    getExtension: (...args: unknown[]) => getExtensionMock(...args),
+    getExtension: getExtensionMock,
   },
   window: {
-    showInformationMessage: (...args: unknown[]) =>
-      showInformationMessageMock(...args) as Promise<undefined>,
+    showInformationMessage: showInformationMessageMock,
   },
   commands: {
-    executeCommand: vi.fn(),
+    executeCommand: vi.fn<Promise<unknown>, [string, unknown]>(),
   },
-}));
+} as unknown as typeof import('vscode');
+
+vi.mock('vscode', () => mockedVscode);
 
 describe('notifyVsxAgentDestinationIfExtensionMissing', () => {
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
     configGetMock.mockImplementation((key: string, fallback: unknown) =>
@@ -39,7 +49,9 @@ describe('notifyVsxAgentDestinationIfExtensionMissing', () => {
 
   it('no notifica si destino es Copilot Chat', async () => {
     const { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } =
-      await import('./vsOpenCodeXDestination');
+      (await import('./vsOpenCodeXDestination')) as {
+        notifyIfVsxAgentDestinationWithoutVsOpenCodeX: () => void;
+      };
     notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
     expect(showInformationMessageMock).not.toHaveBeenCalled();
   });
@@ -49,7 +61,9 @@ describe('notifyVsxAgentDestinationIfExtensionMissing', () => {
       key === 'agentDestination' ? 'vsOpenCodeX' : fallback,
     );
     const { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } =
-      await import('./vsOpenCodeXDestination');
+      (await import('./vsOpenCodeXDestination')) as {
+        notifyIfVsxAgentDestinationWithoutVsOpenCodeX: () => void;
+      };
     notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
     notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
     expect(showInformationMessageMock).toHaveBeenCalledTimes(1);
@@ -57,7 +71,9 @@ describe('notifyVsxAgentDestinationIfExtensionMissing', () => {
 
   it('reinicia el aviso al volver a copilotChat y otra vez a VSX', async () => {
     const { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } =
-      await import('./vsOpenCodeXDestination');
+      (await import('./vsOpenCodeXDestination')) as {
+        notifyIfVsxAgentDestinationWithoutVsOpenCodeX: () => void;
+      };
     configGetMock.mockImplementation((key: string, fallback: unknown) =>
       key === 'agentDestination' ? 'vsOpenCodeX' : fallback,
     );
@@ -79,7 +95,9 @@ describe('notifyVsxAgentDestinationIfExtensionMissing', () => {
     );
     getExtensionMock.mockReturnValue({ id: 'jaminsmoke.vsopencodex' });
     const { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } =
-      await import('./vsOpenCodeXDestination');
+      (await import('./vsOpenCodeXDestination')) as {
+        notifyIfVsxAgentDestinationWithoutVsOpenCodeX: () => void;
+      };
     notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
     expect(showInformationMessageMock).not.toHaveBeenCalled();
   });

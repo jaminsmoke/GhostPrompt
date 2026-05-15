@@ -1,15 +1,14 @@
+/**
+ * @file Engine de completado para OpenCode.
+ */
 import * as vscode from 'vscode';
 
 import { buildCompletionInstruction } from '../../sugcore/rules/instruction';
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
-} from '../../system/internals/protocols/params';
-import type {
-  CompletionRequestOptions,
-  CompletionResult,
-  SuggestionModelDescriptor,
-} from '../../system/internals/protocols/types';
+} from '../../system/internals/protocols/types/params';
+
 import {
   createOpenCodeClient,
   getGlobalClient,
@@ -18,6 +17,12 @@ import {
   resetClient,
   getSession,
 } from './opencodeApiClient';
+
+import type {
+  CompletionRequestOptions,
+  CompletionResult,
+  SuggestionModelDescriptor,
+} from '../../system/internals/protocols/types';
 
 /**
  * Describe un modelo OpenCode para el pipeline de sugerencias.
@@ -38,9 +43,7 @@ function describeOpenCodeModel(modelId: string): SuggestionModelDescriptor {
  * @param {string | undefined} preferredModelId ID de modelo preferido o "auto".
  * @returns {Promise<string | undefined>} Modelo seleccionado o undefined si no se encuentra ninguno.
  */
-async function resolveOpenCodeModel(
-  preferredModelId: string | undefined,
-): Promise<string | undefined> {
+function resolveOpenCodeModel(preferredModelId: string | undefined): string | undefined {
   if (preferredModelId && preferredModelId !== 'auto') {
     return preferredModelId;
   }
@@ -95,7 +98,7 @@ export async function requestOpencodeCompletion(
     return { kind: 'empty', reason: 'no-model' };
   }
 
-  const modelName = await resolveOpenCodeModel(preferredModelId);
+  const modelName = resolveOpenCodeModel(preferredModelId);
   if (!modelName) {
     return { kind: 'empty', reason: 'no-model' };
   }

@@ -1,8 +1,6 @@
-# `system/internals/` — Estados y comportamiento interno
+# `system/internals/` — Contratos y estado interno
 
-> Dominio de estados internos del programa GhostPrompt: loading phases, session state, provider status.
-> Estos módulos representan el **estado de la aplicación** durante el ciclo de vida de la extensión,
-> no la lógica de dominio de suggestions (que vive en `sugcore/`).
+> Contratos compartidos (`protocols/`) y estado mutable del host (`state/`).
 
 ---
 
@@ -10,26 +8,25 @@
 
 ```text
 internals/
-├── states/
-│   ├── loading.ts            # SuggestionLoadingPhase + statusText mapping
-│   ├── session.ts            # GhostPromptSessionStore (estado compartido multi-vista)
-│   ├── provider.ts           # ProviderStatusManager (registro, refresh, start/stop)
-│   ├── provider-types.ts     # Types de provider (ProviderKind, ProviderState, etc.)
-│   ├── register-modules.ts   # registerAllProviderModules()
-│   └── README.md
-└── README.md
+├── protocols/
+│   ├── types/          # CompletionResult, modelos, DEFAULT_*
+│   └── state/          # Tipos: loading phases, session, provider
+└── state/              # Runtime: stores, managers
+    ├── sessionStore.ts
+    └── registerModules.ts
 ```
 
 ---
 
 ## Qué entra aquí
 
-- **Loading phases** (`states/loading.ts`) — textos de estado UI durante requests a modelos
-- **Session state** (`states/session.ts`) — estado de sesión compartido (draft, suggestions, prompts, captureId)
-- **Provider status** (`states/provider.ts` + `provider-types.ts`) — gestión de estado de engines y destinations
+- **Contratos** (`protocols/`) — formas de datos sin lógica de mutación
+- **Estado runtime** (`state/`) — singletons y managers del ciclo de vida de la extensión
 
 ## Qué NO entra aquí
 
 - Lógica de suggestions → `sugcore/`
+- Configuración y routing de fuentes LM → `engines/`
 - Logging → `system/log/`
 - Protocolos webview ↔ host → `api/`
+- Orquestación suggest → `system/runtime/`

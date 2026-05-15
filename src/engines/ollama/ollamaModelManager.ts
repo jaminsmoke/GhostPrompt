@@ -1,5 +1,5 @@
 /**
- * Gestor del ciclo de vida de modelos Ollama vía CLI.
+ * @file Gestor del ciclo de vida de modelos Ollama vía CLI.
  *
  * Proporciona verificación de instalación, listado de modelos locales,
  * inicio/detención de modelos con estados visibles.
@@ -128,11 +128,10 @@ class OllamaModelManager {
    * El proceso se lanza en background con `spawn`. La Promise resuelve cuando
    * stdout/stderr contiene "success", "loaded", "send a message" o "/bye",
    * indicando que el modelo está listo para recibir requests.
-   *
    * @param {string} modelId Nombre del modelo (ej. "mistral:latest").
    * @param {globalThis.AbortSignal} [signal] Señal de cancelación (opcional).
-   * @throws TimeoutError si el modelo no se inicia en 120s.
-   * @throws Error si stderr contiene "error" o "failed".
+   * @throws {Error} Si el modelo no se inicia en 120s (timeout).
+   * @throws {Error} Si stderr contiene "error" o "failed".
    * @returns {Promise<void>} Promise que se resuelve cuando el modelo ya está listo o falla.
    */
   startModel(modelId: string, signal?: AbortSignal): Promise<void> {
@@ -154,8 +153,8 @@ class OllamaModelManager {
       const startTimeout = setTimeout(() => {
         if (!resolved) {
           resolved = true;
-          if (!this._ollamaProcess?.killed) {
-            this._ollamaProcess?.kill();
+          if (this._ollamaProcess && !this._ollamaProcess.killed) {
+            this._ollamaProcess.kill();
           }
           this.setState('error', modelId, 'Tiempo de espera agotado al iniciar el modelo.');
           reject(new Error('Timeout starting model'));
@@ -179,9 +178,9 @@ class OllamaModelManager {
         }
       };
 
-      proc.stdout?.on('data', (data: Buffer) => checkOutput(data.toString()));
+      proc.stdout.on('data', (data: Buffer) => checkOutput(data.toString()));
 
-      proc.stderr?.on('data', (data: Buffer) => {
+      proc.stderr.on('data', (data: Buffer) => {
         const text = data.toString();
         checkOutput(text);
         if (

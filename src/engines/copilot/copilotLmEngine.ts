@@ -1,12 +1,18 @@
+/**
+ * @file Implementación del engine Copilot LM para GhostPrompt.
+ */
 import * as vscode from 'vscode';
 
 import { buildCompletionInstruction } from '../../sugcore/rules/instruction';
-import { describeModel, selectModelByPolicy } from './catalog/modelCatalog';
-import { collectResponseText } from '../../system/internals/streaming/collect';
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
-} from '../../system/internals/protocols/params';
+} from '../../system/internals/protocols/types/params';
+
+import { describeModel, selectModelByPolicy } from './catalog/modelCatalog';
+import { collectLmResponse } from './collectLmResponse';
+
+
 import type { CompletionRequestOptions, CompletionResult } from '../../system/internals/protocols/types';
 
 let premiumQuotaBlocked = false;
@@ -16,7 +22,7 @@ let premiumQuotaBlocked = false;
  * @param {string} userText Texto de usuario actual que debe completarse.
  * @param {CompletionRequestOptions} options Configuración de la petición, incluyendo modelo, timeout y contexto.
  * @returns {Promise<CompletionResult>} Resultado de la petición de completado, con sugerencia o razón vacía.
- * @throws Cuando la petición se cancela mientras se procesa la respuesta.
+ * @throws {Error} Cuando la petición se cancela mientras se procesa la respuesta.
  */
 export async function requestCopilotLmCompletion(
   userText: string,
@@ -55,10 +61,10 @@ export async function requestCopilotLmCompletion(
       onLoadingPhase?.('copilot');
       requestTokenSource = new vscode.CancellationTokenSource();
       requestCancellation = token.onCancellationRequested(() => {
-        requestTokenSource!.cancel();
+        requestTokenSource?.cancel();
       });
       timeoutHandle = setTimeout(() => {
-        requestTokenSource!.cancel();
+        requestTokenSource?.cancel();
       }, requestTimeoutMs);
       onLoadingPhase?.('copilot-generating');
       const response = await model.sendRequest(
@@ -67,7 +73,7 @@ export async function requestCopilotLmCompletion(
         requestTokenSource.token,
       );
 
-      const completion = await collectResponseText(response, requestTimeoutMs);
+      const completion = await collectLmResponse(response, requestTimeoutMs);
       if (looksLikeCopilotRefusal(completion)) {
         return { kind: 'empty', reason: 'content-blocked' };
       }

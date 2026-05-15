@@ -1,11 +1,14 @@
 /// <reference types="vite/client" />
 /// <reference path="../globals.d.ts" />
+/**
+ * @file Punto de entrada React del webview GhostPrompt.
+ */
 import './index.css';
-import { useGhostPrompt } from './hooks/useGhostPrompt';
-import { GhostToolbar } from './components/GhostToolbar';
-import { PromptInput } from './components/PromptInput';
 import { BottomBar } from './components/BottomBar';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { GhostToolbar } from './components/GhostToolbar';
+import { PromptInput } from './components/PromptInput';
+import { useGhostPrompt } from './hooks/useGhostPrompt';
 
 export { postToHost } from './hooks/useGhostPrompt';
 

@@ -1,3 +1,6 @@
+/**
+ * @file Pruebas del catálogo de modelos OpenCode.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { configProvidersMock, fakeSdkClient } = vi.hoisted(() => {
@@ -26,9 +29,9 @@ import { listOpencodeSuggestionModels } from './opencodeModelCatalog';
 beforeEach(() => {
   vi.resetAllMocks();
   cfgGetMock.mockImplementation((key: string, defaultValue: unknown) => {
-    if (key === 'opencodeExcludedModelIds') return [];
-    if (key === 'opencodePort') return 4096;
-    if (key === 'opencodeAuthToken') return undefined;
+    if (key === 'opencodeExcludedModelIds') {return [];}
+    if (key === 'opencodePort') {return 4096;}
+    if (key === 'opencodeAuthToken') {return undefined;}
     return defaultValue;
   });
 });
@@ -95,9 +98,9 @@ describe('listOpencodeSuggestionModels', () => {
 
   it('respects ghostPrompt.opencodeExcludedModelIds', async () => {
     cfgGetMock.mockImplementation((key: string, defaultValue: unknown) => {
-      if (key === 'opencodeExcludedModelIds') return ['anthropic/claude-3'];
-      if (key === 'opencodePort') return 4096;
-      if (key === 'opencodeAuthToken') return undefined;
+      if (key === 'opencodeExcludedModelIds') {return ['anthropic/claude-3'];}
+      if (key === 'opencodePort') {return 4096;}
+      if (key === 'opencodeAuthToken') {return undefined;}
       return defaultValue;
     });
 

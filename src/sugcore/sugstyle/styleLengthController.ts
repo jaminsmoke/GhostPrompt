@@ -1,4 +1,4 @@
 /**
- * Estilo de longitud de las sugerencias generadas por el modelo.
+ * @file Estilos de longitud para sugerencias (`concise`, `balanced`, `detailed`).
  */
 export type SuggestionStyle = 'concise' | 'balanced' | 'detailed';

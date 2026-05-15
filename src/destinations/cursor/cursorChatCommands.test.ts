@@ -1,7 +1,10 @@
+/**
+ * @file Pruebas unitarias del componente de comandos de Cursor Chat.
+ */
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('vscode', () => ({
-  commands: { executeCommand: vi.fn(), getCommands: vi.fn(async () => []) },
+  commands: { executeCommand: vi.fn(), getCommands: vi.fn(() => Promise.resolve([])) },
   env: { appName: 'Cursor' },
   window: { createOutputChannel: vi.fn(() => ({ appendLine: vi.fn(), show: vi.fn(), clear: vi.fn() })) },
 }));

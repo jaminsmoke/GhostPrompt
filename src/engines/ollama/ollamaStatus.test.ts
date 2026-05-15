@@ -1,3 +1,6 @@
+﻿/**
+ * @file Pruebas de estado de proveedor Ollama.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const execMock = vi.hoisted(() => vi.fn());
@@ -18,9 +21,11 @@ describe('ollamaStatusModule', () => {
   });
 
   it('retorna unavailable si ollama --version falla', async () => {
-    execMock.mockImplementationOnce((_cmd: string, _opts: unknown, cb: Function) => {
-      cb(new Error('not found'), '', 'command not found');
-    });
+    execMock.mockImplementationOnce(
+      (_cmd: string, _opts: unknown, cb: (error: Error | null, stdout: string, stderr: string) => void) => {
+        cb(new Error('not found'), '', 'command not found');
+      },
+    );
 
     const state = await ollamaStatusModule.check();
     expect(state.status).toBe('unavailable');
@@ -29,19 +34,25 @@ describe('ollamaStatusModule', () => {
 
   it('retorna stopped si hay modelos pero ninguno activo', async () => {
     execMock
-      .mockImplementationOnce((_cmd: string, _opts: unknown, cb: Function) => {
-        cb(null, 'ollama version 0.5.0', '');
-      })
-      .mockImplementationOnce((_cmd: string, _opts: unknown, cb: Function) => {
-        cb(
-          null,
-          'NAME\tID\tSIZE\tMODIFIED\nmistral:latest\tabc123\t4.2GB\t2 days ago\nllama3:latest\tdef456\t6.1GB\t1 day ago\n',
-          '',
-        );
-      })
-      .mockImplementationOnce((_cmd: string, _opts: unknown, cb: Function) => {
-        cb(null, 'NAME\tID\tSIZE\tMODIFIED\n', '');
-      });
+      .mockImplementationOnce(
+        (_cmd: string, _opts: unknown, cb: (error: Error | null, stdout: string, stderr: string) => void) => {
+          cb(null, 'ollama version 0.5.0', '');
+        },
+      )
+      .mockImplementationOnce(
+        (_cmd: string, _opts: unknown, cb: (error: Error | null, stdout: string, stderr: string) => void) => {
+          cb(
+            null,
+            'NAME\tID\tSIZE\tMODIFIED\nmistral:latest\tabc123\t4.2GB\t2 days ago\nllama3:latest\tdef456\t6.1GB\t1 day ago\n',
+            '',
+          );
+        },
+      )
+      .mockImplementationOnce(
+        (_cmd: string, _opts: unknown, cb: (error: Error | null, stdout: string, stderr: string) => void) => {
+          cb(null, 'NAME\tID\tSIZE\tMODIFIED\n', '');
+        },
+      );
 
     const state = await ollamaStatusModule.check();
     expect(state.status).toBe('stopped');
@@ -51,13 +62,16 @@ describe('ollamaStatusModule', () => {
 
   it('retorna running si hay un modelo activo en ollama ps', async () => {
     execMock
-      .mockImplementationOnce((_cmd: string, _opts: unknown, cb: Function) => {
-        cb(null, 'ollama version 0.5.0', '');
-      })
-      .mockImplementationOnce((_cmd: string, _opts: unknown, cb: Function) => {
+      .mockImplementationOnce(
+        (_cmd: string, _opts: unknown, cb: (error: Error | null, stdout: string, stderr: string) => void) => {
+          cb(null, 'ollama version 0.5.0', '');
+        },
+      )
+      .mockImplementationOnce(
+        (_cmd: string, _opts: unknown, cb: (error: Error | null, stdout: string, stderr: string) => void) => {
         cb(null, 'NAME\tID\tSIZE\tMODIFIED\nmistral:latest\tabc123\t4.2GB\t2 days ago\n', '');
       })
-      .mockImplementationOnce((_cmd: string, _opts: unknown, cb: Function) => {
+      .mockImplementationOnce((_cmd: string, _opts: unknown, cb: (error: Error | null, stdout: string, stderr: string) => void) => {
         cb(null, 'NAME\tID\tCPU\tMEMORY\nmistral:latest\tabc123\t0.1%\t1.2GB/8GB\n', '');
       });
 
@@ -69,10 +83,10 @@ describe('ollamaStatusModule', () => {
 
   it('retorna stopped si no hay modelos instalados', async () => {
     execMock
-      .mockImplementationOnce((_cmd: string, _opts: unknown, cb: Function) => {
+      .mockImplementationOnce((_cmd: string, _opts: unknown, cb: (error: Error | null, stdout: string, stderr: string) => void) => {
         cb(null, 'ollama version 0.5.0', '');
       })
-      .mockImplementationOnce((_cmd: string, _opts: unknown, cb: Function) => {
+      .mockImplementationOnce((_cmd: string, _opts: unknown, cb: (error: Error | null, stdout: string, stderr: string) => void) => {
         cb(null, 'NAME\tID\tSIZE\tMODIFIED\n', '');
       });
 
@@ -81,3 +95,4 @@ describe('ollamaStatusModule', () => {
     expect(state.statusText).toContain('sin modelos');
   });
 });
+

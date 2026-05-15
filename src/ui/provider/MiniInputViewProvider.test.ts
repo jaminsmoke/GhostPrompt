@@ -1,6 +1,17 @@
+/**
+ * @file Tests del MiniInputViewProvider y del webview GhostPrompt.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-type TestSuggestionModel = import('../../core/types').SuggestionModelDescriptor;
+import { suggestionLoadingStatusText } from '../../system/internals/protocols/state/loading';
+import { ghostPromptSessionStore } from '../../system/internals/state/sessionStore';
+
+import { MiniInputViewProvider } from './MiniInputViewProvider';
+
+import type { SuggestionModelDescriptor } from '../../system/internals/protocols/types';
+import type { GhostPromptSuggestDeps } from '../../system/runtime/suggestRuntime';
+
+type TestSuggestionModel = SuggestionModelDescriptor;
 
 const {
   requestCompletionMock,
@@ -18,7 +29,7 @@ const {
   }
   return {
     requestCompletionMock: vi.fn(),
-    listSuggestionModelsMock: vi.fn(async (): Promise<TestSuggestionModel[]> => []),
+    listSuggestionModelsMock: vi.fn((): Promise<TestSuggestionModel[]> => Promise.resolve([])),
     sendToChatMock: vi.fn(),
     readFileSyncMock: vi.fn(
       () => '<html>{{nonce}} {{cspSource}} {{styleUri}} {{scriptUri}}</html>',
@@ -48,7 +59,7 @@ vi.mock('../../engines/modelIdChecks', () => ({
   looksLikeOpencodeModelId: () => false,
 }));
 
-vi.mock('../../system/internals/config/sources', () => ({
+vi.mock('../../engines/config/completionSources', () => ({
   getEnabledCompletionSources: () => ['copilot'],
   getCompletionUiKind: () => 'copilot' as const,
 }));
@@ -62,11 +73,11 @@ vi.mock('../../engines/copilot/catalog/modelCatalog', () => ({
 }));
 
 vi.mock('../../engines/opencode/catalog/opencodeModelCatalog', () => ({
-  listOpencodeSuggestionModels: vi.fn(async () => []),
+  listOpencodeSuggestionModels: vi.fn(() => Promise.resolve([])),
 }));
 
 vi.mock('../../engines/ollama/catalog/ollamaModelCatalog', () => ({
-  listOllamaSuggestionModels: vi.fn(async () => []),
+  listOllamaSuggestionModels: vi.fn(() => Promise.resolve([])),
 }));
 
 vi.mock('../../api/protocols/inboundHandlers', async (importOriginal) => {
@@ -80,9 +91,14 @@ vi.mock('../../api/protocols/inboundHandlers', async (importOriginal) => {
         'type' in message &&
         (message as { type: string }).type === 'suggest'
       ) {
-        const { handleGhostPromptSuggest } = await import('../../system/runtime/suggestRuntime');
-        const deps = (services as { suggestDeps: unknown }).suggestDeps;
-        return handleGhostPromptSuggest(message as never, deps as never);
+        const runtime = await vi.importActual<
+          typeof import('../../system/runtime/suggestRuntime')
+        >('../../system/runtime/suggestRuntime');
+        const deps = (services as { suggestDeps: GhostPromptSuggestDeps }).suggestDeps;
+        return runtime.handleGhostPromptSuggest(
+          message as Parameters<typeof runtime.handleGhostPromptSuggest>[0],
+          deps,
+        );
       }
       return actual.dispatchGhostPromptInboundMessage(message as never, services as never);
     }),
@@ -98,7 +114,7 @@ vi.mock('../../api/protocols/webviewProtocols', async (importOriginal) => {
         typeof raw === 'object' &&
         raw !== null &&
         'type' in raw &&
-        typeof (raw as { type: unknown }).type === 'string'
+        typeof (raw).type === 'string'
       ) {
         const msg = raw as Record<string, unknown>;
         if (
@@ -119,7 +135,7 @@ vi.mock('../../api/settings/settingsPostMessage', async (importOriginal) => {
   return {
     ...actual,
     buildAndPostGhostPromptSettings: vi.fn(
-      async (webview: { postMessage: (m: unknown) => void }, getters: unknown) => {
+      async (webview: { postMessage: (m: unknown) => void }, _getters: unknown) => {
         const models = await listSuggestionModelsMock();
         webview.postMessage({
           type: 'settings',
@@ -160,7 +176,6 @@ vi.mock('../../destinations/copilotChat/copilotChatDestination', () => ({
   sendToChat: sendToChatMock,
 }));
 
-/* eslint-disable @typescript-eslint/naming-convention -- mock del módulo `vscode` (API PascalCase) */
 vi.mock('vscode', () => ({
   workspace: {
     getConfiguration: () => ({
@@ -183,19 +198,18 @@ vi.mock('vscode', () => ({
       }),
     }),
   },
-  Uri: {
+  ['Uri']: {
     joinPath: (...parts: Array<{ fsPath?: string } | string>) => ({
       fsPath: parts.map((p) => (typeof p === 'string' ? p : (p.fsPath ?? ''))).join('/'),
     }),
   },
-  CancellationTokenSource: cancellationTokenSourceMock,
+  ['CancellationTokenSource']: cancellationTokenSourceMock,
 }));
-/* eslint-enable @typescript-eslint/naming-convention */
 
-import { suggestionLoadingStatusText } from '../../system/internals/states/loading';
-import { ghostPromptSessionStore } from '../../system/internals/states/session';
-import { MiniInputViewProvider } from './MiniInputViewProvider';
-
+/**
+ * Creates a mocked MiniInputViewProvider webview view for tests.
+ * @returns {{ webview: { cspSource: string; options: object; html: string; asWebviewUri: (uri: { fsPath: string }) => { toString(): string }; onDidReceiveMessage: (handler: (message: unknown) => void | Promise<void>) => void; postMessage: typeof postMessageMock } }} A test view object with a mock webview.
+ */
 function createView() {
   suggestHandler = undefined;
   postMessageMock.mockReset();
@@ -345,7 +359,7 @@ describe('MiniInputViewProvider', () => {
       type: 'suggest',
       text: 'hola',
       captureId: '1',
-    } as never);
+    });
     expect(requestCompletionMock).not.toHaveBeenCalled();
     expect(postMessageMock).not.toHaveBeenCalled();
   });
@@ -402,25 +416,27 @@ describe('MiniInputViewProvider', () => {
     provider.resolveWebviewView(view as never, {} as never, {} as never);
     await suggestHandler?.({ type: 'init' });
 
-    expect(postMessageMock).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({
-        type: 'settings',
-        settings: expect.objectContaining({
-          completionUiKind: 'copilot',
-          enabledCompletionSources: ['copilot'],
-          suggestionDebounceMs: 800,
-          availableModels: [
-            {
-              id: 'gpt-4o-mini',
-              label: 'GPT-4o mini',
-              tier: 'included',
-              completionSource: 'copilot',
-            },
-          ],
-        }),
-      }),
-    );
+    const firstPost = postMessageMock.mock.calls[0]?.[0] as {
+      type: string;
+      settings: {
+        completionUiKind: string;
+        enabledCompletionSources: string[];
+        suggestionDebounceMs: number;
+        availableModels: Array<{ id: string; label: string; tier: string; completionSource: string }>;
+      };
+    };
+    expect(firstPost.type).toBe('settings');
+    expect(firstPost.settings.completionUiKind).toBe('copilot');
+    expect(firstPost.settings.enabledCompletionSources).toEqual(['copilot']);
+    expect(firstPost.settings.suggestionDebounceMs).toBe(800);
+    expect(firstPost.settings.availableModels).toEqual([
+      {
+        id: 'gpt-4o-mini',
+        label: 'GPT-4o mini',
+        tier: 'included',
+        completionSource: 'copilot',
+      },
+    ]);
     expect(postMessageMock).toHaveBeenNthCalledWith(2, {
       type: 'draftHydrate',
       text: '',

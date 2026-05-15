@@ -1,4 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+/**
+ * @file Pruebas de validación de protocolo webview.
+ */import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('vscode', () => ({
   workspace: {
@@ -17,7 +19,7 @@ vi.mock('vscode', () => ({
       dispose: vi.fn(),
     })),
   },
-  Uri: {
+  ['Uri']: {
     joinPath: (...parts: unknown[]) => ({
       fsPath: parts.map((p) => (typeof p === 'string' ? p : String(p))).join('/'),
     }),

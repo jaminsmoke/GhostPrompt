@@ -1,4 +1,8 @@
+/**
+ * @file Pruebas de normalización de proveedores OpenCode.
+ */
 import { describe, expect, it } from 'vitest';
+
 import { normalizeOpencodeProviderModels } from './normalizeOpencodeProviderModels';
 
 describe('normalizeOpencodeProviderModels', () => {

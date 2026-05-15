@@ -1,4 +1,6 @@
 /**
+ * Utilidades para validar formatos de identificadores de modelo.
+ * @file Validación de formatos de ID de modelo.
  * Comprueba si un ID de modelo corresponde al formato de Ollama (`model:tag`).
  * @param {string} id Identificador de modelo candidato.
  * @returns {boolean} True si el ID contiene dos puntos y no tiene barra.

@@ -1,5 +1,5 @@
 /**
- * Cobertura por variante de mensaje definida en `src/shared/webviewMessageSchemas.ts`.
+ * @file Cobertura por variante de mensaje definida en `src/shared/webviewMessageSchemas.ts`.
  * El host reexporta los mismos schemas desde `src/host/webviewProtocols.ts`.
  */
 import { describe, expect, it, vi } from 'vitest';
@@ -21,12 +21,14 @@ vi.mock('vscode', () => ({
       dispose: vi.fn(),
     })),
   },
-  Uri: {
+  ['Uri']: {
     joinPath: (...parts: unknown[]) => ({
       fsPath: parts.map((p) => (typeof p === 'string' ? p : String(p))).join('/'),
     }),
   },
 }));
+
+import { webviewInboundMessageSchema as hostInboundSchema } from '../../api/protocols/webviewProtocols';
 
 import {
   webviewInboundMessageSchema,
@@ -34,7 +36,6 @@ import {
   webviewOutboundSettingsEnvelopeSchema,
   webviewSettingsPayloadSchema,
 } from './webviewMessageSchemas';
-import { webviewInboundMessageSchema as hostInboundSchema } from '../../api/protocols/webviewProtocols';
 
 describe('webviewMessageSchemas (shared)', () => {
   it('el host reexporta el mismo schema inbound que shared', () => {

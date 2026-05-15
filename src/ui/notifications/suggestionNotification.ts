@@ -1,4 +1,6 @@
 /**
+ * @file Avisos no intrusivos en el host cuando fallan sugerencias accionables.
+ *
  * Avisos no intrusivos en el host cuando fallan sugerencias por causas accionables.
  * La UI del webview sigue siendo la fuente principal; esto complementa sin sustituir el debug.
  */

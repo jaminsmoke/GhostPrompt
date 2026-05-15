@@ -1,6 +1,14 @@
+/**
+ * @file Runner de pruebas E2E con vscode/test-electron.
+ */
 const path = require('path');
+
 const { runTests } = require('@vscode/test-electron');
 
+/**
+ * Entrypoint para ejecutar las pruebas E2E de la extensión.
+ * @returns {Promise<void>} Resolves when the test runner exits.
+ */
 async function main() {
   try {
     const extensionDevelopmentPath = process.cwd();

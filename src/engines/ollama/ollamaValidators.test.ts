@@ -1,3 +1,6 @@
+/**
+ * @file Pruebas de validadores Ollama.
+ */
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -11,15 +14,15 @@ describe('ollamaValidators', () => {
   it('validates a full Ollama model record', () => {
     const parsed = ollamaModelSchema.parse({
       name: 'mistral:latest',
-      modified_at: '2025-01-01',
+      ['modified_at']: '2025-01-01',
       size: 100,
       digest: 'abc',
       details: {
         format: 'onnx',
         family: 'mistral',
         families: ['mistral'],
-        parameter_size: '8B',
-        quantization_level: 'q4_0',
+        ['parameter_size']: '8B',
+        ['quantization_level']: 'q4_0',
       },
     });
 
@@ -28,7 +31,7 @@ describe('ollamaValidators', () => {
   });
 
   it('rejects an invalid Ollama model record', () => {
-    expect(() => ollamaModelSchema.parse({ name: '', modified_at: '2025-01-01' })).toThrow();
+    expect(() => ollamaModelSchema.parse({ name: '', ['modified_at']: '2025-01-01' })).toThrow();
   });
 
   it('accepts tags response with optional models array', () => {
@@ -45,6 +48,6 @@ describe('ollamaValidators', () => {
   it('accepts streaming chunk objects with passthrough data', () => {
     const parsed = ollamaGenerateResponseChunkSchema.parse({ response: 'hello', extra: 'ignored' });
     expect(parsed.response).toBe('hello');
-    expect((parsed as any).extra).toBe('ignored');
+    expect((parsed as unknown as { extra: string }).extra).toBe('ignored');
   });
 });

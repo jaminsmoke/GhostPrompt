@@ -1,3 +1,6 @@
+/**
+ * @file Chip reutilizable para toolbar del webview GhostPrompt.
+ */
 import { type ReactNode, useEffect, useRef } from 'react';
 
 interface ToolbarChipProps {
@@ -65,7 +68,7 @@ const renderToggleButton = (
         aria-expanded="true"
       >
         <span className={`truncate ${compact ? 'max-w-20' : 'max-w-35'}`}>{label}</span>
-        <span className={`transition-transform text-[10px] ${isOpen ? 'rotate-180' : ''}`}>▾</span>
+        <span className="transition-transform text-[10px] rotate-180">▾</span>
       </button>
     );
   }
@@ -81,7 +84,7 @@ const renderToggleButton = (
       aria-expanded="false"
     >
       <span className={`truncate ${compact ? 'max-w-20' : 'max-w-35'}`}>{label}</span>
-      <span className={`transition-transform text-[10px] ${isOpen ? 'rotate-180' : ''}`}>▾</span>
+      <span className="transition-transform text-[10px]">▾</span>
     </button>
   );
 };

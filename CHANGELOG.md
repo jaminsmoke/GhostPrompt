@@ -10,6 +10,11 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
+- **Fuentes de completado → `engines/`:** `getEnabledCompletionSources`, `getCompletionUiKind` en `engines/config/completionSources.ts`; `resolveCompletionSourceForRequest` y `CompletionSourceId` en `engines/routing/resolveCompletionSource.ts` y `engines/completionSourceId.ts`. Eliminados `system/internals/config/sources.ts` y `system/internals/protocols/routing.ts`.
+- **Stream Copilot LM → `engines/copilot/`:** `collectLmResponse` en `engines/copilot/collectLmResponse.ts` (antes `system/internals/streaming/collect.ts` / `collectResponseText`). Carpeta `system/internals/streaming/` eliminada.
+- **`system/internals/` reorganizado:** contratos en `protocols/types/` + `protocols/state/`; implementación en `state/` (`sessionStore`, `providerManager`). Eliminada carpeta `states/`.
+- **Loading en `protocols/state/loading/`:** `loadingPhase.ts` + `loadingLabels.ts` (`suggestionLoadingStatusText`). Eliminado `state/loadingUi.ts`.
+- **ESLint:** zonas `import/no-restricted-paths` actualizadas (`sugcore/`, `system/log/`, `engines/`); `npm run lint` y `npm run validate` en verde sin relajar reglas.
 - **`src/core/routing/sources.ts`:** movido desde `src/core/sources.ts` (Fase G — routing); actualizar imports a `core/routing/sources` o seguir usando el barrel `core/index.ts`.
 - **`src/core/contracts/completion.ts` + `types.ts`:** tipos y contratos de completion viven en `contracts/`; `types.ts` reexporta para compatibilidad.
 - **`src/core/suggest/`** (antes `core/pipeline/`): orquestación del mensaje `suggest` en `runSuggest.ts` (antes `suggestPipeline.ts`), barrel `suggest/index.ts`; consumidores importan `core/suggest` o el barrel `core/index.ts`.

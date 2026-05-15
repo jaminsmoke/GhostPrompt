@@ -1,12 +1,21 @@
+/**
+ * @file Pruebas del completor OpenCode.
+ */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const sessionCreateMock = vi.fn();
-const sessionPromptMock = vi.fn();
-const sessionDeleteMock = vi.fn();
-const configGetMock = vi.fn();
-const eventSubscribeMock = vi.fn();
 
-const fakeSdkClient = {
+import { resetClient, type OpenCodeSdkClient } from './opencodeApiClient';
+import { requestOpencodeCompletion } from './opencodeLmEngine';
+
+const sessionCreateMock = vi.fn<(...args: [unknown?]) => Promise<unknown>>();
+const sessionPromptMock = vi.fn<(...args: [unknown]) => Promise<unknown>>();
+const sessionDeleteMock = vi.fn<(...args: [unknown]) => Promise<unknown>>();
+const configGetMock = vi.fn<(...args: []) => Promise<unknown>>();
+const eventSubscribeMock = vi.fn<(
+  opts: { signal: AbortSignal },
+) => Promise<{ stream: AsyncIterable<unknown> }>>();
+
+const fakeSdkClient: OpenCodeSdkClient = {
   config: { get: configGetMock },
   session: {
     create: sessionCreateMock,
@@ -16,11 +25,13 @@ const fakeSdkClient = {
   event: { subscribe: eventSubscribeMock },
 };
 
+const createOpencodeClientMock = (_opts: unknown): OpenCodeSdkClient => fakeSdkClient;
+
 vi.mock('@opencode-ai/sdk', () => ({
-  createOpencodeClient: vi.fn(() => fakeSdkClient),
+  createOpencodeClient: createOpencodeClientMock,
 }));
 
-const getCfgMock = vi.fn();
+const getCfgMock = vi.fn<(key: string, fallback?: unknown) => unknown>();
 vi.mock('vscode', () => ({
   workspace: {
     getConfiguration: () => ({
@@ -34,9 +45,10 @@ vi.mock('vscode', () => ({
   },
 }));
 
-import { requestOpencodeCompletion } from './opencodeLmEngine';
-import { resetClient } from './opencodeApiClient';
-
+/**
+ * Creates a mock cancellation token for OpenCode tests.
+ * @returns {{ isCancellationRequested: boolean; onCancellationRequested: (cb: () => void) => { dispose(): void } }} A token-like object with cancellation support.
+ */
 function makeToken() {
   const listeners: Array<() => void> = [];
   return {
@@ -55,8 +67,8 @@ beforeEach(() => {
   resetClient();
   vi.clearAllMocks();
   getCfgMock.mockImplementation((key: string, fallback?: unknown) => {
-    if (key === 'opencodePort') return 4096;
-    if (key === 'opencodeAuthToken') return undefined;
+    if (key === 'opencodePort') {return 4096;}
+    if (key === 'opencodeAuthToken') {return undefined;}
     return fallback;
   });
   configGetMock.mockResolvedValue({ data: { status: 'ok' } });

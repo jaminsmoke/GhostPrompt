@@ -1,4 +1,6 @@
 /**
+ * @file Normalización de respuestas `config.providers()` de OpenCode.
+ *
  * `config.providers()` puede devolver `models` como objeto mapa o como array.
  * Normalizamos sin inventar campos: solo filtramos entradas sin `id` string válido.
  *

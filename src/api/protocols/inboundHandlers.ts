@@ -1,18 +1,21 @@
 /**
- * Handlers por `message.type` del canal webview → host (init, suggest, send, …).
+ * @file Handlers por `message.type` del canal webview → host (init, suggest, send, …).
  * Router: `dispatchGhostPromptInboundMessage`. Roadmap v0.3.2 fase A.
  */
 import * as vscode from 'vscode';
+
 import {
   getActiveDestinationProvider,
   getGhostPromptAgentDestination,
 } from '../../destinations/destinationRegistry';
+import { completionSourceStatusManager } from '../../engines/status/completionSourceStatusManager';
+import { ghostPromptSessionStore } from '../../system/internals/state/sessionStore';
 import { getLogger } from '../../system/log';
-import { ghostPromptSessionStore } from '../../system/internals/states/session';
-import { applyWebviewUpdateSetting } from '../settings/applyWebviewUpdate';
 import { type GhostPromptSuggestDeps, handleGhostPromptSuggest } from '../../system/runtime/suggestRuntime';
-import { providerStatusManager } from '../../system/internals/states/provider';
+import { applyWebviewUpdateSetting } from '../settings/applyWebviewUpdate';
+
 import { parseWebviewOutboundMessage } from './webviewProtocols';
+
 import type { WebviewInboundMessage } from './webviewProtocols';
 
 export type GhostPromptInboundBroadcastServices = {
@@ -76,7 +79,6 @@ export function handleGhostPromptInboundDraftChanged(
  * Aplica un cambio de configuración originado en el webview y notifica a todas
  * las vistas. Efectos secundarios delegados al callback `onSettingChanged` si
  * está presente en los servicios de dispatch.
- *
  * @param {WebviewInboundMessage} message Mensaje `updateSetting` del webview.
  * @param {() => Promise<void>} broadcastSettingsToAllViews Callback para re-enviar settings a todas las vistas.
  * @param {GhostPromptInboundDispatchServices | undefined} [dispatchServices] Servicios de dispatch (broadcastUi, etc.), opcional.
@@ -105,7 +107,7 @@ export async function handleGhostPromptInboundUpdateSetting(
  * @param {vscode.Uri} dataUri Ubicación de almacenamiento para el registro de sugerencias.
  * @returns {Promise<void>} Promise que se resuelve cuando la sugerencia se registra.
  */
-export async function handleGhostPromptInboundAccept(
+export function handleGhostPromptInboundAccept(
   message: Extract<WebviewInboundMessage, { type: 'accept' }>,
   dataUri: vscode.Uri,
 ): Promise<void> {
@@ -117,6 +119,7 @@ export async function handleGhostPromptInboundAccept(
     context: message.context,
     suggestion: message.suggestion,
   });
+  return Promise.resolve();
 }
 
 /**
@@ -237,11 +240,11 @@ export async function dispatchGhostPromptInboundMessage(
       await handleProviderStatusRequest(dispatchServices.webview, dispatchServices);
       return;
     case 'startProvider':
-      await providerStatusManager.start(message.provider);
+      await completionSourceStatusManager.start(message.provider);
       await postProviderStatus(dispatchServices.webview, dispatchServices);
       return;
     case 'stopProvider':
-      await providerStatusManager.stop(message.provider);
+      await completionSourceStatusManager.stop(message.provider);
       await postProviderStatus(dispatchServices.webview, dispatchServices);
       return;
     default: {
@@ -274,7 +277,7 @@ async function postProviderStatus(
   webview: vscode.Webview,
   services: GhostPromptInboundDispatchServices,
 ): Promise<void> {
-  const providers = await providerStatusManager.refreshAll();
+  const providers = await completionSourceStatusManager.refreshAll();
   const msg = { type: 'providerStatus' as const, providers };
   const validated = parseWebviewOutboundMessage(msg);
   if (!validated) {

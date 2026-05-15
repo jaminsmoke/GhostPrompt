@@ -1,4 +1,5 @@
 /**
+ * @file Clasificador de tiers de modelo OpenCode.
  * Tier / pricing solo desde metadatos del catálogo OpenCode (`config.providers`).
  * Sin adivinar por nombre de modelo (phi, GPT-*, etc.): si la API no dice precio/free → **unknown**.
  *

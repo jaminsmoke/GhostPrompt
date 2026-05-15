@@ -1,6 +1,11 @@
+/**
+ * @file Destination provider for Copilot Chat, including sendPrompt support.
+ */
 import * as vscode from 'vscode';
-import type { DestinationProvider } from '../destinationRegistry';
+
 import { registerDestination } from '../destinationRegistry';
+
+import type { DestinationProvider } from '../destinationRegistry';
 
 /**
  * Envía una query al chat de VS Code como prompt inicial.

@@ -1,17 +1,23 @@
 /**
+ * @file Orquestación del mensaje webview `suggest` (LM + broadcast UI).
+ *
  * Orquestación del mensaje webview `suggest`: LM (Copilot/OpenCode) y broadcast UI.
  * Invocado desde `suggest/index.ts` (alias `handleGhostPromptSuggest` para imports existentes).
  */
+import { getEnabledCompletionSources } from '../../engines/config/completionSources';
 import { getCompletionProviderForSource } from '../../engines/engineRegistry';
-import { getEnabledCompletionSources } from '../internals/config/sources';
-import { resolveCompletionSourceForRequest } from '../internals/protocols/routing';
-import { suggestionLoadingStatusText, type SuggestionLoadingPhase } from '../../system/internals/states/loading';
+import { resolveCompletionSourceForRequest } from '../../engines/routing/resolveCompletionSource';
 import { SuggestionStyle } from '../../sugcore/sugstyle/styleLengthController';
-import type { CompletionResult, SuggestionModelPolicy } from '../../system/internals/protocols/types';
+import {
+  suggestionLoadingStatusText,
+  type SuggestionLoadingPhase,
+} from '../../system/internals/protocols/state/loading';
+import { ghostPromptSessionStore } from '../../system/internals/state/sessionStore';
 import { flushLogCapture, getLogger } from '../../system/log';
-import { ghostPromptSessionStore } from '../../system/internals/states/session';
-import { DEFAULT_MIN_SUGGEST_INPUT_CHARS } from '../internals/protocols/params';
+import { DEFAULT_MIN_SUGGEST_INPUT_CHARS } from '../internals/protocols/types';
+
 import type { WebviewInboundMessage } from '../../api/protocols/webviewProtocols';
+import type { CompletionResult, SuggestionModelPolicy } from '../../system/internals/protocols/types';
 
 export type NotifyIssueCallback = (result: CompletionResult) => void;
 

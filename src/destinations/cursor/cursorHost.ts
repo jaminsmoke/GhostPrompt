@@ -1,5 +1,5 @@
 /**
- * Detección de host Cursor Desktop (roadmap v0.6 destino `cursorChat`, fase A).
+ * @file Detección de host Cursor Desktop (roadmap v0.6 destino `cursorChat`, fase A).
  */
 import * as vscode from 'vscode';
 
@@ -13,7 +13,7 @@ export const CURSOR_CHAT_DESTINATION_ID = 'cursorChat' as const;
  */
 export function isCursorDesktopHost(): boolean {
   try {
-    const appName = (vscode.env.appName ?? '').toLowerCase();
+    const appName = String(vscode.env.appName).toLowerCase();
     return appName.includes('cursor');
   } catch {
     return false;

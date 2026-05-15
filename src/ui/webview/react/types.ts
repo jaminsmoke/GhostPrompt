@@ -1,3 +1,6 @@
+/**
+ * @file Tipos compartidos del webview React GhostPrompt.
+ */
 export type GhostPromptCapabilities = {
   compactToolbar?: boolean;
 };
@@ -107,17 +110,17 @@ export type InboundMessage =
     }
   | {
       type: 'providerStatus';
-      providers: ProviderStateRecord[];
+      providers: CompletionSourceStateRecord[];
       captureId?: number;
       broadcast?: boolean;
     };
 
-export type ProviderState = 'running' | 'stopped' | 'starting' | 'unavailable' | 'error';
+/** Estado de salud de una fuente de completado (copilot, opencode, ollama). */
+export type CompletionSourceState = 'running' | 'stopped' | 'starting' | 'unavailable' | 'error';
 
-export interface ProviderStateRecord {
-  id: string;
-  kind: 'engine' | 'destination';
-  status: ProviderState;
+export interface CompletionSourceStateRecord {
+  id: CompletionProvider;
+  status: CompletionSourceState;
   label: string;
   statusText?: string;
   actions?: ('start' | 'stop')[];

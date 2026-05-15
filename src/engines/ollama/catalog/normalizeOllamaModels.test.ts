@@ -1,3 +1,6 @@
+/**
+ * @file Pruebas de normalización de modelos Ollama.
+ */
 import { describe, expect, it } from 'vitest';
 
 import { normalizeOllamaModels, ollamaModelToDescriptor } from './normalizeOllamaModels';

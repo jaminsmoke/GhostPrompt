@@ -1,6 +1,11 @@
-(globalThis as any).window = globalThis as any;
+/**
+ * @file Pruebas unitarias para los helpers de estado de GhostPrompt.
+ */
+const globalWithWindow = globalThis as unknown as { window?: unknown };
+globalWithWindow.window = globalWithWindow;
 
 import { beforeAll, describe, expect, it } from 'vitest';
+
 import { parseWebviewInboundMessage } from '../validators/webviewMessageSchemas';
 
 let isDraftSyncForAnotherView: typeof import('./useGhostPrompt').isDraftSyncForAnotherView;

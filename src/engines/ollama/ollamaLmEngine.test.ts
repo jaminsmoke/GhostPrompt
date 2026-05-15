@@ -1,3 +1,6 @@
+/**
+ * @file Pruebas del engine de completado Ollama.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const configGetMock = vi.hoisted(() => vi.fn());
@@ -20,6 +23,10 @@ vi.mock('./ollamaApiClient', () => ({
 
 import { requestOllamaCompletion } from './ollamaLmEngine';
 
+/**
+ * Creates a minimal cancellation token-like object for tests.
+ * @returns {{ isCancellationRequested: boolean; onCancellationRequested: (cb: () => void) => { dispose(): void } }} An object compatible with vscode CancellationToken semantics.
+ */
 function makeToken() {
   return {
     isCancellationRequested: false,
@@ -34,8 +41,8 @@ describe('requestOllamaCompletion', () => {
     mockGenerate.mockReset();
 
     configGetMock.mockImplementation((key: string, defaultValue: unknown) => {
-      if (key === 'ollamaBaseUrl') return 'http://localhost:11434';
-      if (key === 'ollamaExcludedModelIds') return [];
+      if (key === 'ollamaBaseUrl') {return 'http://localhost:11434';}
+      if (key === 'ollamaExcludedModelIds') {return [];}
       return defaultValue;
     });
   });
@@ -65,7 +72,7 @@ describe('requestOllamaCompletion', () => {
 
   it('resolves auto model from listModels when preferredModelId is auto', async () => {
     mockListModels.mockResolvedValue([
-      { name: 'llama3:latest', modified_at: '', size: 0, digest: '' },
+      { name: 'llama3:latest', ['modified_at']: '', size: 0, digest: '' },
     ]);
     mockGenerate.mockResolvedValue(' completion');
 
@@ -109,14 +116,14 @@ describe('requestOllamaCompletion', () => {
 
   it('respects excluded model ids when resolving auto', async () => {
     configGetMock.mockImplementation((key: string, defaultValue: unknown) => {
-      if (key === 'ollamaBaseUrl') return 'http://localhost:11434';
-      if (key === 'ollamaExcludedModelIds') return ['llama3:latest'];
+      if (key === 'ollamaBaseUrl') {return 'http://localhost:11434';}
+      if (key === 'ollamaExcludedModelIds') {return ['llama3:latest'];}
       return defaultValue;
     });
 
     mockListModels.mockResolvedValue([
-      { name: 'llama3:latest', modified_at: '', size: 0, digest: '' },
-      { name: 'mistral:latest', modified_at: '', size: 0, digest: '' },
+      { name: 'llama3:latest', ['modified_at']: '', size: 0, digest: '' },
+      { name: 'mistral:latest', ['modified_at']: '', size: 0, digest: '' },
     ]);
     mockGenerate.mockResolvedValue(' completion');
 
@@ -136,14 +143,14 @@ describe('requestOllamaCompletion', () => {
 
   it('returns empty no-model when all models are excluded', async () => {
     configGetMock.mockImplementation((key: string, defaultValue: unknown) => {
-      if (key === 'ollamaBaseUrl') return 'http://localhost:11434';
-      if (key === 'ollamaExcludedModelIds') return ['llama3:latest', 'mistral:latest'];
+      if (key === 'ollamaBaseUrl') {return 'http://localhost:11434';}
+      if (key === 'ollamaExcludedModelIds') {return ['llama3:latest', 'mistral:latest'];}
       return defaultValue;
     });
 
     mockListModels.mockResolvedValue([
-      { name: 'llama3:latest', modified_at: '', size: 0, digest: '' },
-      { name: 'mistral:latest', modified_at: '', size: 0, digest: '' },
+      { name: 'llama3:latest', ['modified_at']: '', size: 0, digest: '' },
+      { name: 'mistral:latest', ['modified_at']: '', size: 0, digest: '' },
     ]);
 
     const token = makeToken();
@@ -157,7 +164,7 @@ describe('requestOllamaCompletion', () => {
 
   it('returns empty request-timeout when token is cancelled before generate check', async () => {
     const token = makeToken();
-    (token as any).isCancellationRequested = true;
+    (token as unknown as { isCancellationRequested: boolean }).isCancellationRequested = true;
 
     mockGenerate.mockResolvedValue(' some text');
 

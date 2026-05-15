@@ -1,9 +1,12 @@
+/**
+ * @file Esquemas Zod para validar mensajes inbound del webview.
+ */
 import { z } from 'zod';
-import type { InboundMessage, ProviderStateRecord, SettingsPayload } from '../types';
+
+import type { InboundMessage } from '../types';
 
 const providerStateRecordSchema = z.object({
-  id: z.string(),
-  kind: z.enum(['engine', 'destination']),
+  id: z.enum(['copilot', 'opencode', 'ollama']),
   status: z.enum(['running', 'stopped', 'starting', 'unavailable', 'error']),
   label: z.string(),
   statusText: z.string().optional(),
@@ -84,6 +87,11 @@ const webviewInboundMessageSchema = z.discriminatedUnion('type', [
   webviewSettingsMessageSchema,
 ]);
 
+/**
+ * Parses and validates an inbound webview payload.
+ * @param {unknown} raw The raw input from the webview.
+ * @returns {InboundMessage | undefined} A validated InboundMessage or undefined when validation fails.
+ */
 export function parseWebviewInboundMessage(raw: unknown): InboundMessage | undefined {
   const result = webviewInboundMessageSchema.safeParse(raw);
   if (!result.success) {

@@ -1,3 +1,6 @@
+/**
+ * @file Pruebas del registro de engines disponibles.
+ */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const { getEnabledCompletionSourcesMock } = vi.hoisted(() => ({
@@ -17,7 +20,7 @@ vi.mock('vscode', () => ({
   },
 }));
 
-vi.mock('../system/internals/config/sources', () => ({
+vi.mock('./config/completionSources', () => ({
   getEnabledCompletionSources: getEnabledCompletionSourcesMock,
 }));
 
@@ -49,7 +52,7 @@ describe('engineRegistry', () => {
   });
 
   it('getCompletionProviderForSource defaults to copilotLm for unknown source', () => {
-    const provider = getCompletionProviderForSource('unknown' as any);
+    const provider = getCompletionProviderForSource('unknown' as unknown as 'copilot' | 'opencode' | 'ollama');
     expect(provider.id).toBe('copilotLm');
   });
 

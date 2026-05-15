@@ -1,3 +1,6 @@
+/**
+ * @file Utils para enviar consultas a través del host del webview.
+ */
 import type { OutboundMessage } from '../types';
 
 /**
@@ -15,10 +18,16 @@ export function hostQuery<T>(
 ): Promise<T> {
   return new Promise((resolve) => {
     const handler = (e: MessageEvent) => {
-      if (e.data.type === responseType) {
-        window.removeEventListener('message', handler);
-        resolve(e.data as T);
+      const rawPayload = e.data as unknown;
+      if (typeof rawPayload !== 'object' || rawPayload === null) {
+        return;
       }
+      const payloadWithType = rawPayload as { type: unknown };
+      if (typeof payloadWithType.type !== 'string' || payloadWithType.type !== responseType) {
+        return;
+      }
+      window.removeEventListener('message', handler);
+      resolve(rawPayload as T);
     };
     window.addEventListener('message', handler);
     sendMessage(msg);

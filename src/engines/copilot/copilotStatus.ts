@@ -1,17 +1,21 @@
-import type { ProviderStatusModule, ProviderStateRecord } from '../../system/internals/states/provider-types';
+/**
+ * @file Estado de la fuente de completado Copilot LM.
+ */
+import type {
+  CompletionSourceStateRecord,
+  CompletionSourceStatusModule,
+} from '../status/completionSourceStatusTypes';
 
-export const copilotStatusModule: ProviderStatusModule = {
+export const copilotStatusModule: CompletionSourceStatusModule = {
   id: 'copilot',
-  kind: 'engine',
   label: 'Copilot LM',
 
-  async check(): Promise<ProviderStateRecord> {
-    return {
+  check(): Promise<CompletionSourceStateRecord> {
+    return Promise.resolve({
       id: 'copilot',
-      kind: 'engine',
       status: 'running',
       label: 'Copilot LM',
       statusText: 'Siempre disponible',
-    };
+    });
   },
 };

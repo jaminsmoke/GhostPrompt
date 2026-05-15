@@ -1,4 +1,8 @@
+/**
+ * @file Implementación del destino VSOpenCodeX para reenviar UI de GhostPrompt al editor VSOpenCodeX.
+ */
 import * as vscode from 'vscode';
+
 import { getLogger } from '../../system/log';
 import {
   type DestinationProvider,

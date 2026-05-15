@@ -1,3 +1,6 @@
+/**
+ * @file Pruebas unitarias del selector de proveedor de completado.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const getMock = vi.hoisted(() => vi.fn());

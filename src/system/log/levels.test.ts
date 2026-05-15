@@ -1,3 +1,6 @@
+/**
+ * @file Tests de niveles de log y conversión de severidad.
+ */
 import { describe, expect, it } from 'vitest';
 
 import { levelIndex, parseLogLevelString, shouldEmit } from './levels';

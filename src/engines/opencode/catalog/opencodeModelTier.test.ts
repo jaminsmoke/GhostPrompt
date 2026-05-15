@@ -1,4 +1,8 @@
+/**
+ * @file Pruebas de clasificación de tiers de OpenCode.
+ */
 import { describe, expect, it } from 'vitest';
+
 import { classifyOpencodeModelTier } from './opencodeModelTier';
 
 describe('classifyOpencodeModelTier', () => {

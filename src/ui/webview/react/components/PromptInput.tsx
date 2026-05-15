@@ -1,3 +1,6 @@
+/**
+ * @file Input principal de prompts en el webview GhostPrompt.
+ */
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 interface PromptInputProps {
@@ -5,7 +8,7 @@ interface PromptInputProps {
   suggestion: string;
   vsxActive: boolean;
   compact: boolean;
-  textareaRef: React.MutableRefObject<HTMLTextAreaElement | null>;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   isGhostUiAllowed: () => boolean;
   onTextChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSend: () => void;
@@ -20,14 +23,14 @@ interface PromptInputProps {
  * @param {string} props.suggestion Sugerencia fantasma a mostrar.
  * @param {boolean} props.vsxActive Indica si VSOpenCodeX está activo.
  * @param {boolean} props.compact Usa diseño compacto.
- * @param {import('react').MutableRefObject<globalThis.HTMLTextAreaElement | null>} props.textareaRef Referencia del textarea.
+ * @param {import('react').RefObject<globalThis.HTMLTextAreaElement | null>} props.textareaRef Referencia del textarea.
  * @param {() => boolean} props.isGhostUiAllowed Comprueba si se puede aceptar la sugerencia.
  * @param {(e: import('react').ChangeEvent<globalThis.HTMLTextAreaElement>) => void} props.onTextChange Controlador de cambios de texto.
  * @param {() => void} props.onSend Controlador de envío de prompt.
  * @param {() => void} props.onAccept Controlador de aceptación de la sugerencia.
  * @returns {import('react').JSX.Element} JSX del textarea y la sugerencia.
  */
-export function PromptInput(props: PromptInputProps): JSX.Element {
+export function PromptInput(props: PromptInputProps): React.JSX.Element {
   const {
     text,
     suggestion,

@@ -1,15 +1,22 @@
+/// <reference types="node" />
 /**
- * Regresión: paridad funcional del toolbar entre sidebar y panel (mismo bundle webview).
+ * @file Regresión: paridad funcional del toolbar entre sidebar y panel (mismo bundle webview).
  * @see Docs/Plans/Roadmaps/Roadmap-v0.3.1-webview-parity-contracts-ux.md Fase A
  * @see Docs/Plans/Roadmaps/Roadmap-v0.4.3-quality-resilience.md Fase 5 (gobernanza dual webview)
  */
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '../../..');
 
+/**
+ * Reads a file relative to the repository root.
+ * @param {string} rel The relative path from the repo root.
+ * @returns {string} The file contents as a string.
+ */
 function read(rel: string): string {
   return readFileSync(join(repoRoot, rel), 'utf8');
 }

@@ -1,3 +1,6 @@
+/**
+ * @file Pruebas de la integración CopilotCompletion.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { selectChatModelsMock, userMessageMock } = vi.hoisted(() => ({
@@ -9,10 +12,10 @@ vi.mock('vscode', () => ({
   lm: {
     selectChatModels: selectChatModelsMock,
   },
-  LanguageModelChatMessage: {
-    User: userMessageMock,
+  ['LanguageModelChatMessage']: {
+    ['User']: userMessageMock,
   },
-  CancellationTokenSource: class {
+  ['CancellationTokenSource']: class {
     token = {
       isCancellationRequested: false,
       onCancellationRequested: () => ({ dispose: () => {} }),
@@ -24,16 +27,23 @@ vi.mock('vscode', () => ({
   },
 }));
 
+import { buildCompletionInstruction } from '../../sugcore/rules/instruction';
+
 import {
   listSuggestionModels,
   selectModelByPolicy,
 } from './catalog/modelCatalog';
 import { requestCopilotLmCompletion as requestCompletion } from './copilotLmEngine';
-import { buildCompletionInstruction } from '../../sugcore/rules/instruction';
 
+/**
+ * Creates a mock async iterable that yields the provided chunks sequentially.
+ * @param {string[]} chunks Text chunks to emit through the async iterator.
+ * @returns {AsyncIterable<string>} An async iterable of strings.
+ */
 function createTextStream(chunks: string[]): AsyncIterable<string> {
   return {
     async *[Symbol.asyncIterator]() {
+      await Promise.resolve();
       for (const chunk of chunks) {
         yield chunk;
       }
@@ -41,6 +51,10 @@ function createTextStream(chunks: string[]): AsyncIterable<string> {
   };
 }
 
+/**
+ * Creates a mock async iterable that never resolves, simulating a hanging stream.
+ * @returns {AsyncIterable<string>} An async iterable that never completes.
+ */
 function createHangingTextStream(): AsyncIterable<string> {
   return {
     [Symbol.asyncIterator]() {
@@ -51,6 +65,10 @@ function createHangingTextStream(): AsyncIterable<string> {
   };
 }
 
+/**
+ * Creates a minimal cancellation token for tests.
+ * @returns {{ isCancellationRequested: boolean; onCancellationRequested: (cb: () => void) => { dispose(): void } }} A fake CancellationToken-like object.
+ */
 function createToken() {
   return {
     isCancellationRequested: false,
@@ -67,7 +85,7 @@ describe('CopilotCompletion', () => {
     selectChatModelsMock.mockResolvedValueOnce([]);
 
     const result = await requestCompletion('hola', {
-      token: createToken() as never,
+      token: createToken(),
       policy: 'anyModel',
     });
 
@@ -81,7 +99,7 @@ describe('CopilotCompletion', () => {
     selectChatModelsMock.mockResolvedValueOnce([{ sendRequest }]);
 
     const result = await requestCompletion('Escribe', {
-      token: createToken() as never,
+      token: createToken(),
       policy: 'anyModel',
       maxSuggestionChars: 50,
     });
@@ -103,7 +121,7 @@ describe('CopilotCompletion', () => {
     selectChatModelsMock.mockResolvedValue([{ sendRequest }]);
 
     await requestCompletion('Hola', {
-      token: createToken() as never,
+      token: createToken(),
       policy: 'anyModel',
       maxSuggestionChars: 20,
     });
@@ -119,7 +137,7 @@ describe('CopilotCompletion', () => {
     selectChatModelsMock.mockResolvedValueOnce([{ sendRequest }]);
 
     const result = await requestCompletion('Escribe', {
-      token: createToken() as never,
+      token: createToken(),
       policy: 'anyModel',
       requestTimeoutMs: 20,
     });
@@ -134,7 +152,7 @@ describe('CopilotCompletion', () => {
     selectChatModelsMock.mockResolvedValueOnce([{ sendRequest }]);
 
     const result = await requestCompletion('Escribe', {
-      token: createToken() as never,
+      token: createToken(),
       policy: 'anyModel',
     });
 

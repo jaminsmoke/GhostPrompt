@@ -4,13 +4,14 @@
 import * as vscode from 'vscode';
 
 import { CaptureBreadcrumbStore } from './breadcrumbs';
-import type { EmitPayload, LogEmitSink } from './emitContract';
 import { parseLogLevelString, shouldEmit } from './levels';
-import type { LogLevelName } from './levels';
 import { Logger } from './Logger';
-import type { Breadcrumb, LogEntry, LogTransport } from './types';
 import { QueuedNdjsonFileTransport } from './transports/file';
 import { OutputChannelLogTransport } from './transports/outputChannel';
+
+import type { EmitPayload, LogEmitSink } from './emitContract';
+import type { LogLevelName } from './levels';
+import type { Breadcrumb, LogEntry, LogTransport } from './types';
 
 /**
  * Resuelve el nivel mínimo visible según `logLevel` explícito o shim `debugSuggestions`.

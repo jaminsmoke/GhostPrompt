@@ -1,11 +1,18 @@
+/**
+ * @file Pruebas de integración de destino VSOpenCodeX para reenvío de UI y notificaciones.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const executeCommandMock = vi.hoisted(() => vi.fn(() => Promise.resolve()));
-const configGetMock = vi.hoisted(() => vi.fn());
-const getExtensionMock = vi.hoisted(() => vi.fn());
-const showInformationMessageMock = vi.hoisted(() => vi.fn(() => Promise.resolve(undefined)));
+const executeCommandMock = vi.hoisted(
+  () => vi.fn<Promise<unknown>, [string, Record<string, unknown>]>((_) => Promise.resolve()),
+);
+const configGetMock = vi.hoisted(() => vi.fn<unknown, [string, unknown]>());
+const getExtensionMock = vi.hoisted(() => vi.fn<unknown, [string]>());
+const showInformationMessageMock = vi.hoisted(
+  () => vi.fn<Promise<unknown>, [string, string]>((_) => Promise.resolve(undefined)),
+);
 
-vi.mock('vscode', () => ({
+const mockedVscode = {
   workspace: {
     getConfiguration: () => ({
       get: configGetMock,
@@ -25,7 +32,9 @@ vi.mock('vscode', () => ({
   commands: {
     executeCommand: executeCommandMock,
   },
-}));
+} as unknown as typeof import('vscode');
+
+vi.mock('vscode', () => mockedVscode);
 
 vi.mock('../../system/log', () => ({
   getLogger: () => ({
@@ -49,7 +58,11 @@ describe('vsOpenCodeXDestination', () => {
     it('no llama executeCommand si destino es Copilot', async () => {
       configGetMock.mockReturnValue('copilotChat');
       const { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } =
-        await import('./vsOpenCodeXDestination');
+        (await import('./vsOpenCodeXDestination')) as {
+          forwardGhostPromptInlineUiToVsOpenCodeIfApplicable: (
+            payloadWithBroadcast: Record<string, unknown>,
+          ) => void;
+        };
       forwardGhostPromptInlineUiToVsOpenCodeIfApplicable({
         type: 'suggestion',
         suggestion: 'x',
@@ -61,7 +74,11 @@ describe('vsOpenCodeXDestination', () => {
     it('reenvía suggestion sin broadcast si destino es VSX', async () => {
       configGetMock.mockReturnValue('vsOpenCodeX');
       const { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } =
-        await import('./vsOpenCodeXDestination');
+        (await import('./vsOpenCodeXDestination')) as {
+          forwardGhostPromptInlineUiToVsOpenCodeIfApplicable: (
+            payloadWithBroadcast: Record<string, unknown>,
+          ) => void;
+        };
       forwardGhostPromptInlineUiToVsOpenCodeIfApplicable({
         type: 'suggestion',
         suggestion: 'x',
@@ -76,7 +93,11 @@ describe('vsOpenCodeXDestination', () => {
     it('reenvía tipos válidos (loading, empty, error, clear)', async () => {
       configGetMock.mockReturnValue('vsOpenCodeX');
       const { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } =
-        await import('./vsOpenCodeXDestination');
+        (await import('./vsOpenCodeXDestination')) as {
+          forwardGhostPromptInlineUiToVsOpenCodeIfApplicable: (
+            payloadWithBroadcast: Record<string, unknown>,
+          ) => void;
+        };
       for (const type of ['loading', 'empty', 'error', 'clear']) {
         vi.clearAllMocks();
         forwardGhostPromptInlineUiToVsOpenCodeIfApplicable({
@@ -94,7 +115,9 @@ describe('vsOpenCodeXDestination', () => {
     it('no notifica si destino es copilotChat', async () => {
       configGetMock.mockReturnValue('copilotChat');
       const { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } =
-        await import('./vsOpenCodeXDestination');
+        (await import('./vsOpenCodeXDestination')) as {
+          notifyIfVsxAgentDestinationWithoutVsOpenCodeX: () => void;
+        };
       notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
       expect(showInformationMessageMock).not.toHaveBeenCalled();
     });
@@ -103,7 +126,9 @@ describe('vsOpenCodeXDestination', () => {
       configGetMock.mockReturnValue('vsOpenCodeX');
       getExtensionMock.mockReturnValue(undefined);
       const { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } =
-        await import('./vsOpenCodeXDestination');
+        (await import('./vsOpenCodeXDestination')) as {
+          notifyIfVsxAgentDestinationWithoutVsOpenCodeX: () => void;
+        };
       notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
       notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
       expect(showInformationMessageMock).toHaveBeenCalledTimes(1);

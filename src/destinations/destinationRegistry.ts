@@ -1,4 +1,8 @@
+/**
+ * @file Registro y lógica común de destinos GhostPrompt.
+ */
 import * as vscode from 'vscode';
+
 import { CURSOR_CHAT_DESTINATION_ID } from './cursor/cursorHost';
 
 export { CURSOR_CHAT_DESTINATION_ID, isCursorDesktopHost } from './cursor/cursorHost';
@@ -48,9 +52,8 @@ export function getActiveDestinationProvider(): DestinationProvider {
   return (
     registry.get(id) ?? {
       id,
-      sendPrompt: async () => {
-        throw new Error(`Destination provider '${id}' no está registrado`);
-      },
+      sendPrompt: () =>
+        Promise.reject(new Error(`Destination provider '${id}' no está registrado`)),
     }
   );
 }
@@ -87,7 +90,7 @@ function isAgentDestinationExplicitlyConfigured(): boolean {
  */
 export function isVsOpenCodeXExtensionInstalled(): boolean {
   try {
-    return Boolean(vscode.extensions?.getExtension?.(VS_OPEN_CODE_X_EXTENSION_ID));
+    return Boolean(vscode.extensions.getExtension(VS_OPEN_CODE_X_EXTENSION_ID));
   } catch {
     return false;
   }

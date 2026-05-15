@@ -1,10 +1,19 @@
-import { describe, expect, it } from 'vitest';
+/**
+ * @file Tests de uso del output channel de logging.
+ */
 import { readdirSync, readFileSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { describe, expect, it } from 'vitest';
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '../../..');
 
+/**
+ * Recursively collects source file paths under a directory.
+ * @param {string} directory The starting directory to scan for source files.
+ * @returns {string[]} A list of matching source file paths.
+ */
 function collectSourceFiles(directory: string): string[] {
   const files: string[] = [];
 

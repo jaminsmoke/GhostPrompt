@@ -1,3 +1,6 @@
+/**
+ * @file Cliente ligero para la API de Ollama.
+ */
 import { type OllamaClientOptions, type OllamaModel } from './ollamaTypes';
 import {
   ollamaGenerateResponseChunkSchema,
@@ -16,7 +19,7 @@ const DEFAULT_REQUEST_TIMEOUT_MS = 30000;
  * @returns {string} URL completa sin barras finales duplicadas.
  */
 function resolveUrl(path: string, baseUrl?: string): string {
-  const base = (baseUrl || DEFAULT_OLLAMA_BASE_URL).replace(/\/+$/, '');
+  const base = (baseUrl ?? DEFAULT_OLLAMA_BASE_URL).replace(/\/+$/, '');
   return `${base}${path}`;
 }
 
@@ -224,7 +227,7 @@ async function streamGenerate(
       throw new Error(`Ollama HTTP ${res.status}: ${res.statusText}`);
     }
 
-    const reader = res.body?.getReader();
+    const reader = res.body?.getReader() as ReadableStreamDefaultReader<Uint8Array> | undefined;
     if (!reader) {
       throw new Error('Ollama stream response body is null');
     }
@@ -233,12 +236,12 @@ async function streamGenerate(
     let buffer = '';
 
     const decoder = new TextDecoder();
-    while (true) {
-      const { done, value: _value } = await reader.read();
-      if (done) {
+    for (;;) {
+      const readResult = await reader.read();
+      if (readResult.done) {
         break;
       }
-      buffer += decoder.decode(_value, { stream: true });
+      buffer += decoder.decode(readResult.value, { stream: true });
       const lines = buffer.split('\n');
       buffer = lines.pop() ?? '';
 
@@ -247,7 +250,7 @@ async function streamGenerate(
           continue;
         }
         try {
-          const chunk = JSON.parse(line);
+          const chunk = JSON.parse(line) as unknown;
           const chunkParse = ollamaGenerateResponseChunkSchema.safeParse(chunk);
           if (!chunkParse.success || !chunkParse.data.response) {
             continue;

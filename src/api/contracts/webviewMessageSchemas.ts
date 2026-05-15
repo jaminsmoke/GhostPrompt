@@ -1,5 +1,5 @@
 /**
- * Contratos Zod compartidos host ↔ webview (roadmap v0.3.2 fase C).
+ * @file Contratos Zod compartidos host ↔ webview (roadmap v0.3.2 fase C).
  * Consumidos por `src/host/webviewProtocols.ts` y empaquetados en el bundle webview.
  */
 import { z } from 'zod';
@@ -40,8 +40,7 @@ export const webviewOutboundSettingsEnvelopeSchema = z.object({
 });
 
 const providerStateRecordSchema = z.object({
-  id: z.string(),
-  kind: z.enum(['engine', 'destination']),
+  id: z.enum(['copilot', 'opencode', 'ollama']),
   status: z.enum(['running', 'stopped', 'starting', 'unavailable', 'error']),
   label: z.string(),
   statusText: z.string().optional(),

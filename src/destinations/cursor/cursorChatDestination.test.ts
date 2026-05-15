@@ -1,4 +1,9 @@
+/**
+ * @file Unit tests for the Cursor Chat destination behavior.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { DestinationProvider } from '../destinationRegistry';
 
 const executeCommandMock = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 
@@ -25,7 +30,9 @@ beforeEach(() => {
 
 describe('cursorChatDestination', () => {
   it('sendToCursorChat llama workbench.action.chat.open con { query }', async () => {
-    const { sendToCursorChat } = await import('./cursorChatDestination');
+    const { sendToCursorChat } = (await import('./cursorChatDestination')) as {
+      sendToCursorChat: (query: string) => Promise<void>;
+    };
     await sendToCursorChat('  prompt cursor  ');
     expect(executeCommandMock).toHaveBeenCalledWith('workbench.action.chat.open', {
       query: 'prompt cursor',
@@ -36,7 +43,9 @@ describe('cursorChatDestination', () => {
     executeCommandMock
       .mockRejectedValueOnce(new Error('object arg unsupported'))
       .mockResolvedValueOnce(undefined);
-    const { sendToCursorChat } = await import('./cursorChatDestination');
+    const { sendToCursorChat } = (await import('./cursorChatDestination')) as {
+      sendToCursorChat: (query: string) => Promise<void>;
+    };
     await sendToCursorChat('fallback');
     expect(executeCommandMock).toHaveBeenNthCalledWith(1, 'workbench.action.chat.open', {
       query: 'fallback',
@@ -46,10 +55,15 @@ describe('cursorChatDestination', () => {
 
   it('se registra en destinationRegistry como cursorChat', async () => {
     await import('./cursorChatDestination');
-    const { getDestinationProviderForId } = await import('../destinationRegistry');
+    const { getDestinationProviderForId } = (await import('../destinationRegistry')) as {
+      getDestinationProviderForId(id: 'cursorChat'): DestinationProvider | undefined;
+    };
     const provider = getDestinationProviderForId('cursorChat');
     expect(provider).toBeDefined();
-    expect(provider!.id).toBe('cursorChat');
-    expect(typeof provider!.sendPrompt).toBe('function');
+    if (!provider) {
+      return;
+    }
+    expect(provider.id).toBe('cursorChat');
+    expect(typeof provider.sendPrompt).toBe('function');
   });
 });

@@ -6,7 +6,14 @@
  * they prefer relative to the Copilot chat.
  */
 import * as vscode from 'vscode';
-import { MiniInputViewProvider } from '../ui/provider/MiniInputViewProvider';
+
+import '../destinations/copilotChat/copilotChatDestination';
+import '../destinations/cursor/cursorChatDestination';
+import { registerDiscoverCursorChatCommandsCommand } from '../destinations/cursor/discoverCursorChatCommands';
+import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from '../destinations/vsOpenCodeX/vsOpenCodeXDestination';
+import { ollamaModelManager } from '../engines/ollama';
+import { resetClient } from '../engines/opencode/opencodeApiClient';
+import { registerCompletionSourceStatusModules } from '../engines/status/registerCompletionSourceStatusModules';
 import {
   disposeGhostPromptLogging,
   ensureSuggestionDebugChannel,
@@ -14,13 +21,7 @@ import {
   isSuggestionDebugEnabled,
   toggleSuggestionDebug,
 } from '../system/log';
-import { resetClient } from '../engines/opencode/opencodeApiClient';
-import { ollamaModelManager } from '../engines/ollama';
-import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from '../destinations/vsOpenCodeX/vsOpenCodeXDestination';
-import '../destinations/copilotChat/copilotChatDestination';
-import '../destinations/cursor/cursorChatDestination';
-import { registerDiscoverCursorChatCommandsCommand } from '../destinations/cursor/discoverCursorChatCommands';
-import { registerAllProviderModules } from '../system/internals/states/register-modules';
+import { MiniInputViewProvider } from '../ui/provider/MiniInputViewProvider';
 
 /**
  * Activa la extensión GhostPrompt.
@@ -28,7 +29,7 @@ import { registerAllProviderModules } from '../system/internals/states/register-
  */
 export function activate(context: vscode.ExtensionContext): void {
   initGhostPromptLogging(context);
-  registerAllProviderModules();
+  registerCompletionSourceStatusModules();
   const sidebarProvider = new MiniInputViewProvider(context, MiniInputViewProvider.viewId);
   const panelProvider = new MiniInputViewProvider(context, MiniInputViewProvider.panelViewId);
   const openSuggestionPolicySettingsCommand = vscode.commands.registerCommand(
@@ -89,5 +90,5 @@ export function activate(context: vscode.ExtensionContext): void {
 export function deactivate(): void {
   void disposeGhostPromptLogging();
   resetClient();
-  ollamaModelManager.stopAll();
+  void ollamaModelManager.stopAll();
 }

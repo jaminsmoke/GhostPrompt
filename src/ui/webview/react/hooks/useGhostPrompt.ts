@@ -1,18 +1,23 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { ChangeEvent } from 'react';
+/**
+ * @file Hook React para el estado y comunicación del webview GhostPrompt.
+ */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
 import { hostQuery } from '../utils/hostQuery';
 import { parseWebviewInboundMessage } from '../validators/webviewMessageSchemas';
+
 import type {
   AgentDestination,
   CompletionProvider,
   GhostPromptCapabilities,
   InboundMessage,
   OutboundMessage,
-  ProviderStateRecord,
+  CompletionSourceStateRecord,
   SuggestionModel,
   UpdateSettingMessage,
 } from '../types';
+import type { ChangeEvent } from 'react';
 
 /**
  * Determina si un mensaje de borrador remoto proviene de otra vista GhostPrompt.
@@ -79,9 +84,7 @@ const getInitialViewId = (): string =>
   typeof window.__ghostPromptViewId === 'string' ? window.__ghostPromptViewId : '';
 
 const getInitialCapabilities = (): GhostPromptCapabilities =>
-  typeof window.__ghostPromptCapabilities === 'object' && window.__ghostPromptCapabilities !== null
-    ? window.__ghostPromptCapabilities
-    : {};
+  window.__ghostPromptCapabilities ?? {};
 
 interface VsCodeApi {
   postMessage(message: unknown): void;
@@ -157,7 +160,7 @@ export function useGhostPrompt() {
   const { data: providerStatuses = [], isLoading: statusLoading } = useQuery({
     queryKey: ['providerStatus'],
     queryFn: () =>
-      hostQuery<{ providers: ProviderStateRecord[] }>(
+      hostQuery<{ providers: CompletionSourceStateRecord[] }>(
         { type: 'requestProviderStatus' },
         'providerStatus',
         postToHost,
@@ -167,25 +170,25 @@ export function useGhostPrompt() {
 
   const { mutate: mutateStartProvider } = useMutation({
     mutationFn: (provider: string) =>
-      hostQuery<{ providers: ProviderStateRecord[] }>(
+      hostQuery<{ providers: CompletionSourceStateRecord[] }>(
         { type: 'startProvider', provider },
         'providerStatus',
         postToHost,
       ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['providerStatus'] });
+      void queryClient.invalidateQueries({ queryKey: ['providerStatus'] });
     },
   });
 
   const { mutate: mutateStopProvider } = useMutation({
     mutationFn: (provider: string) =>
-      hostQuery<{ providers: ProviderStateRecord[] }>(
+      hostQuery<{ providers: CompletionSourceStateRecord[] }>(
         { type: 'stopProvider', provider },
         'providerStatus',
         postToHost,
       ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['providerStatus'] });
+      void queryClient.invalidateQueries({ queryKey: ['providerStatus'] });
     },
   });
 
@@ -387,7 +390,7 @@ export function useGhostPrompt() {
             setText(message.text);
             break;
           case 'providerStatus':
-            queryClient.setQueryData<ProviderStateRecord[]>(['providerStatus'], message.providers);
+            queryClient.setQueryData<CompletionSourceStateRecord[]>(['providerStatus'], message.providers);
             break;
           default:
             break;
@@ -485,7 +488,7 @@ export function useGhostPrompt() {
     setSelectedModelId(value);
     sendUpdateSetting({ type: 'updateSetting', key: 'selectedModelId', value });
     if (completionProvider === 'ollama' && value) {
-      queryClient.setQueryData<ProviderStateRecord[]>(['providerStatus'], (old) =>
+      queryClient.setQueryData<CompletionSourceStateRecord[]>(['providerStatus'], (old) =>
         old?.map((p) =>
           p.id === 'ollama' ? { ...p, status: 'starting' as const, statusText: 'Iniciando…' } : p,
         ),

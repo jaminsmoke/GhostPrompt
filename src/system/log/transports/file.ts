@@ -1,8 +1,8 @@
 /**
  * @file Transporte: NDJSON + Markdown bajo `globalStorageUri/ghostPrompt/logs/v1/` con cola asíncrona.
  */
-import { gzip } from 'node:zlib';
 import { promisify } from 'node:util';
+import { gzip } from 'node:zlib';
 
 import * as vscode from 'vscode';
 
@@ -21,7 +21,7 @@ const FLUSH_BATCH = 100;
  * Aplica rotación gzip del NDJSON cuando supera el tamaño máximo configurado.
  */
 export class QueuedNdjsonFileTransport {
-  /** @readonly Identificador estable del transporte. */
+  /** @readonly */
   readonly id = 'ghostPromptFileNdjson';
 
   private readonly queue: LogEntry[] = [];
@@ -58,9 +58,9 @@ export class QueuedNdjsonFileTransport {
    * @param {LogEntry} entry Entrada a encolar.
    * @returns {Promise<void>} Promesa que resuelve tras encolar (no espera al vaciado en disco).
    */
-  async write(entry: LogEntry): Promise<void> {
+  write(entry: LogEntry): Promise<void> {
     if (!this.isFileLogEnabled()) {
-      return;
+      return Promise.resolve();
     }
     if (this.queue.length >= this.maxQueue) {
       const idx = this.queue.findIndex((e) => e.level === 'DEBUG');
@@ -79,6 +79,7 @@ export class QueuedNdjsonFileTransport {
     }
     this.queue.push(entry);
     this.scheduleFlush();
+    return Promise.resolve();
   }
 
   /**

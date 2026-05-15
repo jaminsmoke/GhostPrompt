@@ -11,16 +11,16 @@
 
 - Tipos y resultados de completion (`types.ts`).
 - Reglas de construcción del prompt (`rules/instruction.ts`).
-- Resolución de **fuentes** y routing a motor (`routing/sources.ts`).
+- Reglas de instrucción LM (`rules/instruction.ts`). La resolución de fuentes y routing a motor vive en `engines/config/completionSources.ts` y `engines/routing/resolveCompletionSource.ts`.
 
 ## Qué no debe vivir aquí
 
 - **Lista unificada multi-motor para el selector** → `engines/catalog/mergedModelCatalog.ts` (`listMergedSuggestionModels`).
 - Integración VS Code de vistas/HTML/CSP → `ui/provider/`.
 - Protocolos Zod webview ↔ host → `api/`.
-- **Estado interno** (session store, provider status, loading phases) → `system/internals/states/`.
+- **Estado interno** (session store, provider status) → `system/internals/state/`; contratos → `system/internals/protocols/state/`.
 - **Runtime / orquestación** del pipeline suggest → `system/runtime/`.
-- **Infraestructura** de streaming, config readers → `system/internals/`.
+- Stream LM Copilot, config de fuentes → `engines/copilot/`, `engines/config/`.
 
 ---
 
@@ -28,11 +28,8 @@
 
 ```text
 sugcore/
-├── types.ts                    # Domain types canónicos
 ├── rules/
 │   └── instruction.ts          # buildCompletionInstruction
-├── routing/                    # Pendiente de evaluar destino final
-│   └── sources.ts              # Completion source routing (resolveCompletionSourceForRequest)
 └── README.md
 ```
 
@@ -45,7 +42,7 @@ sequenceDiagram
   participant W as Webview
   participant A as api (handlers)
   participant P as system/runtime
-  participant S as system/internals/states/session
+  participant S as system/internals/state/sessionStore
   participant E as engines
   W->>A: suggest(text, captureId)
   A->>P: runGhostPromptSuggestPipeline
@@ -55,7 +52,7 @@ sequenceDiagram
   P->>W: broadcast loading / suggestion / empty / error
 ```
 
-Pasos alineados con `system/runtime/suggest.ts`: preparar token y `captureId`, resolver fuente (`sugcore/routing/sources` + registry), llamar al `CompletionProvider`, broadcast a la UI.
+Pasos alineados con `system/runtime/suggestRuntime.ts`: preparar token y `captureId`, resolver fuente (`engines/config/completionSources` + `engines/routing/resolveCompletionSource` + registry), llamar al `CompletionProvider`, broadcast a la UI.
 
 ---
 
@@ -64,8 +61,8 @@ Pasos alineados con `system/runtime/suggest.ts`: preparar token y `captureId`, r
 | Importa desde                             | Motivo                                    |
 | ----------------------------------------- | ----------------------------------------- |
 | `engines/engineRegistry`                  | Obtener el motor por `CompletionSourceId` |
-| `system/internals/states/session`         | Session store (captureId, cancelación)    |
-| `system/internals/states/loading`         | Loading phases y textos de UI             |
+| `system/internals/state/sessionStore`    | Session store (captureId, cancelación)    |
+| `system/internals/protocols/state/loading` | Fases y textos de carga                  |
 | `system/runtime`                          | Pipeline de orquestación suggest          |
 | `system/log`                              | Logging opcional de performance           |
 | `api/protocols/webviewProtocols`          | Tipo del mensaje inbound `suggest`        |
@@ -77,10 +74,10 @@ Pasos alineados con `system/runtime/suggest.ts`: preparar token y `captureId`, r
 | Test                                          | Cubre                            |
 | --------------------------------------------- | -------------------------------- |
 | `system/runtime/suggest.test.ts`              | Pipeline suggest con mocks       |
-| `system/internals/states/session.test.ts`     | Estado, cancelación, captureId   |
+| `system/internals/state/sessionStore.test.ts` | Estado, cancelación, captureId   |
 | `CopilotCompletion.test.ts` / `opencodeLmEngine` tests | Vía engines, contratos con sugcore |
-| `sugcore/routing/completionSources.test.ts`   | Routing de fuentes               |
-| `system/internals/states/loading.test.ts`     | Textos de fase                   |
-| `system/internals/streaming/collect.test.ts`  | Streaming de respuesta LM        |
+| `engines/routing/resolveCompletionSource.test.ts` | Routing de fuentes           |
+| `protocols/state/loading/loadingLabels.test.ts` | Textos por fase                |
+| `engines/copilot/collectLmResponse.test.ts`   | Stream LM VS Code (Copilot)      |
 
 El merge de catálogos multi-motor se cubre en **`tests/mergedModelCatalog.test.ts`** (módulo bajo `engines/catalog/`).

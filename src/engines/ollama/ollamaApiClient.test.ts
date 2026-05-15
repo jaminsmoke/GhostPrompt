@@ -1,6 +1,9 @@
+/**
+ * @file Pruebas del cliente de API Ollama.
+ */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mockFetch = vi.fn();
+const mockFetch = vi.fn<Promise<Response>, [RequestInfo | URL, RequestInit?]>();
 
 vi.stubGlobal('fetch', mockFetch);
 
@@ -10,6 +13,16 @@ afterEach(() => {
 
 import { listModels, generate } from './ollamaApiClient';
 
+/**
+ * @param data
+ * @param status
+ */
+/**
+ * Creates a mock fetch Response containing JSON.
+ * @param {unknown} data The body payload to serialize.
+ * @param {number} status The HTTP status code.
+ * @returns {unknown} A Response-like object with JSON payload headers.
+ */
 function makeJsonResponse(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
@@ -26,8 +39,8 @@ describe('ollamaApiClient listModels', () => {
     mockFetch.mockResolvedValue(
       makeJsonResponse({
         models: [
-          { name: 'mistral:latest', modified_at: '2024-01-01', size: 100, digest: 'abc' },
-          { name: 'llama3:latest', modified_at: '2024-01-02', size: 200, digest: 'def' },
+          { name: 'mistral:latest', ['modified_at']: '2024-01-01', size: 100, digest: 'abc' },
+          { name: 'llama3:latest', ['modified_at']: '2024-01-02', size: 200, digest: 'def' },
         ],
       }),
     );
@@ -50,8 +63,8 @@ describe('ollamaApiClient listModels', () => {
     mockFetch.mockResolvedValue(
       makeJsonResponse({
         models: [
-          { name: 'mistral:latest', modified_at: '2024-01-01', size: 100, digest: 'abc' },
-          { name: 'bad-model', modified_at: '2024-01-02' },
+          { name: 'mistral:latest', ['modified_at']: '2024-01-01', size: 100, digest: 'abc' },
+          { name: 'bad-model', ['modified_at']: '2024-01-02' },
         ],
       }),
     );
@@ -92,13 +105,9 @@ describe('ollamaApiClient generate', () => {
 
     const text = await generate('Hi', 'mistral:latest');
     expect(text).toBe('Hello!');
-    expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:11434/api/generate',
-      expect.objectContaining({
-        method: 'POST',
-        body: expect.stringContaining('"stream":false'),
-      }),
-    );
+    const [[, init]] = mockFetch.mock.calls as [RequestInfo | URL, RequestInit?][];
+    expect(init).toMatchObject({ method: 'POST' });
+    expect(String(init?.body)).toContain('"stream":false');
   });
 
   it('returns empty string when response field is missing', async () => {
@@ -134,15 +143,16 @@ describe('ollamaApiClient generate', () => {
     await expect(generate('Hi', 'mistral:latest')).rejects.toThrow('Ollama HTTP 400');
   });
 
-  it('uses signal when provided', async () => {
-    mockFetch.mockResolvedValue(makeJsonResponse({ model: 'm', response: 'ok', done: true }));
+  it('propagates abort signal when provided', async () => {
     const controller = new AbortController();
-    await generate('Hi', 'mistral:latest', { signal: controller.signal });
-    expect(mockFetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        signal: expect.objectContaining({ aborted: false }),
-      }),
-    );
+    mockFetch.mockImplementation((_url: RequestInfo | URL, init?: RequestInit) => {
+      const signal = init?.signal;
+      expect(signal).toBeDefined();
+      expect(signal?.aborted).toBe(false);
+      controller.abort();
+      expect(signal?.aborted).toBe(true);
+      return Promise.reject(new DOMException('Aborted', 'AbortError'));
+    });
+    await expect(generate('Hi', 'mistral:latest', { signal: controller.signal })).rejects.toThrow();
   });
 });

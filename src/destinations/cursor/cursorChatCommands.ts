@@ -1,7 +1,8 @@
 /**
- * Comandos IDE para abrir/rellenar el chat de Cursor (fase 0 + fase B).
+ * @file Comandos IDE para abrir/rellenar el chat de Cursor (fase 0 + fase B).
  */
 import * as vscode from 'vscode';
+
 import { getLogger } from '../../system/log';
 
 /** Prefijos usados al filtrar `vscode.commands.getCommands` en descubrimiento. */

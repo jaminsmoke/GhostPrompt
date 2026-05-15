@@ -1,6 +1,11 @@
+/**
+ * @file Manejador de errores React para el webview GhostPrompt.
+ */
 import { Component } from 'react';
-import type { ErrorInfo, ReactNode } from 'react';
+
 import { postToHost } from '../hooks/useGhostPrompt';
+
+import type { ErrorInfo, ReactNode } from 'react';
 
 interface ErrorBoundaryProps {
   children: ReactNode;

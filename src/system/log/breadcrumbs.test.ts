@@ -1,3 +1,6 @@
+/**
+ * @file Tests para breadcrumbs del logger.
+ */
 import { describe, expect, it } from 'vitest';
 
 import { CaptureBreadcrumbStore } from './breadcrumbs';

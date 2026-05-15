@@ -1,3 +1,6 @@
+/**
+ * @file Pruebas de estado de proveedor OpenCode.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const execMock = vi.hoisted(() => vi.fn());

@@ -15,7 +15,8 @@
     "isolatedModules": true
   },
   "include": [
-    "./**/*.{ts,tsx}",
+    "./**/*.ts",
+    "./**/*.tsx",
     "./globals.d.ts",
     "../../api/contracts/webviewMessageSchemas.ts"
   ],

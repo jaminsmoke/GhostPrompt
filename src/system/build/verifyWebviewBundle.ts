@@ -1,9 +1,7 @@
 /**
- * Smoke check: existe `src/ui/webview/dist/react/index.html` y contiene la firma esperada del bundle React del webview.
- * Ejecutar desde la raíz del repo (`npm run verify:webview-bundle`).
+ * @file Smoke check de bundle webview React generado.
  *
- * Compila a `out/system/build/` — excluido del VSIX (`.vscodeignore`): solo herramienta de desarrollo/CI,
- * no forma parte del runtime de la extensión instalada.
+ * Comprueba que el build de webview existe y contiene la firma esperada.
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';

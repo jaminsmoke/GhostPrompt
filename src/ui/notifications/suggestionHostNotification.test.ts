@@ -1,4 +1,13 @@
+/**
+ * @file Tests de notificaciones del host para sugerencias GhostPrompt.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vscode from 'vscode';
+
+import {
+  maybeNotifySuggestionIssue,
+  resetSuggestionHostNotificationThrottleForTests,
+} from './suggestionNotification';
 
 const showWarningMessageMock = vi.hoisted(() => vi.fn());
 
@@ -12,13 +21,6 @@ vi.mock('vscode', () => ({
     showWarningMessage: showWarningMessageMock,
   },
 }));
-
-import * as vscode from 'vscode';
-
-import {
-  maybeNotifySuggestionIssue,
-  resetSuggestionHostNotificationThrottleForTests,
-} from './suggestionNotification';
 
 describe('maybeNotifySuggestionIssue', () => {
   beforeEach(() => {

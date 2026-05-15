@@ -1,3 +1,6 @@
+/**
+ * @file Tests del transporte de log hacia el output channel.
+ */
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('vscode', () => ({

@@ -1,9 +1,11 @@
 /**
- * Lectura de configuración GhostPrompt desde `vscode.workspace` y contexto del editor activo.
+ * @file Lectura de configuración GhostPrompt desde `vscode.workspace` y contexto del editor activo.
  * Extraído de `MiniInputViewProvider` (roadmap v0.3.2 fase A).
  */
 import * as vscode from 'vscode';
+
 import { SuggestionStyle } from '../../sugcore/sugstyle/styleLengthController';
+
 import type { SuggestionModelPolicy } from '../../system/internals/protocols/types';
 
 export {
@@ -47,7 +49,7 @@ export function getGhostPromptSelectedModelId(): string {
   const value = vscode.workspace
     .getConfiguration('ghostPrompt')
     .get<string>('selectedModelId', 'auto');
-  return value?.trim() || 'auto';
+  return value.trim() || 'auto';
 }
 
 /**
@@ -115,7 +117,7 @@ export function collectGhostPromptProjectContext(): {
   }
   const activeLanguageId = editor.document.languageId;
   const activeFilePath = vscode.workspace.asRelativePath(editor.document.uri, false);
-  const selected = editor.selection?.isEmpty ? '' : editor.document.getText(editor.selection);
+  const selected = editor.selection.isEmpty ? '' : editor.document.getText(editor.selection);
   const activeSelection = selected ? trimContextField(selected, 320) : undefined;
   return {
     workspaceName,

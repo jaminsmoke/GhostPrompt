@@ -1,3 +1,6 @@
+/**
+ * @file Barra inferior compartida del webview GhostPrompt.
+ */
 interface BottomBarProps {
   status: string;
   isLoading: boolean;

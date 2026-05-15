@@ -1,8 +1,13 @@
+/**
+ * @file Catálogo de modelos Ollama para el selector de UI.
+ */
 import * as vscode from 'vscode';
 
-import type { SuggestionModelDescriptor, SuggestionModelPolicy } from '../../../system/internals/protocols/types';
 import { listModels } from '../ollamaApiClient';
+
 import { normalizeOllamaModels, ollamaModelToDescriptor } from './normalizeOllamaModels';
+
+import type { SuggestionModelDescriptor, SuggestionModelPolicy } from '../../../system/internals/protocols/types';
 
 /**
  * Lista los modelos de Ollama disponibles y los convierte en descriptores.

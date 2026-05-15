@@ -1,3 +1,6 @@
+/**
+ * @file Normalización de modelos Ollama para el catálogo de sugerencias.
+ */
 import type { SuggestionModelDescriptor } from '../../../system/internals/protocols/types';
 
 export type OllamaApiModelRecord = {

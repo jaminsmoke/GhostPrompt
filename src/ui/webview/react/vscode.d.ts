@@ -1,3 +1,6 @@
+/**
+ * @file Declaraciones globales de VS Code para el webview React.
+ */
 export {};
 
 declare global {

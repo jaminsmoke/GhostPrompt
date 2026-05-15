@@ -1,6 +1,14 @@
+/**
+ * @file Estado de proveedor Ollama y verificación de salud.
+ */
 import { exec } from 'node:child_process';
-import type { ProviderStatusModule, ProviderStateRecord } from '../../system/internals/states/provider-types';
+
 import { ollamaModelManager } from './ollamaModelManager';
+
+import type {
+  CompletionSourceStateRecord,
+  CompletionSourceStatusModule,
+} from '../status/completionSourceStatusTypes';
 
 /**
  * Ejecuta un comando de shell y devuelve su salida estándar.
@@ -33,19 +41,17 @@ function parseModelList(stdout: string): string[] {
     .filter(Boolean);
 }
 
-export const ollamaStatusModule: ProviderStatusModule = {
+export const ollamaStatusModule: CompletionSourceStatusModule = {
   id: 'ollama',
-  kind: 'engine',
   label: 'Ollama',
 
-  async check(): Promise<ProviderStateRecord> {
+  async check(): Promise<CompletionSourceStateRecord> {
     let version: string;
     try {
       version = await execAsync('ollama --version', 5000);
     } catch {
       return {
         id: 'ollama',
-        kind: 'engine',
         status: 'unavailable',
         label: 'Ollama',
         statusText: 'No instalado',
@@ -59,7 +65,6 @@ export const ollamaStatusModule: ProviderStatusModule = {
     } catch {
       return {
         id: 'ollama',
-        kind: 'engine',
         status: 'stopped',
         label: 'Ollama',
         statusText: `Instalado (${version})`,
@@ -69,7 +74,6 @@ export const ollamaStatusModule: ProviderStatusModule = {
     if (models.length === 0) {
       return {
         id: 'ollama',
-        kind: 'engine',
         status: 'stopped',
         label: 'Ollama',
         statusText: 'Instalado — sin modelos',
@@ -80,7 +84,6 @@ export const ollamaStatusModule: ProviderStatusModule = {
     if (activeModel) {
       return {
         id: 'ollama',
-        kind: 'engine',
         status: 'running',
         label: 'Ollama',
         statusText: `${activeModel} activo`,
@@ -90,7 +93,6 @@ export const ollamaStatusModule: ProviderStatusModule = {
 
     return {
       id: 'ollama',
-      kind: 'engine',
       status: 'stopped',
       label: 'Ollama',
       statusText: `${models.length} modelo${models.length > 1 ? 's' : ''} disponible${models.length > 1 ? 's' : ''}`,

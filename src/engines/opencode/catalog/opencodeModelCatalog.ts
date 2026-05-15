@@ -1,13 +1,16 @@
 /**
- * Catálogo de modelos OpenCode para el selector webview (`config.providers()` vía API client).
- * Ver `Docs/ARCHITECTURE.md` §3 — Catálogo OpenCode y merge.
+ * @file Catálogo de modelos OpenCode para el selector webview.
+ *
+ * `config.providers()` se normaliza y se convierte en descriptores que muestra la UI.
  */
 import * as vscode from 'vscode';
 
+import { createOpenCodeClient } from '../opencodeApiClient';
+
 import { normalizeOpencodeProviderModels } from './normalizeOpencodeProviderModels';
 import { classifyOpencodeModelTier } from './opencodeModelTier';
+
 import type { SuggestionModelDescriptor, SuggestionModelPolicy } from '../../../system/internals/protocols/types';
-import { createOpenCodeClient } from '../opencodeApiClient';
 
 type OpencodeProvidersBundle = {
   providers?: Array<{

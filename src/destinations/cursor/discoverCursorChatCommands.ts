@@ -9,13 +9,16 @@
  * la posible eliminación o refactorización de esta herramienta.
  */
 import * as vscode from 'vscode';
-import { appendCursorChatCommandDiscovery } from './cursorChatCommands';
+
 import { ensureSuggestionDebugChannel } from '../../system/log';
+
+import { appendCursorChatCommandDiscovery } from './cursorChatCommands';
 
 /**
  * Registra `ghostPrompt.discoverCursorChatCommands` (paleta / F1).
  * @param {vscode.ExtensionContext} context Contexto de extensión.
  * @returns {void}
+ * @throws {Error} Si el canal de logging no está inicializado.
  */
 export function registerDiscoverCursorChatCommandsCommand(context: vscode.ExtensionContext): void {
   const channel = ensureSuggestionDebugChannel();

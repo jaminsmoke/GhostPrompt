@@ -1,4 +1,6 @@
 /**
+ * @file WebviewViewProvider para el input de GhostPrompt.
+ *
  * WebviewViewProvider para el input de GhostPrompt.
  *
  * Composición de dependencias y flujos para GhostPrompt input v0.5.3.
@@ -28,27 +30,30 @@
  *   - Contratos Zod (`api/contracts/webviewMessageSchemas.ts` / `api/protocols/webviewProtocols.ts`): entrada webview → host y salida `settings`.
  */
 import * as vscode from 'vscode';
-import { buildAndPostGhostPromptSettings } from '../../api/settings/settingsPostMessage';
-import { buildGhostPromptWebviewHtml } from './webviewHtml';
-import { getLogger } from '../../system/log';
+
 import {
   getGhostPromptMaxSuggestionChars,
   getGhostPromptSelectedModelId,
   getGhostPromptSuggestionModelPolicy,
   getGhostPromptSuggestionStyle,
 } from '../../api/getters/workspaceGetters';
-import { handleGhostPromptSuggest } from '../../system/runtime/suggestRuntime';
 import { dispatchGhostPromptInboundMessage } from '../../api/protocols/inboundHandlers';
-import type { GhostPromptSuggestDeps } from '../../system/runtime/suggestRuntime';
 import {
   parseWebviewInboundMessage,
   parseWebviewOutboundMessage,
 } from '../../api/protocols/webviewProtocols';
+import { buildAndPostGhostPromptSettings } from '../../api/settings/settingsPostMessage';
 import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from '../../destinations/vsOpenCodeX/vsOpenCodeXDestination';
-import { maybeNotifySuggestionIssue } from '../notifications/suggestionNotification';
-import { ollamaModelManager } from '../../engines/ollama';
-import { providerStatusManager } from '../../system/internals/states/provider';
 import { looksLikeOllamaModelId } from '../../engines/modelIdChecks';
+import { ollamaModelManager } from '../../engines/ollama';
+import { completionSourceStatusManager } from '../../engines/status/completionSourceStatusManager';
+import { getLogger } from '../../system/log';
+import { handleGhostPromptSuggest } from '../../system/runtime/suggestRuntime';
+import { maybeNotifySuggestionIssue } from '../notifications/suggestionNotification';
+
+import { buildGhostPromptWebviewHtml } from './webviewHtml';
+
+import type { GhostPromptSuggestDeps } from '../../system/runtime/suggestRuntime';
 
 export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /** View ID for the activity bar container. */
@@ -80,7 +85,6 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * Emite el mismo payload de UI a TODAS las instancias del webview registradas
    * (sidebar + panel inferior), añadiendo `broadcast: true` para que cada webview
    * pueda sincronizar su `captureId`. También forwardea a VSOpenCodeX si aplica.
-   *
    * @param {Record<string, unknown>} payload - Mensaje a emitir (se le añade `{ broadcast: true }`).
    *                 Se valida con `parseWebviewOutboundMessage` en desarrollo.
    * @returns {void}
@@ -135,7 +139,8 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
 
   private static ghostPromptSuggestDeps(): GhostPromptSuggestDeps {
     return {
-      broadcastUi: MiniInputViewProvider._broadcastUi,
+      broadcastUi: (...args: Parameters<typeof MiniInputViewProvider._broadcastUi>) =>
+        MiniInputViewProvider._broadcastUi(...args),
       getSuggestionModelPolicy: () => getGhostPromptSuggestionModelPolicy(),
       getSelectedModelId: () => getGhostPromptSelectedModelId(),
       getSuggestionStyle: () => getGhostPromptSuggestionStyle(),
@@ -200,19 +205,19 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     value: string,
   ): Promise<void> {
     if (key === 'selectedModelId' && looksLikeOllamaModelId(value)) {
-      ollamaModelManager.stopAll();
+      void ollamaModelManager.stopAll();
       try {
         await ollamaModelManager.startModel(value);
       } catch {
         // Best-effort: el status se refresca igual.
       }
-      const providers = await providerStatusManager.refreshAll();
+      const providers = await completionSourceStatusManager.refreshAll();
       MiniInputViewProvider._broadcastUi({ type: 'providerStatus', providers });
     }
 
     if (key === 'completionProvider' && value !== 'ollama') {
-      ollamaModelManager.stopAll();
-      const providers = await providerStatusManager.refreshAll();
+      void ollamaModelManager.stopAll();
+      const providers = await completionSourceStatusManager.refreshAll();
       MiniInputViewProvider._broadcastUi({ type: 'providerStatus', providers });
     }
   }
@@ -266,19 +271,24 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         webview: webviewView.webview,
         dataUri,
         postSettings: (w) => this._postSettings(w),
-        broadcastDraftSync: MiniInputViewProvider._broadcastDraftSync,
-        broadcastSettingsToAllViews: MiniInputViewProvider._broadcastSettingsToAllViews,
-        broadcastClearAll: MiniInputViewProvider._broadcastClearAll,
-        broadcastUi: MiniInputViewProvider._broadcastUi,
+        broadcastDraftSync: (...args: Parameters<typeof MiniInputViewProvider._broadcastDraftSync>) =>
+          MiniInputViewProvider._broadcastDraftSync(...args),
+        broadcastSettingsToAllViews: (
+          ...args: Parameters<typeof MiniInputViewProvider._broadcastSettingsToAllViews>
+        ) => MiniInputViewProvider._broadcastSettingsToAllViews(...args),
+        broadcastClearAll: (...args: Parameters<typeof MiniInputViewProvider._broadcastClearAll>) =>
+          MiniInputViewProvider._broadcastClearAll(...args),
+        broadcastUi: (...args: Parameters<typeof MiniInputViewProvider._broadcastUi>) =>
+          MiniInputViewProvider._broadcastUi(...args),
         suggestDeps: MiniInputViewProvider.ghostPromptSuggestDeps(),
-        onSettingChanged: MiniInputViewProvider._onSettingChanged,
+        onSettingChanged: (...args: Parameters<typeof MiniInputViewProvider._onSettingChanged>) =>
+          MiniInputViewProvider._onSettingChanged(...args),
       });
     });
   }
 
   /**
    * Builds HTML from the React webview bundle and injects secure asset URIs and the CSP nonce.
-   *
    * @param {vscode.Webview} webview - The webview instance to generate HTML for.
    * @returns {string} HTML string for the webview.
    */

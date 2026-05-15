@@ -1,3 +1,6 @@
+/**
+ * @file Pruebas de exportaciones públicas del módulo engines.
+ */
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('vscode', () => ({
@@ -14,10 +17,10 @@ vi.mock('vscode', () => ({
   lm: {
     selectChatModels: vi.fn(),
   },
-  LanguageModelChatMessage: {
-    User: vi.fn(),
+  ['LanguageModelChatMessage']: {
+    ['User']: vi.fn(),
   },
-  CancellationTokenSource: class {
+  ['CancellationTokenSource']: class {
     token = {
       isCancellationRequested: false,
       onCancellationRequested: () => ({ dispose: () => {} }),

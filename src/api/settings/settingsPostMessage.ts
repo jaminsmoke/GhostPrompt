@@ -1,25 +1,27 @@
 /**
- * Construye y envía el mensaje `settings` al webview (lista de modelos, chips, etc.).
+ * @file Construye y envía el mensaje `settings` al webview (lista de modelos, chips, etc.).
  */
 import * as vscode from 'vscode';
-import { getCompletionUiKind, getEnabledCompletionSources } from '../../system/internals/config/sources';
-import type { SuggestionStyle } from '../../sugcore/sugstyle/styleLengthController';
-import type {
-  SuggestionModelDescriptor,
-  SuggestionModelPolicy,
-} from '../../system/internals/protocols/types';
-import { listSuggestionModels } from '../../engines/copilot/catalog/modelCatalog';
-import { listOpencodeSuggestionModels } from '../../engines/opencode/catalog/opencodeModelCatalog';
-import { listOllamaSuggestionModels } from '../../engines/ollama/catalog/ollamaModelCatalog';
+
 import { listMergedSuggestionModels } from '../../engines/catalog/mergedModelCatalog';
+import { getCompletionUiKind, getEnabledCompletionSources } from '../../engines/config/completionSources';
+import { listSuggestionModels } from '../../engines/copilot/catalog/modelCatalog';
+import { listOllamaSuggestionModels } from '../../engines/ollama/catalog/ollamaModelCatalog';
+import { listOpencodeSuggestionModels } from '../../engines/opencode/catalog/opencodeModelCatalog';
+import { ghostPromptSessionStore } from '../../system/internals/state/sessionStore';
 import { isSuggestionDebugEnabled } from '../../system/log';
-import { ghostPromptSessionStore } from '../../system/internals/states/session';
 import {
   getGhostPromptAgentDestination,
   isCursorDesktopHost,
   isVsOpenCodeXExtensionInstalled,
 } from '../getters/workspaceGetters';
 import { parseOutboundSettingsEnvelope } from '../protocols/webviewProtocols';
+
+import type { SuggestionStyle } from '../../sugcore/sugstyle/styleLengthController';
+import type {
+  SuggestionModelDescriptor,
+  SuggestionModelPolicy,
+} from '../../system/internals/protocols/types';
 
 export type GhostPromptSettingsGetters = {
   getSuggestionModelPolicy: () => SuggestionModelPolicy;

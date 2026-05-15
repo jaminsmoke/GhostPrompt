@@ -20,11 +20,22 @@
 
 ```text
 engines/
+├── completionSourceId.ts        # Tipo CompletionSourceId ('copilot' | 'opencode' | 'ollama')
+├── status/                      # Estado de salud de fuentes (UI motor: start/stop, refresh)
+│   ├── completionSourceStatusManager.ts
+│   ├── registerCompletionSourceStatusModules.ts
+│   └── completionSourceStatusTypes.ts
 ├── engineRegistry.ts            # Registro de motores + getCompletionProviderForSource
+├── config/
+│   └── completionSources.ts     # getEnabledCompletionSources, getCompletionUiKind (VS Code settings)
+├── routing/
+│   └── resolveCompletionSource.ts  # resolveCompletionSourceForRequest (modelo → fuente)
+├── modelIdChecks.ts             # looksLikeOllamaModelId, looksLikeOpencodeModelId
 ├── catalog/
 │   └── mergedModelCatalog.ts    # Lista unificada multi-motor (settings/UI; no hot path suggest)
 ├── copilot/
 │   ├── copilotLmEngine.ts       # Motor Copilot LM (vscode.lm)
+│   ├── collectLmResponse.ts     # Recolecta texto del stream vscode.lm
 │   └── catalog/
 │       └── modelCatalog.ts      # Catálogo de modelos Copilot
 ├── opencode/
@@ -80,7 +91,8 @@ getCompletionProviderForSource('ollama'); // → ollamaLm provider
 | `providerID/modelID` | `opencodeLm` | `openai/gpt-4`                |
 | `model:tag`          | `ollamaLm`   | `mistral:latest`, `llama3:7b` |
 
-Función clave: `resolveCompletionSourceForRequest(selectedModelId, enabledSources)` en `sugcore/routing/sources.ts`.
+Función clave: `resolveCompletionSourceForRequest(selectedModelId, enabledSources)` en `routing/resolveCompletionSource.ts`.
+Configuración de fuentes habilitadas: `config/completionSources.ts` (`ghostPrompt.enabledCompletionSources` / legacy `completionProvider`).
 
 ---
 
@@ -120,8 +132,10 @@ Función clave: `resolveCompletionSourceForRequest(selectedModelId, enabledSourc
 | --------------------------- | ----------------------------------------------------- |
 | `sugcore/types`                | `SuggestionModelDescriptor`, `CompletionResult`, etc. |
 | `sugcore/rules/instruction`    | `buildCompletionInstruction` para el prompt del LM    |
-| `system/internals/streaming/collect` | `collectResponseText` (stream LM VS Code)       |
-| `system/internals/states/loading`    | `SuggestionLoadingPhase`, textos de fase para la UI |
+| `copilot/collectLmResponse`          | `collectLmResponse` (stream LM VS Code)         |
+| `system/internals/protocols/state/loading` | `SuggestionLoadingPhase`, textos de fase    |
+| `engines/status`                     | Estado de fuentes de completado (manager + tipos) |
+| `system/internals/protocols/state`   | Tipos de sesión y loading                         |
 | `system/log`                | Logging estructurado y perf capture                   |
 
 ---

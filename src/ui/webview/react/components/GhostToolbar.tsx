@@ -1,12 +1,17 @@
+/**
+ * @file Componente de toolbar principal del webview GhostPrompt.
+ */
 import { type ReactNode, useMemo, useState } from 'react';
+
+import { ToolbarChip } from './ToolbarChip';
+
 import type {
   AgentDestination,
   CompletionProvider,
-  ProviderState,
-  ProviderStateRecord,
+  CompletionSourceState,
+  CompletionSourceStateRecord,
   SuggestionModel,
 } from '../types';
-import { ToolbarChip } from './ToolbarChip';
 
 interface GhostToolbarProps {
   completionProvider: CompletionProvider;
@@ -19,7 +24,7 @@ interface GhostToolbarProps {
   vsOpenCodeXExtensionInstalled: boolean;
   cursorDesktopHost: boolean;
   compact: boolean;
-  providerStatuses: ProviderStateRecord[];
+  providerStatuses: CompletionSourceStateRecord[];
   statusLoading: boolean;
   onCompletionProviderChange: (value: CompletionProvider) => void;
   onSelectedModelChange: (value: string) => void;
@@ -38,7 +43,7 @@ const actionBtnClass =
   'border-(--vscode-widget-border) ' +
   'hover:bg-(--vscode-list-hoverBackground)';
 
-const statusIcon = (s: ProviderState): string => {
+const statusIcon = (s: CompletionSourceState): string => {
   switch (s) {
     case 'running':
       return '\u25CF';
@@ -53,7 +58,7 @@ const statusIcon = (s: ProviderState): string => {
   }
 };
 
-const statusColor = (s: ProviderState): string => {
+const statusColor = (s: CompletionSourceState): string => {
   switch (s) {
     case 'running':
       return 'text-green-500';

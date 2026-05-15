@@ -1,3 +1,6 @@
+/**
+ * @file Pruebas unitarias de la actualización de configuración desde el webview.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const updateMock = vi.hoisted(() => vi.fn(() => Promise.resolve()));
@@ -8,7 +11,7 @@ vi.mock('vscode', () => ({
       update: (...args: unknown[]) => updateMock(...args),
     }),
   },
-  ConfigurationTarget: { Global: 1 },
+  ['ConfigurationTarget']: { ['Global']: 1 },
 }));
 
 import { applyWebviewUpdateSetting } from './applyWebviewUpdate';

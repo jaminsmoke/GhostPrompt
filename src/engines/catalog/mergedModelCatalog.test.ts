@@ -1,3 +1,6 @@
+/**
+ * @file Pruebas de catálogo de modelos fusionados para sugerencias.
+ */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockListSuggestionModels = vi.hoisted(() => vi.fn());
