@@ -14,7 +14,7 @@ export function getMultiViewDraftText(): string {
 
 /**
  * Actualiza el borrador compartido entre vistas.
- * @param {string} text Nuevo texto del borrador.
+ * @param {string} text - Nuevo texto del borrador.
  */
 export function setMultiViewDraftText(text: string): void {
   _draftText = text;

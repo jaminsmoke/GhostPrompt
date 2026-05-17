@@ -1,28 +1,28 @@
 /**
  * @file Tests para breadcrumbs del logger.
  */
-import { describe, expect, it } from 'vitest';
+import * as vitest from 'vitest';
 
 import { CaptureBreadcrumbStore } from './breadcrumbs';
 
-describe('CaptureBreadcrumbStore', () => {
-  it('evicción FIFO al superar el máximo', () => {
+vitest.describe('CaptureBreadcrumbStore', () => {
+  vitest.it('evicción FIFO al superar el máximo', () => {
     const store = new CaptureBreadcrumbStore(3);
-    for (let i = 0; i < 5; i += 1) {
+    for (let index = 0; index < 5; index += 1) {
       store.push(1, {
         level: 'INFO',
-        message: `m${i}`,
-        timestamp: `t${i}`,
+        message: `m${index}`,
+        timestamp: `t${index}`,
       });
     }
     const snap = store.snapshot(1);
-    expect(snap.map((b) => b.message)).toEqual(['m2', 'm3', 'm4']);
+    vitest.expect(snap.map((b) => b.message)).toEqual(['m2', 'm3', 'm4']);
   });
 
-  it('flushCapture elimina el buffer', () => {
+  vitest.it('flushCapture elimina el buffer', () => {
     const store = new CaptureBreadcrumbStore();
     store.push(7, { level: 'INFO', message: 'a', timestamp: 't' });
     store.flushCapture(7);
-    expect(store.snapshot(7)).toEqual([]);
+    vitest.expect(store.snapshot(7)).toEqual([]);
   });
 });

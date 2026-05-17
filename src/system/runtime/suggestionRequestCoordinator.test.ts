@@ -1,10 +1,12 @@
 /**
  * @file Tests del coordinador de peticiones de suggestion.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 vi.mock('vscode', () => ({
-  ['CancellationTokenSource']: class {
+  'CancellationTokenSource': class {
     token = { isCancellationRequested: false };
     cancel(): void {
       this.token.isCancellationRequested = true;
@@ -15,32 +17,32 @@ vi.mock('vscode', () => ({
 
 import { SuggestionRequestCoordinator } from './suggestionRequestCoordinator';
 
-describe('SuggestionRequestCoordinator', () => {
+vitest.describe('SuggestionRequestCoordinator', () => {
   let coordinator: SuggestionRequestCoordinator;
 
-  beforeEach(() => {
+  vitest.beforeEach(() => {
     coordinator = new SuggestionRequestCoordinator();
   });
 
-  it('prepareRequest fija capture activo y cancela token anterior', () => {
+  vitest.it('prepareRequest fija capture activo y cancela token anterior', () => {
     const a = coordinator.prepareRequest(1);
-    expect(coordinator.getActiveCaptureId()).toBe(1);
-    expect(coordinator.isActiveCapture(1)).toBe(true);
+    vitest.expect(coordinator.getActiveCaptureId()).toBe(1);
+    vitest.expect(coordinator.isActiveCapture(1)).toBe(true);
 
     const b = coordinator.prepareRequest(2);
-    expect(coordinator.getActiveCaptureId()).toBe(2);
-    expect(coordinator.isActiveCapture(1)).toBe(false);
-    expect(coordinator.isActiveCapture(2)).toBe(true);
-    expect(a.token.isCancellationRequested).toBe(true);
+    vitest.expect(coordinator.getActiveCaptureId()).toBe(2);
+    vitest.expect(coordinator.isActiveCapture(1)).toBe(false);
+    vitest.expect(coordinator.isActiveCapture(2)).toBe(true);
+    vitest.expect(a.token.isCancellationRequested).toBe(true);
 
     coordinator.disposeTokenIfActive(b);
-    expect(b.token.isCancellationRequested).toBe(false);
+    vitest.expect(b.token.isCancellationRequested).toBe(false);
   });
 
-  it('reset limpia capture y token', () => {
+  vitest.it('reset limpia capture y token', () => {
     coordinator.prepareRequest(5);
     coordinator.reset();
-    expect(coordinator.getActiveCaptureId()).toBe(0);
-    expect(coordinator.isActiveCapture(5)).toBe(false);
+    vitest.expect(coordinator.getActiveCaptureId()).toBe(0);
+    vitest.expect(coordinator.isActiveCapture(5)).toBe(false);
   });
 });

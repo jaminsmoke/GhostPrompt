@@ -1,6 +1,11 @@
 /**
  * @file Pruebas de integración del punto de entrada React del webview.
  */
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderToStaticMarkup } from 'react-dom/server';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
+
 type VsCodeApi = { postMessage: (message: unknown) => void };
 
 const { postMessageMock } = vi.hoisted(() => {
@@ -10,10 +15,6 @@ const { postMessageMock } = vi.hoisted(() => {
   globalWithApi.acquireVsCodeApi = () => ({ postMessage: pm });
   return { postMessageMock: pm };
 });
-
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
 
 import { App, postToHost } from './App';
 
@@ -33,18 +34,18 @@ function renderApp() {
   );
 }
 
-describe('GhostPrompt React webview App', () => {
-  it('renders the bottom bar with initial status line', () => {
+vitest.describe('GhostPrompt React webview App', () => {
+  vitest.it('renders the bottom bar with initial status line', () => {
     const html = renderApp();
 
-    expect(html).toContain('Copilot LM');
-    expect(html).toContain('Auto');
-    expect(html).toContain('Empieza a escribir para obtener sugerencias...');
+    vitest.expect(html).toContain('Copilot LM');
+    vitest.expect(html).toContain('Auto');
+    vitest.expect(html).toContain('Empieza a escribir para obtener sugerencias...');
   });
 
-  it('posts outbound messages using the VS Code API when available', () => {
+  vitest.it('posts outbound messages using the VS Code API when available', () => {
     postToHost({ type: 'init' });
 
-    expect(postMessageMock).toHaveBeenCalledWith({ type: 'init' });
+    vitest.expect(postMessageMock).toHaveBeenCalledWith({ type: 'init' });
   });
 });

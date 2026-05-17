@@ -3,12 +3,12 @@
  */
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
-interface PromptInputProps {
+interface PromptInputProperties {
   text: string;
   suggestion: string;
   vsxActive: boolean;
   compact: boolean;
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  textareaRef: React.RefObject<HTMLTextAreaElement | undefined>;
   isGhostUiAllowed: () => boolean;
   onTextChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSend: () => void;
@@ -18,19 +18,19 @@ interface PromptInputProps {
 
 /**
  * Componente de entrada de prompt con sugerencia fantasma y atajos de teclado.
- * @param {PromptInputProps} props Propiedades del componente PromptInput.
- * @param {string} props.text Texto actual del prompt.
- * @param {string} props.suggestion Sugerencia fantasma a mostrar.
- * @param {boolean} props.vsxActive Indica si VSOpenCodeX está activo.
- * @param {boolean} props.compact Usa diseño compacto.
- * @param {import('react').RefObject<globalThis.HTMLTextAreaElement | null>} props.textareaRef Referencia del textarea.
- * @param {() => boolean} props.isGhostUiAllowed Comprueba si se puede aceptar la sugerencia.
- * @param {(e: import('react').ChangeEvent<globalThis.HTMLTextAreaElement>) => void} props.onTextChange Controlador de cambios de texto.
- * @param {() => void} props.onSend Controlador de envío de prompt.
- * @param {() => void} props.onAccept Controlador de aceptación de la sugerencia.
+ * @param {PromptInputProperties} props - Propiedades del componente PromptInput.
+ * @param {string} props.text - Texto actual del prompt.
+ * @param {string} props.suggestion - Sugerencia fantasma a mostrar.
+ * @param {boolean} props.vsxActive - Indica si VSOpenCodeX está activo.
+ * @param {boolean} props.compact - Usa diseño compacto.
+ * @param {import('react').RefObject<globalThis.HTMLTextAreaElement | undefined>} props.textareaRef - Referencia del textarea.
+ * @param {() => boolean} props.isGhostUiAllowed - Comprueba si se puede aceptar la sugerencia.
+ * @param {(e: import('react').ChangeEvent<globalThis.HTMLTextAreaElement>) => void} props.onTextChange - Controlador de cambios de texto.
+ * @param {() => void} props.onSend - Controlador de envío de prompt.
+ * @param {() => void} props.onAccept - Controlador de aceptación de la sugerencia.
  * @returns {import('react').JSX.Element} JSX del textarea y la sugerencia.
  */
-export function PromptInput(props: PromptInputProps): React.JSX.Element {
+export function PromptInput(props: PromptInputProperties): React.JSX.Element {
   const {
     text,
     suggestion,
@@ -43,7 +43,7 @@ export function PromptInput(props: PromptInputProps): React.JSX.Element {
     onAccept,
     onCursorCheck,
   } = props;
-  const ghostRef = useRef<HTMLPreElement | null>(null);
+  const ghostReference = useRef<HTMLPreElement | undefined>(undefined);
 
   const syncTextareaHeight = useCallback(() => {
     const input = textareaRef.current;
@@ -60,20 +60,20 @@ export function PromptInput(props: PromptInputProps): React.JSX.Element {
 
   const syncScroll = useCallback(() => {
     const input = textareaRef.current;
-    const ghost = ghostRef.current;
+    const ghost = ghostReference.current;
     if (input && ghost) {
       ghost.scrollTop = input.scrollTop;
       ghost.scrollLeft = input.scrollLeft;
     }
-  }, [textareaRef, ghostRef]);
+  }, [textareaRef, ghostReference]);
 
   const ghostContent = useMemo(() => {
     if (!suggestion || !text.trim()) {
-      return null;
+      return;
     }
     return (
       <pre
-        ref={ghostRef}
+        ref={ghostReference as unknown as React.Ref<HTMLPreElement>}
         className="absolute inset-px pointer-events-none m-0 px-3 py-2 whitespace-pre-wrap wrap-break-word text-sm leading-6 overflow-auto"
         aria-hidden="true"
       >
@@ -87,7 +87,7 @@ export function PromptInput(props: PromptInputProps): React.JSX.Element {
     <div className="relative mb-2">
       {ghostContent}
       <textarea
-        ref={textareaRef}
+        ref={textareaRef as unknown as React.Ref<HTMLTextAreaElement>}
         id="prompt-input"
         className={`w-full rounded-md border border-(--vscode-input-border) bg-(--vscode-input-background) px-3 py-2 text-sm leading-6 text-(--vscode-input-foreground) outline-none transition focus:border-(--vscode-focusBorder) focus:ring-1 focus:ring-(--vscode-focusBorder) resize-none ${compact ? 'min-h-16' : 'min-h-25'}`}
         value={text}
@@ -96,12 +96,10 @@ export function PromptInput(props: PromptInputProps): React.JSX.Element {
         onMouseUp={onCursorCheck}
         onKeyUp={onCursorCheck}
         onKeyDown={(event) => {
-          if (event.key === 'Tab') {
-            if (suggestion && isGhostUiAllowed()) {
+          if (event.key === 'Tab' && suggestion && isGhostUiAllowed()) {
               event.preventDefault();
               onAccept();
             }
-          }
           if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             onSend();

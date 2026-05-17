@@ -1,13 +1,14 @@
 /**
  * @file Tests del texto de carga de sugerencias.
  */
-import { describe, expect, it } from 'vitest';
 
-import { suggestionLoadingStatusText } from './loadingLabels';
+import * as vitest from 'vitest';
 
-import type { SuggestionLoadingPhase } from './loadingPhase';
+import { suggestionLoadingStatusText } from './stateLoadingLabels';
 
-describe('suggestionLoadingStatusText', () => {
+import type { SuggestionLoadingPhase } from './stateLoadingPhase';
+
+vitest.describe('suggestionLoadingStatusText', () => {
   const cases: [SuggestionLoadingPhase, string][] = [
     ['copilot', 'Buscando modelo…'],
     ['copilot-generating', 'Generando sugerencia…'],
@@ -24,8 +25,8 @@ describe('suggestionLoadingStatusText', () => {
   ];
 
   for (const [phase, expected] of cases) {
-    it(`returns "${expected}" for phase "${phase}"`, () => {
-      expect(suggestionLoadingStatusText(phase)).toBe(expected);
+    vitest.it(`returns "${expected}" for phase "${phase}"`, () => {
+      vitest.expect(suggestionLoadingStatusText(phase)).toBe(expected);
     });
   }
 });

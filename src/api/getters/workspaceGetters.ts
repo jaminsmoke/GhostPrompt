@@ -2,44 +2,18 @@
  * @file Lectura de configuración GhostPrompt desde `vscode.workspace` y contexto del editor activo.
  * Extraído de `MiniInputViewProvider` (roadmap v0.3.2 fase A).
  */
+
 import * as vscode from 'vscode';
 
-import { SuggestionStyle } from '../../sugcore/sugstyle/styleLengthController';
-
-import type { SuggestionModelPolicy } from '../../system/internals/protocols/types';
+import type { SuggestionStyle } from '../../system/internals/protocols/types';
 
 export {
-  type GhostPromptAgentDestination,
-  getGhostPromptAgentDestination,
+  type AgentDestination,
+  getAgentDestination,
   isCursorDesktopHost,
   isVsOpenCodeXExtensionInstalled,
-  parseGhostPromptAgentDestination,
+  parseAgentDestination,
 } from '../../destinations/destinationRegistry';
-
-/**
- * Normaliza y recorta un campo de contexto para el prompt.
- * @param {string} value Cadena original a normalizar.
- * @param {number} maxChars Límite máximo de caracteres en el campo.
- * @returns {string} Texto limpio y recortado con elípsis si excede el límite.
- */
-function trimContextField(value: string, maxChars: number): string {
-  const normalized = value.replace(/\s+/g, ' ').trim();
-  if (normalized.length <= maxChars) {
-    return normalized;
-  }
-  return `${normalized.slice(0, Math.max(0, maxChars - 3))}...`;
-}
-
-/**
- * Lee la política de modelo de sugerencias desde la configuración de GhostPrompt.
- * @returns {SuggestionModelPolicy} Política válida de sugerencia de modelo.
- */
-export function getGhostPromptSuggestionModelPolicy(): SuggestionModelPolicy {
-  const value = vscode.workspace
-    .getConfiguration('ghostPrompt')
-    .get<string>('suggestionModelPolicy', 'nonPremiumOnly');
-  return value === 'anyModel' ? 'anyModel' : 'nonPremiumOnly';
-}
 
 /**
  * Obtiene el identificador del modelo seleccionado en la configuración.
@@ -101,8 +75,8 @@ export function getGhostPromptOllamaExcludedModelIds(): string[] {
 }
 
 /**
- * Recopila contexto de proyecto disponible desde el editor activo.
- * @returns {{ workspaceName?: string; activeFilePath?: string; activeLanguageId?: string; activeSelection?: string }} Metadata del workspace y selección activa, si aplica.
+ * Recopila contexto de proyecto disponible desde el editor activo (texto tal cual del documento, sin normalizar).
+ * @returns {{ workspaceName?: string; activeFilePath?: string; activeLanguageId?: string; activeSelection?: string }} Metadata del vscode.workspace y selección activa, si aplica.
  */
 export function collectGhostPromptProjectContext(): {
   workspaceName?: string;
@@ -118,11 +92,11 @@ export function collectGhostPromptProjectContext(): {
   const activeLanguageId = editor.document.languageId;
   const activeFilePath = vscode.workspace.asRelativePath(editor.document.uri, false);
   const selected = editor.selection.isEmpty ? '' : editor.document.getText(editor.selection);
-  const activeSelection = selected ? trimContextField(selected, 320) : undefined;
+  const activeSelection = selected || undefined;
   return {
     workspaceName,
-    activeFilePath: trimContextField(activeFilePath, 180),
-    activeLanguageId: trimContextField(activeLanguageId, 40),
+    activeFilePath,
+    activeLanguageId,
     activeSelection,
   };
 }

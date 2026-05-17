@@ -11,7 +11,7 @@ import type { CompletionRequestOptions, CompletionResult } from '../../system/in
 /** Adaptador de un proveedor LM dentro del dominio engines. */
 export interface EngineProvider {
   readonly id: string;
-  requestCompletion(userText: string, options: CompletionRequestOptions): Promise<CompletionResult>;
+  requestCompletion: (userText: string, options: CompletionRequestOptions) => Promise<CompletionResult>;
 }
 
 const copilotLmProvider: EngineProvider = {
@@ -31,7 +31,7 @@ const ollamaProvider: EngineProvider = {
 
 /**
  * Devuelve el adaptador LM del proveedor indicado.
- * @param {ProviderId} source Identificador del proveedor.
+ * @param {ProviderId} source - Identificador del proveedor.
  * @returns {EngineProvider} Adaptador con `requestCompletion` del motor correspondiente.
  */
 export function resolveProvider(source: ProviderId): EngineProvider {

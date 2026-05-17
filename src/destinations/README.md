@@ -48,7 +48,7 @@ registerDestination("vsOpenCodeX", { id: "vsOpenCodeX", sendPrompt: ... });
 
 ```ts
 getActiveDestinationProvider(); // → provider del destino activo
-getGhostPromptAgentDestination(); // → "copilotChat" | "vsOpenCodeX"
+getAgentDestination(); // → "copilotChat" | "vsOpenCodeX"
 ```
 
 ---

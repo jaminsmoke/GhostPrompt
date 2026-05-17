@@ -1,11 +1,20 @@
 /**
  * @file Tipos y contratos comunes para solicitudes y resultados de completado.
  */
-import type { SuggestionStyle } from '../../../../sugcore/sugstyle/styleLengthController';
-import type { SuggestionLoadingPhase } from '../state/loading/loadingPhase';
-import type { CancellationToken } from 'vscode';
+import type { SuggestionStyle } from './typeSuggestionStyle';
+import type { SuggestionLoadingPhase } from '../state/loading/stateLoadingPhase';
+import type { ProviderId } from '../state/provider/stateProviderId';
 
-export type SuggestionModelPolicy = 'nonPremiumOnly' | 'anyModel';
+/**
+ * Token de cancelación mínimo para el pipeline de completion (sin dependencia de `vscode`).
+ * Estructuralmente compatible con `vscode.CancellationToken` en el boundary host/engines.
+ */
+export interface CompletionCancellationToken {
+  readonly isCancellationRequested: boolean;
+  readonly onCancellationRequested: (listener: () => void) => { dispose: () => void };
+}
+
+export type SuggestionModelPolicy = 'anyModel' | 'nonPremiumOnly';
 export type SuggestionModelTier = 'included' | 'premium' | 'unknown';
 
 export interface SuggestionModelDescriptor {
@@ -15,33 +24,22 @@ export interface SuggestionModelDescriptor {
   pricing?: string;
   provider?: string;
   /** Motor que debe ejecutar esta fila del selector (multi‑fuente). */
-  completionSource?: 'copilot' | 'opencode' | 'ollama';
+  completionSource?: ProviderId;
 }
 
 export type CompletionResult =
-  | {
+  {
+      kind: 'empty';
+      reason:
+        'content-blocked' | 'duplicate-input' | 'empty-response' | 'no-included-model' | 'no-model' | 'premium-quota-blocked' | 'rate-limited' | 'request-timeout' | 'session-budget-exhausted' | 'too-short';
+    } | {
       kind: 'suggestion';
       suggestion: string;
       model?: SuggestionModelDescriptor;
-    }
-  | {
-      kind: 'empty';
-      reason:
-        | 'no-model'
-        | 'no-included-model'
-        | 'premium-quota-blocked'
-        | 'empty-response'
-        | 'request-timeout'
-        | 'too-short'
-        | 'duplicate-input'
-        | 'rate-limited'
-        | 'session-budget-exhausted'
-        | 'content-blocked';
-    }
-  | { kind: 'error'; message: string };
+    } | { kind: 'error'; message: string };
 
 export interface CompletionRequestOptions {
-  token: CancellationToken;
+  token: CompletionCancellationToken;
   policy: SuggestionModelPolicy;
   preferredModelId?: string;
   style?: SuggestionStyle;
@@ -49,6 +47,7 @@ export interface CompletionRequestOptions {
   requestTimeoutMs?: number;
   /** Actualiza mensaje de carga en el webview (OpenCode: varias fases). */
   onLoadingPhase?: (phase: SuggestionLoadingPhase) => void;
+
   /**
    * OpenCode: texto acumulado desde SSE (`message.part.delta` en partes `text`).
    * El host debe validar `captureId` activo antes de postear al webview.

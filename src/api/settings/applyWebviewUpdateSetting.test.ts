@@ -1,7 +1,8 @@
 /**
  * @file Pruebas unitarias de la actualización de configuración desde el webview.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 const updateMock = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 
@@ -11,52 +12,52 @@ vi.mock('vscode', () => ({
       update: (...args: unknown[]) => updateMock(...args),
     }),
   },
-  ['ConfigurationTarget']: { ['Global']: 1 },
+  'ConfigurationTarget': { 'Global': 1 },
 }));
 
 import { applyWebviewUpdateSetting } from './applyWebviewUpdate';
 
-describe('applyWebviewUpdateSetting', () => {
-  beforeEach(() => {
+vitest.describe('applyWebviewUpdateSetting', () => {
+  vitest.beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('persiste agentDestination en configuración global', async () => {
+  vitest.it('persiste agentDestination en configuración global', async () => {
     const vscode = await import('vscode');
     await applyWebviewUpdateSetting({
       type: 'updateSetting',
       key: 'agentDestination',
       value: 'vsOpenCodeX',
     });
-    expect(updateMock).toHaveBeenCalledWith(
+    vitest.expect(updateMock).toHaveBeenCalledWith(
       'agentDestination',
       'vsOpenCodeX',
       vscode.ConfigurationTarget.Global,
     );
   });
 
-  it('normaliza agentDestination a copilotChat', async () => {
+  vitest.it('normaliza agentDestination a copilotChat', async () => {
     const vscode = await import('vscode');
     await applyWebviewUpdateSetting({
       type: 'updateSetting',
       key: 'agentDestination',
       value: 'copilotChat',
     });
-    expect(updateMock).toHaveBeenCalledWith(
+    vitest.expect(updateMock).toHaveBeenCalledWith(
       'agentDestination',
       'copilotChat',
       vscode.ConfigurationTarget.Global,
     );
   });
 
-  it('persiste agentDestination cursorChat', async () => {
+  vitest.it('persiste agentDestination cursorChat', async () => {
     const vscode = await import('vscode');
     await applyWebviewUpdateSetting({
       type: 'updateSetting',
       key: 'agentDestination',
       value: 'cursorChat',
     });
-    expect(updateMock).toHaveBeenCalledWith(
+    vitest.expect(updateMock).toHaveBeenCalledWith(
       'agentDestination',
       'cursorChat',
       vscode.ConfigurationTarget.Global,

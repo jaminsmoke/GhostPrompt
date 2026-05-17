@@ -17,7 +17,7 @@ VsCodeExtension-InlineChatSuggestions/
 │   ├── completion/index.ts             # Barrel del dominio completion
 │   ├── governor/SuggestionRequestGovernor.ts
 │   ├── bridge/ChatBridge.ts
-│   ├── system/contracts/webviewMessageSchemas.ts
+│   ├── system/internals/protocols/validations/schemas/zschemWebviewMessages.ts
 │   ├── system/log/ConversationLog.ts
 │   ├── system/log/SuggestionLog.ts
 │   └── system/log/LogManager.ts
@@ -37,7 +37,8 @@ VsCodeExtension-InlineChatSuggestions/
 │   │   └── Adopted/
 │   │       └── Option-C--Hybrid-TextEditor-Plus-Positioning.md
 │   ├── ExtensionArchitecture/
-│   │   └── PhysicalStructure.md      ← este archivo
+│   │   ├── PhysicalStructure.md      ← este archivo
+│   │   └── NamingConventions.md    # Convenciones de nombres (protocols, …)
 │   └── MyConversation/
 │       └── conversation.md           # Log de prompts enviados (runtime artifact)
 │

@@ -1,19 +1,20 @@
 /**
  * @file Tests de recolección de texto desde respuestas LM de VS Code (Copilot).
  */
-import { describe, expect, it } from 'vitest';
+
+import * as vitest from 'vitest';
 
 import { collectLmResponse } from './collectLmResponse';
 
-import type { LanguageModelChatResponse } from 'vscode';
+import type * as Vscode from 'vscode';
 
 /**
- * Creates a mock LanguageModelChatResponse with a text async iterator.
- * @param {string[]} chunks The text chunks to emit from the generated stream.
- * @param {number} [delayMs] Optional delay between emitted chunks in milliseconds.
- * @returns {unknown} A fake LanguageModelChatResponse for testing.
+ * Creates a mock Vscode.LanguageModelChatResponse with a text async iterator.
+ * @param {string[]} chunks - The text chunks to emit from the generated stream.
+ * @param {number} [delayMs] - Optional delay between emitted chunks in milliseconds.
+ * @returns {unknown} A fake Vscode.LanguageModelChatResponse for testing.
  */
-function createMockResponse(chunks: string[], delayMs = 0): LanguageModelChatResponse {
+function createMockResponse(chunks: string[], delayMs = 0): Vscode.LanguageModelChatResponse {
   const asyncIterator = (async function* () {
     for (const chunk of chunks) {
       if (delayMs > 0) {
@@ -30,39 +31,42 @@ function createMockResponse(chunks: string[], delayMs = 0): LanguageModelChatRes
   };
 }
 
-describe('collectLmResponse', () => {
-  it('collects single chunk', async () => {
+vitest.describe('collectLmResponse', () => {
+  vitest.it('collects single chunk', async () => {
     const response = createMockResponse(['hello']);
     const result = await collectLmResponse(response, 1000);
-    expect(result).toBe('hello');
+    vitest.expect(result).toBe('hello');
   });
 
-  it('concatenates multiple chunks', async () => {
+  vitest.it('concatenates multiple chunks', async () => {
     const response = createMockResponse(['hello', ' ', 'world']);
     const result = await collectLmResponse(response, 1000);
-    expect(result).toBe('hello world');
+    vitest.expect(result).toBe('hello world');
   });
 
-  it('returns empty string for no chunks', async () => {
+  vitest.it('returns empty string for no chunks', async () => {
     const response = createMockResponse([]);
     const result = await collectLmResponse(response, 1000);
-    expect(result).toBe('');
+    vitest.expect(result).toBe('');
   });
 
-  it('handles markdown content', async () => {
+  vitest.it('handles markdown content', async () => {
     const response = createMockResponse(['```typescript\n', 'const x = 1;\n', '```']);
     const result = await collectLmResponse(response, 1000);
-    expect(result).toBe('```typescript\nconst x = 1;\n```');
+    vitest.expect(result).toBe('```typescript\nconst x = 1;\n```');
   });
 
-  it('throws on timeout when no chunks arrive', async () => {
-    const asyncIterator = (async function* () {
-      await new Promise(() => {});
-    })();
+  vitest.it('throws on timeout when no chunks arrive', async () => {
+    const asyncIterator = {
+      [Symbol.asyncIterator]: () => ({
+        next: () =>
+          new Promise<IteratorResult<string>>(() => {}),
+      }),
+    };
     const response = {
-      text: { [Symbol.asyncIterator]: () => asyncIterator },
-    } as unknown as LanguageModelChatResponse;
+      text: asyncIterator,
+    } as unknown as Vscode.LanguageModelChatResponse;
 
-    await expect(collectLmResponse(response, 50)).rejects.toThrow('request-timeout');
+    await vitest.expect(collectLmResponse(response, 50)).rejects.toThrow('request-timeout');
   });
 });

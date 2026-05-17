@@ -3,7 +3,7 @@
  */
 
 declare function acquireVsCodeApi(): {
-  postMessage(message: unknown): void;
+  postMessage: (message: unknown) => void;
 };
 
 interface GhostPromptCapabilities {

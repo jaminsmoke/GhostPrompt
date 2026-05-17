@@ -11,9 +11,9 @@ import type {
 
 /**
  * Selecciona el modelo Copilot adecuado según la política y preferencia.
- * @param {readonly vscode.LanguageModelChat[]} models Lista de modelos disponibles.
- * @param {SuggestionModelPolicy} policy Política de selección de modelo.
- * @param {string | undefined} [preferredModelId] Identificador de modelo preferido opcional.
+ * @param {readonly vscode.LanguageModelChat[]} models - Lista de modelos disponibles.
+ * @param {SuggestionModelPolicy} policy - Política de selección de modelo.
+ * @param {string | undefined} [preferredModelId] - Identificador de modelo preferido opcional.
  * @returns {vscode.LanguageModelChat | undefined} Modelo elegido o undefined si no hay coincidencias.
  */
 export function selectModelByPolicy(
@@ -23,11 +23,9 @@ export function selectModelByPolicy(
 ): vscode.LanguageModelChat | undefined {
   if (preferredModelId) {
     const preferred = models.find((candidate) => getModelId(candidate) === preferredModelId);
-    if (preferred) {
-      if (policy === 'anyModel' || isIncludedModel(preferred)) {
+    if (preferred && (policy === 'anyModel' || isIncludedModel(preferred))) {
         return preferred;
       }
-    }
   }
 
   if (policy === 'anyModel') {
@@ -38,7 +36,7 @@ export function selectModelByPolicy(
 
 /**
  * Enumera los modelos Copilot que cumplen la política indicada.
- * @param {SuggestionModelPolicy} policy Política para filtrar los modelos devueltos.
+ * @param {SuggestionModelPolicy} policy - Política para filtrar los modelos devueltos.
  * @returns {Promise<SuggestionModelDescriptor[]>} Lista de descriptores de modelo Copilot.
  */
 export async function listSuggestionModels(
@@ -66,7 +64,7 @@ export async function listSuggestionModels(
 
 /**
  * Expuesto para el proveedor LM al armar el resultado de suggestion.
- * @param {unknown} model Objeto de modelo Copilot a describir.
+ * @param {unknown} model - Objeto de modelo Copilot a describir.
  * @returns {SuggestionModelDescriptor} Descriptor del modelo.
  */
 export function describeModel(model: unknown): SuggestionModelDescriptor {
@@ -85,14 +83,14 @@ export function describeModel(model: unknown): SuggestionModelDescriptor {
     id,
     label,
     tier,
-    ...(pricing ? { pricing } : {}),
-    ...(provider ? { provider } : {}),
+    ...pricing ? { pricing } : {},
+    ...provider ? { provider } : {},
   };
 }
 
 /**
  * Resuelve el identificador de un modelo a partir de sus campos disponibles.
- * @param {unknown} model Objeto de modelo posible.
+ * @param {unknown} model - Objeto de modelo posible.
  * @returns {string} Id del modelo o "unknown" si no se encuentra ninguno.
  */
 function getModelId(model: unknown): string {
@@ -104,7 +102,7 @@ function getModelId(model: unknown): string {
 
 /**
  * Determina si un modelo debe incluirse según sus marcas y precio.
- * @param {unknown} model Objeto de modelo a evaluar.
+ * @param {unknown} model - Objeto de modelo a evaluar.
  * @returns {boolean} True si el modelo es elegible para uso incluido.
  */
 function isIncludedModel(model: unknown): boolean {
@@ -137,7 +135,7 @@ function isIncludedModel(model: unknown): boolean {
 
 /**
  * Clasifica el nivel de un modelo en función de su precio y compatibilidad.
- * @param {unknown} model Objeto de modelo a clasificar.
+ * @param {unknown} model - Objeto de modelo a clasificar.
  * @returns {SuggestionModelTier} Nivel de sugerencia deducido.
  */
 function classifyModelTier(model: unknown): SuggestionModelTier {
@@ -150,7 +148,7 @@ function classifyModelTier(model: unknown): SuggestionModelTier {
 
 /**
  * Clasifica el tier de un modelo en función de la cadena pricing.
- * @param {unknown} model Objeto de modelo con posible campo pricing.
+ * @param {unknown} model - Objeto de modelo con posible campo pricing.
  * @returns {SuggestionModelTier} Tier inferido a partir del precio.
  */
 function classifyTierFromPricing(model: unknown): SuggestionModelTier {
@@ -168,7 +166,7 @@ function classifyTierFromPricing(model: unknown): SuggestionModelTier {
 
 /**
  * Normaliza la cadena de pricing de un modelo si es válida.
- * @param {unknown} pricing Valor bruto de pricing.
+ * @param {unknown} pricing - Valor bruto de pricing.
  * @returns {string | undefined} Pricing limpio o undefined si no es válido.
  */
 function normalizePricing(pricing: unknown): string | undefined {
@@ -176,16 +174,16 @@ function normalizePricing(pricing: unknown): string | undefined {
     return undefined;
   }
   const value = pricing.trim();
-  return value.length ? value : undefined;
+  return value.length > 0 ? value : undefined;
 }
 
 /**
  * Extrae el multiplicador numérico de una cadena de pricing tipo `2x`.
- * @param {string} pricing Cadena de pricing a parsear.
+ * @param {string} pricing - Cadena de pricing a parsear.
  * @returns {number | undefined} Multiplicador numérico o undefined si no coincide.
  */
 function parsePricingMultiplier(pricing: string): number | undefined {
-  const match = /^([0-9]+(?:\.[0-9]+)?)x$/i.exec(pricing.trim());
+  const match = /^(\d+(?:\.\d+)?)x$/iu.exec(pricing.trim());
   if (!match) {
     return undefined;
   }
@@ -194,23 +192,31 @@ function parsePricingMultiplier(pricing: string): number | undefined {
 }
 
 /**
+ * Normaliza un segmento de texto para claves de deduplicado de modelos.
+ * @param {string | undefined} value - Valor opcional del segmento.
+ * @returns {string} Texto en minúsculas sin espacios extremos.
+ */
+function normalizeModelDedupeSegment(value: string | undefined): string {
+  return (value ?? '').trim().toLowerCase();
+}
+
+/**
  * Construye una clave de deduplicado para un descriptor de modelo.
- * @param {SuggestionModelDescriptor} model Descriptor de modelo que se normaliza.
+ * @param {SuggestionModelDescriptor} model - Descriptor de modelo que se normaliza.
  * @returns {string} Clave única usada para evitar duplicados.
  */
 function buildModelDedupeKey(model: SuggestionModelDescriptor): string {
-  const normalize = (value: string | undefined): string => (value ?? '').trim().toLowerCase();
   return [
-    normalize(model.provider),
-    normalize(model.label),
+    normalizeModelDedupeSegment(model.provider),
+    normalizeModelDedupeSegment(model.label),
     model.tier,
-    normalize(model.pricing),
+    normalizeModelDedupeSegment(model.pricing),
   ].join('|');
 }
 
 /**
  * Infiera el proveedor original de un modelo a partir de su nombre/fingerprint.
- * @param {unknown} model Objeto de modelo con campos id, family o name.
+ * @param {unknown} model - Objeto de modelo con campos id, family o name.
  * @returns {string | undefined} Nombre del proveedor o undefined si no se puede inferir.
  */
 function inferModelProvider(model: unknown): string | undefined {

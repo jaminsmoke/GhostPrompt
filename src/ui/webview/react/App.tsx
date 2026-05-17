@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-/// <reference path="../globals.d.ts" />
+
 /**
  * @file Punto de entrada React del webview GhostPrompt.
  */
@@ -77,7 +77,7 @@ export function App() {
         onStopProvider={stopProvider}
       />
 
-      {vsxActive ? (
+      {vsxActive ? 
         <p
           id="gp-vsx-surface-note"
           className="rounded-md border border-(--vscode-widget-border) bg-(--vscode-textBlockQuote-background) px-3 py-2 mb-2 text-sm text-(--vscode-sideBar-foreground)"
@@ -87,7 +87,7 @@ export function App() {
           VSOpenCodeX para redactar y enviar; las sugerencias siguen el modelo y chips configurados
           aquí.
         </p>
-      ) : null}
+       : undefined}
 
       <PromptInput
         compact={compact}

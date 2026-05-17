@@ -4,8 +4,8 @@
 
 /**
  * Recorta el texto al máximo de caracteres permitido.
- * @param {string} text Texto devuelto por el LM.
- * @param {number} maxChars Tope de caracteres.
+ * @param {string} text - Texto devuelto por el LM.
+ * @param {number} maxChars - Tope de caracteres.
  * @returns {string} Texto acotado (sin trim ni reformateo).
  */
 export function boundSuggestionText(text: string, maxChars: number): string {

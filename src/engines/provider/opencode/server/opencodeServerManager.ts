@@ -1,12 +1,13 @@
 /**
  * @file Ciclo de vida del servidor OpenCode (health, start, stop, configuración).
  */
+
 import * as vscode from 'vscode';
 
 import {
   OPENCODE_DEFAULT_PORT,
   type OpenCodeClientOptions,
-} from '../../../../system/internals/protocols/types/opencodeClient';
+} from '../../../../system/internals/protocols/types/typeOpencodeClient';
 
 export interface OpenCodeConnectionConfig {
   baseUrl: string;
@@ -30,7 +31,7 @@ export function getOpenCodeConnectionConfig(): OpenCodeConnectionConfig {
       const url = new URL(baseUrlSetting.trim());
       const port = portOverride ?? (url.port ? Number(url.port) : OPENCODE_DEFAULT_PORT);
       return {
-        baseUrl: baseUrlSetting.trim().replace(/\/$/, ''),
+        baseUrl: baseUrlSetting.trim().replace(/\/$/u, ''),
         hostname: url.hostname || '127.0.0.1',
         port,
         authToken,
@@ -51,7 +52,7 @@ export function getOpenCodeConnectionConfig(): OpenCodeConnectionConfig {
 }
 
 /**
- * Opciones para `createOpenCodeClient` derivadas de la configuración del workspace.
+ * Opciones para `createOpenCodeClient` derivadas de la configuración del vscode.workspace.
  * @returns {OpenCodeClientOptions} Host, puerto y token para el SDK.
  */
 export function getOpenCodeClientOptions(): OpenCodeClientOptions {
@@ -61,7 +62,7 @@ export function getOpenCodeClientOptions(): OpenCodeClientOptions {
 
 /**
  * Comprueba si el servidor OpenCode responde en `/health`.
- * @param {string} [baseUrl] URL base; por defecto la de configuración.
+ * @param {string} [baseUrl] - URL base; por defecto la de configuración.
  * @returns {Promise<boolean>} True si el servidor responde correctamente.
  */
 export async function pingOpenCodeServer(baseUrl?: string): Promise<boolean> {
@@ -83,11 +84,13 @@ export async function startOpenCodeServer(): Promise<void> {
   terminal.sendText(`opencode --headless --port ${port}`);
   terminal.show();
 
-  for (let i = 0; i < 30; i++) {
+  for (let index = 0; index < 30; index++) {
     if (await pingOpenCodeServer(baseUrl)) {
       return;
     }
-    await new Promise((r) => setTimeout(r, 1000));
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 1000);
+    });
   }
   throw new Error('No se pudo iniciar OpenCode (timeout 30s)');
 }
@@ -100,10 +103,10 @@ export async function stopOpenCodeServer(): Promise<void> {
   try {
     await fetch(`${baseUrl}/exit`, { method: 'POST', signal: AbortSignal.timeout(3000) });
   } catch {
-    vscode.window.terminals.forEach((t) => {
+    for (const t of vscode.window.terminals) {
       if (t.name.includes('OpenCode')) {
         t.dispose();
       }
-    });
+    }
   }
 }

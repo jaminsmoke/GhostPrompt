@@ -1,13 +1,15 @@
 /**
  * @file Tests de ProviderStatusManager.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 import { ProviderStatusManager } from './providerStatusManager';
 
 import type { ProviderStatusModule } from '../internals/protocols/state/provider';
 
-describe('ProviderStatusManager', () => {
+vitest.describe('ProviderStatusManager', () => {
   let manager: ProviderStatusManager;
 
   const runningModule: ProviderStatusModule = {
@@ -31,7 +33,7 @@ describe('ProviderStatusManager', () => {
       statusText: 'Stopped',
       actions: ['start' as const],
     }),
-    start: vi.fn().mockResolvedValue(undefined),
+    start: vi.fn().mockResolvedValue(),
   };
 
   const errorModule: ProviderStatusModule = {
@@ -40,82 +42,82 @@ describe('ProviderStatusManager', () => {
     check: vi.fn().mockRejectedValue(new Error('fail')),
   };
 
-  beforeEach(() => {
+  vitest.beforeEach(() => {
     manager = new ProviderStatusManager();
   });
 
-  it('registra y lista módulos', () => {
+  vitest.it('registra y lista módulos', () => {
     manager.register(runningModule);
-    expect(manager.getAllModules()).toHaveLength(1);
-    expect(manager.getModule('copilot')).toBeDefined();
+    vitest.expect(manager.getAllModules()).toHaveLength(1);
+    vitest.expect(manager.getModule('copilot')).toBeDefined();
   });
 
-  it('refreshAll retorna estados de todos los módulos registrados', async () => {
+  vitest.it('refreshAll retorna estados de todos los módulos registrados', async () => {
     manager.register(runningModule);
     manager.register(stoppedModule);
 
     const states = await manager.refreshAll();
 
-    expect(states).toHaveLength(2);
-    expect(states[0].status).toBe('running');
-    expect(states[1].status).toBe('stopped');
+    vitest.expect(states).toHaveLength(2);
+    vitest.expect(states[0].status).toBe('running');
+    vitest.expect(states[1].status).toBe('stopped');
   });
 
-  it('refreshAll captura errores y retorna estado error', async () => {
+  vitest.it('refreshAll captura errores y retorna estado error', async () => {
     manager.register(errorModule);
 
     const states = await manager.refreshAll();
 
-    expect(states).toHaveLength(1);
-    expect(states[0].status).toBe('error');
-    expect(states[0].statusText).toBe('Error al comprobar estado');
+    vitest.expect(states).toHaveLength(1);
+    vitest.expect(states[0].status).toBe('error');
+    vitest.expect(states[0].statusText).toBe('Error al comprobar estado');
   });
 
-  it('refresh retorna estado de un módulo específico', async () => {
+  vitest.it('refresh retorna estado de un módulo específico', async () => {
     manager.register(runningModule);
 
     const state = await manager.refresh('copilot');
 
-    expect(state.status).toBe('running');
+    vitest.expect(state.status).toBe('running');
   });
 
-  it('refresh lanza error si el módulo no existe', async () => {
-    await expect(manager.refresh('no-existe')).rejects.toThrow('Proveedor "no-existe" no registrado');
+  vitest.it('refresh lanza error si el módulo no existe', async () => {
+    await vitest.expect(manager.refresh('no-existe')).rejects.toThrow('Proveedor "no-existe" no registrado');
   });
 
-  it('start ejecuta start del módulo y refresca estado', async () => {
+  vitest.it('start ejecuta start del módulo y refresca estado', async () => {
     manager.register(stoppedModule);
 
     const state = await manager.start('opencode');
 
-    expect(stoppedModule.start).toHaveBeenCalledOnce();
-    expect(state.status).toBe('stopped');
+    vitest.expect(stoppedModule.start).toHaveBeenCalledOnce();
+    vitest.expect(state.status).toBe('stopped');
   });
 
-  it('start lanza error si módulo no tiene start', async () => {
+  vitest.it('start lanza error si módulo no tiene start', async () => {
     manager.register(runningModule);
 
-    await expect(manager.start('copilot')).rejects.toThrow('Proveedor "copilot" no soporta iniciar');
+    await vitest.expect(manager.start('copilot')).rejects.toThrow('Proveedor "copilot" no soporta iniciar');
   });
 
-  it('onDidChange se dispara tras refreshAll', async () => {
+  vitest.it('onDidChange se dispara tras refreshAll', async () => {
     manager.register(runningModule);
     const listener = vi.fn();
     manager.onDidChange(listener);
 
     await manager.refreshAll();
 
-    expect(listener).toHaveBeenCalledOnce();
-    expect(listener).toHaveBeenCalledWith(
-      expect.arrayContaining([expect.objectContaining({ id: 'copilot' })]),
+    vitest.expect(listener).toHaveBeenCalledOnce();
+    vitest.expect(listener).toHaveBeenCalledWith(
+      vitest.expect.arrayContaining([vitest.expect.objectContaining({ id: 'copilot' })]),
     );
   });
 
-  it('dispose limpia listeners', () => {
+  vitest.it('dispose limpia listeners', () => {
     const listener = vi.fn();
     manager.onDidChange(listener);
     manager.dispose();
 
-    expect(manager.getAllModules()).toHaveLength(0);
+    vitest.expect(manager.getAllModules()).toHaveLength(0);
   });
 });

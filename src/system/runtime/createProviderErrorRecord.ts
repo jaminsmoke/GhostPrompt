@@ -5,16 +5,16 @@ import type { ProviderStateRecord, ProviderStatusModule } from '../internals/pro
 
 /**
  * Construye un registro de estado de error cuando `check()` de un módulo falla.
- * @param {Pick<ProviderStatusModule, 'id' | 'label'>} mod Módulo cuyo estado no pudo comprobarse.
+ * @param {Pick<ProviderStatusModule, 'id' | 'label'>} statusModule - Módulo cuyo estado no pudo comprobarse.
  * @returns {ProviderStateRecord} Registro con `status: 'error'` y texto localizado.
  */
 export function createProviderErrorRecord(
-  mod: Pick<ProviderStatusModule, 'id' | 'label'>,
+  statusModule: Pick<ProviderStatusModule, 'id' | 'label'>,
 ): ProviderStateRecord {
   return {
-    id: mod.id,
+    id: statusModule.id,
     status: 'error',
-    label: mod.label,
+    label: statusModule.label,
     statusText: 'Error al comprobar estado',
   };
 }

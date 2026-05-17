@@ -1,7 +1,9 @@
 /**
  * @file Pruebas del motor Copilot LM (`completion/copilotCompletionEngine`).
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 const { selectChatModelsMock, userMessageMock } = vi.hoisted(() => ({
   selectChatModelsMock: vi.fn(),
@@ -12,18 +14,20 @@ vi.mock('vscode', () => ({
   lm: {
     selectChatModels: selectChatModelsMock,
   },
-  ['LanguageModelChatMessage']: {
-    ['User']: userMessageMock,
+  'LanguageModelChatMessage': {
+    'User': userMessageMock,
   },
-  ['CancellationTokenSource']: class {
+  'CancellationTokenSource': class {
     token = {
       isCancellationRequested: false,
-      onCancellationRequested: () => ({ dispose: () => {} }),
+      onCancellationRequested: () => ({
+        dispose: () => {},
+      }),
     };
     cancel() {
       this.token.isCancellationRequested = true;
     }
-    dispose() {}
+    dispose(): void {}
   },
 }));
 
@@ -37,7 +41,7 @@ import { requestCopilotLmCompletion as requestCompletion } from './copilotComple
 
 /**
  * Creates a mock async iterable that yields the provided chunks sequentially.
- * @param {string[]} chunks Text chunks to emit through the async iterator.
+ * @param {string[]} chunks - Text chunks to emit through the async iterator.
  * @returns {AsyncIterable<string>} An async iterable of strings.
  */
 function createTextStream(chunks: string[]): AsyncIterable<string> {
@@ -59,7 +63,8 @@ function createHangingTextStream(): AsyncIterable<string> {
   return {
     [Symbol.asyncIterator]() {
       return {
-        next: () => new Promise<IteratorResult<string>>(() => {}),
+        next: () =>
+          new Promise<IteratorResult<string>>(() => {}),
       };
     },
   };
@@ -72,16 +77,18 @@ function createHangingTextStream(): AsyncIterable<string> {
 function createToken() {
   return {
     isCancellationRequested: false,
-    onCancellationRequested: () => ({ dispose: () => {} }),
+    onCancellationRequested: () => ({
+      dispose: () => {},
+    }),
   };
 }
 
-describe('CopilotCompletion', () => {
-  beforeEach(() => {
+vitest.describe('CopilotCompletion', () => {
+  vitest.beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('devuelve empty no-model cuando no hay modelos', async () => {
+  vitest.it('devuelve empty no-model cuando no hay modelos', async () => {
     selectChatModelsMock.mockResolvedValueOnce([]);
 
     const result = await requestCompletion('hola', {
@@ -89,10 +96,10 @@ describe('CopilotCompletion', () => {
       policy: 'anyModel',
     });
 
-    expect(result).toEqual({ kind: 'empty', reason: 'no-model' });
+    vitest.expect(result).toEqual({ kind: 'empty', reason: 'no-model' });
   });
 
-  it('devuelve suggestion cuando el modelo responde texto', async () => {
+  vitest.it('devuelve suggestion cuando el modelo responde texto', async () => {
     const sendRequest = vi.fn().mockResolvedValue({
       text: createTextStream([' continuacion ', 'util']),
     });
@@ -103,17 +110,17 @@ describe('CopilotCompletion', () => {
       policy: 'anyModel',
     });
 
-    expect(result).toEqual(
-      expect.objectContaining({
+    vitest.expect(result).toEqual(
+      vitest.expect.objectContaining({
         kind: 'suggestion',
         suggestion: ' continuacion util',
       }),
     );
-    expect(sendRequest).toHaveBeenCalledOnce();
-    expect(userMessageMock).toHaveBeenCalledTimes(1);
+    vitest.expect(sendRequest).toHaveBeenCalledOnce();
+    vitest.expect(userMessageMock).toHaveBeenCalledTimes(1);
   });
 
-  it('requestCompletion envia instruccion simple sin directivas de estilo', async () => {
+  vitest.it('requestCompletion envia instruccion simple sin directivas de estilo', async () => {
     const sendRequest = vi.fn().mockResolvedValue({
       text: createTextStream([' ok']),
     });
@@ -123,12 +130,12 @@ describe('CopilotCompletion', () => {
       token: createToken(),
       policy: 'anyModel',
     });
-    expect(userMessageMock.mock.calls[0][0]).toContain('Complete the following text');
-    expect(userMessageMock.mock.calls[0][0]).toContain('Hola');
-    expect(userMessageMock.mock.calls[0][0]).not.toContain('STYLE_');
+    vitest.expect(userMessageMock.mock.calls[0][0]).toContain('Complete the following text');
+    vitest.expect(userMessageMock.mock.calls[0][0]).toContain('Hola');
+    vitest.expect(userMessageMock.mock.calls[0][0]).not.toContain('STYLE_');
   });
 
-  it('devuelve request-timeout si el modelo no responde en el tiempo limite', async () => {
+  vitest.it('devuelve request-timeout si el modelo no responde en el tiempo limite', async () => {
     const sendRequest = vi.fn().mockResolvedValue({
       text: createHangingTextStream(),
     });
@@ -140,10 +147,10 @@ describe('CopilotCompletion', () => {
       requestTimeoutMs: 20,
     });
 
-    expect(result).toEqual({ kind: 'empty', reason: 'request-timeout' });
+    vitest.expect(result).toEqual({ kind: 'empty', reason: 'request-timeout' });
   });
 
-  it('devuelve el texto crudo del modelo incluso si parece una negativa (post-procesado en runtime)', async () => {
+  vitest.it('devuelve el texto crudo del modelo incluso si parece una negativa (post-procesado en runtime)', async () => {
     const refusal = "I'm sorry, I can't assist with that.";
     const sendRequest = vi.fn().mockResolvedValue({
       text: createTextStream([refusal]),
@@ -155,37 +162,37 @@ describe('CopilotCompletion', () => {
       policy: 'anyModel',
     });
 
-    expect(result).toEqual(
-      expect.objectContaining({
+    vitest.expect(result).toEqual(
+      vitest.expect.objectContaining({
         kind: 'suggestion',
         suggestion: refusal,
       }),
     );
   });
 
-  it('selectModelByPolicy prioriza modelo no premium en modo seguro', () => {
+  vitest.it('selectModelByPolicy prioriza modelo no premium en modo seguro', () => {
     const models = [{ id: 'gpt-5-pro' }, { id: 'gpt-4o-mini' }] as never[];
 
     const selected = selectModelByPolicy(models, 'nonPremiumOnly');
-    expect(selected).toEqual(models[1]);
+    vitest.expect(selected).toEqual(models[1]);
   });
 
-  it('selectModelByPolicy respeta preferredModelId cuando es compatible', () => {
+  vitest.it('selectModelByPolicy respeta preferredModelId cuando es compatible', () => {
     const models = [{ id: 'gpt-4o-mini' }, { id: 'claude-3.5-haiku' }] as never[];
     const selected = selectModelByPolicy(models, 'nonPremiumOnly', 'claude-3.5-haiku');
-    expect(selected).toEqual(models[1]);
+    vitest.expect(selected).toEqual(models[1]);
   });
 
-  it('selectModelByPolicy ignora preferred premium en modo seguro', () => {
+  vitest.it('selectModelByPolicy ignora preferred premium en modo seguro', () => {
     const models = [{ id: 'gpt-5-pro' }, { id: 'gpt-4o-mini' }] as never[];
     const selected = selectModelByPolicy(models, 'nonPremiumOnly', 'gpt-5-pro');
-    expect(selected).toEqual(models[1]);
+    vitest.expect(selected).toEqual(models[1]);
   });
 
-  it('listSuggestionModels devuelve label con tier', async () => {
+  vitest.it('listSuggestionModels devuelve label con tier', async () => {
     selectChatModelsMock.mockResolvedValueOnce([{ id: 'gpt-4o-mini', name: 'GPT-4o mini' }]);
     const models = await listSuggestionModels('anyModel');
-    expect(models).toEqual([
+    vitest.expect(models).toEqual([
       {
         id: 'gpt-4o-mini',
         label: 'GPT-4o mini',
@@ -196,14 +203,14 @@ describe('CopilotCompletion', () => {
     ]);
   });
 
-  it('listSuggestionModels elimina modelos duplicados por etiqueta visible', async () => {
+  vitest.it('listSuggestionModels elimina modelos duplicados por etiqueta visible', async () => {
     selectChatModelsMock.mockResolvedValueOnce([
       { id: 'gpt-4o', name: 'GPT-4o', pricing: '0x' },
       { id: 'copilot-fast-gpt4o', name: 'GPT-4o', pricing: '0x' },
       { id: 'gpt-4o-alt', name: 'GPT-4o', pricing: '0x' },
     ]);
     const models = await listSuggestionModels('anyModel');
-    expect(models).toEqual([
+    vitest.expect(models).toEqual([
       {
         id: 'gpt-4o',
         label: 'GPT-4o',
@@ -215,13 +222,13 @@ describe('CopilotCompletion', () => {
     ]);
   });
 
-  it('listSuggestionModels deduplica ids versionados del mismo modelo visible', async () => {
+  vitest.it('listSuggestionModels deduplica ids versionados del mismo modelo visible', async () => {
     selectChatModelsMock.mockResolvedValueOnce([
       { id: 'gpt-4o', name: 'GPT-4o', pricing: '0x' },
       { id: 'gpt-4o-2024-11-20', name: 'GPT-4o', pricing: '0x' },
     ]);
     const models = await listSuggestionModels('anyModel');
-    expect(models).toEqual([
+    vitest.expect(models).toEqual([
       {
         id: 'gpt-4o',
         label: 'GPT-4o',
@@ -233,18 +240,18 @@ describe('CopilotCompletion', () => {
     ]);
   });
 
-  it('buildCompletionInstruction genera instruccion simple', () => {
+  vitest.it('buildCompletionInstruction genera instruccion simple', () => {
     const instruction = buildCompletionInstruction('Escribe una propuesta');
 
-    expect(instruction).toContain('Complete the following text as a natural continuation');
-    expect(instruction).toContain('Only output the continuation itself');
-    expect(instruction).toContain('Escribe una propuesta');
-    expect(instruction).not.toContain('STYLE_');
-    expect(instruction).not.toContain('Partial text to continue');
+    vitest.expect(instruction).toContain('Complete the following text as a natural continuation');
+    vitest.expect(instruction).toContain('Only output the continuation itself');
+    vitest.expect(instruction).toContain('Escribe una propuesta');
+    vitest.expect(instruction).not.toContain('STYLE_');
+    vitest.expect(instruction).not.toContain('Partial text to continue');
   });
 
-  it('buildCompletionInstruction no repite contexto ignorado', () => {
+  vitest.it('buildCompletionInstruction no repite contexto ignorado', () => {
     const instruction = buildCompletionInstruction('Create a test plan');
-    expect(instruction).toContain('Create a test plan');
+    vitest.expect(instruction).toContain('Create a test plan');
   });
 });

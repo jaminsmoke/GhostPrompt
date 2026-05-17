@@ -14,24 +14,24 @@ export class CaptureBreadcrumbStore {
 
   /**
    * Crea el almacén con un tope de migajas por identificador de captura.
-   * @param {number} [maxPerCapture] Tamaño máximo del anillo por `captureId`.
+   * @param {number} [maxPerCapture] - Tamaño máximo del anillo por `captureId`.
    */
   constructor(private readonly maxPerCapture: number = DEFAULT_MAX_PER_CAPTURE) {}
 
   /**
    * Copia superficial de las migajas actuales (sin mutar el buffer interno).
-   * @param {number} captureId Identificador de correlación.
+   * @param {number} captureId - Identificador de correlación.
    * @returns {Breadcrumb[]} Lista clonada (puede estar vacía).
    */
   snapshot(captureId: number): Breadcrumb[] {
-    const cur = this.byCaptureId.get(captureId);
-    return cur ? [...cur] : [];
+    const current = this.byCaptureId.get(captureId);
+    return current ? [...current] : [];
   }
 
   /**
    * Añade una migaja al anillo del `captureId` (evicción FIFO).
-   * @param {number} captureId Identificador de correlación.
-   * @param {Breadcrumb} crumb Migaja a registrar.
+   * @param {number} captureId - Identificador de correlación.
+   * @param {Breadcrumb} crumb - Migaja a registrar.
    * @returns {void} Void.
    */
   push(captureId: number, crumb: Breadcrumb): void {
@@ -45,7 +45,7 @@ export class CaptureBreadcrumbStore {
 
   /**
    * Borra el anillo asociado a un `captureId`, por ejemplo al terminar el pipeline.
-   * @param {number} captureId Identificador de correlación.
+   * @param {number} captureId - Identificador de correlación.
    * @returns {void} Sin valor de retorno.
    */
   flushCapture(captureId: number): void {

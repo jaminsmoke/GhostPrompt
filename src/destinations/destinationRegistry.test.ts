@@ -1,7 +1,10 @@
 /**
  * @file Pruebas unitarias del registro de destinos GhostPrompt.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
+
+import type * as DestinationRegistryModule from './destinationRegistry';
 
 const configGetMock = vi.hoisted(() => vi.fn());
 const getExtensionMock = vi.hoisted(() => vi.fn());
@@ -22,107 +25,107 @@ vi.mock('vscode', () => ({
   },
 }));
 
-type TestModule = typeof import('./destinationRegistry');
-let mod: TestModule;
+type TestModule = typeof DestinationRegistryModule;
+let loadedModule: TestModule;
 
-beforeEach(async () => {
+vitest.beforeEach(async () => {
   vi.clearAllMocks();
   configGetMock.mockReturnValue('copilotChat');
-  getExtensionMock.mockReturnValue(undefined);
-  mod = (await import('./destinationRegistry')) as TestModule;
+  getExtensionMock.mockReturnValue();
+  loadedModule = (await import('./destinationRegistry')) as TestModule;
 });
 
-describe('destinationRegistry', () => {
-  describe('registerDestination / getDestinationProviderForId', () => {
-    it('registra y resuelve un provider por id', () => {
-      mod.registerDestination({ id: 'copilotChat', sendPrompt: vi.fn() });
+vitest.describe('destinationRegistry', () => {
+  vitest.describe('registerDestination / getDestinationProviderForId', () => {
+    vitest.it('registra y resuelve un provider por id', () => {
+      loadedModule.registerDestination({ id: 'copilotChat', sendPrompt: vi.fn() });
 
-      const found = mod.getDestinationProviderForId('copilotChat');
-      expect(found).toBeDefined();
+      const found = loadedModule.getDestinationProviderForId('copilotChat');
+      vitest.expect(found).toBeDefined();
       if (!found) {
         throw new Error('Expected provider to be registered');
       }
-      expect(found.id).toBe('copilotChat');
-      expect(found.sendPrompt).toBeDefined();
+      vitest.expect(found.id).toBe('copilotChat');
+      vitest.expect(found.sendPrompt).toBeDefined();
     });
 
-    it('devuelve undefined si no hay provider registrado', () => {
-      const found = mod.getDestinationProviderForId('vsOpenCodeX');
-      expect(found).toBeUndefined();
+    vitest.it('devuelve undefined si no hay provider registrado', () => {
+      const found = loadedModule.getDestinationProviderForId('vsOpenCodeX');
+      vitest.expect(found).toBeUndefined();
     });
   });
 
-  describe('getActiveDestinationProvider', () => {
-    it('devuelve provider registrado si existe', () => {
+  vitest.describe('getActiveDestinationProvider', () => {
+    vitest.it('devuelve provider registrado si existe', () => {
       const sendPrompt = vi.fn<Promise<void>, [string]>();
-      mod.registerDestination({ id: 'copilotChat', sendPrompt });
+      loadedModule.registerDestination({ id: 'copilotChat', sendPrompt });
 
-      const active = mod.getActiveDestinationProvider();
-      expect(active.id).toBe('copilotChat');
-      expect(active.sendPrompt).toBe(sendPrompt);
+      const active = loadedModule.getActiveDestinationProvider();
+      vitest.expect(active.id).toBe('copilotChat');
+      vitest.expect(active.sendPrompt).toBe(sendPrompt);
     });
 
-    it('devuelve provider cursorChat cuando está registrado y configurado', async () => {
+    vitest.it('devuelve provider cursorChat cuando está registrado y configurado', async () => {
       await import('./cursor/cursorChatDestination');
       configGetMock.mockReturnValue('cursorChat');
-      const active = mod.getActiveDestinationProvider();
-      expect(active.id).toBe('cursorChat');
-      expect(active.sendPrompt).toBeDefined();
+      const active = loadedModule.getActiveDestinationProvider();
+      vitest.expect(active.id).toBe('cursorChat');
+      vitest.expect(active.sendPrompt).toBeDefined();
     });
 
-    it('devuelve fallback con sendPrompt vacío si no hay provider para el destino activo', () => {
+    vitest.it('devuelve fallback con sendPrompt vacío si no hay provider para el destino activo', () => {
       configGetMock.mockReturnValue('vsOpenCodeX');
-      const active = mod.getActiveDestinationProvider();
-      expect(active.id).toBe('vsOpenCodeX');
-      expect(active.sendPrompt).toBeDefined();
+      const active = loadedModule.getActiveDestinationProvider();
+      vitest.expect(active.id).toBe('vsOpenCodeX');
+      vitest.expect(active.sendPrompt).toBeDefined();
     });
 
-    it('lanza error al invocar sendPrompt de fallback no registrado', async () => {
+    vitest.it('lanza error al invocar sendPrompt de fallback no registrado', async () => {
       configGetMock.mockReturnValue('vsOpenCodeX');
-      const active = mod.getActiveDestinationProvider();
-      await expect(active.sendPrompt('hola')).rejects.toThrow(
+      const active = loadedModule.getActiveDestinationProvider();
+      await vitest.expect(active.sendPrompt('hola')).rejects.toThrow(
         "Destination provider 'vsOpenCodeX' no está registrado",
       );
     });
   });
 
-  describe('getGhostPromptAgentDestination', () => {
-    it('retorna copilotChat por defecto sin VSX instalada', () => {
+  vitest.describe('getAgentDestination', () => {
+    vitest.it('retorna copilotChat por defecto sin VSX instalada', () => {
       configGetMock.mockReturnValue('copilotChat');
-      getExtensionMock.mockReturnValue(undefined);
-      expect(mod.getGhostPromptAgentDestination()).toBe('copilotChat');
+      getExtensionMock.mockReturnValue();
+      vitest.expect(loadedModule.getAgentDestination()).toBe('copilotChat');
     });
 
-    it('retorna vsOpenCodeX si está configurado explícitamente', () => {
+    vitest.it('retorna vsOpenCodeX si está configurado explícitamente', () => {
       configGetMock.mockReturnValue('vsOpenCodeX');
-      expect(mod.getGhostPromptAgentDestination()).toBe('vsOpenCodeX');
+      vitest.expect(loadedModule.getAgentDestination()).toBe('vsOpenCodeX');
     });
 
-    it('retorna cursorChat si está configurado explícitamente', () => {
+    vitest.it('retorna cursorChat si está configurado explícitamente', () => {
       configGetMock.mockReturnValue('cursorChat');
-      expect(mod.getGhostPromptAgentDestination()).toBe('cursorChat');
+      vitest.expect(loadedModule.getAgentDestination()).toBe('cursorChat');
     });
   });
 
-  describe('parseGhostPromptAgentDestination', () => {
-    it('normaliza valores conocidos y desconocidos', () => {
-      expect(mod.parseGhostPromptAgentDestination('vsOpenCodeX')).toBe('vsOpenCodeX');
-      expect(mod.parseGhostPromptAgentDestination('cursorChat')).toBe('cursorChat');
-      expect(mod.parseGhostPromptAgentDestination('copilotChat')).toBe('copilotChat');
-      expect(mod.parseGhostPromptAgentDestination('other')).toBe('copilotChat');
-      expect(mod.parseGhostPromptAgentDestination(undefined)).toBe('copilotChat');
+  vitest.describe('parseAgentDestination', () => {
+    vitest.it('normaliza valores conocidos y desconocidos', () => {
+      vitest.expect(loadedModule.parseAgentDestination('vsOpenCodeX')).toBe('vsOpenCodeX');
+      vitest.expect(loadedModule.parseAgentDestination('cursorChat')).toBe('cursorChat');
+      vitest.expect(loadedModule.parseAgentDestination('copilotChat')).toBe('copilotChat');
+      vitest.expect(loadedModule.parseAgentDestination('other')).toBe('copilotChat');
+      vitest.expect(loadedModule.parseAgentDestination()).toBe('copilotChat');
     });
   });
 
-  describe('isVsOpenCodeXExtensionInstalled', () => {
-    it('retorna true si getExtension devuelve algo truthy', () => {
+  vitest.describe('isVsOpenCodeXExtensionInstalled', () => {
+    vitest.it('retorna true si getExtension devuelve algo truthy', () => {
       getExtensionMock.mockReturnValue({ id: 'jaminsmoke.vsopencodex' });
-      expect(mod.isVsOpenCodeXExtensionInstalled()).toBe(true);
+      vitest.expect(loadedModule.isVsOpenCodeXExtensionInstalled()).toBe(true);
     });
 
-    it('retorna false si getExtension devuelve undefined', () => {
-      getExtensionMock.mockReturnValue(undefined);
-      expect(mod.isVsOpenCodeXExtensionInstalled()).toBe(false);
+    vitest.it('retorna false si getExtension devuelve undefined', () => {
+      getExtensionMock.mockReturnValue();
+      vitest.expect(loadedModule.isVsOpenCodeXExtensionInstalled()).toBe(false);
     });
   });
 });

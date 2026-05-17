@@ -1,14 +1,10 @@
 /**
  * @file Contrato de estado de salud de un proveedor LM (mensaje providerStatus).
  */
-import type { ProviderId } from './providerId';
+import type { ProviderId } from './stateProviderId';
 
 export type ProviderState =
-  | 'running'
-  | 'stopped'
-  | 'starting'
-  | 'unavailable'
-  | 'error';
+  'error' | 'running' | 'starting' | 'stopped' | 'unavailable';
 
 export interface ProviderStateRecord {
   id: ProviderId;

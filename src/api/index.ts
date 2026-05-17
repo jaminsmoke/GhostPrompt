@@ -6,7 +6,7 @@
  *
  * - **protocols/** — Validación Zod en el boundary postMessage, router de mensajes inbound.
  * - **settings/** — Construcción/envío del envelope `settings`, aplicación de `updateSetting`.
- * - **getters/** — Lectores de configuración `vscode.workspace` + resolución de destino agente.
+ * - **getters/** — Lectores de configuración `vscode.workspace` + resolución de destino agente; `readGhostPromptSuggestionModelPolicy` se reexporta desde `system/internals/config/` (ver barrel al final de este archivo).
  */
 
 // Protocols
@@ -42,10 +42,9 @@ export {
 
 // Getters
 export {
-  type GhostPromptAgentDestination,
-  getGhostPromptAgentDestination,
+  type AgentDestination,
+  getAgentDestination,
   isVsOpenCodeXExtensionInstalled,
-  getGhostPromptSuggestionModelPolicy,
   getGhostPromptSelectedModelId,
   getGhostPromptMaxSuggestionChars,
   getGhostPromptSuggestionStyle,
@@ -53,3 +52,5 @@ export {
   getGhostPromptOllamaExcludedModelIds,
   collectGhostPromptProjectContext,
 } from './getters/workspaceGetters';
+
+export { readGhostPromptSuggestionModelPolicy } from '../system/internals/config/readGhostPromptSuggestionModelPolicy';

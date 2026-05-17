@@ -1,30 +1,18 @@
 /**
  * @file Comandos IDE para abrir/rellenar el chat de Cursor (fase 0 + fase B).
+ * Constantes: `system/internals/protocols/constants/consCursorChat.ts`.
  */
 import * as vscode from 'vscode';
 
+import {
+  CURSOR_CHAT_COMMAND_PROBE_PREFIXES,
+  CURSOR_CHAT_PRIMARY_COMMAND_ID,
+} from '../../system/internals/protocols/constants/consCursorChat';
 import { getLogger } from '../../system/log';
-
-/** Prefijos usados al filtrar `vscode.commands.getCommands` en descubrimiento. */
-export const CURSOR_CHAT_COMMAND_PROBE_PREFIXES = [
-  'chat',
-  'composer',
-  'agent',
-  'aichat',
-  'cursor',
-  'aicontext',
-  'aipopup',
-] as const;
-
-/**
- * Comando principal validado para v1 (misma API que Copilot Chat en VS Code / Cursor).
- * @see Docs/Integrations/APIS/Cursor.md
- */
-export const CURSOR_CHAT_PRIMARY_COMMAND_ID = 'workbench.action.chat.open';
 
 /**
  * Filtra IDs de comando candidatos para chat/composer en Cursor.
- * @param {readonly string[]} allCommands Lista completa de `vscode.commands.getCommands`.
+ * @param {readonly string[]} allCommands - Lista completa de `vscode.commands.getCommands`.
  * @returns {string[]} Comandos ordenados que coinciden con algún prefijo de sondeo.
  */
 export function filterCursorChatCandidateCommands(allCommands: readonly string[]): string[] {
@@ -34,12 +22,12 @@ export function filterCursorChatCandidateCommands(allCommands: readonly string[]
       const lower = id.toLowerCase();
       return needles.some((n) => lower.includes(n));
     })
-    .sort((a, b) => a.localeCompare(b));
+    .toSorted((a, b) => a.localeCompare(b));
 }
 
 /**
  * Escribe en un canal de salida el resultado del sondeo de comandos (fase 0 / QA).
- * @param {vscode.OutputChannel} output Canal donde volcar la lista.
+ * @param {vscode.OutputChannel} output - Canal donde volcar la lista.
  * @returns {Promise<void>}
  */
 export async function appendCursorChatCommandDiscovery(
@@ -71,7 +59,7 @@ export async function appendCursorChatCommandDiscovery(
 
 /**
  * Abre el chat nativo y rellena el prompt (no envía automáticamente).
- * @param {string} query Texto a inyectar en el input del chat.
+ * @param {string} query - Texto a inyectar en el input del chat.
  * @returns {Promise<void>}
  */
 export async function executeCursorChatOpen(query: string): Promise<void> {
@@ -88,19 +76,20 @@ export async function executeCursorChatOpen(query: string): Promise<void> {
   try {
     await run({ query: trimmed });
     return;
-  } catch (first) {
+  } catch (error) {
     log.debug('cursor-chat-open-query-object-failed', {
-      error: first instanceof Error ? first.message : String(first),
+      error: error instanceof Error ? error.message : String(error),
     });
   }
 
   try {
     await run(trimmed);
-    return;
-  } catch (second) {
-    const detail = second instanceof Error ? second.message : String(second);
+    
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
     throw new Error(
       `GhostPrompt: no se pudo abrir el chat de Cursor (${CURSOR_CHAT_PRIMARY_COMMAND_ID}): ${detail}`,
+      { cause: error },
     );
   }
 }

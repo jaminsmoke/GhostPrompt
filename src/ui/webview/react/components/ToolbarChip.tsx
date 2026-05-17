@@ -3,7 +3,7 @@
  */
 import { type ReactNode, useEffect, useRef } from 'react';
 
-interface ToolbarChipProps {
+interface ToolbarChipProperties {
   label: string;
   chipLabel?: string;
   tooltip?: string;
@@ -22,17 +22,17 @@ const getChipLabelClass = (chipLabel: string | undefined, compact?: boolean) =>
   }`;
 
 const renderChipLabel = (chipLabel: string | undefined, compact?: boolean) => {
-  const className = getChipLabelClass(chipLabel, compact);
+  const chipLabelClass = getChipLabelClass(chipLabel, compact);
   if (chipLabel) {
     return (
-      <span className={className} aria-hidden="false">
+      <span className={chipLabelClass} aria-hidden="false">
         {chipLabel}
       </span>
     );
   }
 
   return (
-    <span className={className} aria-hidden="true">
+    <span className={chipLabelClass} aria-hidden="true">
       Label
     </span>
   );
@@ -91,13 +91,13 @@ const renderToggleButton = (
 
 /**
  * Chip de la barra superior que gestiona estados abiertos y eventos de cierre.
- * @param {ToolbarChipProps} props Propiedades del componente ToolbarChip.
+ * @param {ToolbarChipProperties} props - Propiedades del componente ToolbarChip.
  * @returns {import('react').JSX.Element} Elemento JSX para el chip de la barra superior.
  */
-export function ToolbarChip(props: ToolbarChipProps) {
+export function ToolbarChip(props: ToolbarChipProperties) {
   const { label, chipLabel, tooltip, isOpen, onToggle, onClose, children, id, compact, disabled } =
     props;
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement | undefined>(undefined);
 
   useEffect(() => {
     if (!isOpen) {
@@ -129,16 +129,16 @@ export function ToolbarChip(props: ToolbarChipProps) {
   }, [isOpen, onClose]);
 
   return (
-    <div ref={ref} className="inline-flex flex-col gap-0">
+    <div ref={ref as unknown as React.Ref<HTMLDivElement>} className="inline-flex flex-col gap-0">
       {renderChipLabel(chipLabel, compact)}
       <div className="relative">
         {renderToggleButton(isOpen, id, tooltip, disabled, compact, onToggle, label)}
 
-        {isOpen && (
+        {isOpen && 
           <div className="absolute top-full left-0 z-50 mt-0.5 min-w-45 rounded-md border border-(--vscode-dropdown-border) bg-(--vscode-dropdown-background) shadow-lg">
             {children}
           </div>
-        )}
+        }
       </div>
     </div>
   );

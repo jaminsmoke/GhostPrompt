@@ -1,8 +1,10 @@
 /**
- * @file Cobertura por variante de mensaje definida en `src/shared/webviewMessageSchemas.ts`.
- * El host reexporta los mismos schemas desde `src/host/webviewProtocols.ts`.
+ * @file Cobertura de variantes de mensaje webview; schemas canónicos en este directorio.
+ * Comprueba alineación con `api/protocols/webviewProtocols.ts` (mismo objeto `webviewInboundMessageSchema`).
  */
-import { describe, expect, it, vi } from 'vitest';
+
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 vi.mock('vscode', () => ({
   workspace: {
@@ -21,28 +23,28 @@ vi.mock('vscode', () => ({
       dispose: vi.fn(),
     })),
   },
-  ['Uri']: {
+  'Uri': {
     joinPath: (...parts: unknown[]) => ({
-      fsPath: parts.map((p) => (typeof p === 'string' ? p : String(p))).join('/'),
+      fsPath: parts.map((p) => { return typeof p === 'string' ? p : String(p); }).join('/'),
     }),
   },
 }));
 
-import { webviewInboundMessageSchema as hostInboundSchema } from '../../api/protocols/webviewProtocols';
+import { webviewInboundMessageSchema as hostInboundSchema } from '../../../../../api/protocols/webviewProtocols';
 
 import {
   webviewInboundMessageSchema,
   webviewOutboundMessageSchema,
   webviewOutboundSettingsEnvelopeSchema,
   webviewSettingsPayloadSchema,
-} from './webviewMessageSchemas';
+} from './zschemWebviewMessages';
 
-describe('webviewMessageSchemas (shared)', () => {
-  it('el host reexporta el mismo schema inbound que shared', () => {
-    expect(hostInboundSchema).toBe(webviewInboundMessageSchema);
+vitest.describe('zschemWebviewMessages', () => {
+  vitest.it('el host reexporta el mismo schema inbound que el módulo canónico', () => {
+    vitest.expect(hostInboundSchema).toBe(webviewInboundMessageSchema);
   });
 
-  it('acepta todas las variantes inbound documentadas', () => {
+  vitest.it('acepta todas las variantes inbound documentadas', () => {
     const samples = [
       { type: 'init' as const },
       {
@@ -93,11 +95,11 @@ describe('webviewMessageSchemas (shared)', () => {
       },
     ];
     for (const msg of samples) {
-      expect(webviewInboundMessageSchema.safeParse(msg).success).toBe(true);
+      vitest.expect(webviewInboundMessageSchema.safeParse(msg).success).toBe(true);
     }
   });
 
-  it('settings payload con modelo efectivo opcional', () => {
+  vitest.it('settings payload con modelo efectivo opcional', () => {
     const r = webviewSettingsPayloadSchema.safeParse({
       completionProvider: 'copilot',
       completionUiKind: 'multi',
@@ -117,10 +119,10 @@ describe('webviewMessageSchemas (shared)', () => {
       vsOpenCodeXExtensionInstalled: false,
       cursorDesktopHost: false,
     });
-    expect(r.success).toBe(true);
+    vitest.expect(r.success).toBe(true);
   });
 
-  it('sobre settings outbound válido', () => {
+  vitest.it('sobre settings outbound válido', () => {
     const envelope = {
       type: 'settings' as const,
       settings: {
@@ -138,33 +140,33 @@ describe('webviewMessageSchemas (shared)', () => {
         cursorDesktopHost: false,
       },
     };
-    expect(webviewOutboundSettingsEnvelopeSchema.safeParse(envelope).success).toBe(true);
+    vitest.expect(webviewOutboundSettingsEnvelopeSchema.safeParse(envelope).success).toBe(true);
   });
 
-  it('acepta el mensaje outbound empty con reason válido', () => {
+  vitest.it('acepta el mensaje outbound empty con reason válido', () => {
     const msg = {
       type: 'empty' as const,
       reason: 'no-model' as const,
       captureId: 1,
     };
-    expect(webviewOutboundMessageSchema.safeParse(msg).success).toBe(true);
+    vitest.expect(webviewOutboundMessageSchema.safeParse(msg).success).toBe(true);
   });
 
-  it('acepta el mensaje outbound empty con reason content-blocked', () => {
+  vitest.it('acepta el mensaje outbound empty con reason content-blocked', () => {
     const msg = {
       type: 'empty' as const,
       reason: 'content-blocked' as const,
       captureId: 1,
     };
-    expect(webviewOutboundMessageSchema.safeParse(msg).success).toBe(true);
+    vitest.expect(webviewOutboundMessageSchema.safeParse(msg).success).toBe(true);
   });
 
-  it('rechaza el mensaje outbound empty con reason inválido', () => {
+  vitest.it('rechaza el mensaje outbound empty con reason inválido', () => {
     const msg = {
       type: 'empty' as const,
       reason: 'unexpected-reason' as string,
       captureId: 1,
     };
-    expect(webviewOutboundMessageSchema.safeParse(msg).success).toBe(false);
+    vitest.expect(webviewOutboundMessageSchema.safeParse(msg).success).toBe(false);
   });
 });

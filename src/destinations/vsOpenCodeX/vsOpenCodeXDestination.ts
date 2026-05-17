@@ -1,50 +1,45 @@
 /**
  * @file Implementación del destino VSOpenCodeX para reenviar UI de GhostPrompt al editor VSOpenCodeX.
  */
+
 import * as vscode from 'vscode';
 
+import {
+  
+  VS_OPEN_CODE_X_INLINE_UI_COMMAND,
+  
+} from '../../system/internals/protocols/constants';
+import { isOutboundUiForwardKind } from '../../system/internals/protocols/guards/guardOutboundForward';
 import { getLogger } from '../../system/log';
 import {
   type DestinationProvider,
-  getGhostPromptAgentDestination,
+  getAgentDestination,
   registerDestination,
   VS_OPEN_CODE_X_EXTENSION_ID,
 } from '../destinationRegistry';
 
-/** Comando en VSOpenCodeX: mismo payload que postMessage GP sin campo `broadcast`. */
-export const VS_OPEN_CODE_X_GHOST_PROMPT_INLINE_UI = 'vsopencodex.ghostPromptInlineUi';
-
-const FORWARD_MESSAGE_TYPES = new Set<string>([
-  'loading',
-  'suggestion-stream',
-  'suggestion',
-  'empty',
-  'error',
-  'clear',
-]);
-
 /**
  * Reenvía mensajes de UI de GhostPrompt a VSOpenCodeX cuando el destino está activo.
- * @param {Record<string, unknown>} payloadWithBroadcast Payload con posibles datos de broadcast.
+ * @param {Record<string, unknown>} payloadWithBroadcast - Payload con posibles datos de broadcast.
  * @returns {void}
  */
 export function forwardGhostPromptInlineUiToVsOpenCodeIfApplicable(
   payloadWithBroadcast: Record<string, unknown>,
 ): void {
-  if (getGhostPromptAgentDestination() !== 'vsOpenCodeX') {
+  if (getAgentDestination() !== 'vsOpenCodeX') {
     return;
   }
   const t = payloadWithBroadcast.type;
-  if (typeof t !== 'string' || !FORWARD_MESSAGE_TYPES.has(t)) {
+  if (typeof t !== 'string' || !isOutboundUiForwardKind(t)) {
     return;
   }
 
   const { broadcast: _b, ...sanitized } = payloadWithBroadcast;
-  void Promise.resolve(
-    vscode.commands.executeCommand(VS_OPEN_CODE_X_GHOST_PROMPT_INLINE_UI, sanitized),
-  ).catch((e: unknown) => {
-    const msg = e instanceof Error ? e.message : String(e);
-    getLogger('vsOpenCodeX').error('vsopencodex-inline-forward-failed', { detail: msg }, e);
+  Promise.resolve(
+    vscode.commands.executeCommand(VS_OPEN_CODE_X_INLINE_UI_COMMAND, sanitized),
+  ).catch((error: unknown) => {
+    const msg = error instanceof Error ? error.message : String(error);
+    getLogger('vsOpenCodeX').error('vsopencodex-inline-forward-failed', { detail: msg }, error);
   });
 }
 
@@ -55,7 +50,7 @@ let notifiedMissingVsxThisSession = false;
  * @returns {void}
  */
 export function notifyIfVsxAgentDestinationWithoutVsOpenCodeX(): void {
-  if (getGhostPromptAgentDestination() !== 'vsOpenCodeX') {
+  if (getAgentDestination() !== 'vsOpenCodeX') {
     notifiedMissingVsxThisSession = false;
     return;
   }
@@ -66,18 +61,23 @@ export function notifyIfVsxAgentDestinationWithoutVsOpenCodeX(): void {
     return;
   }
   notifiedMissingVsxThisSession = true;
-  void vscode.window
-    .showInformationMessage(
+  Promise.resolve(
+    vscode.window.showInformationMessage(
       'GhostPrompt: el destino del agente es VSOpenCodeX, pero esa extensión no está instalada o no está cargada. Instálala o cambia ghostPrompt.agentDestination a copilotChat.',
       'Abrir ajustes',
-    )
+    ),
+  )
     .then((choice) => {
       if (choice === 'Abrir ajustes') {
-        void vscode.commands.executeCommand(
-          'workbench.action.openSettings',
-          'ghostPrompt.agentDestination',
-        );
+        Promise.resolve(
+          vscode.commands.executeCommand('workbench.action.openSettings', 'ghostPrompt.agentDestination'),
+        ).catch(() => {
+          /* ignore */
+        });
       }
+    })
+    .catch(() => {
+      /* ignore */
     });
 }
 
@@ -87,3 +87,6 @@ const vsOpenCodeXProvider: DestinationProvider = {
 };
 
 registerDestination(vsOpenCodeXProvider);
+
+export {OUTBOUND_UI_FORWARD_KINDS, type OutboundUiForwardKind, VS_OPEN_CODE_X_INLINE_UI_COMMAND} from '../../system/internals/protocols/constants';
+export {isOutboundUiForwardKind} from '../../system/internals/protocols/guards/guardOutboundForward';

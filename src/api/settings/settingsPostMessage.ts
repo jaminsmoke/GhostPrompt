@@ -11,16 +11,16 @@ import { listOpencodeSuggestionModels } from '../../engines/provider/opencode/ca
 import { isSuggestionDebugEnabled } from '../../system/log';
 import { getLastEffectiveSuggestionModel } from '../../system/runtime/lastEffectiveSuggestionModel';
 import {
-  getGhostPromptAgentDestination,
+  getAgentDestination,
   isCursorDesktopHost,
   isVsOpenCodeXExtensionInstalled,
 } from '../getters/workspaceGetters';
 import { parseOutboundSettingsEnvelope } from '../protocols/webviewProtocols';
 
-import type { SuggestionStyle } from '../../sugcore/sugstyle/styleLengthController';
 import type {
   SuggestionModelDescriptor,
   SuggestionModelPolicy,
+  SuggestionStyle,
 } from '../../system/internals/protocols/types';
 
 export type GhostPromptSettingsGetters = {
@@ -31,7 +31,7 @@ export type GhostPromptSettingsGetters = {
 
 /**
  * Normaliza el debounce de sugerencia al rango permitido.
- * @param {number} value Valor de debounce de configuración.
+ * @param {number} value - Valor de debounce de configuración.
  * @returns {number} Valor ajustado dentro del rango mínimo y máximo.
  */
 function clampSuggestionDebounceMs(value: number): number {
@@ -40,8 +40,8 @@ function clampSuggestionDebounceMs(value: number): number {
 
 /**
  * Construye y envía el payload de configuración al webview.
- * @param {vscode.Webview} webview Webview destinatario del mensaje de settings.
- * @param {GhostPromptSettingsGetters} getters Callbacks para obtener valores runtime de settings.
+ * @param {vscode.Webview} webview - Webview destinatario del mensaje de settings.
+ * @param {GhostPromptSettingsGetters} getters - Callbacks para obtener valores runtime de settings.
  * @returns {Promise<void>} Promise que se resuelve cuando el mensaje se ha enviado.
  */
 export async function buildAndPostGhostPromptSettings(
@@ -56,7 +56,7 @@ export async function buildAndPostGhostPromptSettings(
   const enabledSources = getEnabledCompletionSources();
   const completionUiKind = getCompletionUiKind();
   const completionProvider = completionUiKind === 'multi' ? 'copilot' : completionUiKind;
-  let availableModels: SuggestionModelDescriptor[] = [];
+  let availableModels: SuggestionModelDescriptor[];
   try {
     if (enabledSources.length > 1) {
       availableModels = await listMergedSuggestionModels(policy, enabledSources);
@@ -83,7 +83,7 @@ export async function buildAndPostGhostPromptSettings(
       effectiveModel: getLastEffectiveSuggestionModel(),
       debugSuggestions: isSuggestionDebugEnabled(),
       suggestionDebounceMs,
-      agentDestination: getGhostPromptAgentDestination(),
+      agentDestination: getAgentDestination(),
       vsOpenCodeXExtensionInstalled: isVsOpenCodeXExtensionInstalled(),
       cursorDesktopHost: isCursorDesktopHost(),
     },

@@ -1,7 +1,7 @@
 /**
  * @file Plantilla HTML del webview GhostPrompt (CSP nonce y URIs).
  */
-import * as fs from 'fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import * as vscode from 'vscode';
 
@@ -14,7 +14,7 @@ export function generateGhostPromptWebviewNonce(): string {
   return Array.from({ length: 32 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
-export type GhostPromptWebviewHtmlParams = {
+export type GhostPromptWebviewHtmlParameters = {
   extensionUri: vscode.Uri;
   webview: vscode.Webview;
   viewContributionId: string;
@@ -24,11 +24,11 @@ export type GhostPromptWebviewHtmlParams = {
 /**
  * Construye el HTML del webview a partir del bundle React generado por Vite,
  * reemplazando placeholders por URIs seguras y CSP.
- * @param {GhostPromptWebviewHtmlParams} params Parámetros de construcción del webview.
+ * @param {GhostPromptWebviewHtmlParameters} params - Parámetros de construcción del webview.
  * @returns {string} HTML final para cargar en el webview.
  * @throws {Error} Si falta el bundle React compilado en `src/ui/webview/dist/react/index.html`.
  */
-export function buildGhostPromptWebviewHtml(params: GhostPromptWebviewHtmlParams): string {
+export function buildGhostPromptWebviewHtml(params: GhostPromptWebviewHtmlParameters): string {
   const { extensionUri, webview, viewContributionId, capabilitiesPayload } = params;
   const nonce = generateGhostPromptWebviewNonce();
   const reactIndexHtmlPath = vscode.Uri.joinPath(
@@ -41,14 +41,14 @@ export function buildGhostPromptWebviewHtml(params: GhostPromptWebviewHtmlParams
     'index.html',
   ).fsPath;
 
-  if (!fs.existsSync(reactIndexHtmlPath)) {
+  if (!existsSync(reactIndexHtmlPath)) {
     throw new Error('GhostPrompt React webview bundle missing. Run `npm run build:webview`.');
   }
 
-  const rawHtml = fs.readFileSync(reactIndexHtmlPath, 'utf-8');
+  const rawHtml = readFileSync(reactIndexHtmlPath, 'utf8');
   const reactAssetRoot = vscode.Uri.joinPath(extensionUri, 'src', 'ui', 'webview', 'dist', 'react');
-  const htmlWithAssets = rawHtml.replace(
-    /(src|href)="\.\/([^"\s]+)"/g,
+  const htmlWithAssets = rawHtml.replaceAll(
+    /(src|href)="\.\/([^\s"]+)"/gu,
     (_match: string, attr: string, relativePath: string) => {
     const assetUri = webview.asWebviewUri(vscode.Uri.joinPath(reactAssetRoot, relativePath));
       return `${attr}="${assetUri.toString()}"`;
@@ -56,8 +56,8 @@ export function buildGhostPromptWebviewHtml(params: GhostPromptWebviewHtmlParams
   );
   // Vite emite el <meta CSP> en varias líneas; si no coincide el reemplazo, VS Code deja
   // script-src 'unsafe-inline' y bloquea los bundles servidos vía asWebviewUri (vscode-cdn).
-  const cspMetaPattern = /<meta\s[^>]*?http-equiv\s*=\s*["']Content-Security-Policy["'][^>]*>/gis;
-  const htmlWithCsp = htmlWithAssets.replace(
+  const cspMetaPattern = /<meta\s[^>]*?http-equiv\s*=\s*["']content-security-policy["'][^>]*>/gius;
+  const htmlWithCsp = htmlWithAssets.replaceAll(
     cspMetaPattern,
     `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src ${webview.cspSource} 'nonce-${nonce}'; style-src ${webview.cspSource} 'unsafe-inline'; font-src ${webview.cspSource}; connect-src https:; img-src ${webview.cspSource} data: https:;" />`,
   );

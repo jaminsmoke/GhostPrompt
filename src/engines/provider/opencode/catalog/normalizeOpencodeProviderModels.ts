@@ -7,19 +7,19 @@
  * Capa de integración (no comportamiento del LM). Ver `Docs/ARCHITECTURE.md` §3 — Catálogo OpenCode.
  */
 
-export type RawOpencodeProviderModel = {
+export type RawOpencodeProviderModel = Record<string, unknown> & {
   id: string;
   name?: string;
-} & Record<string, unknown>;
+};
 
 /**
  * Comprueba si un valor es un registro de modelo OpenCode válido.
- * @param {unknown} v Valor a validar.
+ * @param {unknown} v - Valor a validar.
  * @returns {v is RawOpencodeProviderModel} True si el valor representa un modelo OpenCode válido.
  */
 function isModelRecord(v: unknown): v is RawOpencodeProviderModel {
   return (
-    v !== null &&
+    Boolean(v) &&
     typeof v === 'object' &&
     typeof (v as { id?: unknown }).id === 'string' &&
     (v as { id: string }).id.trim().length > 0
@@ -28,11 +28,11 @@ function isModelRecord(v: unknown): v is RawOpencodeProviderModel {
 
 /**
  * Normaliza la salida de modelos del proveedor OpenCode para el catálogo.
- * @param {unknown} models Datos devueltos por config.providers().
+ * @param {unknown} models - Datos devueltos por config.providers().
  * @returns {RawOpencodeProviderModel[]} Array de registros de modelo válidos.
  */
 export function normalizeOpencodeProviderModels(models: unknown): RawOpencodeProviderModel[] {
-  if (models === null || models === undefined) {
+  if (!models) {
     return [];
   }
   if (Array.isArray(models)) {

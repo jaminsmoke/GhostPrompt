@@ -1,7 +1,9 @@
 /**
  * @file Pruebas de catálogo de modelos fusionados para sugerencias.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 const mockListSuggestionModels = vi.hoisted(() => vi.fn());
 const mockListOpencodeSuggestionModels = vi.hoisted(() => vi.fn());
@@ -29,26 +31,26 @@ vi.mock('vscode', () => ({
 
 import { listMergedSuggestionModels } from './mergedModelCatalog';
 
-describe('listMergedSuggestionModels', () => {
-  beforeEach(() => {
+vitest.describe('listMergedSuggestionModels', () => {
+  vitest.beforeEach(() => {
     mockListSuggestionModels.mockReset();
     mockListOpencodeSuggestionModels.mockReset();
     mockListOllamaSuggestionModels.mockReset();
   });
 
-  it('returns only copilot models when only copilot is enabled', async () => {
+  vitest.it('returns only copilot models when only copilot is enabled', async () => {
     mockListSuggestionModels.mockResolvedValue([
       { id: 'gpt-4', label: 'GPT-4', tier: 'included', provider: 'OpenAI' },
     ]);
 
     const models = await listMergedSuggestionModels('nonPremiumOnly', ['copilot']);
-    expect(models).toHaveLength(1);
-    expect(models[0].id).toBe('gpt-4');
-    expect(mockListOpencodeSuggestionModels).not.toHaveBeenCalled();
-    expect(mockListOllamaSuggestionModels).not.toHaveBeenCalled();
+    vitest.expect(models).toHaveLength(1);
+    vitest.expect(models[0].id).toBe('gpt-4');
+    vitest.expect(mockListOpencodeSuggestionModels).not.toHaveBeenCalled();
+    vitest.expect(mockListOllamaSuggestionModels).not.toHaveBeenCalled();
   });
 
-  it('includes ollama models when ollama source is enabled', async () => {
+  vitest.it('includes ollama models when ollama source is enabled', async () => {
     mockListSuggestionModels.mockResolvedValue([
       { id: 'gpt-4', label: 'GPT-4', tier: 'included', provider: 'OpenAI' },
     ]);
@@ -57,11 +59,11 @@ describe('listMergedSuggestionModels', () => {
     ]);
 
     const models = await listMergedSuggestionModels('nonPremiumOnly', ['copilot', 'ollama']);
-    expect(models).toHaveLength(2);
-    expect(models.map((m) => m.id).sort()).toEqual(['gpt-4', 'mistral:latest']);
+    vitest.expect(models).toHaveLength(2);
+    vitest.expect(models.map((m) => m.id).toSorted()).toEqual(['gpt-4', 'mistral:latest']);
   });
 
-  it('deduplicates models with same id across sources', async () => {
+  vitest.it('deduplicates models with same id across sources', async () => {
     mockListSuggestionModels.mockResolvedValue([
       { id: 'shared-model', label: 'Shared', tier: 'included', provider: 'Copilot' },
     ]);
@@ -73,11 +75,11 @@ describe('listMergedSuggestionModels', () => {
     ]);
 
     const models = await listMergedSuggestionModels('anyModel', ['copilot', 'opencode', 'ollama']);
-    expect(models).toHaveLength(1);
-    expect(models[0].id).toBe('shared-model');
+    vitest.expect(models).toHaveLength(1);
+    vitest.expect(models[0].id).toBe('shared-model');
   });
 
-  it('returns empty array when all catalogs return empty', async () => {
+  vitest.it('returns empty array when all catalogs return empty', async () => {
     mockListSuggestionModels.mockResolvedValue([]);
     mockListOpencodeSuggestionModels.mockResolvedValue([]);
     mockListOllamaSuggestionModels.mockResolvedValue([]);
@@ -87,13 +89,13 @@ describe('listMergedSuggestionModels', () => {
       'opencode',
       'ollama',
     ]);
-    expect(models).toEqual([]);
+    vitest.expect(models).toEqual([]);
   });
 
-  it('propagates errors from individual catalogs', async () => {
+  vitest.it('propagates errors from individual catalogs', async () => {
     mockListSuggestionModels.mockRejectedValue(new Error('copilot error'));
 
-    await expect(
+    await vitest.expect(
       listMergedSuggestionModels('anyModel', ['copilot', 'opencode', 'ollama']),
     ).rejects.toThrow('copilot error');
   });

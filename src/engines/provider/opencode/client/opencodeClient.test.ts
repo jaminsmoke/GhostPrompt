@@ -1,9 +1,14 @@
 /**
  * @file Tests del cliente SDK OpenCode (sesiones, health, prompt).
  */
-import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { OpenCodeSdkClient } from '../../../../system/internals/protocols/types/opencodeClient';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
+
+import type * as OpencodeClientModule from './index';
+import type * as TypeOpencodeClientModule from '../../../../system/internals/protocols/types/typeOpencodeClient';
+
+type OpenCodeSdkClient = TypeOpencodeClientModule.OpenCodeSdkClient;
 
 const sessionCreateMock = vi.fn<Promise<unknown>, [unknown?]>();
 const sessionPromptMock = vi.fn<Promise<unknown>, [unknown]>();
@@ -25,103 +30,105 @@ vi.mock('@opencode-ai/sdk', () => ({
   createOpencodeClient: vi.fn<OpenCodeSdkClient, [unknown]>(() => fakeSdkClient),
 }));
 
-afterEach(() => {
+vitest.afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('opencode client', () => {
-  it('OPENCODE_DEFAULT_PORT es 4096', async () => {
-    const mod = (await import('../../../../system/internals/protocols/types/opencodeClient')) as typeof import('../../../../system/internals/protocols/types/opencodeClient');
-    expect(mod.OPENCODE_DEFAULT_PORT).toBe(4096);
+vitest.describe('opencode client', () => {
+  vitest.it('OPENCODE_DEFAULT_PORT es 4096', async () => {
+    const loadedModule = (await import(
+      '../../../../system/internals/protocols/types/typeOpencodeClient'
+    )) as typeof TypeOpencodeClientModule;
+    vitest.expect(loadedModule.OPENCODE_DEFAULT_PORT).toBe(4096);
   });
 
-  it('createOpenCodeClient devuelve un cliente y lo almacena como global', async () => {
-    const mod = (await import('./index')) as typeof import('./index');
-    mod.resetClient();
-    const client = await mod.createOpenCodeClient({});
-    expect(client).toBe(fakeSdkClient);
-    expect(mod.getGlobalClient()).toBe(fakeSdkClient);
-    mod.resetClient();
+  vitest.it('createOpenCodeClient devuelve un cliente y lo almacena como global', async () => {
+    const loadedModule = (await import('./index')) as typeof OpencodeClientModule;
+    loadedModule.resetClient();
+    const client = await loadedModule.createOpenCodeClient({});
+    vitest.expect(client).toBe(fakeSdkClient);
+    vitest.expect(loadedModule.getGlobalClient()).toBe(fakeSdkClient);
+    loadedModule.resetClient();
   });
 
-  it('healthCheck devuelve true si config.get resolves', async () => {
-    const mod = (await import('./index')) as typeof import('./index');
-    mod.resetClient();
-    await mod.createOpenCodeClient({});
+  vitest.it('healthCheck devuelve true si config.get resolves', async () => {
+    const loadedModule = (await import('./index')) as typeof OpencodeClientModule;
+    loadedModule.resetClient();
+    await loadedModule.createOpenCodeClient({});
     configGetMock.mockResolvedValue({ data: { status: 'ok' } });
-    const result = await mod.healthCheck(mod.getGlobalClient());
-    expect(result).toBe(true);
-    mod.resetClient();
+    const result = await loadedModule.healthCheck(loadedModule.getGlobalClient());
+    vitest.expect(result).toBe(true);
+    loadedModule.resetClient();
   });
 
-  it('healthCheck devuelve false si config.get rechaza', async () => {
-    const mod = (await import('./index')) as typeof import('./index');
-    mod.resetClient();
-    await mod.createOpenCodeClient({});
+  vitest.it('healthCheck devuelve false si config.get rechaza', async () => {
+    const loadedModule = (await import('./index')) as typeof OpencodeClientModule;
+    loadedModule.resetClient();
+    await loadedModule.createOpenCodeClient({});
     configGetMock.mockRejectedValue(new Error('conn refused'));
-    const result = await mod.healthCheck(mod.getGlobalClient());
-    expect(result).toBe(false);
-    mod.resetClient();
+    const result = await loadedModule.healthCheck(loadedModule.getGlobalClient());
+    vitest.expect(result).toBe(false);
+    loadedModule.resetClient();
   });
 
-  it('getSession devuelve id de sesion', async () => {
-    const mod = (await import('./index')) as typeof import('./index');
-    mod.resetClient();
-    await mod.createOpenCodeClient({});
+  vitest.it('getSession devuelve id de sesion', async () => {
+    const loadedModule = (await import('./index')) as typeof OpencodeClientModule;
+    loadedModule.resetClient();
+    await loadedModule.createOpenCodeClient({});
     sessionCreateMock.mockResolvedValue({ data: { id: 'sess-xyz' } });
-    const id = await mod.getSession(mod.getGlobalClient());
-    expect(id).toBe('sess-xyz');
-    mod.resetClient();
+    const id = await loadedModule.getSession(loadedModule.getGlobalClient());
+    vitest.expect(id).toBe('sess-xyz');
+    loadedModule.resetClient();
   });
 
-  it('promptOpenCode extrae texto de parts tipo text', async () => {
-    const mod = (await import('./index')) as typeof import('./index');
-    mod.resetClient();
-    await mod.createOpenCodeClient({});
+  vitest.it('promptOpenCode extrae texto de parts tipo text', async () => {
+    const loadedModule = (await import('./index')) as typeof OpencodeClientModule;
+    loadedModule.resetClient();
+    await loadedModule.createOpenCodeClient({});
     sessionCreateMock.mockResolvedValue({ data: { id: 'sess-prompt' } });
     sessionPromptMock.mockResolvedValue({
       data: { parts: [{ type: 'text', text: 'respuesta completa' }] },
     });
-    const id = await mod.getSession(mod.getGlobalClient());
-    const text = await mod.promptOpenCode(
+    const id = await loadedModule.getSession(loadedModule.getGlobalClient());
+    const text = await loadedModule.promptOpenCode(
       id,
       { providerID: 'test', modelID: 'm1' },
       [{ type: 'text', text: 'pr' }],
-      mod.getGlobalClient(),
+      loadedModule.getGlobalClient(),
     );
-    expect(text).toBe('respuesta completa');
-    mod.resetClient();
+    vitest.expect(text).toBe('respuesta completa');
+    loadedModule.resetClient();
   });
 
-  it('getSession reutiliza sesion del pool (no crea otra)', async () => {
-    const mod = (await import('./index')) as typeof import('./index');
-    mod.resetClient();
-    await mod.createOpenCodeClient({});
+  vitest.it('getSession reutiliza sesion del pool (no crea otra)', async () => {
+    const loadedModule = (await import('./index')) as typeof OpencodeClientModule;
+    loadedModule.resetClient();
+    await loadedModule.createOpenCodeClient({});
     sessionCreateMock.mockResolvedValue({ data: { id: 'pooled' } });
-    const id1 = await mod.getSession(mod.getGlobalClient());
-    const id2 = await mod.getSession(mod.getGlobalClient());
-    expect(id1).toBe('pooled');
-    expect(id2).toBe('pooled');
-    expect(sessionCreateMock).toHaveBeenCalledTimes(1);
-    mod.resetClient();
+    const id1 = await loadedModule.getSession(loadedModule.getGlobalClient());
+    const id2 = await loadedModule.getSession(loadedModule.getGlobalClient());
+    vitest.expect(id1).toBe('pooled');
+    vitest.expect(id2).toBe('pooled');
+    vitest.expect(sessionCreateMock).toHaveBeenCalledTimes(1);
+    loadedModule.resetClient();
   });
 
-  it('closeAllSessions hace delete de cada sesion del pool', async () => {
-    const mod = (await import('./index')) as typeof import('./index');
-    mod.resetClient();
-    await mod.createOpenCodeClient({});
+  vitest.it('closeAllSessions hace delete de cada sesion del pool', async () => {
+    const loadedModule = (await import('./index')) as typeof OpencodeClientModule;
+    loadedModule.resetClient();
+    await loadedModule.createOpenCodeClient({});
     sessionCreateMock.mockResolvedValue({ data: { id: 'close-sess' } });
-    await mod.getSession(mod.getGlobalClient());
-    await mod.closeAllSessions(mod.getGlobalClient());
-    expect(sessionDeleteMock).toHaveBeenCalled();
-    mod.resetClient();
+    await loadedModule.getSession(loadedModule.getGlobalClient());
+    await loadedModule.closeAllSessions(loadedModule.getGlobalClient());
+    vitest.expect(sessionDeleteMock).toHaveBeenCalled();
+    loadedModule.resetClient();
   });
 
-  it('resetClient deja getGlobalClient sin inicializar', async () => {
-    const mod = (await import('./index')) as typeof import('./index');
-    mod.resetClient();
-    await mod.createOpenCodeClient({});
-    mod.resetClient();
-    expect(() => mod.getGlobalClient()).toThrow();
+  vitest.it('resetClient deja getGlobalClient sin inicializar', async () => {
+    const loadedModule = (await import('./index')) as typeof OpencodeClientModule;
+    loadedModule.resetClient();
+    await loadedModule.createOpenCodeClient({});
+    loadedModule.resetClient();
+    vitest.expect(() => loadedModule.getGlobalClient()).toThrow();
   });
 });

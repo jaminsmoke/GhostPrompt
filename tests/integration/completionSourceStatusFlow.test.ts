@@ -1,7 +1,8 @@
 /**
  * @file Tests de integración del flujo de estado de proveedores LM.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 const execMock = vi.hoisted(() => vi.fn());
 vi.mock('node:child_process', () => ({ exec: execMock }));
@@ -14,7 +15,7 @@ import { ProviderStatusManager } from '../../src/system/runtime/providerStatusMa
 
 import type { ProviderStatusModule } from '../../src/system/internals/protocols/state/provider';
 
-describe('providerStatus flow - integration', () => {
+vitest.describe('providerStatus flow - integration', () => {
   let manager: ProviderStatusManager;
 
   const mockCopilot: ProviderStatusModule = {
@@ -27,8 +28,8 @@ describe('providerStatus flow - integration', () => {
       statusText: 'Running',
       actions: ['stop' as const],
     }),
-    start: vi.fn().mockResolvedValue(undefined),
-    stop: vi.fn().mockResolvedValue(undefined),
+    start: vi.fn().mockResolvedValue(),
+    stop: vi.fn().mockResolvedValue(),
   };
 
   const mockOllama: ProviderStatusModule = {
@@ -42,12 +43,12 @@ describe('providerStatus flow - integration', () => {
     }),
   };
 
-  beforeEach(() => {
+  vitest.beforeEach(() => {
     manager = new ProviderStatusManager();
     vi.clearAllMocks();
   });
 
-  it('refreshAll captura errores de módulos individuales', async () => {
+  vitest.it('refreshAll captura errores de módulos individuales', async () => {
     manager.register({
       ...mockCopilot,
       check: vi.fn().mockRejectedValue(new Error('connection failed')),
@@ -55,38 +56,38 @@ describe('providerStatus flow - integration', () => {
 
     const result = await manager.refreshAll();
 
-    expect(result).toHaveLength(1);
-    expect(result[0].status).toBe('error');
-    expect(result[0].statusText).toBe('Error al comprobar estado');
+    vitest.expect(result).toHaveLength(1);
+    vitest.expect(result[0].status).toBe('error');
+    vitest.expect(result[0].statusText).toBe('Error al comprobar estado');
   });
 
-  it('start ejecuta start del módulo y refresca estado', async () => {
+  vitest.it('start ejecuta start del módulo y refresca estado', async () => {
     manager.register(mockCopilot);
 
     const state = await manager.start('copilot');
 
-    expect(mockCopilot.start).toHaveBeenCalledOnce();
-    expect(state.status).toBe('running');
+    vitest.expect(mockCopilot.start).toHaveBeenCalledOnce();
+    vitest.expect(state.status).toBe('running');
   });
 
-  it('stop ejecuta stop del módulo y refresca estado', async () => {
-    const stopFn = vi.fn().mockResolvedValue(undefined);
-    manager.register({ ...mockCopilot, stop: stopFn });
+  vitest.it('stop ejecuta stop del módulo y refresca estado', async () => {
+    const stopFunction = vi.fn().mockResolvedValue();
+    manager.register({ ...mockCopilot, stop: stopFunction });
 
     const state = await manager.stop('copilot');
 
-    expect(stopFn).toHaveBeenCalledOnce();
-    expect(state.status).toBe('running');
+    vitest.expect(stopFunction).toHaveBeenCalledOnce();
+    vitest.expect(state.status).toBe('running');
   });
 
-  it('refreshAll retorna estados de todas las fuentes registradas', async () => {
+  vitest.it('refreshAll retorna estados de todas las fuentes registradas', async () => {
     manager.register(mockCopilot);
     manager.register(mockOllama);
 
     const result = await manager.refreshAll();
 
-    expect(result).toHaveLength(2);
-    expect(result[0].status).toBe('running');
-    expect(result[1].status).toBe('unavailable');
+    vitest.expect(result).toHaveLength(2);
+    vitest.expect(result[0].status).toBe('running');
+    vitest.expect(result[1].status).toBe('unavailable');
   });
 });

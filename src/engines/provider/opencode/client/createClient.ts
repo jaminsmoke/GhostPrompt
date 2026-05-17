@@ -5,13 +5,13 @@ import {
   OPENCODE_DEFAULT_PORT,
   type OpenCodeClientOptions,
   type OpenCodeSdkClient,
-} from '../../../../system/internals/protocols/types/opencodeClient';
+} from '../../../../system/internals/protocols/types/typeOpencodeClient';
 
 import { setGlobalOpenCodeClient } from './clientSingleton';
 
 /**
  * Construye la URL base del cliente OpenCode.
- * @param {OpenCodeClientOptions} options Opciones de cliente que incluyen host y puerto.
+ * @param {OpenCodeClientOptions} options - Opciones de cliente que incluyen host y puerto.
  * @returns {string} URL base HTTP.
  */
 function buildBaseUrl(options: OpenCodeClientOptions): string {
@@ -22,7 +22,7 @@ function buildBaseUrl(options: OpenCodeClientOptions): string {
 
 /**
  * Construye las cabeceras HTTP para el cliente OpenCode.
- * @param {OpenCodeClientOptions} options Opciones que pueden incluir token de autenticación.
+ * @param {OpenCodeClientOptions} options - Opciones que pueden incluir token de autenticación.
  * @returns {Record<string, string>} Cabeceras de petición.
  */
 function buildHeaders(options: OpenCodeClientOptions): Record<string, string> {
@@ -35,7 +35,7 @@ function buildHeaders(options: OpenCodeClientOptions): Record<string, string> {
 
 /**
  * Crea e inicializa el cliente OpenCode SDK y lo registra como global.
- * @param {OpenCodeClientOptions} options Opciones de configuración de cliente.
+ * @param {OpenCodeClientOptions} options - Opciones de configuración de cliente.
  * @returns {Promise<OpenCodeSdkClient>} Instancia de cliente OpenCode.
  */
 export async function createOpenCodeClient(

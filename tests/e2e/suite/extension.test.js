@@ -1,7 +1,7 @@
 /**
  * @file Pruebas E2E de activación y comandos seguros de la extensión.
  */
-const assert = require('assert');
+const assert = require('node:assert');
 
 const vscode = require('vscode');
 

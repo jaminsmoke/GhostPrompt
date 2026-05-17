@@ -4,7 +4,7 @@
 
 /**
  * Comprueba si un ID corresponde al formato OpenCode (`provider/model`).
- * @param {string} id Identificador de modelo candidato.
+ * @param {string} id - Identificador de modelo candidato.
  * @returns {boolean} True si el ID contiene exactamente una barra y no es un URL con doble slash.
  */
 export function looksLikeOpencodeModelId(id: string): boolean {

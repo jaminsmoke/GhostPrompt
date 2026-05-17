@@ -3,14 +3,14 @@
  */
 
 /** Etiqueta serializada en `LogEntry` / NDJSON. */
-export type LogLevelName = 'ERROR' | 'WARN' | 'INFO' | 'DEBUG';
+export type LogLevelName = 'DEBUG' | 'ERROR' | 'INFO' | 'WARN';
 
 /** Orden creciente de “verbosidad” (ERROR es el más restrictivo al filtrar por defecto). */
 export const LOG_LEVEL_ORDER: readonly LogLevelName[] = ['ERROR', 'WARN', 'INFO', 'DEBUG'] as const;
 
 /**
  * Convierte una cadena de configuración (`ghostPrompt.logLevel`) a `LogLevelName`.
- * @param {string | undefined} raw Valor en minúsculas o mezcla; por defecto `info`.
+ * @param {string | undefined} raw - Valor en minúsculas o mezcla; por defecto `info`.
  * @returns {LogLevelName} Nivel canónico.
  */
 export function parseLogLevelString(raw: string | undefined): LogLevelName {
@@ -29,7 +29,7 @@ export function parseLogLevelString(raw: string | undefined): LogLevelName {
 
 /**
  * Índice del nivel en {@link LOG_LEVEL_ORDER}.
- * @param {LogLevelName} level Nivel a indexar.
+ * @param {LogLevelName} level - Nivel a indexar.
  * @returns {number} Índice 0..3.
  */
 export function levelIndex(level: LogLevelName): number {
@@ -38,8 +38,8 @@ export function levelIndex(level: LogLevelName): number {
 
 /**
  * Indica si una entrada con `entryLevel` debe emitirse cuando el umbral mínimo es `minLevel`.
- * @param {LogLevelName} entryLevel Severidad del evento.
- * @param {LogLevelName} minLevel Umbral mínimo configurado (por ejemplo, `INFO` excluye solo `DEBUG`).
+ * @param {LogLevelName} entryLevel - Severidad del evento.
+ * @param {LogLevelName} minLevel - Umbral mínimo configurado (por ejemplo, `INFO` excluye solo `DEBUG`).
  * @returns {boolean} Verdadero si el evento debe mostrarse o persistirse.
  */
 export function shouldEmit(entryLevel: LogLevelName, minLevel: LogLevelName): boolean {

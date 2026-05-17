@@ -10,6 +10,7 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
+- **Protocols v0.6.1:** contratos bajo `src/system/internals/protocols/` con prefijos de archivo (`cons*`, `guard*`, `type*`, `state*`, `zschem*`); schemas Zod canónicos en `zschemWebviewMessages.ts`; adaptador webview `parseWebviewInbound.ts`; símbolos sin prefijo `GHOST_PROMPT_*` (`AGENT_DESTINATION_IDS`, `parseAgentDestination`, `getAgentDestination`, …); `CompletionCancellationToken` sin import de `vscode` en protocols.
 - **Fuentes de completado → `engines/`:** `getEnabledCompletionSources`, `getCompletionUiKind` en `engines/config/completionSources.ts`; `resolveCompletionSourceForRequest` y `CompletionSourceId` en `engines/routing/resolveCompletionSource.ts` y `engines/completionSourceId.ts`. Eliminados `system/internals/config/sources.ts` y `system/internals/protocols/routing.ts`.
 - **Stream Copilot LM → `engines/copilot/`:** `collectLmResponse` en `engines/copilot/collectLmResponse.ts` (antes `system/internals/streaming/collect.ts` / `collectResponseText`). Carpeta `system/internals/streaming/` eliminada.
 - **`system/internals/` reorganizado:** contratos en `protocols/types/` + `protocols/state/`; implementación en `state/` (`sessionStore`, `providerManager`). Eliminada carpeta `states/`.

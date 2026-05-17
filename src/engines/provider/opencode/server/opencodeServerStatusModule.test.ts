@@ -1,7 +1,9 @@
 /**
  * @file Pruebas del módulo de estado I/O del servidor OpenCode (`ProviderStatusModule`).
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 const configGetMock = vi.hoisted(() => vi.fn());
 vi.mock('vscode', () => ({
@@ -20,8 +22,8 @@ vi.mock('vscode', () => ({
 
 import { opencodeStatusModule } from './opencodeServerStatusModule';
 
-describe('opencodeStatusModule', () => {
-  beforeEach(() => {
+vitest.describe('opencodeStatusModule', () => {
+  vitest.beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal('fetch', vi.fn());
     configGetMock.mockImplementation((key: string, fallback?: unknown) => {
@@ -32,21 +34,21 @@ describe('opencodeStatusModule', () => {
     });
   });
 
-  it('retorna running si el ping HTTP responde ok', async () => {
+  vitest.it('retorna running si el ping HTTP responde ok', async () => {
     const mockFetch = vi.fn().mockResolvedValue({ ok: true });
     vi.stubGlobal('fetch', mockFetch);
 
     const state = await opencodeStatusModule.check();
-    expect(state.status).toBe('running');
-    expect(state.actions).toContain('stop');
+    vitest.expect(state.status).toBe('running');
+    vitest.expect(state.actions).toContain('stop');
   });
 
-  it('retorna stopped si el ping HTTP falla', async () => {
+  vitest.it('retorna stopped si el ping HTTP falla', async () => {
     const mockFetch = vi.fn().mockRejectedValue(new Error('fetch failed'));
     vi.stubGlobal('fetch', mockFetch);
 
     const state = await opencodeStatusModule.check();
-    expect(state.status).toBe('stopped');
-    expect(state.actions).toContain('start');
+    vitest.expect(state.status).toBe('stopped');
+    vitest.expect(state.actions).toContain('start');
   });
 });

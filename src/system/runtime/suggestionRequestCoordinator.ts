@@ -20,7 +20,7 @@ export class SuggestionRequestCoordinator {
 
   /**
    * Indica si un captureId sigue siendo la petición activa (no sustituida por otra más nueva).
-   * @param {number} captureId Identificador de captura a comprobar.
+   * @param {number} captureId - Identificador de captura a comprobar.
    * @returns {boolean} True si coincide con el capture activo.
    */
   isActiveCapture(captureId: number): boolean {
@@ -29,7 +29,7 @@ export class SuggestionRequestCoordinator {
 
   /**
    * Cancela la petición anterior, fija el captureId activo y devuelve un token nuevo.
-   * @param {number} captureId Identificador de la captura actual de sugerencia.
+   * @param {number} captureId - Identificador de la captura actual de sugerencia.
    * @returns {vscode.CancellationTokenSource} Token de cancelación para la solicitud en curso.
    */
   prepareRequest(captureId: number): vscode.CancellationTokenSource {
@@ -43,7 +43,7 @@ export class SuggestionRequestCoordinator {
 
   /**
    * Libera el token si sigue siendo el activo.
-   * @param {vscode.CancellationTokenSource} tokenSource Token devuelto por `prepareRequest`.
+   * @param {vscode.CancellationTokenSource} tokenSource - Token devuelto por `prepareRequest`.
    */
   disposeTokenIfActive(tokenSource: vscode.CancellationTokenSource): void {
     if (this._activeSuggestionToken === tokenSource) {

@@ -3,21 +3,21 @@
  *
  * HTTP vía `../http/ollamaApiClient`; políticas en `vscode.workspace`.
  */
+
 import * as vscode from 'vscode';
 
 import { buildCompletionInstruction } from '../../../../sugcore/rules/instruction';
-import { DEFAULT_MODEL_REQUEST_TIMEOUT_MS } from '../../../../system/internals/protocols/types/params';
-import { listModels, generate } from '../http/ollamaApiClient';
-
-import type {
-  CompletionRequestOptions,
-  CompletionResult,
-  SuggestionModelDescriptor,
+import {
+  DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
+  type CompletionRequestOptions,
+  type CompletionResult,
+  type SuggestionModelDescriptor,
 } from '../../../../system/internals/protocols/types';
+import { listModels, generate } from '../http/ollamaApiClient';
 
 /**
  * Describe un modelo Ollama para el pipeline de sugerencias.
- * @param {string} modelName Nombre del modelo Ollama.
+ * @param {string} modelName - Nombre del modelo Ollama.
  * @returns {SuggestionModelDescriptor} Descriptor de modelo para sugerencias.
  */
 function describeOllamaModel(modelName: string): SuggestionModelDescriptor {
@@ -31,7 +31,7 @@ function describeOllamaModel(modelName: string): SuggestionModelDescriptor {
 
 /**
  * Resuelve el modelo Ollama a usar según preferencia y configuración.
- * @param {string | undefined} preferredModelId Modelo preferido o "auto".
+ * @param {string | undefined} preferredModelId - Modelo preferido o "auto".
  * @returns {Promise<string | undefined>} Nombre del modelo seleccionado o undefined.
  */
 async function resolveOllamaModel(
@@ -55,8 +55,8 @@ async function resolveOllamaModel(
 
 /**
  * Solicita una completación a Ollama para un texto de usuario.
- * @param {string} userText Texto del usuario a completar.
- * @param {CompletionRequestOptions} options Opciones de completion del pipeline.
+ * @param {string} userText - Texto del usuario a completar.
+ * @param {CompletionRequestOptions} options - Opciones de completion del pipeline.
  * @returns {Promise<CompletionResult>} Resultado de completion con sugerencia o error.
  */
 export async function requestOllamaCompletion(
@@ -119,15 +119,15 @@ export async function requestOllamaCompletion(
       suggestion: completionText,
       model: describeOllamaModel(modelName),
     };
-  } catch (err) {
+  } catch (error) {
     if (token.isCancellationRequested) {
       return { kind: 'empty', reason: 'request-timeout' };
     }
-    const message = err instanceof Error ? err.message : String(err);
-    if (/timed out|cancelled/i.test(message)) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/timed out|cancelled/iu.test(message)) {
       return { kind: 'empty', reason: 'request-timeout' };
     }
-    if (/ECONNREFUSED|fetch failed|not found|no model/i.test(message)) {
+    if (/econnrefused|fetch failed|not found|no model/iu.test(message)) {
       return { kind: 'empty', reason: 'no-model' };
     }
     return { kind: 'error', message };

@@ -1,9 +1,13 @@
 /**
  * @file Lectura de configuración VS Code: fuentes de completado habilitadas.
  */
+
 import * as vscode from 'vscode';
 
+import { isProviderId } from '../../system/internals/protocols/guards/guardProviderId';
+
 import type { ProviderId } from '../../system/internals/protocols/state/provider';
+import type { CompletionUiKind } from '../../system/internals/protocols/types/typeCompletionUi';
 
 /**
  * Devuelve las fuentes de sugerencia activas según configuración o el modo legacy.
@@ -48,7 +52,7 @@ function legacySourcesFromCompletionProvider(): ProviderId[] {
 
 /**
  * Normaliza el valor bruto de `enabledCompletionSources`.
- * @param {unknown} raw Valor sin validar obtenido desde la configuración.
+ * @param {unknown} raw - Valor sin validar obtenido desde la configuración.
  * @returns {ProviderId[]} Arreglo limpio de IDs de proveedores válidos.
  */
 function normalizeCompletionSources(raw: unknown): ProviderId[] {
@@ -71,19 +75,10 @@ function normalizeCompletionSources(raw: unknown): ProviderId[] {
 }
 
 /**
- * Comprueba si un valor coincide con un ID de fuente de completado válido.
- * @param {unknown} value Valor a validar.
- * @returns {value is ProviderId} True si el valor es un proveedor válido.
- */
-function isProviderId(value: unknown): value is ProviderId {
-  return value === 'copilot' || value === 'opencode' || value === 'ollama';
-}
-
-/**
  * Determina el tipo de UI de completado que debe usar la webview.
- * @returns {'copilot'|'opencode'|'ollama'|'multi'} `multi` si hay varias fuentes habilitadas, de lo contrario la única fuente disponible.
+ * @returns {CompletionUiKind} `multi` si hay varias fuentes habilitadas, de lo contrario la única fuente disponible.
  */
-export function getCompletionUiKind(): 'copilot' | 'opencode' | 'ollama' | 'multi' {
+export function getCompletionUiKind(): CompletionUiKind {
   const s = getEnabledCompletionSources();
   if (s.length > 1) {
     return 'multi';

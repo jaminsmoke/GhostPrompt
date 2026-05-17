@@ -1,36 +1,29 @@
 /**
  * @file Validación en límites del canal postMessage (host).
- * Schemas canónicos y tipos inferidos: `src/api/contracts/webviewMessageSchemas.ts`.
+ * Schemas canónicos: `system/internals/protocols/validations/schemas/zschemWebviewMessages.ts`.
  */
 import { z } from 'zod';
 
-import { getLogger } from '../../system/log';
 import {
+  
   webviewInboundMessageSchema,
   webviewOutboundMessageSchema,
   webviewOutboundSettingsEnvelopeSchema,
+  
+  
   type WebviewInboundMessage,
   type WebviewOutboundMessage,
-} from '../contracts/webviewMessageSchemas';
+  
+} from '../../system/internals/protocols/validations/schemas/zschemWebviewMessages';
+import { getLogger } from '../../system/log';
 
-export type {
-  WebviewInboundMessage,
-  WebviewOutboundMessage,
-  WebviewSettingsPayload,
-} from '../contracts/webviewMessageSchemas';
-export {
-  suggestionModelDescriptorSchema,
-  webviewInboundMessageSchema,
-  webviewOutboundMessageSchema,
-  webviewOutboundSettingsEnvelopeSchema,
-  webviewSettingsPayloadSchema,
-  webviewUpdateSettingSchema,
-} from '../contracts/webviewMessageSchemas';
+
+
 
 /**
  * Parsea un mensaje entrante del webview. Si falla el contrato, no debe procesarse
  * (no actualizar `vscode.workspace`).
- * @param {unknown} raw Datos sin validar recibidos desde el webview.
+ * @param {unknown} raw - Datos sin validar recibidos desde el webview.
  * @returns {WebviewInboundMessage | undefined} El mensaje parseado o undefined si no pasa la validación Zod.
  */
 export function parseWebviewInboundMessage(raw: unknown): WebviewInboundMessage | undefined {
@@ -44,7 +37,7 @@ export function parseWebviewInboundMessage(raw: unknown): WebviewInboundMessage 
 
 /**
  * Valida el sobre `{ type: 'settings', settings }` antes de `postMessage`.
- * @param {unknown} raw Datos sin validar que vienen del host para el payload de settings.
+ * @param {unknown} raw - Datos sin validar que vienen del host para el payload de settings.
  * @returns {z.infer<typeof webviewOutboundSettingsEnvelopeSchema> | undefined} El objeto parseado o undefined si no pasa la validación Zod.
  */
 export function parseOutboundSettingsEnvelope(
@@ -61,7 +54,7 @@ export function parseOutboundSettingsEnvelope(
 /**
  * Parsea un mensaje saliente hacia el webview. Si falla el contrato,
  * loguea warning (no bloquea el envío en producción).
- * @param {unknown} raw Datos sin validar que se enviarán al webview.
+ * @param {unknown} raw - Datos sin validar que se enviarán al webview.
  * @returns {WebviewOutboundMessage | undefined} El mensaje parseado o undefined si no pasa la validación Zod.
  */
 export function parseWebviewOutboundMessage(raw: unknown): WebviewOutboundMessage | undefined {
@@ -72,3 +65,5 @@ export function parseWebviewOutboundMessage(raw: unknown): WebviewOutboundMessag
   }
   return r.data;
 }
+
+export {suggestionModelDescriptorSchema, webviewSettingsPayloadSchema, webviewUpdateSettingSchema, type WebviewSettingsPayload, type WebviewInboundMessage, type WebviewOutboundMessage, webviewInboundMessageSchema, webviewOutboundMessageSchema, webviewOutboundSettingsEnvelopeSchema} from '../../system/internals/protocols/validations/schemas/zschemWebviewMessages';

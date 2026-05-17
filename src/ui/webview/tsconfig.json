@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "DOM"],
+    "lib": ["ES2023", "DOM"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
@@ -18,7 +18,7 @@
     "./**/*.ts",
     "./**/*.tsx",
     "./globals.d.ts",
-    "../../api/contracts/webviewMessageSchemas.ts",
+    "../../system/internals/protocols/validations/schemas/zschemWebviewMessages.ts",
     "../../system/internals/protocols/state/provider/**/*.ts"
   ],
   "exclude": [

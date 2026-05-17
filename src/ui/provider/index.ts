@@ -5,7 +5,7 @@ export { MiniInputViewProvider } from './MiniInputViewProvider';
 export {
   buildGhostPromptWebviewHtml,
   generateGhostPromptWebviewNonce,
-  type GhostPromptWebviewHtmlParams,
+  type GhostPromptWebviewHtmlParameters,
 } from './webviewHtml';
 export {
   getMultiViewDraftText,

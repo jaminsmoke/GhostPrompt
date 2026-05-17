@@ -1,7 +1,8 @@
 /**
  * @file Pruebas unitarias del componente de comandos de Cursor Chat.
  */
-import { describe, expect, it, vi } from 'vitest';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 vi.mock('vscode', () => ({
   commands: { executeCommand: vi.fn(), getCommands: vi.fn(() => Promise.resolve([])) },
@@ -13,13 +14,12 @@ vi.mock('../../system/log', () => ({
   getLogger: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
 }));
 
-import {
-  CURSOR_CHAT_PRIMARY_COMMAND_ID,
-  filterCursorChatCandidateCommands,
-} from './cursorChatCommands';
+import { CURSOR_CHAT_PRIMARY_COMMAND_ID } from '../../system/internals/protocols/constants/consCursorChat';
 
-describe('cursorChatCommands', () => {
-  it('filterCursorChatCandidateCommands incluye chat/composer/cursor y ordena', () => {
+import { filterCursorChatCandidateCommands } from './cursorChatCommands';
+
+vitest.describe('cursorChatCommands', () => {
+  vitest.it('filterCursorChatCandidateCommands incluye chat/composer/cursor y ordena', () => {
     const all = [
       'workbench.action.files.save',
       'workbench.action.chat.open',
@@ -28,7 +28,7 @@ describe('cursorChatCommands', () => {
       'cursor.foo',
       'ghostPrompt.runSuggestPipeline',
     ];
-    expect(filterCursorChatCandidateCommands(all)).toEqual([
+    vitest.expect(filterCursorChatCandidateCommands(all)).toEqual([
       'aichat.newchataction',
       'composer.openComposer',
       'cursor.foo',
@@ -36,7 +36,7 @@ describe('cursorChatCommands', () => {
     ]);
   });
 
-  it('expone el comando primario acordado en fase 0', () => {
-    expect(CURSOR_CHAT_PRIMARY_COMMAND_ID).toBe('workbench.action.chat.open');
+  vitest.it('expone el comando primario acordado en fase 0', () => {
+    vitest.expect(CURSOR_CHAT_PRIMARY_COMMAND_ID).toBe('workbench.action.chat.open');
   });
 });

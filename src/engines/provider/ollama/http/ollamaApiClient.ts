@@ -1,7 +1,6 @@
 /**
  * @file Cliente ligero para la API de Ollama.
  */
-import { type OllamaClientOptions, type OllamaModel } from './ollamaTypes';
 import {
   ollamaGenerateResponseChunkSchema,
   ollamaGenerateResponseSchema,
@@ -9,42 +8,43 @@ import {
   ollamaTagsResponseSchema,
 } from './ollamaValidators';
 
+import type { OllamaClientOptions, OllamaModel } from './ollamaTypes';
+
 const DEFAULT_OLLAMA_BASE_URL = 'http://localhost:11434';
-const DEFAULT_REQUEST_TIMEOUT_MS = 30000;
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 
 /**
  * Construye una URL completa para una ruta de la API de Ollama.
- * @param {string} path Ruta del endpoint, incluyendo prefijo '/'.
- * @param {string | undefined} [baseUrl] URL base opcional de Ollama.
+ * @param {string} path - Ruta del endpoint, incluyendo prefijo '/'.
+ * @param {string | undefined} [baseUrl] - URL base opcional de Ollama.
  * @returns {string} URL completa sin barras finales duplicadas.
  */
 function resolveUrl(path: string, baseUrl?: string): string {
-  const base = (baseUrl ?? DEFAULT_OLLAMA_BASE_URL).replace(/\/+$/, '');
+  const base = (baseUrl ?? DEFAULT_OLLAMA_BASE_URL).replace(/\/+$/u, '');
   return `${base}${path}`;
 }
 
 /**
  * Construye las opciones de cabecera y señal para una petición Ollama.
- * @param {OllamaClientOptions} opts Opciones de cliente que pueden incluir señal de cancelación.
+ * @param {OllamaClientOptions} options - Opciones de cliente que pueden incluir señal de cancelación.
  * @returns {{ headers: Record<string, string>; signal?: globalThis.AbortSignal }} Objeto con cabeceras y señal para fetch.
  */
-function buildOptions(opts: OllamaClientOptions): {
+function buildOptions(options: OllamaClientOptions): {
   headers: Record<string, string>;
   signal?: globalThis.AbortSignal;
 } {
-  const headers: Record<string, string> = {};
-  headers['Content-Type'] = 'application/json';
+  const headers: Record<string, string> = { 'Content-Type': 'application/json',};
   return {
     headers,
-    ...(opts.signal ? { signal: opts.signal } : {}),
+    ...options.signal ? { signal: options.signal } : {},
   };
 }
 
 /**
  * Realiza una petición fetch y parsea la respuesta JSON con timeout.
- * @param {string} url URL a la que realizar la petición.
- * @param {globalThis.RequestInit} init Configuración de la petición fetch.
- * @param {number} timeoutMs Tiempo máximo en milisegundos antes de abortar.
+ * @param {string} url - URL a la que realizar la petición.
+ * @param {globalThis.RequestInit} init - Configuración de la petición fetch.
+ * @param {number} timeoutMs - Tiempo máximo en milisegundos antes de abortar.
  * @returns {Promise<T>} Respuesta parseada como JSON genérico.
  */
 async function fetchJson<T>(
@@ -66,18 +66,18 @@ async function fetchJson<T>(
       throw new Error(`Ollama HTTP ${res.status}: ${res.statusText}`);
     }
     return (await res.json()) as T;
-  } catch (err) {
+  } catch (error) {
     clearTimeout(timeoutId);
-    if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error('Ollama request timed out or was cancelled');
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Ollama request timed out or was cancelled', { cause: error });
     }
-    throw err;
+    throw error;
   }
 }
 
 /**
  * Crea una señal combinada que se aborta cuando cualquiera de las señales internas se aborta.
- * @param {globalThis.AbortSignal[]} signals Señales a combinar.
+ * @param {globalThis.AbortSignal[]} signals - Señales a combinar.
  * @returns {globalThis.AbortSignal} Señal compuesta de cancelación.
  */
 function anySignal(signals: globalThis.AbortSignal[]): globalThis.AbortSignal {
@@ -96,51 +96,52 @@ function anySignal(signals: globalThis.AbortSignal[]): globalThis.AbortSignal {
 
 /**
  * Lista modelos disponibles en la instancia de Ollama.
- * @param {OllamaClientOptions} [opts] Opciones de cliente para la petición.
+ * @param {OllamaClientOptions} [options] - Opciones de cliente para la petición.
  * @returns {Promise<OllamaModel[]>} Array de modelos disponibles.
  */
-export async function listModels(opts: OllamaClientOptions = {}): Promise<OllamaModel[]> {
-  const url = resolveUrl('/api/tags', opts.baseUrl);
-  const { headers, signal } = buildOptions(opts);
+export async function listModels(options: OllamaClientOptions = {}): Promise<OllamaModel[]> {
+  const url = resolveUrl('/api/tags', options.baseUrl);
+  const { headers, signal } = buildOptions(options);
   const data = await fetchJson<unknown>(
     url,
     { method: 'GET', headers, signal },
-    opts.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
+    options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
   );
   const parsed = ollamaTagsResponseSchema.safeParse(data);
   if (!parsed.success || !Array.isArray(parsed.data.models)) {
     return [];
   }
-  return parsed.data.models.reduce<OllamaModel[]>((validModels, candidate) => {
+  const validModels: OllamaModel[] = [];
+  for (const candidate of parsed.data.models) {
     const modelParse = ollamaModelSchema.safeParse(candidate);
     if (modelParse.success) {
       validModels.push(modelParse.data);
     }
-    return validModels;
-  }, []);
+  }
+  return validModels;
 }
 
 /**
  * Genera texto desde Ollama usando el prompt y modelo especificados.
- * @param {string} prompt Texto de entrada para el modelo.
- * @param {string} model Identificador del modelo Ollama.
- * @param {OllamaClientOptions & { onStreamPreview?: (text: string) => void; system?: string; options?: Record<string, unknown>; }} [opts] Opciones de generación y streaming.
+ * @param {string} prompt - Texto de entrada para el modelo.
+ * @param {string} model - Identificador del modelo Ollama.
+ * @param {OllamaClientOptions & { onStreamPreview?: (text: string) => void; system?: string; options?: Record<string, unknown>; }} [options] - Opciones de generación y streaming.
  * @returns {Promise<string>} Texto generado completo.
  */
 export async function generate(
   prompt: string,
   model: string,
-  opts: OllamaClientOptions & {
+  options: OllamaClientOptions & {
     onStreamPreview?: (text: string) => void;
     system?: string;
     options?: Record<string, unknown>;
   } = {},
 ): Promise<string> {
-  const url = resolveUrl('/api/generate', opts.baseUrl);
-  const timeoutMs = opts.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+  const url = resolveUrl('/api/generate', options.baseUrl);
+  const timeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
 
-  if (opts.onStreamPreview) {
-    return streamGenerate(prompt, model, url, opts, timeoutMs);
+  if (options.onStreamPreview) {
+    return streamGenerate(prompt, model, url, options, timeoutMs);
   }
 
   const body: Record<string, unknown> = {
@@ -148,14 +149,14 @@ export async function generate(
     prompt,
     stream: false,
   };
-  if (opts.system) {
-    body.system = opts.system;
+  if (options.system) {
+    body.system = options.system;
   }
-  if (opts.options) {
-    body.options = opts.options;
+  if (options.options) {
+    body.options = options.options;
   }
 
-  const { headers, signal } = buildOptions(opts);
+  const { headers, signal } = buildOptions(options);
   const res = await fetchJson<unknown>(
     url,
     {
@@ -176,18 +177,18 @@ export async function generate(
 
 /**
  * Realiza una generación de Ollama por streaming y emite previews.
- * @param {string} prompt Texto para enviar al modelo.
- * @param {string} model Modelo Ollama a usar.
- * @param {string} url URL de la API generate.
- * @param {OllamaClientOptions & { onStreamPreview?: (text: string) => void; system?: string; options?: Record<string, unknown>; }} opts Opciones de generación y streaming.
- * @param {number} timeoutMs Timeout en milisegundos para la operación.
+ * @param {string} prompt - Texto para enviar al modelo.
+ * @param {string} model - Modelo Ollama a usar.
+ * @param {string} url - URL de la API generate.
+ * @param {OllamaClientOptions & { onStreamPreview?: (text: string) => void; system?: string; options?: Record<string, unknown>; }} options - Opciones de generación y streaming.
+ * @param {number} timeoutMs - Timeout en milisegundos para la operación.
  * @returns {Promise<string>} Texto completo generado.
  */
 async function streamGenerate(
   prompt: string,
   model: string,
   url: string,
-  opts: OllamaClientOptions & {
+  options: OllamaClientOptions & {
     onStreamPreview?: (text: string) => void;
     system?: string;
     options?: Record<string, unknown>;
@@ -196,23 +197,22 @@ async function streamGenerate(
 ): Promise<string> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-  const signal = opts.signal ? anySignal([opts.signal, controller.signal]) : controller.signal;
+  const signal = options.signal ? anySignal([options.signal, controller.signal]) : controller.signal;
 
   const body: Record<string, unknown> = {
     model,
     prompt,
     stream: true,
   };
-  if (opts.system) {
-    body.system = opts.system;
+  if (options.system) {
+    body.system = options.system;
   }
-  if (opts.options) {
-    body.options = opts.options;
+  if (options.options) {
+    body.options = options.options;
   }
 
   try {
-    const headers: Record<string, string> = {};
-    headers['Content-Type'] = 'application/json';
+    const headers: Record<string, string> = { 'Content-Type': 'application/json',};
 
     const res = await fetch(url, {
       method: 'POST',
@@ -256,7 +256,7 @@ async function streamGenerate(
             continue;
           }
           fullText += chunkParse.data.response;
-          opts.onStreamPreview?.(fullText);
+          options.onStreamPreview?.(fullText);
         } catch {
           // skip malformed lines
         }
@@ -264,11 +264,11 @@ async function streamGenerate(
     }
 
     return fullText;
-  } catch (err) {
+  } catch (error) {
     clearTimeout(timeoutId);
-    if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error('Ollama request timed out or was cancelled');
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Ollama request timed out or was cancelled', { cause: error });
     }
-    throw err;
+    throw error;
   }
 }

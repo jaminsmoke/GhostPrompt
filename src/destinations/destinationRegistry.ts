@@ -1,33 +1,24 @@
 /**
  * @file Registro y lógica común de destinos GhostPrompt.
  */
+
 import * as vscode from 'vscode';
 
-import { CURSOR_CHAT_DESTINATION_ID } from './cursor/cursorHost';
+import {  VS_OPEN_CODE_X_EXTENSION_ID } from '../system/internals/protocols/constants/consDestinations';
+import {
+  parseAgentDestination,
+  type AgentDestination,
+  type DestinationId,
+  type DestinationProvider,
+} from '../system/internals/protocols/types/typeDestinations';
 
 export { CURSOR_CHAT_DESTINATION_ID, isCursorDesktopHost } from './cursor/cursorHost';
-
-export const VS_OPEN_CODE_X_EXTENSION_ID = 'jaminsmoke.vsopencodex';
-
-export const GHOST_PROMPT_AGENT_DESTINATION_IDS = [
-  'copilotChat',
-  'vsOpenCodeX',
-  CURSOR_CHAT_DESTINATION_ID,
-] as const;
-
-export type DestinationId = (typeof GHOST_PROMPT_AGENT_DESTINATION_IDS)[number];
-
-export interface DestinationProvider {
-  readonly id: DestinationId;
-  sendPrompt?(text: string): Promise<void>;
-  forwardSuggestionUi?(payload: Record<string, unknown>): void;
-}
 
 const registry = new Map<DestinationId, DestinationProvider>();
 
 /**
  * Registra un proveedor de destino para GhostPrompt.
- * @param {DestinationProvider} provider Provider que implementa la interfaz DestinationProvider.
+ * @param {DestinationProvider} provider - Provider que implementa la interfaz DestinationProvider.
  * @returns {void}
  */
 export function registerDestination(provider: DestinationProvider): void {
@@ -36,7 +27,7 @@ export function registerDestination(provider: DestinationProvider): void {
 
 /**
  * Obtiene un proveedor de destino registrado por su ID.
- * @param {DestinationId} id Identificador del destino deseado.
+ * @param {DestinationId} id - Identificador del destino deseado.
  * @returns {DestinationProvider | undefined} Proveedor de destino o undefined si no está registrado.
  */
 export function getDestinationProviderForId(id: DestinationId): DestinationProvider | undefined {
@@ -57,8 +48,6 @@ export function getActiveDestinationProvider(): DestinationProvider {
     }
   );
 }
-
-export type GhostPromptAgentDestination = DestinationId;
 
 /**
  * Comprueba si el destino del agente fue configurado explícitamente por el usuario.
@@ -97,35 +86,17 @@ export function isVsOpenCodeXExtensionInstalled(): boolean {
 }
 
 /**
- * Normaliza un valor crudo de `ghostPrompt.agentDestination` al enum soportado.
- * Valores desconocidos → `copilotChat`.
- * @param {string | undefined} raw Valor leído de configuración o webview.
- * @returns {GhostPromptAgentDestination} Destino normalizado.
- */
-export function parseGhostPromptAgentDestination(
-  raw: string | undefined,
-): GhostPromptAgentDestination {
-  if (raw === 'vsOpenCodeX') {
-    return 'vsOpenCodeX';
-  }
-  if (raw === CURSOR_CHAT_DESTINATION_ID) {
-    return CURSOR_CHAT_DESTINATION_ID;
-  }
-  return 'copilotChat';
-}
-
-/**
  * Determina el destino efectivo de GhostPrompt (`copilotChat`, `vsOpenCodeX` o `cursorChat`).
  * Con destino `cursorChat` no aplica gating VSX: suggest/send usan la webview GhostPrompt (como `copilotChat`).
- * @returns {GhostPromptAgentDestination} Destino seleccionado o inferido según configuración y disponibilidad.
+ * @returns {AgentDestination} Destino seleccionado o inferido según configuración y disponibilidad.
  */
-export function getGhostPromptAgentDestination(): GhostPromptAgentDestination {
+export function getAgentDestination(): AgentDestination {
   const cfg = vscode.workspace.getConfiguration('ghostPrompt');
   const v = cfg.get<string>('agentDestination', 'copilotChat');
   if (!isAgentDestinationExplicitlyConfigured() && isVsOpenCodeXExtensionInstalled()) {
     return 'vsOpenCodeX';
   }
-  return parseGhostPromptAgentDestination(v);
+  return parseAgentDestination(v);
 }
 
 /**
@@ -133,5 +104,8 @@ export function getGhostPromptAgentDestination(): GhostPromptAgentDestination {
  * @returns {DestinationId} ID de destino a usar para enviar prompts.
  */
 function resolveEffectiveDestinationId(): DestinationId {
-  return getGhostPromptAgentDestination();
+  return getAgentDestination();
 }
+
+export {AGENT_DESTINATION_IDS, VS_OPEN_CODE_X_EXTENSION_ID} from '../system/internals/protocols/constants/consDestinations';
+export {type DestinationId, type DestinationProvider, type AgentDestination, parseAgentDestination} from '../system/internals/protocols/types/typeDestinations';

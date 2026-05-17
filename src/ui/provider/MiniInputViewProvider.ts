@@ -5,36 +5,35 @@
  *
  * Composición de dependencias y flujos para GhostPrompt input v0.5.3.
  *
- * - Contratos Zod y parseo: `api/protocols/webviewProtocols.ts`.
+ * - Contratos Zod y parseo: `api/protocols/webviewProtocols.ts` (schemas en `system/internals/protocols/validations/schemas/`).
  * - HTML/CSP y plantilla: `ui/provider/webviewHtml.ts`.
  * - Mensaje `settings` → webview: `api/settings/settingsPostMessage.ts`.
  * - Mensaje `suggest`: `core/suggest/runSuggest.ts`.
  * - Router/handlers webview → host (`init`, `draftChanged`, `updateSetting`, `send`, `accept`): `api/protocols/inboundHandlers.ts`.
- * - Lectura de workspace / contexto editor: `api/getters/workspaceGetters.ts`.
+ * - Lectura de workspace / contexto editor: `api/getters/workspaceGetters.ts`; política de modelo de sugerencias: `system/internals/config/readGhostPromptSuggestionModelPolicy.ts`.
  * - Actualización desde chips (`updateSetting`): `api/settings/applyWebviewUpdate.ts`.
  *
  * Registra la vista en el activity bar y el panel inferior (C2).
  * Protocolo host↔webview:
- *   - `suggest`    (webview → host): solicitar suggestion para el texto parcial.
- *   - `loading`    (host → webview): suggestion en curso; opcional `phase`, `statusText` (fases OpenCode / Copilot).
- *   - `suggestion-stream` (host → webview): OpenCode — texto acumulado vía SSE antes del resultado final.
- *   - `suggestion` (host → webview): devolver el texto de la suggestion capturada.
- *   - `empty`      (host → webview): no hay suggestion disponible.
- *   - `error`      (host → webview): error al pedir suggestion.
- *   - `accept`     (webview → host): el usuario aceptó la suggestion con Tab.
- *   - `send`       (webview → host): enviar el prompt completo al chat de Copilot.
- *   - `clear`      (host → webview): resetear el input tras un envío exitoso.
- *   - `draftChanged` (webview → host): texto del borrador para sincronizar vistas.
- *   - `draftSync` / `draftHydrate` (host → webview): aplicar borrador remoto o estado inicial.
- *   - Mensajes de suggestion pueden llevar `broadcast: true` para espejar Sidebar + Panel.
- *   - Contratos Zod (`api/contracts/webviewMessageSchemas.ts` / `api/protocols/webviewProtocols.ts`): entrada webview → host y salida `settings`.
+ * - `suggest` (webview → host): solicitar suggestion para el texto parcial.
+ * - `loading` (host → webview): suggestion en curso; opcional `phase`, `statusText` (fases OpenCode / Copilot).
+ * - `suggestion-stream` (host → webview): OpenCode — texto acumulado vía SSE antes del resultado final.
+ * - `suggestion` (host → webview): devolver el texto de la suggestion capturada.
+ * - `empty` (host → webview): no hay suggestion disponible.
+ * - `error` (host → webview): error al pedir suggestion.
+ * - `accept` (webview → host): el usuario aceptó la suggestion con Tab.
+ * - `send` (webview → host): enviar el prompt completo al chat de Copilot.
+ * - `clear` (host → webview): resetear el input tras un envío exitoso.
+ * - `draftChanged` (webview → host): texto del borrador para sincronizar vistas.
+ * - `draftSync` / `draftHydrate` (host → webview): aplicar borrador remoto o estado inicial.
+ * - Mensajes de suggestion pueden llevar `broadcast: true` para espejar Sidebar + Panel.
+ * - Esquemas Zod (`system/internals/protocols/validations/schemas/zschemWebviewMessages.ts`); parseo en `api/protocols/webviewProtocols.ts`.
  */
 import * as vscode from 'vscode';
 
 import {
   getGhostPromptMaxSuggestionChars,
   getGhostPromptSelectedModelId,
-  getGhostPromptSuggestionModelPolicy,
   getGhostPromptSuggestionStyle,
 } from '../../api/getters/workspaceGetters';
 import { dispatchGhostPromptInboundMessage } from '../../api/protocols/inboundHandlers';
@@ -46,14 +45,16 @@ import { buildAndPostGhostPromptSettings } from '../../api/settings/settingsPost
 import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from '../../destinations/vsOpenCodeX/vsOpenCodeXDestination';
 import { ollamaModelManager } from '../../engines/provider/ollama';
 import { looksLikeOllamaModelId } from '../../engines/provider/ollama/routing/routingModelId';
+import { readGhostPromptSuggestionModelPolicy } from '../../system/internals/config/readGhostPromptSuggestionModelPolicy';
 import { getLogger } from '../../system/log';
 import { providerStatusManager } from '../../system/runtime/providerStatusManager';
-import { handleGhostPromptSuggest } from '../../system/runtime/suggestRuntime';
+import {
+  handleGhostPromptSuggest,
+  type GhostPromptSuggestDeps,
+} from '../../system/runtime/suggestRuntime';
 import { maybeNotifySuggestionIssue } from '../notifications/suggestionNotification';
 
 import { buildGhostPromptWebviewHtml } from './webviewHtml';
-
-import type { GhostPromptSuggestDeps } from '../../system/runtime/suggestRuntime';
 
 export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /** View ID for the activity bar container. */
@@ -86,7 +87,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * (sidebar + panel inferior), añadiendo `broadcast: true` para que cada webview
    * pueda sincronizar su `captureId`. También forwardea a VSOpenCodeX si aplica.
    * @param {Record<string, unknown>} payload - Mensaje a emitir (se le añade `{ broadcast: true }`).
-   *                 Se valida con `parseWebviewOutboundMessage` en desarrollo.
+   * Se valida con `parseWebviewOutboundMessage` en desarrollo.
    * @returns {void}
    */
   private static _broadcastUi(payload: Record<string, unknown>): void {
@@ -103,8 +104,8 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
 
   /**
    * Propaga borrador a la otra vista GhostPrompt (Sidebar ↔ Panel).
-   * @param {string} originViewId Identificador de la vista origen que no debe recibir el sync.
-   * @param {string} text Texto del borrador que se sincroniza.
+   * @param {string} originViewId - Identificador de la vista origen que no debe recibir el sync.
+   * @param {string} text - Texto del borrador que se sincroniza.
    * @returns {void}
    */
   private static _broadcastDraftSync(originViewId: string, text: string): void {
@@ -141,7 +142,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     return {
       broadcastUi: (...args: Parameters<typeof MiniInputViewProvider._broadcastUi>) =>
         MiniInputViewProvider._broadcastUi(...args),
-      getSuggestionModelPolicy: () => getGhostPromptSuggestionModelPolicy(),
+      getSuggestionModelPolicy: () => readGhostPromptSuggestionModelPolicy(),
       getSelectedModelId: () => getGhostPromptSelectedModelId(),
       getSuggestionStyle: () => getGhostPromptSuggestionStyle(),
       getMaxSuggestionChars: () => getGhostPromptMaxSuggestionChars(),
@@ -152,7 +153,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /**
    * API para VSOpenCodeX (executeCommand): ejecuta el pipeline de suggestion con el texto actual del chat VSX.
    * Ignorar cuando el usuario usa destino Copilot (sigue usando la webview).
-   * @param {string} text Texto que se debe sugerir desde el host externo.
+   * @param {string} text - Texto que se debe sugerir desde el host externo.
    * @returns {Promise<void>} Promise que indica cuando el proceso de suggest se completa.
    */
   public static async runSuggestFromExternalHost(text: string): Promise<void> {
@@ -169,7 +170,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
 
   private async _postSettings(webview: vscode.Webview): Promise<void> {
     await buildAndPostGhostPromptSettings(webview, {
-      getSuggestionModelPolicy: () => getGhostPromptSuggestionModelPolicy(),
+      getSuggestionModelPolicy: () => readGhostPromptSuggestionModelPolicy(),
       getSelectedModelId: () => getGhostPromptSelectedModelId(),
       getSuggestionStyle: () => getGhostPromptSuggestionStyle(),
     });
@@ -196,16 +197,16 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /**
    * Maneja efectos secundarios de cambio de modelo/provider (Ollama lifecycle).
    * Extraído de `inboundHandlers.ts` para separar lógica de negocio del protocol handler.
-   * @param {string} key Clave de configuración cambiada.
-   * @param {string} value Nuevo valor de la configuración.
+   * @param {string} key - Clave de configuración cambiada.
+   * @param {string} value - Nuevo valor de la configuración.
    * @returns {Promise<void>} Promise que se resuelve cuando el lifecycle termina.
    */
   private static async _onSettingChanged(
-    key: 'selectedModelId' | 'completionProvider',
+    key: 'completionProvider' | 'selectedModelId',
     value: string,
   ): Promise<void> {
     if (key === 'selectedModelId' && looksLikeOllamaModelId(value)) {
-      void ollamaModelManager.stopAll();
+      await ollamaModelManager.stopAll();
       try {
         await ollamaModelManager.startModel(value);
       } catch {
@@ -216,7 +217,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     }
 
     if (key === 'completionProvider' && value !== 'ollama') {
-      void ollamaModelManager.stopAll();
+      await ollamaModelManager.stopAll();
       const providers = await providerStatusManager.refreshAll();
       MiniInputViewProvider._broadcastUi({ type: 'providerStatus', providers });
     }

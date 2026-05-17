@@ -17,12 +17,12 @@ export interface OpenCodeSdkClient {
     get: () => Promise<unknown>;
   };
   session: {
-    create: (opts?: unknown) => Promise<unknown>;
-    prompt: (opts: unknown) => Promise<unknown>;
-    delete: (opts: unknown) => Promise<unknown>;
+    create: (options?: unknown) => Promise<unknown>;
+    prompt: (options: unknown) => Promise<unknown>;
+    delete: (options: unknown) => Promise<unknown>;
   };
   event: {
-    subscribe: (opts: {
+    subscribe: (options: {
       signal: AbortSignal;
     }) => Promise<{ stream: AsyncIterable<unknown> }>;
   };

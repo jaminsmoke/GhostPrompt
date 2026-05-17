@@ -1,7 +1,8 @@
 /**
  * @file Tests de notificaciones del host para sugerencias GhostPrompt.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 import * as vscode from 'vscode';
 
 import {
@@ -22,26 +23,26 @@ vi.mock('vscode', () => ({
   },
 }));
 
-describe('maybeNotifySuggestionIssue', () => {
-  beforeEach(() => {
+vitest.describe('maybeNotifySuggestionIssue', () => {
+  vitest.beforeEach(() => {
     resetSuggestionHostNotificationThrottleForTests();
     vi.clearAllMocks();
   });
 
-  it('no notifica razones empty no accionables en host', () => {
+  vitest.it('no notifica razones empty no accionables en host', () => {
     maybeNotifySuggestionIssue({ kind: 'empty', reason: 'too-short' });
     maybeNotifySuggestionIssue({ kind: 'empty', reason: 'empty-response' });
-    expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
+    vitest.expect(vscode.window.showWarningMessage).not.toHaveBeenCalled();
   });
 
-  it('throttle: mismo empty accionable solo una vez hasta pasar la ventana', () => {
+  vitest.it('throttle: mismo empty accionable solo una vez hasta pasar la ventana', () => {
     vi.useFakeTimers();
     maybeNotifySuggestionIssue({ kind: 'empty', reason: 'no-model' });
     maybeNotifySuggestionIssue({ kind: 'empty', reason: 'no-model' });
-    expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
+    vitest.expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
     vi.advanceTimersByTime(91_000);
     maybeNotifySuggestionIssue({ kind: 'empty', reason: 'no-model' });
-    expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(2);
+    vitest.expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(2);
     vi.useRealTimers();
   });
 });

@@ -11,8 +11,8 @@ import type { SuggestionModelDescriptor, SuggestionModelPolicy } from '../../sys
 
 /**
  * Concatena modelos Copilot + OpenCode + Ollama; deduplica por `id` (prioriza el primero: Copilot).
- * @param {SuggestionModelPolicy} policy Política para filtrar modelos de cada proveedor.
- * @param {readonly ProviderId[]} sources Proveedores habilitados a consultar.
+ * @param {SuggestionModelPolicy} policy - Política para filtrar modelos de cada proveedor.
+ * @param {readonly ProviderId[]} sources - Proveedores habilitados a consultar.
  * @returns {Promise<SuggestionModelDescriptor[]>} Lista fusionada y deduplicada.
  */
 export async function listMergedSuggestionModels(
@@ -21,13 +21,13 @@ export async function listMergedSuggestionModels(
 ): Promise<SuggestionModelDescriptor[]> {
   const merged: SuggestionModelDescriptor[] = [];
   if (sources.includes('copilot')) {
-    merged.push(...(await listSuggestionModels(policy)));
+    merged.push(...await listSuggestionModels(policy));
   }
   if (sources.includes('opencode')) {
-    merged.push(...(await listOpencodeSuggestionModels(policy)));
+    merged.push(...await listOpencodeSuggestionModels(policy));
   }
   if (sources.includes('ollama')) {
-    merged.push(...(await listOllamaSuggestionModels(policy)));
+    merged.push(...await listOllamaSuggestionModels(policy));
   }
 
   const seen = new Set<string>();

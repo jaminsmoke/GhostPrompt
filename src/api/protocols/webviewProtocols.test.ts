@@ -1,6 +1,8 @@
 /**
  * @file Pruebas de validación de protocolo webview.
- */import { describe, expect, it, vi } from 'vitest';
+ */
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 vi.mock('vscode', () => ({
   workspace: {
@@ -19,9 +21,9 @@ vi.mock('vscode', () => ({
       dispose: vi.fn(),
     })),
   },
-  ['Uri']: {
+  'Uri': {
     joinPath: (...parts: unknown[]) => ({
-      fsPath: parts.map((p) => (typeof p === 'string' ? p : String(p))).join('/'),
+      fsPath: parts.map((p) => { return typeof p === 'string' ? p : String(p); }).join('/'),
     }),
   },
 }));
@@ -50,52 +52,52 @@ const minimalSettingsPayload = {
   cursorDesktopHost: false,
 };
 
-describe('webviewProtocols (v0.3.1 Fase B)', () => {
-  it('acepta mensajes entrantes válidos', () => {
-    expect(parseWebviewInboundMessage({ type: 'init' })).toEqual({ type: 'init' });
-    expect(
+vitest.describe('webviewProtocols (v0.3.1 Fase B)', () => {
+  vitest.it('acepta mensajes entrantes válidos', () => {
+    vitest.expect(parseWebviewInboundMessage({ type: 'init' })).toEqual({ type: 'init' });
+    vitest.expect(
       parseWebviewInboundMessage({
         type: 'suggest',
         text: 'hola',
         captureId: 1,
       }),
     ).toMatchObject({ type: 'suggest', captureId: 1 });
-    expect(
+    vitest.expect(
       parseWebviewInboundMessage({
         type: 'draftChanged',
         text: 'x',
         originViewId: 'ghostPrompt.input',
       }),
     ).toMatchObject({ type: 'draftChanged' });
-    expect(
+    vitest.expect(
       parseWebviewInboundMessage({
         type: 'log',
         level: 'debug',
         message: 'test-log',
       }),
     ).toMatchObject({ type: 'log', level: 'debug', message: 'test-log' });
-    expect(
+    vitest.expect(
       parseWebviewInboundMessage({
         type: 'updateSetting',
         key: 'debugSuggestions',
         value: true,
       }),
     ).toMatchObject({ key: 'debugSuggestions', value: true });
-    expect(
+    vitest.expect(
       parseWebviewInboundMessage({
         type: 'updateSetting',
         key: 'selectedModelId',
         value: 'openai/gpt-4',
       }),
     ).toMatchObject({ key: 'selectedModelId' });
-    expect(
+    vitest.expect(
       parseWebviewInboundMessage({
         type: 'updateSetting',
         key: 'agentDestination',
         value: 'vsOpenCodeX',
       }),
     ).toMatchObject({ key: 'agentDestination', value: 'vsOpenCodeX' });
-    expect(
+    vitest.expect(
       parseWebviewInboundMessage({
         type: 'updateSetting',
         key: 'agentDestination',
@@ -104,31 +106,31 @@ describe('webviewProtocols (v0.3.1 Fase B)', () => {
     ).toMatchObject({ key: 'agentDestination', value: 'cursorChat' });
   });
 
-  it('rechaza mensajes entrantes inválidos', () => {
-    expect(parseWebviewInboundMessage(null)).toBeUndefined();
-    expect(parseWebviewInboundMessage({})).toBeUndefined();
-    expect(
+  vitest.it('rechaza mensajes entrantes inválidos', () => {
+    vitest.expect(parseWebviewInboundMessage()).toBeUndefined();
+    vitest.expect(parseWebviewInboundMessage({})).toBeUndefined();
+    vitest.expect(
       parseWebviewInboundMessage({
         type: 'suggest',
         text: 'x',
         captureId: '1',
       }),
     ).toBeUndefined();
-    expect(
+    vitest.expect(
       parseWebviewInboundMessage({
         type: 'updateSetting',
         key: 'debugSuggestions',
         value: 'true',
       }),
     ).toBeUndefined();
-    expect(
+    vitest.expect(
       parseWebviewInboundMessage({
         type: 'updateSetting',
         key: 'suggestionStyle',
         value: 'fancy',
       }),
     ).toBeUndefined();
-    expect(
+    vitest.expect(
       parseWebviewInboundMessage({
         type: 'updateSetting',
         key: 'agentDestination',
@@ -137,7 +139,7 @@ describe('webviewProtocols (v0.3.1 Fase B)', () => {
     ).toBeUndefined();
   });
 
-  it('acepta sobre settings saliente válido', () => {
+  vitest.it('acepta sobre settings saliente válido', () => {
     const envelope = {
       type: 'settings' as const,
       settings: {
@@ -152,11 +154,11 @@ describe('webviewProtocols (v0.3.1 Fase B)', () => {
         ],
       },
     };
-    expect(parseOutboundSettingsEnvelope(envelope)).toEqual(envelope);
-    expect(webviewOutboundSettingsEnvelopeSchema.safeParse(envelope).success).toBe(true);
+    vitest.expect(parseOutboundSettingsEnvelope(envelope)).toEqual(envelope);
+    vitest.expect(webviewOutboundSettingsEnvelopeSchema.safeParse(envelope).success).toBe(true);
   });
 
-  it('rechaza settings saliente con tier inválido', () => {
+  vitest.it('rechaza settings saliente con tier inválido', () => {
     const bad = {
       type: 'settings' as const,
       settings: {
@@ -164,10 +166,10 @@ describe('webviewProtocols (v0.3.1 Fase B)', () => {
         availableModels: [{ id: 'x', label: 'X', tier: 'free' }],
       },
     };
-    expect(parseOutboundSettingsEnvelope(bad)).toBeUndefined();
+    vitest.expect(parseOutboundSettingsEnvelope(bad)).toBeUndefined();
   });
 
-  it('webviewSettingsPayloadSchema coincide con modelo descriptor', () => {
+  vitest.it('webviewSettingsPayloadSchema coincide con modelo descriptor', () => {
     const r = webviewSettingsPayloadSchema.safeParse({
       ...minimalSettingsPayload,
       effectiveModel: {
@@ -177,15 +179,15 @@ describe('webviewProtocols (v0.3.1 Fase B)', () => {
         pricing: '1x',
       },
     });
-    expect(r.success).toBe(true);
+    vitest.expect(r.success).toBe(true);
   });
 
-  it('webviewInboundMessageSchema cubre updateSetting discriminado', () => {
+  vitest.it('webviewInboundMessageSchema cubre updateSetting discriminado', () => {
     const r = webviewInboundMessageSchema.safeParse({
       type: 'updateSetting',
       key: 'suggestionStyle',
       value: 'concise',
     });
-    expect(r.success).toBe(true);
+    vitest.expect(r.success).toBe(true);
   });
 });

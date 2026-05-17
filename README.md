@@ -237,13 +237,13 @@ From the repo root:
 
 Edit webview behavior in **TypeScript** under `src/ui/webview/react/` (not hand-edit `src/ui/webview/dist/react/index.html`; it is regenerated). After changing webview sources, `npm run validate` or `npm run build:webview` refreshes the bundle.
 
-### Webview ↔ host message contracts (v0.3.2)
+### Webview ↔ host message contracts
 
-- **Canonical Zod schemas:** [`src/system/contracts/webviewMessageSchemas.ts`](./src/system/contracts/webviewMessageSchemas.ts) — single source of truth for `postMessage` payloads (inbound to the extension host and the mirrored outbound shape from the webview).
-- **Host boundary:** [`src/host/webviewProtocols.ts`](./src/host/webviewProtocols.ts) re-exports those schemas and runs `parseWebviewInboundMessage` / `parseOutboundSettingsEnvelope` at the channel edge.
-- **Webview boundary:** The current React webview bundle validates outbound messages within `src/ui/webview/react/App.tsx` before calling `postMessage` to the host.
+- **Canonical Zod schemas:** [`src/system/internals/protocols/validations/schemas/zschemWebviewMessages.ts`](./src/system/internals/protocols/validations/schemas/zschemWebviewMessages.ts) — single source of truth for `postMessage` payloads (inbound to the extension host and the mirrored outbound shape from the webview).
+- **Host boundary:** [`src/api/protocols/webviewProtocols.ts`](./src/api/protocols/webviewProtocols.ts) imports those schemas and runs `parseWebviewInboundMessage` / `parseOutboundSettingsEnvelope` at the channel edge (with logging).
+- **Webview boundary:** [`src/ui/webview/react/validators/parseWebviewInbound.ts`](./src/ui/webview/react/validators/parseWebviewInbound.ts) validates outbound messages before `postMessage`.
 
-**Checklist when you change message shapes:** edit `src/system/contracts/webviewMessageSchemas.ts` first; update protocol comments in `webview/src/main.ts` if needed; run **`npm run check`** (runs extension `tsc`, webview typecheck + esbuild bundle, and tests including `src/api/contracts/webviewMessageSchemas.test.ts` and `src/api/protocols/webviewProtocols.test.ts`).
+**Checklist when you change message shapes:** edit `zschemWebviewMessages.ts` first; update `parseWebviewInbound.ts` / `webviewProtocols.ts` if needed; run **`npm run check`** (includes `zschemWebviewMessages.test.ts`, `webviewProtocols.test.ts`, and the webview bundle build).
 
 ### Dual webview (sidebar + panel) — contributor checklist (v0.4.3)
 

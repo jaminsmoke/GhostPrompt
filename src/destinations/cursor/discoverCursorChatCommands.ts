@@ -16,7 +16,7 @@ import { appendCursorChatCommandDiscovery } from './cursorChatCommands';
 
 /**
  * Registra `ghostPrompt.discoverCursorChatCommands` (paleta / F1).
- * @param {vscode.ExtensionContext} context Contexto de extensión.
+ * @param {vscode.ExtensionContext} context - Contexto de extensión.
  * @returns {void}
  * @throws {Error} Si el canal de logging no está inicializado.
  */
@@ -31,7 +31,7 @@ export function registerDiscoverCursorChatCommandsCommand(context: vscode.Extens
       channel.clear();
       channel.show(true);
       await appendCursorChatCommandDiscovery(channel);
-      void vscode.window.showInformationMessage(
+      await vscode.window.showInformationMessage(
         'GhostPrompt: lista de comandos Cursor en el canal «GhostPrompt Log».',
       );
     },

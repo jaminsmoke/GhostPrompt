@@ -1,8 +1,15 @@
 /**
- * @file Contratos Zod compartidos host ↔ webview (roadmap v0.3.2 fase C).
- * Consumidos por `src/host/webviewProtocols.ts` y empaquetados en el bundle webview.
+ * @file Esquemas Zod host ↔ webview (postMessage). Solo `zod` — sin parsers, logging ni dependencias de VS Code.
+ * Consumidos por `api/protocols/webviewProtocols.ts`.
  */
 import { z } from 'zod';
+
+import {
+  COMPLETION_UI_KIND_VALUES,
+  COMPLETION_UI_SOURCE_VALUES,
+} from '../../types/typeCompletionUi';
+
+const completionUiSourceSchema = z.enum(COMPLETION_UI_SOURCE_VALUES);
 
 export const suggestionModelDescriptorSchema = z.object({
   id: z.string(),
@@ -10,14 +17,14 @@ export const suggestionModelDescriptorSchema = z.object({
   tier: z.enum(['included', 'premium', 'unknown']),
   pricing: z.string().optional(),
   provider: z.string().optional(),
-  completionSource: z.enum(['copilot', 'opencode', 'ollama']).optional(),
+  completionSource: completionUiSourceSchema.optional(),
 });
 
 /** Payload `settings` dentro de `{ type: "settings", settings }` (host → webview). */
 export const webviewSettingsPayloadSchema = z.object({
-  completionProvider: z.enum(['copilot', 'opencode', 'ollama']),
-  completionUiKind: z.enum(['copilot', 'opencode', 'ollama', 'multi']),
-  enabledCompletionSources: z.array(z.enum(['copilot', 'opencode', 'ollama'])),
+  completionProvider: completionUiSourceSchema,
+  completionUiKind: z.enum(COMPLETION_UI_KIND_VALUES),
+  enabledCompletionSources: z.array(completionUiSourceSchema),
   suggestionModelPolicy: z.enum(['nonPremiumOnly', 'anyModel']),
   selectedModelId: z.string(),
   availableModels: z.array(suggestionModelDescriptorSchema),
@@ -39,8 +46,8 @@ export const webviewOutboundSettingsEnvelopeSchema = z.object({
   settings: webviewSettingsPayloadSchema,
 });
 
-const providerStateRecordSchema = z.object({
-  id: z.enum(['copilot', 'opencode', 'ollama']),
+export const providerStateRecordSchema = z.object({
+  id: completionUiSourceSchema,
   status: z.enum(['running', 'stopped', 'starting', 'unavailable', 'error']),
   label: z.string(),
   statusText: z.string().optional(),
@@ -163,7 +170,7 @@ export const webviewUpdateSettingSchema = z.discriminatedUnion('key', [
   z.object({
     type: z.literal('updateSetting'),
     key: z.literal('completionProvider'),
-    value: z.enum(['copilot', 'opencode', 'ollama']),
+    value: completionUiSourceSchema,
   }),
   z.object({
     type: z.literal('updateSetting'),
@@ -210,3 +217,5 @@ export const webviewInboundMessageSchema = z.union([
 ]);
 
 export type WebviewInboundMessage = z.infer<typeof webviewInboundMessageSchema>;
+
+export type WebviewUpdateSetting = z.infer<typeof webviewUpdateSettingSchema>;

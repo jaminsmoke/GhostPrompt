@@ -1,7 +1,8 @@
 /**
  * @file Pruebas del catálogo de modelos OpenCode.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 const { configProvidersMock, fakeSdkClient } = vi.hoisted(() => {
   const configProvidersMock = vi.fn();
@@ -26,27 +27,27 @@ vi.mock('vscode', () => ({
 
 import { listOpencodeSuggestionModels } from './opencodeModelCatalog';
 
-beforeEach(() => {
+vitest.beforeEach(() => {
   vi.resetAllMocks();
   cfgGetMock.mockImplementation((key: string, defaultValue: unknown) => {
     if (key === 'opencodeExcludedModelIds') {return [];}
     if (key === 'opencodePort') {return 4096;}
-    if (key === 'opencodeAuthToken') {return undefined;}
+    if (key === 'opencodeAuthToken') {return;}
     return defaultValue;
   });
 });
 
-describe('listOpencodeSuggestionModels', () => {
-  it('returns empty array when createOpenCodeClient throws', async () => {
+vitest.describe('listOpencodeSuggestionModels', () => {
+  vitest.it('returns empty array when createOpenCodeClient throws', async () => {
     const sdk = await import('@opencode-ai/sdk');
     vi.mocked(sdk.createOpencodeClient).mockImplementation(() => {
       throw new Error('CLI missing');
     });
     const models = await listOpencodeSuggestionModels('nonPremiumOnly');
-    expect(models).toEqual([]);
+    vitest.expect(models).toEqual([]);
   });
 
-  it('maps models array from config.providers() into descriptors', async () => {
+  vitest.it('maps models array from config.providers() into descriptors', async () => {
     configProvidersMock.mockResolvedValue({
       data: {
         providers: [
@@ -64,13 +65,13 @@ describe('listOpencodeSuggestionModels', () => {
     });
 
     const models = await listOpencodeSuggestionModels('anyModel');
-    expect(models).toHaveLength(2);
-    expect(models.map((m) => m.id).sort()).toEqual(['openai/gpt-4', 'openai/gpt-4o-mini']);
-    expect(models.find((m) => m.id === 'openai/gpt-4o-mini')?.tier).toBe('included');
-    expect(models.find((m) => m.id === 'openai/gpt-4')?.tier).toBe('premium');
+    vitest.expect(models).toHaveLength(2);
+    vitest.expect(models.map((m) => m.id).toSorted()).toEqual(['openai/gpt-4', 'openai/gpt-4o-mini']);
+    vitest.expect(models.find((m) => m.id === 'openai/gpt-4o-mini')?.tier).toBe('included');
+    vitest.expect(models.find((m) => m.id === 'openai/gpt-4')?.tier).toBe('premium');
   });
 
-  it('maps config.providers() map-shaped models into descriptors', async () => {
+  vitest.it('maps config.providers() map-shaped models into descriptors', async () => {
     configProvidersMock.mockResolvedValue({
       data: {
         providers: [
@@ -87,8 +88,8 @@ describe('listOpencodeSuggestionModels', () => {
     });
 
     const models = await listOpencodeSuggestionModels('nonPremiumOnly');
-    expect(models).toHaveLength(1);
-    expect(models[0]).toMatchObject({
+    vitest.expect(models).toHaveLength(1);
+    vitest.expect(models[0]).toMatchObject({
       id: 'anthropic/claude-3',
       label: 'Claude 3',
       tier: 'unknown',
@@ -96,11 +97,11 @@ describe('listOpencodeSuggestionModels', () => {
     });
   });
 
-  it('respects ghostPrompt.opencodeExcludedModelIds', async () => {
+  vitest.it('respects ghostPrompt.opencodeExcludedModelIds', async () => {
     cfgGetMock.mockImplementation((key: string, defaultValue: unknown) => {
       if (key === 'opencodeExcludedModelIds') {return ['anthropic/claude-3'];}
       if (key === 'opencodePort') {return 4096;}
-      if (key === 'opencodeAuthToken') {return undefined;}
+      if (key === 'opencodeAuthToken') {return;}
       return defaultValue;
     });
 
@@ -119,11 +120,11 @@ describe('listOpencodeSuggestionModels', () => {
       },
     });
 
-    expect(await listOpencodeSuggestionModels('nonPremiumOnly')).toEqual([]);
+    vitest.expect(await listOpencodeSuggestionModels('nonPremiumOnly')).toEqual([]);
   });
 
-  it('returns empty on providers() throw', async () => {
+  vitest.it('returns empty on providers() throw', async () => {
     configProvidersMock.mockRejectedValue(new Error('network'));
-    expect(await listOpencodeSuggestionModels('nonPremiumOnly')).toEqual([]);
+    vitest.expect(await listOpencodeSuggestionModels('nonPremiumOnly')).toEqual([]);
   });
 });

@@ -3,6 +3,8 @@
  */
 import { type ReactNode, useMemo, useState } from 'react';
 
+import { COMPLETION_UI_SOURCE_VALUES } from '../../../../system/internals/protocols/types/typeCompletionUi';
+
 import { ToolbarChip } from './ToolbarChip';
 
 import type {
@@ -13,12 +15,12 @@ import type {
   SuggestionModel,
 } from '../types';
 
-interface GhostToolbarProps {
+interface GhostToolbarProperties {
   completionProvider: CompletionProvider;
   selectedModelId: string;
   availableModels: SuggestionModel[];
-  suggestionModelPolicy: 'nonPremiumOnly' | 'anyModel';
-  suggestionStyle: 'concise' | 'balanced' | 'detailed';
+  suggestionModelPolicy: 'anyModel' | 'nonPremiumOnly';
+  suggestionStyle: 'balanced' | 'concise' | 'detailed';
   debugSuggestions: boolean;
   agentDestination: AgentDestination;
   vsOpenCodeXExtensionInstalled: boolean;
@@ -38,42 +40,75 @@ interface GhostToolbarProps {
 const itemClass =
   'flex w-full items-center justify-between px-3 py-1.5 text-sm text-(--vscode-sideBar-foreground) hover:bg-(--vscode-list-hoverBackground) transition';
 
-const actionBtnClass =
+const actionButtonClass =
   'rounded px-2 py-0.5 text-xs font-medium transition border ' +
   'border-(--vscode-widget-border) ' +
   'hover:bg-(--vscode-list-hoverBackground)';
 
 const statusIcon = (s: CompletionSourceState): string => {
   switch (s) {
-    case 'running':
+    case 'running': {
       return '\u25CF';
-    case 'stopped':
+    }
+    case 'stopped': {
       return '\u25CB';
-    case 'starting':
+    }
+    case 'starting': {
       return '\u25CB';
-    case 'unavailable':
+    }
+    case 'unavailable': {
       return '\u2014';
-    case 'error':
+    }
+    case 'error': {
       return '\u26A0';
+    }
+    default: {
+      return '\u2014';
+    }
   }
 };
 
 const statusColor = (s: CompletionSourceState): string => {
   switch (s) {
-    case 'running':
+    case 'running': {
       return 'text-green-500';
-    case 'stopped':
+    }
+    case 'stopped': {
       return 'text-gray-400';
-    case 'starting':
+    }
+    case 'starting': {
       return 'text-yellow-400';
-    case 'unavailable':
+    }
+    case 'unavailable': {
       return 'text-gray-500';
-    case 'error':
+    }
+    case 'error': {
       return 'text-red-500';
+    }
+    default: {
+      return 'text-gray-500';
+    }
   }
 };
 
-const toggleBtn = (active: boolean) =>
+const completionSourceLabel = (provider: CompletionProvider): string => {
+  switch (provider) {
+    case 'copilot': {
+      return 'Copilot LM';
+    }
+    case 'opencode': {
+      return 'OpenCode';
+    }
+    case 'ollama': {
+      return 'Ollama';
+    }
+    default: {
+      return provider;
+    }
+  }
+};
+
+const toggleButton = (active: boolean) =>
   `inline-flex items-center justify-center rounded-md border px-2 py-1 text-xs transition ${
     active
       ? 'border-(--vscode-badge-background) bg-(--vscode-badge-background) text-(--vscode-badge-foreground)'
@@ -83,14 +118,14 @@ const toggleBtn = (active: boolean) =>
 const renderToggleOption = (active: boolean, onClick: () => void, children: ReactNode) => {
   if (active) {
     return (
-      <button type="button" className={toggleBtn(active)} onClick={onClick} aria-pressed="true">
+      <button type="button" className={toggleButton(active)} onClick={onClick} aria-pressed="true">
         {children}
       </button>
     );
   }
 
   return (
-    <button type="button" className={toggleBtn(active)} onClick={onClick} aria-pressed="false">
+    <button type="button" className={toggleButton(active)} onClick={onClick} aria-pressed="false">
       {children}
     </button>
   );
@@ -98,14 +133,50 @@ const renderToggleOption = (active: boolean, onClick: () => void, children: Reac
 
 const separatorClass = 'my-1 border-t border-(--vscode-widget-border)';
 
-const chipLabelClass = (compact: boolean) => (compact ? 'text-[10px]' : 'text-xs');
+/**
+ * Etiqueta legible del destino del agente en el chip de destino.
+ * @param {AgentDestination} destination - Destino configurado en el webview.
+ * @returns {string} Texto mostrado en el chip.
+ */
+function agentDestinationLabel(destination: AgentDestination): string {
+  if (destination === 'copilotChat') {
+    return 'Copilot Chat';
+  }
+  if (destination === 'vsOpenCodeX') {
+    return 'VSOpenCodeX';
+  }
+  return 'Cursor Chat';
+}
+
+const chipLabelClass = (compact: boolean) => {
+  return compact ? 'text-[10px]' : 'text-xs';
+};
+
+/**
+ * Comprueba si un registro de estado del host corresponde al proveedor UI activo.
+ * @param {CompletionProvider} provider - Proveedor de completion en UI.
+ * @param {string} statusId - Identificador del estado reportado por el host.
+ * @returns {boolean} Si el estado corresponde al proveedor seleccionado.
+ */
+function providerStatusMatches(
+  provider: CompletionProvider,
+  statusId: string,
+): boolean {
+  if (provider === 'copilot') {
+    return statusId === 'copilot';
+  }
+  if (provider === 'opencode') {
+    return statusId === 'opencode';
+  }
+  return statusId === 'ollama';
+}
 
 /**
  * Toolbar de GhostPrompt con controles de modelo, sugerencia y proveedor.
- * @param {GhostToolbarProps} props Propiedades del componente GhostToolbar.
+ * @param {GhostToolbarProperties} props - Propiedades del componente GhostToolbar.
  * @returns {import('react').JSX.Element} Elemento JSX del toolbar de GhostPrompt.
  */
-export function GhostToolbar(props: GhostToolbarProps) {
+export function GhostToolbar(props: GhostToolbarProperties) {
   const {
     completionProvider,
     selectedModelId,
@@ -127,24 +198,19 @@ export function GhostToolbar(props: GhostToolbarProps) {
     onStartProvider,
     onStopProvider,
   } = props;
-  const [openChip, setOpenChip] = useState<string | null>(null);
+  const [openChip, setOpenChip] = useState<string | undefined>();
 
-  const toggleChip = (id: string) => setOpenChip((p) => (p === id ? null : id));
-  const closeChips = () => setOpenChip(null);
+  const toggleChip = (id: string) => {
+    setOpenChip((p) => {
+      return p === id ? undefined : id;
+    });
+  };
+  const closeChips = () => setOpenChip(undefined);
 
-  const providerLabel =
-    completionProvider === 'copilot'
-      ? 'Copilot LM'
-      : completionProvider === 'opencode'
-        ? 'OpenCode'
-        : 'Ollama';
+  const providerLabel = completionSourceLabel(completionProvider);
 
   const currentProviderStatus = providerStatuses.find((s) =>
-    completionProvider === 'copilot'
-      ? s.id === 'copilot'
-      : completionProvider === 'opencode'
-        ? s.id === 'opencode'
-        : s.id === 'ollama',
+    providerStatusMatches(completionProvider, s.id),
   );
   const providerLabelWithStatus = currentProviderStatus
     ? `${statusIcon(currentProviderStatus.status)} ${providerLabel}`
@@ -164,8 +230,12 @@ export function GhostToolbar(props: GhostToolbarProps) {
   const modeloLabel =
     currentModel?.label ?? (selectedModelId === 'auto' ? 'Auto' : selectedModelId);
 
-  const styleLabel =
-    suggestionStyle === 'concise' ? 'Breve' : suggestionStyle === 'balanced' ? 'Normal' : 'Extenso';
+  let styleLabel = 'Extenso';
+  if (suggestionStyle === 'concise') {
+    styleLabel = 'Breve';
+  } else if (suggestionStyle === 'balanced') {
+    styleLabel = 'Normal';
+  }
 
   const compLabel = styleLabel;
 
@@ -202,18 +272,14 @@ export function GhostToolbar(props: GhostToolbarProps) {
         compact={compact}
       >
         <div className="py-1" data-key="completionProvider">
-          {statusLoading ? (
+          {statusLoading ? 
             <div className="px-3 py-2 text-sm text-(--vscode-descriptionForeground)">
               ◌ Comprobando estados...
             </div>
-          ) : (
-            (['copilot', 'opencode', 'ollama'] as const).map((p) => {
+           : 
+            COMPLETION_UI_SOURCE_VALUES.map((p) => {
               const pStatus = providerStatuses.find((s) =>
-                p === 'copilot'
-                  ? s.id === 'copilot'
-                  : p === 'opencode'
-                    ? s.id === 'opencode'
-                    : s.id === 'ollama',
+                providerStatusMatches(p, s.id),
               );
               const isActive = completionProvider === p;
               return (
@@ -233,28 +299,28 @@ export function GhostToolbar(props: GhostToolbarProps) {
                     }}
                   >
                     <span className="flex items-center gap-2">
-                      {pStatus && (
+                      {pStatus && 
                         <span className={`${statusColor(pStatus.status)} text-xs`}>
                           {statusIcon(pStatus.status)}
                         </span>
-                      )}
+                      }
                       <span>
-                        {p === 'copilot' ? 'Copilot LM' : p === 'opencode' ? 'OpenCode' : 'Ollama'}
+                        {completionSourceLabel(p)}
                       </span>
                     </span>
                     <span className="flex items-center gap-2">
-                      {pStatus?.statusText && (
+                      {pStatus?.statusText && 
                         <span className="text-[10px] text-(--vscode-descriptionForeground)">
                           {pStatus.statusText}
                         </span>
-                      )}
+                      }
                       {isActive && <span className="text-(--vscode-badge-background)">✓</span>}
                     </span>
                   </button>
-                  {pStatus?.actions?.includes('stop') && isActive && p !== 'copilot' && (
+                  {pStatus?.actions?.includes('stop') && isActive && p !== 'copilot' && 
                     <button
                       type="button"
-                      className={actionBtnClass}
+                      className={actionButtonClass}
                       onClick={() => {
                         onStopProvider(p);
                         closeChips();
@@ -262,23 +328,17 @@ export function GhostToolbar(props: GhostToolbarProps) {
                     >
                       ■ Detener
                     </button>
-                  )}
+                  }
                 </div>
               );
             })
-          )}
+          }
         </div>
       </ToolbarChip>
 
       <ToolbarChip
         id="destino-chip"
-        label={
-          agentDestination === 'copilotChat'
-            ? 'Copilot Chat'
-            : agentDestination === 'vsOpenCodeX'
-              ? 'VSOpenCodeX'
-              : 'Cursor Chat'
-        }
+        label={agentDestinationLabel(agentDestination)}
         chipLabel="Destino"
         tooltip="Destino del prompt: Copilot Chat, VSOpenCodeX o Cursor Chat"
         isOpen={openChip === 'destino'}
@@ -289,30 +349,30 @@ export function GhostToolbar(props: GhostToolbarProps) {
         <div className="py-1" data-key="agentDestination">
           <button type="button" className={itemClass} onClick={() => handleDestino('copilotChat')}>
             <span>Copilot Chat</span>
-            {agentDestination === 'copilotChat' && (
+            {agentDestination === 'copilotChat' && 
               <span className="text-(--vscode-badge-background)">✓</span>
-            )}
+            }
           </button>
-          {vsOpenCodeXExtensionInstalled && (
+          {vsOpenCodeXExtensionInstalled && 
             <button
               type="button"
               className={itemClass}
               onClick={() => handleDestino('vsOpenCodeX')}
             >
               <span>VSOpenCodeX</span>
-              {agentDestination === 'vsOpenCodeX' && (
+              {agentDestination === 'vsOpenCodeX' && 
                 <span className="text-(--vscode-badge-background)">✓</span>
-              )}
+              }
             </button>
-          )}
-          {cursorDesktopHost && (
+          }
+          {cursorDesktopHost && 
             <button type="button" className={itemClass} onClick={() => handleDestino('cursorChat')}>
               <span>Cursor Chat</span>
-              {agentDestination === 'cursorChat' && (
+              {agentDestination === 'cursorChat' && 
                 <span className="text-(--vscode-badge-background)">✓</span>
-              )}
+              }
             </button>
-          )}
+          }
         </div>
       </ToolbarChip>
 
@@ -352,17 +412,17 @@ export function GhostToolbar(props: GhostToolbarProps) {
               onChange={(e) => handleModel(e.target.value)}
               aria-label="Modelo sugerencias"
             >
-              {selectedModelId === '' && (
+              {selectedModelId === '' && 
                 <option value="" disabled>
                   Selecciona modelo
                 </option>
-              )}
+              }
               <option value="auto">Auto</option>
-              {filteredModels.map((model) => (
+              {filteredModels.map((model) => 
                 <option key={model.id} value={model.id}>
                   {model.label}
                 </option>
-              ))}
+              )}
             </select>
             <span
               id="model-chip-label"

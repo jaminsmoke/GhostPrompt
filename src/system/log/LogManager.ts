@@ -4,18 +4,17 @@
 import * as vscode from 'vscode';
 
 import { CaptureBreadcrumbStore } from './breadcrumbs';
-import { parseLogLevelString, shouldEmit } from './levels';
+import { parseLogLevelString, shouldEmit, type LogLevelName } from './levels';
 import { Logger } from './Logger';
 import { QueuedNdjsonFileTransport } from './transports/file';
 import { OutputChannelLogTransport } from './transports/outputChannel';
 
 import type { EmitPayload, LogEmitSink } from './emitContract';
-import type { LogLevelName } from './levels';
 import type { Breadcrumb, LogEntry, LogTransport } from './types';
 
 /**
  * Resuelve el nivel mínimo visible según `logLevel` explícito o shim `debugSuggestions`.
- * @param {vscode.WorkspaceConfiguration} cfg Sección `ghostPrompt` de VS Code.
+ * @param {vscode.WorkspaceConfiguration} cfg - Sección `ghostPrompt` de VS Code.
  * @returns {LogLevelName} Umbral aplicado a transports.
  */
 export function resolveEffectiveMinLevelName(
@@ -37,7 +36,7 @@ export function resolveEffectiveMinLevelName(
 
 /**
  * Serializa un valor desconocido a la forma `error` de `LogEntry`.
- * @param {unknown} err Valor lanzado o pasado como `cause`.
+ * @param {unknown} err - Valor lanzado o pasado como `cause`.
  * @returns {NonNullable<LogEntry['error']>} Objeto con nombre, mensaje y stack si aplica.
  */
 function toErrorPayload(err: unknown): NonNullable<LogEntry['error']> {
@@ -49,7 +48,7 @@ function toErrorPayload(err: unknown): NonNullable<LogEntry['error']> {
 
 /**
  * Obtiene `captureId` numérico de `data` si existe y es finito.
- * @param {Record<string, unknown>} [data] Metadatos opcionales del evento.
+ * @param {Record<string, unknown>} [data] - Metadatos opcionales del evento.
  * @returns {number | undefined} Identificador o `undefined`.
  */
 function extractCaptureId(data?: Record<string, unknown>): number | undefined {
@@ -65,12 +64,16 @@ function extractCaptureId(data?: Record<string, unknown>): number | undefined {
 
 let singleton: LogManager | undefined;
 
-const inactiveSink: LogEmitSink = { emit: () => {} };
+const inactiveSink: LogEmitSink = {
+  emit() {
+    /* sink inactivo antes de initGhostPromptLogging */
+  },
+};
 const inactiveLoggers = new Map<string, Logger>();
 
 /**
  * Inicializa transports y suscripciones (idempotente).
- * @param {vscode.ExtensionContext} context Contexto de activación de la extensión.
+ * @param {vscode.ExtensionContext} context - Contexto de activación de la extensión.
  * @returns {void} Sin valor de retorno.
  */
 export function initGhostPromptLogging(context: vscode.ExtensionContext): void {
@@ -84,10 +87,10 @@ export function initGhostPromptLogging(context: vscode.ExtensionContext): void {
         singleton?.touchConfig();
       }
     }),
-  );
-  context.subscriptions.push(
     new vscode.Disposable(() => {
-      void singleton?.disposeAll();
+      singleton?.disposeAll().catch(() => {
+        /* ignore */
+      });
       singleton = undefined;
     }),
   );
@@ -104,7 +107,7 @@ export async function disposeGhostPromptLogging(): Promise<void> {
 
 /**
  * Obtiene el logger de un módulo. Si aún no se ha llamado a {@link initGhostPromptLogging}, el sink no registra eventos.
- * @param {string} moduleName Nombre estable (`suggest`, `inbound`, …).
+ * @param {string} moduleName - Nombre estable (`suggest`, `inbound`, …).
  * @returns {Logger} Instancia reutilizada por módulo.
  */
 export function getLogger(moduleName: string): Logger {
@@ -121,7 +124,7 @@ export function getLogger(moduleName: string): Logger {
 
 /**
  * Vacía el anillo de migajas de un `captureId` (por ejemplo, al terminar el pipeline).
- * @param {number} captureId Identificador de correlación.
+ * @param {number} captureId - Identificador de correlación.
  * @returns {void} Sin valor de retorno.
  */
 export function flushLogCapture(captureId: number): void {
@@ -164,9 +167,9 @@ export function ensureSuggestionDebugChannel(): vscode.OutputChannel | undefined
 
 /**
  * Registra tiempos de OpenCode en nivel DEBUG (sustituye `logOpenCodePerfCapture` legacy).
- * @param {number | undefined} captureId Identificador de correlación opcional.
- * @param {string} phase Fase de medición.
- * @param {string} [details] Detalle libre (por ejemplo, `elapsedMs=12`).
+ * @param {number | undefined} captureId - Identificador de correlación opcional.
+ * @param {string} phase - Fase de medición.
+ * @param {string} [details] - Detalle libre (por ejemplo, `elapsedMs=12`).
  * @returns {void} Sin valor de retorno.
  */
 export function logOpenCodePerfCapture(
@@ -183,8 +186,8 @@ export function logOpenCodePerfCapture(
 
 /**
  * Registra depuración OpenCode en nivel DEBUG (sustituye `logOpenCodeDebug` legacy).
- * @param {string} stage Etapa del flujo.
- * @param {string} [details] Detalle opcional.
+ * @param {string} stage - Etapa del flujo.
+ * @param {string} [details] - Detalle opcional.
  * @returns {void} Sin valor de retorno.
  */
 export function logOpenCodeDebug(stage: string, details?: string): void {
@@ -203,18 +206,18 @@ class LogManager implements LogEmitSink {
 
   /**
    * Arranca transports de archivo y de canal, y programa la migración best-effort de Markdown legacy.
-   * @param {vscode.ExtensionContext} context Contexto de extensión (almacenamiento global y opcional por workspace).
+   * @param {vscode.ExtensionContext} context - Contexto de extensión (almacenamiento global y opcional por workspace).
    */
   constructor(private readonly context: vscode.ExtensionContext) {
-    const logsDir = vscode.Uri.joinPath(context.globalStorageUri, 'ghostPrompt', 'logs', 'v1');
+    const logsDirectory = vscode.Uri.joinPath(context.globalStorageUri, 'ghostPrompt', 'logs', 'v1');
     this.fileTransport = new QueuedNdjsonFileTransport(
-      logsDir,
+      logsDirectory,
       () => vscode.workspace.getConfiguration('ghostPrompt').get<boolean>('logFileEnabled', true),
       () =>
         vscode.workspace.getConfiguration('ghostPrompt').get<number>('logFileMaxBytes', 5_242_880),
     );
     this.transports.push(this.outputTransport, this.fileTransport);
-    void this.runLegacyMarkdownMigration(logsDir).catch(() => {
+    this.runLegacyMarkdownMigration(logsDirectory).catch(() => {
       // Best-effort: no bloquear activate.
     });
   }
@@ -222,11 +225,11 @@ class LogManager implements LogEmitSink {
   /**
    * Importa una sola vez los ficheros Markdown legacy hacia NDJSON como eventos `migration/legacy-md-snapshot`.
    * Usa `storageUri` y `globalStorageUri` como bases de lectura, sin aplicar el filtro de nivel al escribir.
-   * @param {vscode.Uri} logsDir Directorio `ghostPrompt/logs/v1`.
+   * @param {vscode.Uri} logsDirectory - Directorio `ghostPrompt/logs/v1`.
    * @returns {Promise<void>} Promesa que termina tras leer y escribir el marcador de importación.
    */
-  private async runLegacyMarkdownMigration(logsDir: vscode.Uri): Promise<void> {
-    const flagUri = vscode.Uri.joinPath(logsDir, '.legacy-md-imported.json');
+  private async runLegacyMarkdownMigration(logsDirectory: vscode.Uri): Promise<void> {
+    const flagUri = vscode.Uri.joinPath(logsDirectory, '.legacy-md-imported.json');
     try {
       await vscode.workspace.fs.stat(flagUri);
       return;
@@ -245,7 +248,7 @@ class LogManager implements LogEmitSink {
         const fileUri = vscode.Uri.joinPath(base, fileName);
         try {
           const bytes = await vscode.workspace.fs.readFile(fileUri);
-          const text = Buffer.from(bytes).toString('utf-8').trim();
+          const text = Buffer.from(bytes).toString('utf8').trim();
           if (text.length === 0) {
             continue;
           }
@@ -267,10 +270,12 @@ class LogManager implements LogEmitSink {
       }
     }
     for (const e of entries) {
-      void this.fileTransport.write(e);
+      this.fileTransport.write(e).catch(() => {
+        /* ignore */
+      });
     }
     try {
-      await vscode.workspace.fs.createDirectory(logsDir);
+      await vscode.workspace.fs.createDirectory(logsDirectory);
       await vscode.workspace.fs.writeFile(
         flagUri,
         Buffer.from(
@@ -278,7 +283,7 @@ class LogManager implements LogEmitSink {
             importedAt: new Date().toISOString(),
             snapshots: entries.length,
           }),
-          'utf-8',
+          'utf8',
         ),
       );
     } catch {
@@ -296,7 +301,7 @@ class LogManager implements LogEmitSink {
 
   /**
    * Devuelve o crea el `Logger` singleton por nombre de módulo.
-   * @param {string} moduleName Nombre del módulo.
+   * @param {string} moduleName - Nombre del módulo.
    * @returns {Logger} Instancia reutilizada.
    */
   getLoggerInstance(moduleName: string): Logger {
@@ -318,7 +323,7 @@ class LogManager implements LogEmitSink {
 
   /**
    * Elimina el anillo de migajas interno para un `captureId`.
-   * @param {number} captureId Identificador de correlación.
+   * @param {number} captureId - Identificador de correlación.
    * @returns {void} Sin valor de retorno.
    */
   flushCaptureInternal(captureId: number): void {
@@ -327,7 +332,7 @@ class LogManager implements LogEmitSink {
 
   /**
    * Materializa `LogEntry`, actualiza migajas y escribe en todos los transports.
-   * @param {EmitPayload} payload Carga cruda del logger.
+   * @param {EmitPayload} payload - Carga cruda del logger.
    * @returns {void} Sin valor de retorno.
    */
   emit(payload: EmitPayload): void {
@@ -348,7 +353,7 @@ class LogManager implements LogEmitSink {
       message: payload.message,
       data: payload.data,
       breadcrumbs,
-      error: payload.cause !== undefined ? toErrorPayload(payload.cause) : undefined,
+      error: payload.cause === undefined ? undefined : toErrorPayload(payload.cause),
     };
     if (captureId !== undefined) {
       this.crumbs.push(captureId, {
@@ -359,7 +364,9 @@ class LogManager implements LogEmitSink {
       });
     }
     for (const t of this.transports) {
-      void t.write(entry);
+      t.write(entry).catch(() => {
+        /* ignore */
+      });
     }
   }
 

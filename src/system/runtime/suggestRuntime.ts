@@ -7,22 +7,41 @@
 import { getEnabledCompletionSources } from '../../engines/config/completionSources';
 import { resolveCompletionSourceForRequest } from '../../engines/routing/resolveCompletionSource';
 import { resolveProvider } from '../../engines/routing/resolveProvider';
-import { SuggestionStyle } from '../../sugcore/sugstyle/styleLengthController';
 import {
   suggestionLoadingStatusText,
   type SuggestionLoadingPhase,
-} from '../../system/internals/protocols/state/loading';
-import { flushLogCapture, getLogger } from '../../system/log';
-import { DEFAULT_MIN_SUGGEST_INPUT_CHARS } from '../internals/protocols/types';
+} from "../internals/protocols/state/loading";
+import {
+  DEFAULT_MIN_SUGGEST_INPUT_CHARS,
+  type CompletionResult,
+  type SuggestionModelPolicy,
+  type SuggestionStyle,
+} from '../internals/protocols/types';
+import { flushLogCapture, getLogger } from '../log';
 
 import { finalizeEngineCompletionResult } from './finalizeEngineCompletionResult';
 import { setLastEffectiveSuggestionModel } from './lastEffectiveSuggestionModel';
 import { suggestionRequestCoordinator } from './suggestionRequestCoordinator';
 
 import type { WebviewInboundMessage } from '../../api/protocols/webviewProtocols';
-import type { CompletionResult, SuggestionModelPolicy } from '../../system/internals/protocols/types';
+import type { ProviderId } from '../internals/protocols/state/provider';
 
 export type NotifyIssueCallback = (result: CompletionResult) => void;
+
+/**
+ * Fase de carga inicial según el proveedor de completion enrutado.
+ * @param {ProviderId} source - Proveedor que atenderá la petición.
+ * @returns {SuggestionLoadingPhase} Fase inicial de carga para la UI.
+ */
+function initialSuggestionLoadingPhase(source: ProviderId): SuggestionLoadingPhase {
+  if (source === 'opencode') {
+    return 'opencode-start';
+  }
+  if (source === 'ollama') {
+    return 'ollama-start';
+  }
+  return 'copilot';
+}
 
 export type GhostPromptSuggestDeps = {
   broadcastUi: (payload: Record<string, unknown>) => void;
@@ -35,8 +54,8 @@ export type GhostPromptSuggestDeps = {
 
 /**
  * Ejecuta el flujo completo de suggestion para un par texto + captureId (tras validar entrada).
- * @param {WebviewInboundMessage} message Mensaje de sugerencia recibido desde el webview.
- * @param {GhostPromptSuggestDeps} deps Dependencias y callbacks necesarios para el pipeline.
+ * @param {WebviewInboundMessage} message - Mensaje de sugerencia recibido desde el webview.
+ * @param {GhostPromptSuggestDeps} deps - Dependencias y callbacks necesarios para el pipeline.
  */
 export async function runGhostPromptSuggestPipeline(
   message: Extract<WebviewInboundMessage, { type: 'suggest' }>,
@@ -74,12 +93,7 @@ export async function runGhostPromptSuggestPipeline(
     source: routedSource,
     style,
   });
-  const initialPhase: SuggestionLoadingPhase =
-    routedSource === 'opencode'
-      ? 'opencode-start'
-      : routedSource === 'ollama'
-        ? 'ollama-start'
-        : 'copilot';
+  const initialPhase = initialSuggestionLoadingPhase(routedSource);
   const emitLoadingPhase = (phase: SuggestionLoadingPhase) => {
     deps.broadcastUi({
       type: 'loading',
@@ -104,7 +118,7 @@ export async function runGhostPromptSuggestPipeline(
       preferredModelId: selectedModelId === 'auto' ? undefined : selectedModelId,
       style,
       onLoadingPhase: emitLoadingPhase,
-      ...(routedSource === 'opencode' || routedSource === 'ollama'
+      ...routedSource === 'opencode' || routedSource === 'ollama'
         ? {
             onStreamPreview: (accumulated: string) => {
               if (!suggestionRequestCoordinator.isActiveCapture(captureId)) {
@@ -117,7 +131,7 @@ export async function runGhostPromptSuggestPipeline(
               });
             },
           }
-        : {}),
+        : {},
     });
 
     const result = finalizeEngineCompletionResult(rawResult, deps.getMaxSuggestionChars());
@@ -141,7 +155,7 @@ export async function runGhostPromptSuggestPipeline(
       deps.broadcastUi({
         type: 'suggestion',
         suggestion: result.suggestion,
-        ...(result.model ? { model: result.model } : {}),
+        ...result.model ? { model: result.model } : {},
         captureId,
       });
     } else if (result.kind === 'empty') {

@@ -1,7 +1,9 @@
 /**
  * @file Tests del runtime de sugerencias del host.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 const { showWarningMessageMock, wsConfigGetMock } = vi.hoisted(() => ({
   showWarningMessageMock: vi.fn(),
@@ -9,14 +11,14 @@ const { showWarningMessageMock, wsConfigGetMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('vscode', () => ({
-  ['CancellationTokenSource']: class {
+  'CancellationTokenSource': class {
     public token = { isCancellationRequested: false };
     cancel(): void {
       this.token.isCancellationRequested = true;
     }
     dispose(): void {}
   },
-  ['Uri']: {
+  'Uri': {
     file: (p: string) => ({ scheme: 'file', fsPath: p, path: p, toString: () => `file://${p}` }),
   },
   workspace: {
@@ -63,7 +65,7 @@ vi.mock('../../engines/config/completionSources', () => ({
 
 /**
  * Creates a minimal runtime dependencies object for suggest pipeline tests.
- * @param {Partial<GhostPromptSuggestDeps>} [overrides] Optional overrides to customize the returned dependencies.
+ * @param {Partial<GhostPromptSuggestDeps>} [overrides] - Optional overrides to customize the returned dependencies.
  * @returns {GhostPromptSuggestDeps} A GhostPromptSuggestDeps object with defaults suitable for tests.
  */
 function minimalDeps(overrides?: Partial<GhostPromptSuggestDeps>): GhostPromptSuggestDeps {
@@ -78,8 +80,8 @@ function minimalDeps(overrides?: Partial<GhostPromptSuggestDeps>): GhostPromptSu
   };
 }
 
-describe('runGhostPromptSuggestPipeline', () => {
-  beforeEach(() => {
+vitest.describe('runGhostPromptSuggestPipeline', () => {
+  vitest.beforeEach(() => {
     vi.clearAllMocks();
     wsConfigGetMock.mockImplementation((key: string, fallback: unknown) => fallback);
     resetSuggestionHostNotificationThrottleForTests();
@@ -95,34 +97,34 @@ describe('runGhostPromptSuggestPipeline', () => {
     });
   });
 
-  it('no emite UI si text está vacío', async () => {
+  vitest.it('no emite UI si text está vacío', async () => {
     const deps = minimalDeps();
     await runGhostPromptSuggestPipeline({ type: 'suggest', text: '', captureId: 1 }, deps);
-    expect(deps.broadcastUi).not.toHaveBeenCalled();
-    expect(requestCompletion).not.toHaveBeenCalled();
+    vitest.expect(deps.broadcastUi).not.toHaveBeenCalled();
+    vitest.expect(requestCompletion).not.toHaveBeenCalled();
   });
 
-  it('bloquea texto corto y emite empty (too-short) sin llamar al LM', async () => {
+  vitest.it('bloquea texto corto y emite empty (too-short) sin llamar al LM', async () => {
     const deps = minimalDeps();
     await runGhostPromptSuggestPipeline({ type: 'suggest', text: 'ab', captureId: 2 }, deps);
-    expect(requestCompletion).not.toHaveBeenCalled();
-    expect(deps.broadcastUi).toHaveBeenCalledWith(
-      expect.objectContaining({
+    vitest.expect(requestCompletion).not.toHaveBeenCalled();
+    vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
+      vitest.expect.objectContaining({
         type: 'empty',
         reason: 'too-short',
         captureId: 2,
       }),
     );
-    expect(showWarningMessageMock).not.toHaveBeenCalled();
+    vitest.expect(showWarningMessageMock).not.toHaveBeenCalled();
   });
 
-  it('tras decisión request llama al proveedor y emite suggestion', async () => {
+  vitest.it('tras decisión request llama al proveedor y emite suggestion', async () => {
     const deps = minimalDeps();
     const text = 'hello world pipeline test phrase here unique-a';
     await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 3 }, deps);
-    expect(requestCompletion).toHaveBeenCalled();
-    expect(deps.broadcastUi).toHaveBeenCalledWith(
-      expect.objectContaining({
+    vitest.expect(requestCompletion).toHaveBeenCalled();
+    vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
+      vitest.expect.objectContaining({
         type: 'suggestion',
         suggestion: 'mocked suggestion text',
         captureId: 3,
@@ -130,7 +132,7 @@ describe('runGhostPromptSuggestPipeline', () => {
     );
   });
 
-  it('post-procesado: negativa del LM se emite como empty content-blocked', async () => {
+  vitest.it('post-procesado: negativa del LM se emite como empty content-blocked', async () => {
     requestCompletion.mockResolvedValue({
       kind: 'suggestion',
       suggestion: "I'm sorry, I can't assist with that.",
@@ -139,8 +141,8 @@ describe('runGhostPromptSuggestPipeline', () => {
     const deps = minimalDeps();
     const text = 'long enough phrase for finalize refusal unique-fr';
     await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 51 }, deps);
-    expect(deps.broadcastUi).toHaveBeenCalledWith(
-      expect.objectContaining({
+    vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
+      vitest.expect.objectContaining({
         type: 'empty',
         reason: 'content-blocked',
         captureId: 51,
@@ -148,7 +150,7 @@ describe('runGhostPromptSuggestPipeline', () => {
     );
   });
 
-  it('post-procesado: acota suggestion según getMaxSuggestionChars', async () => {
+  vitest.it('post-procesado: acota suggestion según getMaxSuggestionChars', async () => {
     requestCompletion.mockResolvedValue({
       kind: 'suggestion',
       suggestion: 'abcdefghijklmnopqrstuvwxyz',
@@ -159,8 +161,8 @@ describe('runGhostPromptSuggestPipeline', () => {
     });
     const text = 'long enough phrase for finalize bound unique-bd';
     await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 52 }, deps);
-    expect(deps.broadcastUi).toHaveBeenCalledWith(
-      expect.objectContaining({
+    vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
+      vitest.expect.objectContaining({
         type: 'suggestion',
         suggestion: 'abcdefghij',
         captureId: 52,
@@ -168,30 +170,30 @@ describe('runGhostPromptSuggestPipeline', () => {
     );
   });
 
-  it('ruta OpenCode: loading inicial opencode-start y onStreamPreview en opciones', async () => {
+  vitest.it('ruta OpenCode: loading inicial opencode-start y onStreamPreview en opciones', async () => {
     vi.mocked(resolveCompletionSourceForRequest).mockReturnValue('opencode');
     try {
       const deps = minimalDeps();
       const text = 'long enough phrase for governor pass unique-oc';
       await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 20 }, deps);
-      expect(deps.broadcastUi).toHaveBeenCalledWith(
-        expect.objectContaining({
+      vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
+        vitest.expect.objectContaining({
           type: 'loading',
           phase: 'opencode-start',
           captureId: 20,
         }),
       );
-      const opts = requestCompletion.mock.calls[0]?.[1] as {
+      const options = requestCompletion.mock.calls[0]?.[1] as {
         onStreamPreview?: (s: string) => void;
       };
-      expect(opts).toBeDefined();
-      expect(typeof opts.onStreamPreview).toBe('function');
+      vitest.expect(options).toBeDefined();
+      vitest.expect(typeof options.onStreamPreview).toBe('function');
     } finally {
       vi.mocked(resolveCompletionSourceForRequest).mockReturnValue('copilot');
     }
   });
 
-  it('resultado empty del LM emite broadcast empty con reason', async () => {
+  vitest.it('resultado empty del LM emite broadcast empty con reason', async () => {
     requestCompletion.mockResolvedValue({
       kind: 'empty',
       reason: 'no-model',
@@ -199,18 +201,18 @@ describe('runGhostPromptSuggestPipeline', () => {
     const deps = minimalDeps();
     const text = 'long enough phrase for governor pass unique-empty';
     await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 30 }, deps);
-    expect(deps.broadcastUi).toHaveBeenCalledWith(
-      expect.objectContaining({
+    vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
+      vitest.expect.objectContaining({
         type: 'empty',
         reason: 'no-model',
         captureId: 30,
       }),
     );
-    expect(showWarningMessageMock).toHaveBeenCalledTimes(1);
-    expect(showWarningMessageMock.mock.calls[0]?.[0]).toContain('No hay motor');
+    vitest.expect(showWarningMessageMock).toHaveBeenCalledTimes(1);
+    vitest.expect(showWarningMessageMock.mock.calls[0]?.[0]).toContain('No hay motor');
   });
 
-  it('empty no-model repetido respeta throttle de aviso en host', async () => {
+  vitest.it('empty no-model repetido respeta throttle de aviso en host', async () => {
     requestCompletion.mockResolvedValue({
       kind: 'empty',
       reason: 'no-model',
@@ -220,10 +222,10 @@ describe('runGhostPromptSuggestPipeline', () => {
     const t2 = 'long enough phrase governor empty dup two';
     await runGhostPromptSuggestPipeline({ type: 'suggest', text: t1, captureId: 40 }, deps);
     await runGhostPromptSuggestPipeline({ type: 'suggest', text: t2, captureId: 41 }, deps);
-    expect(showWarningMessageMock).toHaveBeenCalledTimes(1);
+    vitest.expect(showWarningMessageMock).toHaveBeenCalledTimes(1);
   });
 
-  it('resultado error del LM emite broadcast error', async () => {
+  vitest.it('resultado error del LM emite broadcast error', async () => {
     requestCompletion.mockResolvedValue({
       kind: 'error',
       message: 'provider exploded',
@@ -231,17 +233,17 @@ describe('runGhostPromptSuggestPipeline', () => {
     const deps = minimalDeps();
     const text = 'long enough phrase for governor pass unique-err';
     await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 31 }, deps);
-    expect(deps.broadcastUi).toHaveBeenCalledWith(
-      expect.objectContaining({
+    vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
+      vitest.expect.objectContaining({
         type: 'error',
         message: 'provider exploded',
         captureId: 31,
       }),
     );
-    expect(showWarningMessageMock).not.toHaveBeenCalled();
+    vitest.expect(showWarningMessageMock).not.toHaveBeenCalled();
   });
 
-  it('error con patrón OpenCode muestra aviso en host', async () => {
+  vitest.it('error con patrón OpenCode muestra aviso en host', async () => {
     requestCompletion.mockResolvedValue({
       kind: 'error',
       message: 'Failed to start OpenCode server: nope',
@@ -249,11 +251,11 @@ describe('runGhostPromptSuggestPipeline', () => {
     const deps = minimalDeps();
     const text = 'long enough phrase for governor pass unique-oc-err';
     await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 32 }, deps);
-    expect(showWarningMessageMock).toHaveBeenCalledTimes(1);
-    expect(showWarningMessageMock.mock.calls[0]?.[0]).toContain('OpenCode');
+    vitest.expect(showWarningMessageMock).toHaveBeenCalledTimes(1);
+    vitest.expect(showWarningMessageMock.mock.calls[0]?.[0]).toContain('OpenCode');
   });
 
-  it('no muestra aviso si showSuggestionIssueNotifications está desactivado', async () => {
+  vitest.it('no muestra aviso si showSuggestionIssueNotifications está desactivado', async () => {
     wsConfigGetMock.mockImplementation((key: string, fallback: unknown) => {
       if (key === 'showSuggestionIssueNotifications') {
         return false;
@@ -267,6 +269,6 @@ describe('runGhostPromptSuggestPipeline', () => {
     const deps = minimalDeps();
     const text = 'long enough phrase for governor pass unique-notify-off';
     await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 33 }, deps);
-    expect(showWarningMessageMock).not.toHaveBeenCalled();
+    vitest.expect(showWarningMessageMock).not.toHaveBeenCalled();
   });
 });

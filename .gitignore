@@ -37,6 +37,9 @@ Thumbs.db
 .env
 .env.*
 
+# ESLint
+.eslintcache
+
 # Misc
 *.swp
 *.swo
@@ -46,5 +49,9 @@ Thumbs.db
 !ImagesReadme*.png
 !img/icon.png
 !media/**
+
 # Exclude extension private storage (if any)
 .globalStorage/
+
+# Misc
+eslint/

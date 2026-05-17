@@ -74,7 +74,7 @@
 | `src/system/policies/SuggestionRequestGovernor.ts` | **Legacy** (cache / cooldown / bloqueo); **no** invocado por `runSuggest`; cubierto por `SuggestionRequestGovernor.test.ts`.                                                                                                                                |
 | `src/engines/`                                     | Motores de completion canónicos. `copilot/`, `opencode/` (apiClient + catalog), `ollama/`, `engineRegistry.ts`, `config/completionSources.ts` (fuentes habilitadas), `routing/resolveCompletionSource.ts` (modelo → motor).                                                                                                                                           |
 | `src/destinations/`                                | Destinos de prompt. `copilotChat/` (`sendToChat`), `vsOpenCodeX/` (forward UI, notify missing).                                                                                                                                                             |
-| `src/system/contracts/webviewMessageSchemas.ts`    | Schemas Zod canónicos host ↔ webview.                                                                                                                                                                                                                       |
+| `src/system/internals/protocols/validations/schemas/zschemWebviewMessages.ts` | Schemas Zod canónicos host ↔ webview (contratos puros; ver `protocols/README.md`).                                                                                                                                                                          |
 | `src/system/log/ConversationLog.ts`                | `conversation.md` bajo `storageUri`.                                                                                                                                                                                                                        |
 | `src/system/log/SuggestionLog.ts`                  | `suggestions.md` bajo `storageUri`.                                                                                                                                                                                                                         |
 | `src/system/log/LogManager.ts`                     | Logger estructurado con `GhostPrompt Log`, transporte OutputChannel y persistencia de logs en disco.                                                                                                                                                        |
@@ -155,7 +155,7 @@ Each debounce cycle increments `currentCaptureId` (webview-local counter). The h
 
 ## 4. Host ↔ Webview message protocol
 
-Los mensajes son JSON. Contratos **Zod** en `src/system/contracts/webviewMessageSchemas.ts`; el host valida entrada con `parseWebviewInboundMessage` (`webviewProtocols.ts`). El cliente webview empaqueta la misma forma en el bundle.
+Los mensajes son JSON. Contratos **Zod** en `src/system/internals/protocols/validations/schemas/zschemWebviewMessages.ts`; el host valida entrada con `parseWebviewInboundMessage` (`api/protocols/webviewProtocols.ts`). El webview React valida salida con `parseWebviewInbound` (`ui/webview/react/validators/parseWebviewInbound.ts`).
 
 ### Webview → Host (resumen)
 
@@ -253,7 +253,7 @@ Ollama provides **local, offline-first** model inference with no API key or clou
 
 ### Why a `destinations/` module?
 
-Destinations (where the final prompt is sent) are logically distinct from completion engines (which generate suggestions). `copilotChat` opens the Copilot Chat panel; `vsOpenCodeX` forwards the UI to the VSOpenCodeX extension. A registry pattern (`destinationRegistry.ts`) with per-destination modules allows adding new destinations without touching the suggest pipeline or host handlers. The active destination is resolved at runtime via `getGhostPromptAgentDestination()` reading `ghostPrompt.agentDestination`, or auto-detected when VSOpenCodeX is installed but no explicit preference is saved.
+Destinations (where the final prompt is sent) are logically distinct from completion engines (which generate suggestions). `copilotChat` opens the Copilot Chat panel; `vsOpenCodeX` forwards the UI to the VSOpenCodeX extension. A registry pattern (`destinationRegistry.ts`) with per-destination modules allows adding new destinations without touching the suggest pipeline or host handlers. The active destination is resolved at runtime via `getAgentDestination()` reading `ghostPrompt.agentDestination`, or auto-detected when VSOpenCodeX is installed but no explicit preference is saved.
 
 ### Why `storageUri ?? globalStorageUri`?
 

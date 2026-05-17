@@ -11,8 +11,8 @@ import type { ProviderId } from '../../system/internals/protocols/state/provider
 
 /**
  * Decide qué proveedor LM debe atender una petición.
- * @param {string} selectedModelId Modelo seleccionado o `auto`.
- * @param {readonly ProviderId[]} enabledSources Proveedores habilitados en configuración.
+ * @param {string} selectedModelId - Modelo seleccionado o `auto`.
+ * @param {readonly ProviderId[]} enabledSources - Proveedores habilitados en configuración.
  * @returns {ProviderId} Proveedor que debe atender la petición.
  */
 export function resolveCompletionSourceForRequest(

@@ -18,6 +18,9 @@
   "engines": {
     "vscode": "^1.90.0"
   },
+  "peerDependencies": {
+    "vscode": "^1.90.0"
+  },
   "categories": [
     "Other"
   ],
@@ -259,6 +262,7 @@
     "clean": "node -e \"require('fs').rmSync('out',{recursive:true,force:true});require('fs').rmSync('src/ui/webview/dist',{recursive:true,force:true})\"",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "lint:stats": "node eslint/print-stats.js",
     "typecheck": "tsc --noEmit && tsc --noEmit -p src/ui/webview/tsconfig.json",
     "typecheck:webview": "tsc -p src/ui/webview/tsconfig.json",
     "build:webview": "vite build --config vite.config.ts",
@@ -296,6 +300,7 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsdoc": "^62.9.0",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-unicorn": "^64.0.0",
     "prettier": "^3.8.3",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",

@@ -1,7 +1,7 @@
 /**
  * @file Runner de pruebas E2E con vscode/test-electron.
  */
-const path = require('path');
+const path = require('node:path');
 
 const { runTests } = require('@vscode/test-electron');
 
@@ -13,7 +13,7 @@ async function main() {
   try {
     const extensionDevelopmentPath = process.cwd();
     const extensionTestsPath = path.resolve(process.cwd(), 'tests/e2e/suite');
-    const userDataDir = path.resolve(process.cwd(), '.vscode-test-profile');
+    const userDataDirectory = path.resolve(process.cwd(), '.vscode-test-profile');
 
     await runTests({
       extensionDevelopmentPath,
@@ -26,13 +26,13 @@ async function main() {
         '--skip-release-notes',
         '--disable-workspace-trust',
         '--disable-crash-reporter',
-        `--user-data-dir=${userDataDir}`
+        `--user-data-dir=${userDataDirectory}`
       ],
       reuseMachineInstall: true
     });
-  } catch (err) {
+  } catch (error) {
     console.error('Failed to run E2E tests');
-    console.error(err);
+    console.error(error);
     process.exit(1);
   }
 }

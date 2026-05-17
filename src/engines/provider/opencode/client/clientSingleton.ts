@@ -1,13 +1,13 @@
 /**
  * @file Singleton del cliente SDK OpenCode en el proceso de la extensión.
  */
-import type { OpenCodeSdkClient } from '../../../../system/internals/protocols/types/opencodeClient';
+import type { OpenCodeSdkClient } from '../../../../system/internals/protocols/types/typeOpencodeClient';
 
 let globalClient: OpenCodeSdkClient | undefined;
 
 /**
  * Registra el cliente global (uso interno tras `createOpenCodeClient`).
- * @param {OpenCodeSdkClient} client Instancia del SDK.
+ * @param {OpenCodeSdkClient} client - Instancia del SDK.
  */
 export function setGlobalOpenCodeClient(client: OpenCodeSdkClient): void {
   globalClient = client;

@@ -1,6 +1,6 @@
 /**
- * @file Barrel del protocolo de estado de proveedores LM.
+ * @file Barrel de contratos de estado de proveedores LM.
  */
-export * from './providerId';
-export * from './providerState';
-export * from './providerStatusModule';
+export * from './stateProviderId';
+export type * from './stateProviderRecord';
+export type * from './stateProviderModule';

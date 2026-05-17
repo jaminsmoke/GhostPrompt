@@ -5,7 +5,7 @@ const { runTests } = require('./extension.test.js');
 
 /**
  * Waits for the given number of milliseconds.
- * @param {number} ms Time in milliseconds to wait.
+ * @param {number} ms - Time in milliseconds to wait.
  * @returns {Promise<void>} Promise that resolves after the delay.
  */
 function sleep(ms) {

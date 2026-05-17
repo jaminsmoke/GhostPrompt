@@ -4,13 +4,13 @@
 import { getGlobalClient } from './clientSingleton';
 import { extractDeltaText } from './parseSdkResponse';
 
-import type { OpenCodeSdkClient } from '../../../../system/internals/protocols/types/opencodeClient';
+import type { OpenCodeSdkClient } from '../../../../system/internals/protocols/types/typeOpencodeClient';
 
 /**
  * Crea un stream de texto para una sesión OpenCode.
- * @param {string} _sessionId ID de sesión de OpenCode.
- * @param {globalThis.AbortSignal} signal Señal de abort para cancelar el stream.
- * @param {OpenCodeSdkClient} [client] Cliente OpenCode opcional.
+ * @param {string} _sessionId - ID de sesión de OpenCode.
+ * @param {globalThis.AbortSignal} signal - Señal de abort para cancelar el stream.
+ * @param {OpenCodeSdkClient} [client] - Cliente OpenCode opcional.
  * @yields {string} Fragmentos de texto incremental del stream OpenCode.
  */
 export async function* promptStreamOpenCode(

@@ -2,49 +2,48 @@
  * @file Tests de uso del output channel de logging.
  */
 import { readdirSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import * as vitest from 'vitest';
 
-const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '../../..');
+const repoRoot = join(import.meta.dirname, '../../..');
 
 /**
  * Recursively collects source file paths under a directory.
- * @param {string} directory The starting directory to scan for source files.
+ * @param {string} directory - The starting directory to scan for source files.
  * @returns {string[]} A list of matching source file paths.
  */
 function collectSourceFiles(directory: string): string[] {
   const files: string[] = [];
 
   for (const dirent of readdirSync(directory, { withFileTypes: true })) {
-    const path = join(directory, dirent.name);
+    const entryPath = join(directory, dirent.name);
 
     if (dirent.isDirectory()) {
       if (dirent.name === 'node_modules') {
         continue;
       }
-      files.push(...collectSourceFiles(path));
-    } else if (dirent.isFile() && /\.[jt]sx?$/.test(dirent.name)) {
-      files.push(path);
+      files.push(...collectSourceFiles(entryPath));
+    } else if (dirent.isFile() && /\.[jt]sx?$/u.test(dirent.name)) {
+      files.push(entryPath);
     }
   }
 
   return files;
 }
 
-describe('GhostPrompt log output channel usage', () => {
-  it('only creates the canonical GhostPrompt log output channel through the log manager', () => {
+vitest.describe('GhostPrompt log output channel usage', () => {
+  vitest.it('only creates the canonical GhostPrompt log output channel through the log manager', () => {
     const sourceFiles = collectSourceFiles(join(repoRoot, 'src'));
     const bannedPatterns = [
-      /vscode\.window\.createOutputChannel\(\s*GHOSTPROMPT_LOG_CHANNEL_NAME\s*\)/,
-      /vscode\.window\.createOutputChannel\(\s*['\"]GhostPrompt Log['\"]\s*\)/,
-      /createOutputChannel\(\s*GHOSTPROMPT_LOG_CHANNEL_NAME\s*\)/,
-      /createOutputChannel\(\s*['\"]GhostPrompt Log['\"]\s*\)/,
+      /vscode\.window\.createOutputChannel\(\s*GHOSTPROMPT_LOG_CHANNEL_NAME\s*\)/u,
+      /vscode\.window\.createOutputChannel\(\s*["']GhostPrompt Log["']\s*\)/u,
+      /createOutputChannel\(\s*GHOSTPROMPT_LOG_CHANNEL_NAME\s*\)/u,
+      /createOutputChannel\(\s*["']GhostPrompt Log["']\s*\)/u,
     ];
 
     const violations = sourceFiles.flatMap((filePath) => {
-      const normalized = filePath.replace(/\\/g, '/');
+      const normalized = filePath.replaceAll('\\', '/');
       if (normalized.endsWith('/src/system/log/transports/outputChannel.ts')) {
         return [];
       }
@@ -53,6 +52,6 @@ describe('GhostPrompt log output channel usage', () => {
       return bannedPatterns.some((pattern) => pattern.test(content)) ? [filePath] : [];
     });
 
-    expect(violations).toEqual([]);
+    vitest.expect(violations).toEqual([]);
   });
 });

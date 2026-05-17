@@ -1,38 +1,38 @@
 /**
  * @file Pruebas de normalización de modelos Ollama.
  */
-import { describe, expect, it } from 'vitest';
+import * as vitest from 'vitest';
 
 import { normalizeOllamaModels, ollamaModelToDescriptor } from './normalizeOllamaModels';
 
-describe('normalizeOllamaModels', () => {
-  it('returns an empty array for null or undefined input', () => {
-    expect(normalizeOllamaModels(null)).toEqual([]);
-    expect(normalizeOllamaModels(undefined)).toEqual([]);
+vitest.describe('normalizeOllamaModels', () => {
+  vitest.it('returns an empty array for missing input', () => {
+    vitest.expect(normalizeOllamaModels()).toEqual([]);
+    vitest.expect(normalizeOllamaModels()).toEqual([]);
   });
 
-  it('returns an empty array when the input is not an array', () => {
-    expect(normalizeOllamaModels({})).toEqual([]);
-    expect(normalizeOllamaModels('not an array')).toEqual([]);
+  vitest.it('returns an empty array when the input is not an array', () => {
+    vitest.expect(normalizeOllamaModels({})).toEqual([]);
+    vitest.expect(normalizeOllamaModels('not an array')).toEqual([]);
   });
 
-  it('filters out invalid Ollama model records', () => {
+  vitest.it('filters out invalid Ollama model records', () => {
     const raw = [
       { name: 'mistral:latest', size: 100 },
       { name: '', size: 200 },
       { size: 300 },
       'invalid',
-      null,
+      undefined,
     ];
 
-    expect(normalizeOllamaModels(raw)).toEqual([{ name: 'mistral:latest', size: 100 }]);
+    vitest.expect(normalizeOllamaModels(raw)).toEqual([{ name: 'mistral:latest', size: 100 }]);
   });
 });
 
-describe('ollamaModelToDescriptor', () => {
-  it('returns a suggestion model descriptor with Ollama metadata', () => {
+vitest.describe('ollamaModelToDescriptor', () => {
+  vitest.it('returns a suggestion model descriptor with Ollama metadata', () => {
     const record = { name: 'mistral:latest', size: 100 };
-    expect(ollamaModelToDescriptor(record)).toEqual({
+    vitest.expect(ollamaModelToDescriptor(record)).toEqual({
       id: 'mistral:latest',
       label: 'mistral:latest',
       tier: 'included',

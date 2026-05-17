@@ -5,7 +5,7 @@ import { getGlobalClient, hasGlobalClient } from './clientSingleton';
 import { OPENCODE_SESSION_POOL_MAX_SIZE, OPENCODE_SESSION_POOL_TTL_MS } from './constants';
 import { extractSessionId } from './parseSdkResponse';
 
-import type { OpenCodeSdkClient } from '../../../../system/internals/protocols/types/opencodeClient';
+import type { OpenCodeSdkClient } from '../../../../system/internals/protocols/types/typeOpencodeClient';
 
 interface PoolEntry {
   sessionId: string;
@@ -16,7 +16,7 @@ let sessionPool: PoolEntry[] = [];
 
 /**
  * Crea una sesión nueva en el servidor OpenCode.
- * @param {OpenCodeSdkClient} client Cliente SDK.
+ * @param {OpenCodeSdkClient} client - Cliente SDK.
  * @returns {Promise<string>} ID de la sesión creada.
  */
 async function createSessionInternal(client: OpenCodeSdkClient): Promise<string> {
@@ -26,8 +26,8 @@ async function createSessionInternal(client: OpenCodeSdkClient): Promise<string>
 
 /**
  * Elimina una sesión en el servidor OpenCode.
- * @param {string} sessionId ID de sesión.
- * @param {OpenCodeSdkClient} client Cliente SDK.
+ * @param {string} sessionId - ID de sesión.
+ * @param {OpenCodeSdkClient} client - Cliente SDK.
  */
 async function deleteSessionInternal(sessionId: string, client: OpenCodeSdkClient): Promise<void> {
   await client.session.delete({
@@ -37,7 +37,7 @@ async function deleteSessionInternal(sessionId: string, client: OpenCodeSdkClien
 
 /**
  * Indica si una entrada del pool superó el TTL.
- * @param {PoolEntry} entry Entrada del pool.
+ * @param {PoolEntry} entry - Entrada del pool.
  * @returns {boolean} `true` si la entrada expiró.
  */
 function isSessionStale(entry: PoolEntry): boolean {
@@ -53,7 +53,9 @@ function evictStaleSessions(): void {
   const client = getGlobalClient();
   sessionPool = sessionPool.filter((e) => {
     if (isSessionStale(e)) {
-      deleteSessionInternal(e.sessionId, client).catch(() => {});
+      deleteSessionInternal(e.sessionId, client).catch(() => {
+        /* evicción en segundo plano */
+      });
       return false;
     }
     return true;
@@ -62,7 +64,7 @@ function evictStaleSessions(): void {
 
 /**
  * Obtiene una sesión OpenCode reutilizando una existente o creando una nueva.
- * @param {OpenCodeSdkClient} [client] Cliente OpenCode opcional.
+ * @param {OpenCodeSdkClient} [client] - Cliente OpenCode opcional.
  * @returns {Promise<string>} ID de sesión disponible.
  */
 export async function getSession(client?: OpenCodeSdkClient): Promise<string> {
@@ -74,7 +76,12 @@ export async function getSession(client?: OpenCodeSdkClient): Promise<string> {
     return pooled.sessionId;
   }
   if (sessionPool.length >= OPENCODE_SESSION_POOL_MAX_SIZE) {
-    const oldest = sessionPool.reduce((a, b) => (a.lastUsed < b.lastUsed ? a : b));
+    let oldest = sessionPool[0];
+    for (const entry of sessionPool.slice(1)) {
+      if (entry.lastUsed < oldest.lastUsed) {
+        oldest = entry;
+      }
+    }
     await deleteSessionInternal(oldest.sessionId, c);
     sessionPool = sessionPool.filter((e) => e !== oldest);
   }
@@ -85,7 +92,7 @@ export async function getSession(client?: OpenCodeSdkClient): Promise<string> {
 
 /**
  * Cierra todas las sesiones OpenCode activas en la piscina.
- * @param {OpenCodeSdkClient} [client] Cliente OpenCode opcional.
+ * @param {OpenCodeSdkClient} [client] - Cliente OpenCode opcional.
  */
 export async function closeAllSessions(client?: OpenCodeSdkClient): Promise<void> {
   const c = client ?? getGlobalClient();

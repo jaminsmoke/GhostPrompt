@@ -1,6 +1,7 @@
 /**
  * @file Catálogo de modelos Ollama para el selector de UI.
  */
+
 import * as vscode from 'vscode';
 
 import { listModels } from '../http/ollamaApiClient';
@@ -11,7 +12,7 @@ import type { SuggestionModelDescriptor, SuggestionModelPolicy } from '../../../
 
 /**
  * Lista los modelos de Ollama disponibles y los convierte en descriptores.
- * @param {SuggestionModelPolicy} _policy Política de modelo solicitada (actualmente no usada para Ollama).
+ * @param {SuggestionModelPolicy} _policy - Política de modelo solicitada (actualmente no usada para Ollama).
  * @returns {Promise<SuggestionModelDescriptor[]>} Lista de descriptores de modelos Ollama.
  */
 export async function listOllamaSuggestionModels(
@@ -30,11 +31,11 @@ export async function listOllamaSuggestionModels(
     const normalized = normalizeOllamaModels(models);
     const descriptors = normalized
       .filter((m) => !excluded.has(m.name))
-      .map(ollamaModelToDescriptor);
+      .map((model) => ollamaModelToDescriptor(model));
 
-    descriptors.sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
-
-    return descriptors;
+    return descriptors.toSorted((a, b) =>
+      a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }),
+    );
   } catch {
     return [
       {

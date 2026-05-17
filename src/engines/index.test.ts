@@ -1,12 +1,13 @@
 /**
  * @file Pruebas de exportaciones públicas del módulo engines.
  */
-import { describe, expect, it, vi } from 'vitest';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 vi.mock('vscode', () => ({
   workspace: {
     getConfiguration: () => ({
-      get: vi.fn(() => undefined),
+      get: vi.fn(() => {}),
       inspect: vi.fn(() => ({
         globalValue: undefined,
         workspaceValue: undefined,
@@ -17,27 +18,29 @@ vi.mock('vscode', () => ({
   lm: {
     selectChatModels: vi.fn(),
   },
-  ['LanguageModelChatMessage']: {
-    ['User']: vi.fn(),
+  'LanguageModelChatMessage': {
+    'User': vi.fn(),
   },
-  ['CancellationTokenSource']: class {
+  'CancellationTokenSource': class {
     token = {
       isCancellationRequested: false,
-      onCancellationRequested: () => ({ dispose: () => {} }),
+      onCancellationRequested: () => ({
+        dispose: () => {},
+      }),
     };
-    cancel() {}
-    dispose() {}
+    cancel(): void {}
+    dispose(): void {}
   },
 }));
 
-import * as engines from './index';
+import { resolveProvider, resolveCompletionSourceForRequest, getEnabledCompletionSources, listMergedSuggestionModels, registerProviderStatusRegistry } from './index';
 
-describe('engines index exports', () => {
-  it('exports public engines API', () => {
-    expect(engines.resolveProvider).toBeTypeOf('function');
-    expect(engines.resolveCompletionSourceForRequest).toBeTypeOf('function');
-    expect(engines.getEnabledCompletionSources).toBeTypeOf('function');
-    expect(engines.listMergedSuggestionModels).toBeTypeOf('function');
-    expect(engines.registerProviderStatusRegistry).toBeTypeOf('function');
+vitest.describe('engines index exports', () => {
+  vitest.it('exports public engines API', () => {
+    vitest.expect(resolveProvider).toBeTypeOf('function');
+    vitest.expect(resolveCompletionSourceForRequest).toBeTypeOf('function');
+    vitest.expect(getEnabledCompletionSources).toBeTypeOf('function');
+    vitest.expect(listMergedSuggestionModels).toBeTypeOf('function');
+    vitest.expect(registerProviderStatusRegistry).toBeTypeOf('function');
   });
 });

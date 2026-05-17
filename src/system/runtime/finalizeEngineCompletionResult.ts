@@ -1,16 +1,17 @@
 /**
  * @file Post-procesado del resultado crudo del motor LM antes del broadcast (acotación y rechazo).
  */
-import { looksLikeCopilotRefusal } from '../internals/protocols/guards/copilotLm';
-import { boundSuggestionText } from '../internals/protocols/types/boundSuggestionText';
-import { DEFAULT_MAX_SUGGESTION_CHARS } from '../internals/protocols/types/params';
-
-import type { CompletionResult } from '../internals/protocols/types';
+import { boundSuggestionText } from '../internals/protocols/guards/guardBoundSuggestion';
+import { looksLikeCopilotRefusal } from '../internals/protocols/guards/guardCopilotLm';
+import {
+  DEFAULT_MAX_SUGGESTION_CHARS,
+  type CompletionResult,
+} from '../internals/protocols/types';
 
 /**
  * Aplica límites de producto al texto devuelto por el motor (sin mutar vacíos ni errores).
- * @param {CompletionResult} result Resultado tal cual devuelve `EngineProvider.requestCompletion`.
- * @param {number} [maxSuggestionChars] Tope de caracteres para la sugerencia enviada al webview.
+ * @param {CompletionResult} result - Resultado tal cual devuelve `EngineProvider.requestCompletion`.
+ * @param {number} [maxSuggestionChars] - Tope de caracteres para la sugerencia enviada al webview.
  * @returns {CompletionResult} Resultado listo para UI y logs.
  */
 export function finalizeEngineCompletionResult(

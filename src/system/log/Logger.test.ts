@@ -1,20 +1,21 @@
 /**
  * @file Tests para el logger principal y su registro de eventos.
  */
-import { describe, expect, it } from 'vitest';
+
+import * as vitest from 'vitest';
 
 import { Logger } from './Logger';
 
 import type { LogEmitSink, EmitPayload } from './emitContract';
 
-describe('Logger', () => {
-  it('debug emits payload with correct level and module', () => {
+vitest.describe('Logger', () => {
+  vitest.it('debug emits payload with correct level and module', () => {
     const emitted: EmitPayload[] = [];
     const sink: LogEmitSink = { emit: (p) => emitted.push(p) };
     const logger = new Logger('suggest', sink);
     logger.debug('request-start', { captureId: 1 });
-    expect(emitted).toHaveLength(1);
-    expect(emitted[0]).toEqual({
+    vitest.expect(emitted).toHaveLength(1);
+    vitest.expect(emitted[0]).toEqual({
       level: 'DEBUG',
       module: 'suggest',
       message: 'request-start',
@@ -22,45 +23,45 @@ describe('Logger', () => {
     });
   });
 
-  it('info emits payload with correct level', () => {
+  vitest.it('info emits payload with correct level', () => {
     const emitted: EmitPayload[] = [];
     const sink: LogEmitSink = { emit: (p) => emitted.push(p) };
     const logger = new Logger('inbound', sink);
     logger.info('message-received');
-    expect(emitted[0].level).toBe('INFO');
-    expect(emitted[0].module).toBe('inbound');
-    expect(emitted[0].message).toBe('message-received');
+    vitest.expect(emitted[0].level).toBe('INFO');
+    vitest.expect(emitted[0].module).toBe('inbound');
+    vitest.expect(emitted[0].message).toBe('message-received');
   });
 
-  it('warn emits payload with correct level', () => {
+  vitest.it('warn emits payload with correct level', () => {
     const emitted: EmitPayload[] = [];
     const sink: LogEmitSink = { emit: (p) => emitted.push(p) };
     const logger = new Logger('engines', sink);
     logger.warn('provider-slow', { provider: 'ollama' });
-    expect(emitted[0].level).toBe('WARN');
-    expect(emitted[0].data).toEqual({ provider: 'ollama' });
+    vitest.expect(emitted[0].level).toBe('WARN');
+    vitest.expect(emitted[0].data).toEqual({ provider: 'ollama' });
   });
 
-  it('error emits payload with cause', () => {
+  vitest.it('error emits payload with cause', () => {
     const emitted: EmitPayload[] = [];
     const sink: LogEmitSink = { emit: (p) => emitted.push(p) };
     const logger = new Logger('suggest', sink);
     const err = new Error('timeout');
     logger.error('request-failed', { captureId: 42 }, err);
-    expect(emitted[0].level).toBe('ERROR');
-    expect(emitted[0].data).toEqual({ captureId: 42 });
-    expect(emitted[0].cause).toBe(err);
+    vitest.expect(emitted[0].level).toBe('ERROR');
+    vitest.expect(emitted[0].data).toEqual({ captureId: 42 });
+    vitest.expect(emitted[0].cause).toBe(err);
   });
 
-  it('works without data parameter', () => {
+  vitest.it('works without data parameter', () => {
     const emitted: EmitPayload[] = [];
     const sink: LogEmitSink = { emit: (p) => emitted.push(p) };
     const logger = new Logger('test', sink);
     logger.info('no-data');
-    expect(emitted[0].data).toBeUndefined();
+    vitest.expect(emitted[0].data).toBeUndefined();
   });
 
-  it('moduleName is fixed at construction', () => {
+  vitest.it('moduleName is fixed at construction', () => {
     const emitted: EmitPayload[] = [];
     const sink: LogEmitSink = { emit: (p) => emitted.push(p) };
     const logger = new Logger('fixed-module', sink);
@@ -68,6 +69,6 @@ describe('Logger', () => {
     logger.info('b');
     logger.warn('c');
     logger.error('d');
-    emitted.forEach((e) => expect(e.module).toBe('fixed-module'));
+    for (const e of emitted) {vitest.expect(e.module).toBe('fixed-module');}
   });
 });

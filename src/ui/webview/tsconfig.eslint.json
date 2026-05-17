@@ -4,7 +4,7 @@
     "./**/*.ts",
     "./**/*.tsx",
     "./globals.d.ts",
-    "../../api/contracts/webviewMessageSchemas.ts"
+    "../../system/internals/protocols/validations/schemas/zschemWebviewMessages.ts"
   ],
   "exclude": ["node_modules", "dist/**"]
 }

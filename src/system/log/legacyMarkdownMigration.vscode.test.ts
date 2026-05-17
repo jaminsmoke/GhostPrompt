@@ -1,7 +1,8 @@
 /**
  * @file Tests de migración de markdown legacy para VS Code.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 import * as vscode from 'vscode';
 
 import {
@@ -13,18 +14,17 @@ const hoisted = vi.hoisted(() => ({
   files: new Map<string, Uint8Array>(),
   logFileEnabled: true,
   logFileMaxBytes: 10_000_000,
+  joinPath: (base: { fsPath: string }, ...parts: string[]) => {
+    const fsPath = [base.fsPath, ...parts].filter(Boolean).join('/');
+    return { scheme: 'file', fsPath, path: fsPath, toString: () => `file://${fsPath}` };
+  },
 }));
 
 vi.mock('vscode', () => {
-  const { files, logFileEnabled, logFileMaxBytes } = hoisted;
-
-  const joinPath = (base: { fsPath: string }, ...parts: string[]) => {
-    const fsPath = [base.fsPath, ...parts].filter(Boolean).join('/');
-    return { scheme: 'file', fsPath, path: fsPath, toString: () => `file://${fsPath}` };
-  };
+  const { files, logFileEnabled, logFileMaxBytes, joinPath } = hoisted;
 
   return {
-    ['Uri']: {
+    'Uri': {
       file: (p: string) => ({ scheme: 'file', fsPath: p, path: p, toString: () => `file://${p}` }),
       joinPath,
     },
@@ -55,14 +55,14 @@ vi.mock('vscode', () => {
         }),
       },
       getConfiguration: vi.fn(() => ({
-        get: vi.fn((key: string, def?: unknown) => {
+        get: vi.fn((key: string, defaultValue?: unknown) => {
           if (key === 'logFileEnabled') {
             return logFileEnabled;
           }
           if (key === 'logFileMaxBytes') {
             return logFileMaxBytes;
           }
-          return def;
+          return defaultValue;
         }),
         inspect: vi.fn(() => ({
           globalValue: undefined,
@@ -78,7 +78,7 @@ vi.mock('vscode', () => {
         dispose: vi.fn(),
       })),
     },
-    ['Disposable']: class {
+    'Disposable': class {
       constructor(private readonly callback: () => void) {}
       dispose(): void {
         this.callback();
@@ -87,19 +87,19 @@ vi.mock('vscode', () => {
   };
 });
 
-describe('migración Markdown legacy (LogManager)', () => {
-  beforeEach(async () => {
+vitest.describe('migración Markdown legacy (LogManager)', () => {
+  vitest.beforeEach(async () => {
     await disposeGhostPromptLogging();
     hoisted.files.clear();
     hoisted.logFileEnabled = true;
     hoisted.logFileMaxBytes = 10_000_000;
   });
 
-  afterEach(async () => {
+  vitest.afterEach(async () => {
     await disposeGhostPromptLogging();
   });
 
-  it('importa suggestions.md y escribe el marcador', async () => {
+  vitest.it('importa suggestions.md y escribe el marcador', async () => {
     const wsRoot = vscode.Uri.file('/ws');
     const globalRoot = vscode.Uri.file('/g');
     const suggPath = vscode.Uri.joinPath(wsRoot, 'suggestions.md').fsPath;
@@ -118,7 +118,7 @@ describe('migración Markdown legacy (LogManager)', () => {
       'events.ndjson',
     ).fsPath;
 
-    hoisted.files.set(suggPath, new Uint8Array(Buffer.from('contenido legacy', 'utf-8')));
+    hoisted.files.set(suggPath, new Uint8Array(Buffer.from('contenido legacy', 'utf8')));
 
     const ctx = {
       subscriptions: [] as { dispose: () => void }[],
@@ -130,39 +130,45 @@ describe('migración Markdown legacy (LogManager)', () => {
 
     await vi.waitFor(
       () => {
-        expect(hoisted.files.has(flagPath)).toBe(true);
+        vitest.expect(hoisted.files.has(flagPath)).toBe(true);
       },
       { timeout: 3000, interval: 5 },
     );
 
     const flagBytes = hoisted.files.get(flagPath);
-    expect(flagBytes).toBeDefined();
-    const flag = JSON.parse(Buffer.from(flagBytes as Uint8Array).toString('utf-8')) as {
+    vitest.expect(flagBytes).toBeDefined();
+    if (flagBytes === undefined) {
+      throw new Error('expected flag bytes');
+    }
+    const flag = JSON.parse(Buffer.from(flagBytes).toString('utf8')) as {
       snapshots: number;
     };
-    expect(flag.snapshots).toBe(1);
+    vitest.expect(flag.snapshots).toBe(1);
 
     const nd = hoisted.files.get(ndPath);
-    expect(nd).toBeDefined();
-    const lines = Buffer.from(nd as Uint8Array)
-      .toString('utf-8')
+    vitest.expect(nd).toBeDefined();
+    if (nd === undefined) {
+      throw new Error('expected ndjson bytes');
+    }
+    const lines = Buffer.from(nd)
+      .toString('utf8')
       .trim()
       .split('\n')
       .filter(Boolean);
-    expect(lines.length).toBeGreaterThanOrEqual(1);
+    vitest.expect(lines.length).toBeGreaterThanOrEqual(1);
     const first = JSON.parse(lines[0]) as {
       module: string;
       message: string;
       data: { preview: string };
     };
-    expect(first.module).toBe('migration');
-    expect(first.message).toBe('legacy-md-snapshot');
-    expect(first.data.preview).toContain('contenido legacy');
+    vitest.expect(first.module).toBe('migration');
+    vitest.expect(first.message).toBe('legacy-md-snapshot');
+    vitest.expect(first.data.preview).toContain('contenido legacy');
 
     await disposeGhostPromptLogging();
   });
 
-  it('no escribe NDJSON si el marcador ya existía', async () => {
+  vitest.it('no escribe NDJSON si el marcador ya existía', async () => {
     const wsRoot = vscode.Uri.file('/ws');
     const globalRoot = vscode.Uri.file('/g');
     const suggPath = vscode.Uri.joinPath(wsRoot, 'suggestions.md').fsPath;
@@ -181,13 +187,13 @@ describe('migración Markdown legacy (LogManager)', () => {
       'events.ndjson',
     ).fsPath;
 
-    hoisted.files.set(suggPath, new Uint8Array(Buffer.from('solo una vez', 'utf-8')));
+    hoisted.files.set(suggPath, new Uint8Array(Buffer.from('solo una vez', 'utf8')));
     hoisted.files.set(
       flagPath,
       new Uint8Array(
         Buffer.from(
           JSON.stringify({ importedAt: new Date().toISOString(), snapshots: 0 }),
-          'utf-8',
+          'utf8',
         ),
       ),
     );
@@ -202,6 +208,6 @@ describe('migración Markdown legacy (LogManager)', () => {
     await new Promise((r) => setTimeout(r, 50));
     await disposeGhostPromptLogging();
 
-    expect(hoisted.files.has(ndPath)).toBe(false);
+    vitest.expect(hoisted.files.has(ndPath)).toBe(false);
   });
 });

@@ -28,7 +28,7 @@ api/
 │   ├── settingsPostMessage.ts # Construye y envía el envelope `settings` al webview
 │   └── applyWebviewUpdate.ts  # Aplica `updateSetting` via `vscode.workspace` config API
 ├── getters/
-│   └── workspaceGetters.ts    # Lectores de `vscode.workspace.getConfiguration` + destino agente
+│   └── workspaceGetters.ts    # Lectores de `vscode.workspace` + destino agente (sin política de modelo; ver `system/internals/config/`)
 └── index.ts                   # Barrel público (re-exports de todo el dominio)
 ```
 
@@ -81,7 +81,7 @@ Webview.postMessage({ type: 'suggest', text, captureId })
 
 ## Contratos Zod
 
-Los schemas canónicos viven en `api/contracts/webviewMessageSchemas.ts`. `api/protocols/webviewProtocols.ts` los re-exporta y expone las funciones de parseo:
+Los schemas canónicos viven en `system/internals/protocols/validations/schemas/zschemWebviewMessages.ts`. `api/protocols/webviewProtocols.ts` los importa y expone las funciones de parseo:
 
 - `parseWebviewInboundMessage(raw)` → `WebviewInboundMessage | undefined`
 - `parseOutboundSettingsEnvelope(raw)` → validated envelope
@@ -97,7 +97,7 @@ Los schemas canónicos viven en `api/contracts/webviewMessageSchemas.ts`. `api/p
 | `ui/provider/multiViewDraft`            | Borrador compartido Sidebar + Panel                        |
 | `system/runtime/providerStatusManager` | Estado de proveedores LM (start/stop, refresh)         |
 | `system/runtime`                         | `handleGhostPromptSuggest` para el mensaje `suggest`       |
-| `system/contracts/webviewMessageSchemas` | Schemas Zod canónicos                                      |
+| `system/internals/protocols/validations/schemas/zschemWebviewMessages` | Schemas Zod canónicos host↔webview                                      |
 | `system/log`                             | Logging estructurado, conversation y suggestions           |
 | `system/log`                             | Debug toggle check                                         |
 | `destinations/destinationRegistry`       | Resolución de destino agente                               |
@@ -111,5 +111,5 @@ Los schemas canónicos viven en `api/contracts/webviewMessageSchemas.ts`. `api/p
 | `protocols/webviewProtocols.test.ts`             | Parseo Zod de mensajes inbound |
 | `protocols/inboundHandlers.test.ts`              | Dispatch por tipo de mensaje   |
 | `settings/applyWebviewUpdate.test.ts`            | Aplicación de `updateSetting`  |
-| `contracts/webviewMessageSchemas.test.ts`        | Validación de schemas Zod      |
+| `protocols/validations/schemas/zschemWebviewMessages.test.ts` | Validación de schemas Zod host↔webview |
 | `provider/MiniInputViewProvider.test.ts`         | Flujo end-to-end con mocks     |

@@ -3,6 +3,7 @@
  *
  * `config.providers()` se normaliza y se convierte en descriptores que muestra la UI.
  */
+
 import * as vscode from 'vscode';
 
 import { createOpenCodeClient } from '../client';
@@ -14,18 +15,18 @@ import { classifyOpencodeModelTier } from './opencodeModelTier';
 import type { SuggestionModelDescriptor, SuggestionModelPolicy } from '../../../../system/internals/protocols/types';
 
 type OpencodeProvidersBundle = {
-  providers?: Array<{
+  providers?: {
     id: string;
     name?: string;
     models?: unknown;
-  }>;
+  }[];
 };
 
 /**
  * Lista modelos instalados/configurados en OpenCode para el dropdown.
  * Vacío si no hay conexión o no hay CLI.
  * Con **`nonPremiumOnly`** se ocultan modelos clasificados como **premium** según metadatos del catálogo.
- * @param {SuggestionModelPolicy} policy Política de modelo usada para filtrar modelos premium.
+ * @param {SuggestionModelPolicy} policy - Política de modelo usada para filtrar modelos premium.
  * @returns {Promise<SuggestionModelDescriptor[]>} Lista de descriptores de modelo OpenCode.
  */
 export async function listOpencodeSuggestionModels(
@@ -46,7 +47,7 @@ export async function listOpencodeSuggestionModels(
   }
 
   const sdkClient = client as {
-    config: { providers(): Promise<unknown> };
+    config: { providers: () => Promise<unknown> };
   };
 
   try {
@@ -84,16 +85,16 @@ export async function listOpencodeSuggestionModels(
           id,
           label: labelSource || model.id,
           tier,
-          ...(pricing ? { pricing } : {}),
+          ...pricing ? { pricing } : {},
           provider: typeof p.name === 'string' && p.name.trim() ? p.name.trim() : p.id,
           completionSource: 'opencode',
         });
       }
     }
 
-    descriptors.sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
-
-    return descriptors;
+    return descriptors.toSorted((a, b) =>
+      a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }),
+    );
   } catch {
     return [];
   }

@@ -1,15 +1,21 @@
 /**
  * @file Tests del MiniInputViewProvider y del webview GhostPrompt.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 import { suggestionLoadingStatusText } from '../../system/internals/protocols/state/loading';
 import { resetGhostPromptHostRuntimeForTests } from '../../system/runtime/resetHostRuntimeForTests';
 
 import { MiniInputViewProvider } from './MiniInputViewProvider';
 
+import type * as InboundHandlersModule from '../../api/protocols/inboundHandlers';
+import type * as WebviewProtocolsModule from '../../api/protocols/webviewProtocols';
+import type * as SettingsPostMessageModule from '../../api/settings/settingsPostMessage';
 import type { SuggestionModelDescriptor } from '../../system/internals/protocols/types';
-import type { GhostPromptSuggestDeps } from '../../system/runtime/suggestRuntime';
+import type * as SuggestRuntimeModule from '../../system/runtime/suggestRuntime';
+
+type GhostPromptSuggestDeps = SuggestRuntimeModule.GhostPromptSuggestDeps;
 
 type TestSuggestionModel = SuggestionModelDescriptor;
 
@@ -25,7 +31,7 @@ const {
     public cancel(): void {
       this.token.isCancellationRequested = true;
     }
-    public dispose(): void {}
+    public dispose(): void { return; }
   }
   return {
     requestCompletionMock: vi.fn(),
@@ -38,7 +44,7 @@ const {
   };
 });
 
-let suggestHandler: ((message: unknown) => void | Promise<void>) | undefined;
+let suggestHandler: ((message: unknown) => Promise<void> | void) | undefined;
 const postMessageMock = vi.fn();
 
 vi.mock('fs', () => ({
@@ -83,19 +89,18 @@ vi.mock('../../engines/provider/ollama/catalog/ollamaModelCatalog', () => ({
 }));
 
 vi.mock('../../api/protocols/inboundHandlers', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../api/protocols/inboundHandlers')>();
+  const actual = await importOriginal<typeof InboundHandlersModule>();
   return {
     ...actual,
     dispatchGhostPromptInboundMessage: vi.fn(async (message: unknown, services: unknown) => {
       if (
         typeof message === 'object' &&
-        message !== null &&
         'type' in message &&
         (message as { type: string }).type === 'suggest'
       ) {
-        const runtime = await vi.importActual<
-          typeof import('../../system/runtime/suggestRuntime')
-        >('../../system/runtime/suggestRuntime');
+        const runtime = await vi.importActual<typeof SuggestRuntimeModule>(
+          '../../system/runtime/suggestRuntime',
+        );
         const deps = (services as { suggestDeps: GhostPromptSuggestDeps }).suggestDeps;
         return runtime.handleGhostPromptSuggest(
           message as Parameters<typeof runtime.handleGhostPromptSuggest>[0],
@@ -108,32 +113,31 @@ vi.mock('../../api/protocols/inboundHandlers', async (importOriginal) => {
 });
 
 vi.mock('../../api/protocols/webviewProtocols', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../api/protocols/webviewProtocols')>();
+  const actual = await importOriginal<typeof WebviewProtocolsModule>();
   return {
     ...actual,
     parseWebviewInboundMessage: (raw: unknown) => {
       if (
         typeof raw === 'object' &&
-        raw !== null &&
         'type' in raw &&
-        typeof (raw).type === 'string'
+        typeof raw.type === 'string'
       ) {
         const msg = raw as Record<string, unknown>;
         if (
           msg.type === 'suggest' &&
           (typeof msg.captureId !== 'number' || typeof msg.text !== 'string')
         ) {
-          return undefined;
+          return;
         }
         return raw;
       }
-      return undefined;
+      
     },
   };
 });
 
 vi.mock('../../api/settings/settingsPostMessage', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../api/settings/settingsPostMessage')>();
+  const actual = await importOriginal<typeof SettingsPostMessageModule>();
   return {
     ...actual,
     buildAndPostGhostPromptSettings: vi.fn(
@@ -166,12 +170,15 @@ vi.mock('../../api/getters/workspaceGetters', () => ({
   collectGhostPromptProjectContext: () => ({}),
   getGhostPromptMaxSuggestionChars: () => 180,
   getGhostPromptSelectedModelId: () => 'auto',
-  getGhostPromptSuggestionModelPolicy: () => 'nonPremiumOnly',
   getGhostPromptSuggestionStyle: () => 'balanced',
-  getGhostPromptAgentDestination: () => 'copilotChat',
+  getAgentDestination: () => 'copilotChat',
   isVsOpenCodeXExtensionInstalled: () => false,
   getGhostPromptOllamaBaseUrl: () => 'http://localhost:11434',
   getGhostPromptOllamaExcludedModelIds: () => [],
+}));
+
+vi.mock('../../system/internals/config/readGhostPromptSuggestionModelPolicy', () => ({
+  readGhostPromptSuggestionModelPolicy: () => 'nonPremiumOnly',
 }));
 
 vi.mock('../../destinations/copilotChat/copilotChatDestination', () => ({
@@ -200,12 +207,16 @@ vi.mock('vscode', () => ({
       }),
     }),
   },
-  ['Uri']: {
-    joinPath: (...parts: Array<{ fsPath?: string } | string>) => ({
-      fsPath: parts.map((p) => (typeof p === 'string' ? p : (p.fsPath ?? ''))).join('/'),
+  'Uri': {
+    joinPath: (...parts: (string | { fsPath?: string })[]) => ({
+      fsPath: parts
+        .map((p) => {
+          return typeof p === 'string' ? p : p.fsPath ?? '';
+        })
+        .join('/'),
     }),
   },
-  ['CancellationTokenSource']: cancellationTokenSourceMock,
+  'CancellationTokenSource': cancellationTokenSourceMock,
 }));
 
 /**
@@ -222,7 +233,7 @@ function createView() {
       options: {},
       html: '',
       asWebviewUri: (uri: { fsPath: string }) => ({ toString: () => `webview://${uri.fsPath}` }),
-      onDidReceiveMessage: (handler: (message: unknown) => void | Promise<void>) => {
+      onDidReceiveMessage: (handler: (message: unknown) => Promise<void> | void) => {
         suggestHandler = handler;
       },
       postMessage: postMessageMock,
@@ -230,14 +241,14 @@ function createView() {
   };
 }
 
-describe('MiniInputViewProvider', () => {
-  beforeEach(() => {
+vitest.describe('MiniInputViewProvider', () => {
+  vitest.beforeEach(() => {
     vi.clearAllMocks();
     resetGhostPromptHostRuntimeForTests();
     MiniInputViewProvider.clearWebviewRegistrationsForTests();
   });
 
-  it('publica loading y suggestion cuando requestCompletion responde sugerencia', async () => {
+  vitest.it('publica loading y suggestion cuando requestCompletion responde sugerencia', async () => {
     const view = createView();
     const provider = new MiniInputViewProvider(
       {
@@ -257,14 +268,14 @@ describe('MiniInputViewProvider', () => {
     provider.resolveWebviewView(view as never, {} as never, {} as never);
     await suggestHandler?.({ type: 'suggest', text: 'hola', captureId: 1 });
 
-    expect(postMessageMock).toHaveBeenNthCalledWith(1, {
+    vitest.expect(postMessageMock).toHaveBeenNthCalledWith(1, {
       type: 'loading',
       captureId: 1,
       phase: 'copilot',
       statusText: suggestionLoadingStatusText('copilot'),
       broadcast: true,
     });
-    expect(postMessageMock).toHaveBeenNthCalledWith(2, {
+    vitest.expect(postMessageMock).toHaveBeenNthCalledWith(2, {
       type: 'suggestion',
       suggestion: 'continuacion',
       model: { id: 'gpt-4o-mini', label: 'GPT-4o mini', tier: 'included' },
@@ -273,7 +284,7 @@ describe('MiniInputViewProvider', () => {
     });
   });
 
-  it('publica empty cuando requestCompletion no encuentra sugerencia', async () => {
+  vitest.it('publica empty cuando requestCompletion no encuentra sugerencia', async () => {
     const view = createView();
     const provider = new MiniInputViewProvider(
       {
@@ -292,7 +303,7 @@ describe('MiniInputViewProvider', () => {
     provider.resolveWebviewView(view as never, {} as never, {} as never);
     await suggestHandler?.({ type: 'suggest', text: 'texto distinto', captureId: 2 });
 
-    expect(postMessageMock).toHaveBeenNthCalledWith(2, {
+    vitest.expect(postMessageMock).toHaveBeenNthCalledWith(2, {
       type: 'empty',
       reason: 'no-model',
       captureId: 2,
@@ -300,7 +311,7 @@ describe('MiniInputViewProvider', () => {
     });
   });
 
-  it('bloquea input demasiado corto y se recupera en siguiente suggest valido', async () => {
+  vitest.it('bloquea input demasiado corto y se recupera en siguiente suggest valido', async () => {
     const view = createView();
     const provider = new MiniInputViewProvider(
       {
@@ -320,33 +331,33 @@ describe('MiniInputViewProvider', () => {
     provider.resolveWebviewView(view as never, {} as never, {} as never);
 
     await suggestHandler?.({ type: 'suggest', text: ' ', captureId: 3 });
-    expect(postMessageMock).toHaveBeenLastCalledWith({
+    vitest.expect(postMessageMock).toHaveBeenLastCalledWith({
       type: 'empty',
       reason: 'too-short',
       captureId: 3,
       broadcast: true,
     });
-    expect(requestCompletionMock).not.toHaveBeenCalled();
+    vitest.expect(requestCompletionMock).not.toHaveBeenCalled();
 
     await suggestHandler?.({ type: 'suggest', text: 'hola mundo', captureId: 4 });
-    expect(postMessageMock).toHaveBeenNthCalledWith(2, {
+    vitest.expect(postMessageMock).toHaveBeenNthCalledWith(2, {
       type: 'loading',
       captureId: 4,
       phase: 'copilot',
       statusText: suggestionLoadingStatusText('copilot'),
       broadcast: true,
     });
-    expect(postMessageMock).toHaveBeenNthCalledWith(3, {
+    vitest.expect(postMessageMock).toHaveBeenNthCalledWith(3, {
       type: 'suggestion',
       suggestion: 'continuacion valida',
       model: { id: 'gpt-4o-mini', label: 'GPT-4o mini', tier: 'included' },
       captureId: 4,
       broadcast: true,
     });
-    expect(requestCompletionMock).toHaveBeenCalledOnce();
+    vitest.expect(requestCompletionMock).toHaveBeenCalledOnce();
   });
 
-  it('ignora mensajes entrantes que no pasan el contrato Zod', async () => {
+  vitest.it('ignora mensajes entrantes que no pasan el contrato Zod', async () => {
     const view = createView();
     const provider = new MiniInputViewProvider(
       {
@@ -362,11 +373,11 @@ describe('MiniInputViewProvider', () => {
       text: 'hola',
       captureId: '1',
     });
-    expect(requestCompletionMock).not.toHaveBeenCalled();
-    expect(postMessageMock).not.toHaveBeenCalled();
+    vitest.expect(requestCompletionMock).not.toHaveBeenCalled();
+    vitest.expect(postMessageMock).not.toHaveBeenCalled();
   });
 
-  it('refreshSettingsAllViews envía settings a todas las vistas registradas (D1)', async () => {
+  vitest.it('refreshSettingsAllViews envía settings a todas las vistas registradas (D1)', async () => {
     const postA = vi.fn();
     const postB = vi.fn();
     const ctx = {
@@ -379,7 +390,7 @@ describe('MiniInputViewProvider', () => {
       options: {},
       html: '',
       asWebviewUri: (uri: { fsPath: string }) => ({ toString: () => `webview://${uri.fsPath}` }),
-      onDidReceiveMessage: () => {},
+      onDidReceiveMessage: () => { return; },
     };
     const viewA = { webview: { ...webviewShell, postMessage: postA } };
     const viewB = { webview: { ...webviewShell, postMessage: postB } };
@@ -391,11 +402,11 @@ describe('MiniInputViewProvider', () => {
 
     await MiniInputViewProvider.refreshSettingsAllViews();
 
-    expect(postA).toHaveBeenCalledWith(expect.objectContaining({ type: 'settings' }));
-    expect(postB).toHaveBeenCalledWith(expect.objectContaining({ type: 'settings' }));
+    vitest.expect(postA).toHaveBeenCalledWith(vitest.expect.objectContaining({ type: 'settings' }));
+    vitest.expect(postB).toHaveBeenCalledWith(vitest.expect.objectContaining({ type: 'settings' }));
   });
 
-  it('publica metadata de modelo en settings iniciales', async () => {
+  vitest.it('publica metadata de modelo en settings iniciales', async () => {
     const view = createView();
     const provider = new MiniInputViewProvider(
       {
@@ -424,14 +435,14 @@ describe('MiniInputViewProvider', () => {
         completionUiKind: string;
         enabledCompletionSources: string[];
         suggestionDebounceMs: number;
-        availableModels: Array<{ id: string; label: string; tier: string; completionSource: string }>;
+        availableModels: { id: string; label: string; tier: string; completionSource: string }[];
       };
     };
-    expect(firstPost.type).toBe('settings');
-    expect(firstPost.settings.completionUiKind).toBe('copilot');
-    expect(firstPost.settings.enabledCompletionSources).toEqual(['copilot']);
-    expect(firstPost.settings.suggestionDebounceMs).toBe(800);
-    expect(firstPost.settings.availableModels).toEqual([
+    vitest.expect(firstPost.type).toBe('settings');
+    vitest.expect(firstPost.settings.completionUiKind).toBe('copilot');
+    vitest.expect(firstPost.settings.enabledCompletionSources).toEqual(['copilot']);
+    vitest.expect(firstPost.settings.suggestionDebounceMs).toBe(800);
+    vitest.expect(firstPost.settings.availableModels).toEqual([
       {
         id: 'gpt-4o-mini',
         label: 'GPT-4o mini',
@@ -439,7 +450,7 @@ describe('MiniInputViewProvider', () => {
         completionSource: 'copilot',
       },
     ]);
-    expect(postMessageMock).toHaveBeenNthCalledWith(2, {
+    vitest.expect(postMessageMock).toHaveBeenNthCalledWith(2, {
       type: 'draftHydrate',
       text: '',
     });

@@ -1,14 +1,15 @@
 /**
  * @file Recolecta texto incremental desde `vscode.LanguageModelChatResponse` (Copilot LM).
  */
-import * as vscode from 'vscode';
+import { DEFAULT_MODEL_REQUEST_TIMEOUT_MS } from '../../../../system/internals/protocols/types';
 
-import { DEFAULT_MODEL_REQUEST_TIMEOUT_MS } from '../../../../system/internals/protocols/types/params';
+import type * as vscode from 'vscode';
+
 
 /**
  * Recompone el texto completo de la respuesta de Copilot LM a partir del stream de VS Code.
- * @param {vscode.LanguageModelChatResponse} response Respuesta de chat de la API de lenguaje de VS Code.
- * @param {number} timeoutMs Tiempo máximo en milisegundos para esperar el siguiente fragmento.
+ * @param {vscode.LanguageModelChatResponse} response - Respuesta de chat de la API de lenguaje de VS Code.
+ * @param {number} timeoutMs - Tiempo máximo en milisegundos para esperar el siguiente fragmento.
  * @returns {Promise<string>} Texto acumulado de la respuesta.
  */
 export async function collectLmResponse(
@@ -29,8 +30,8 @@ export async function collectLmResponse(
 
 /**
  * Espera un fragmento del iterador de texto o expira si se supera el timeout.
- * @param {AsyncIterator<string>} iterator Iterador asíncrono que produce trozos de texto.
- * @param {number} timeoutMs Tiempo de espera en milisegundos antes de cancelar.
+ * @param {AsyncIterator<string>} iterator - Iterador asíncrono que produce trozos de texto.
+ * @param {number} timeoutMs - Tiempo de espera en milisegundos antes de cancelar.
  * @returns {Promise<IteratorResult<string>>} El siguiente resultado del iterador.
  */
 async function awaitNextChunkWithTimeout(

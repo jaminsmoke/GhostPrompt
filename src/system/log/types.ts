@@ -32,15 +32,17 @@ export type LogEntry = {
  */
 export type LogTransport = {
   readonly id: string;
+
   /**
    * Escribe una entrada ya filtrada por `LogManager` según nivel global.
-   * @param {LogEntry} entry Entrada completa.
+   * @param {LogEntry} entry - Entrada completa.
    * @returns {Promise<void>} Flujo async del transporte.
    */
-  write(entry: LogEntry): Promise<void>;
+  write: (entry: LogEntry) => Promise<void>;
+
   /**
    * Libera recursos del transporte.
    * @returns {Promise<void>} Flujo async de cierre.
    */
-  dispose(): Promise<void>;
+  dispose: () => Promise<void>;
 };

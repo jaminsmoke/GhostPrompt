@@ -1,7 +1,9 @@
 /**
  * @file Tests del transporte de log hacia el output channel.
  */
-import { describe, expect, it, vi } from 'vitest';
+
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 vi.mock('vscode', () => ({
   window: {
@@ -14,20 +16,20 @@ vi.mock('vscode', () => ({
 
 import { formatLocalTime, OutputChannelLogTransport } from './transports/outputChannel';
 
-describe('formatLocalTime', () => {
-  it('formats ISO string to HH:mm:ss.SSS', () => {
-    expect(formatLocalTime('2026-05-15T10:30:45.123Z')).toMatch(/^\d{2}:\d{2}:\d{2}\.\d{3}$/);
+vitest.describe('formatLocalTime', () => {
+  vitest.it('formats ISO string to HH:mm:ss.SSS', () => {
+    vitest.expect(formatLocalTime('2026-05-15T10:30:45.123Z')).toMatch(/^\d{2}:\d{2}:\d{2}\.\d{3}$/u);
   });
 
-  it('pads single-digit values with zeros', () => {
+  vitest.it('pads single-digit values with zeros', () => {
     const result = formatLocalTime('2026-01-01T01:02:03.004Z');
-    expect(result).toMatch(/^\d{2}:\d{2}:\d{2}\.\d{3}$/);
-    expect(result.length).toBe(12);
+    vitest.expect(result).toMatch(/^\d{2}:\d{2}:\d{2}\.\d{3}$/u);
+    vitest.expect(result.length).toBe(12);
   });
 });
 
-describe('OutputChannelLogTransport', () => {
-  it('formatLine renders basic entry', () => {
+vitest.describe('OutputChannelLogTransport', () => {
+  vitest.it('formatLine renders basic entry', () => {
     const transport = new OutputChannelLogTransport();
     const line = transport.formatLine({
       timestamp: '2026-05-15T10:30:45.123Z',
@@ -35,12 +37,12 @@ describe('OutputChannelLogTransport', () => {
       module: 'suggest',
       message: 'request-start',
     });
-    expect(line).toContain('[INFO]');
-    expect(line).toContain('[suggest]');
-    expect(line).toContain('request-start');
+    vitest.expect(line).toContain('[INFO]');
+    vitest.expect(line).toContain('[suggest]');
+    vitest.expect(line).toContain('request-start');
   });
 
-  it('formatLine includes data when present', () => {
+  vitest.it('formatLine includes data when present', () => {
     const transport = new OutputChannelLogTransport();
     const line = transport.formatLine({
       timestamp: '2026-05-15T10:30:45.123Z',
@@ -49,11 +51,11 @@ describe('OutputChannelLogTransport', () => {
       message: 'perf',
       data: { elapsedMs: 42 },
     });
-    expect(line).toContain('elapsedMs');
-    expect(line).toContain('42');
+    vitest.expect(line).toContain('elapsedMs');
+    vitest.expect(line).toContain('42');
   });
 
-  it('formatLine omits data when empty', () => {
+  vitest.it('formatLine omits data when empty', () => {
     const transport = new OutputChannelLogTransport();
     const line = transport.formatLine({
       timestamp: '2026-05-15T10:30:45.123Z',
@@ -62,10 +64,10 @@ describe('OutputChannelLogTransport', () => {
       message: 'no-data',
       data: {},
     });
-    expect(line).not.toContain('| {}');
+    vitest.expect(line).not.toContain('| {}');
   });
 
-  it('formatLine includes error payload', () => {
+  vitest.it('formatLine includes error payload', () => {
     const transport = new OutputChannelLogTransport();
     const line = transport.formatLine({
       timestamp: '2026-05-15T10:30:45.123Z',
@@ -74,11 +76,11 @@ describe('OutputChannelLogTransport', () => {
       message: 'failed',
       error: { name: 'TimeoutError', message: 'request-timeout' },
     });
-    expect(line).toContain('TimeoutError');
-    expect(line).toContain('request-timeout');
+    vitest.expect(line).toContain('TimeoutError');
+    vitest.expect(line).toContain('request-timeout');
   });
 
-  it('formatLine includes breadcrumb count', () => {
+  vitest.it('formatLine includes breadcrumb count', () => {
     const transport = new OutputChannelLogTransport();
     const line = transport.formatLine({
       timestamp: '2026-05-15T10:30:45.123Z',
@@ -90,11 +92,11 @@ describe('OutputChannelLogTransport', () => {
         { level: 'INFO', message: 'progress', timestamp: '2026-05-15T10:30:44.500Z' },
       ],
     });
-    expect(line).toContain('breadcrumbs=2');
+    vitest.expect(line).toContain('breadcrumbs=2');
   });
 
-  it('has stable transport id', () => {
+  vitest.it('has stable transport id', () => {
     const transport = new OutputChannelLogTransport();
-    expect(transport.id).toBe('ghostPromptOutputChannel');
+    vitest.expect(transport.id).toBe('ghostPromptOutputChannel');
   });
 });

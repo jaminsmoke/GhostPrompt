@@ -1,6 +1,8 @@
 # `system/internals/protocols/` — Contratos internos
 
-> Tipos y contratos compartidos entre host, engines y runtime. Sin implementación ni mutación de estado.
+> **Capa de protocolo** compartida entre host, engines, runtime y destinos: tipos, constantes, validación (Zod y otras), predicados (guards), estado declarativo del host, etc. Sin estado mutable en tiempo de ejecución (eso vive en `system/runtime/`, `ui/provider/`, …).
+
+Convención de nombres de archivo: [`Docs/ExtensionArchitecture/NamingConventions.md`](../../../Docs/ExtensionArchitecture/NamingConventions.md).
 
 ---
 
@@ -8,36 +10,59 @@
 
 ```text
 protocols/
-├── guards/             # Heurísticas puras sobre errores/respuestas LM (sin estado)
-│   ├── copilotLm.ts
-│   └── copilotLm.test.ts
-├── types/              # Contratos de completado (CompletionResult, modelos, params)
-│   ├── completion.ts
-│   ├── params.ts
+├── constants/
+│   ├── consDestinations.ts
+│   ├── consPipelineDefaults.ts
+│   ├── consOutboundForwardKinds.ts
+│   ├── consVsOpenCodeX.ts
+│   ├── consCursorChat.ts
 │   └── index.ts
-└── state/              # Contratos de estado del host
+├── validations/
+│   └── schemas/
+│       ├── zschemWebviewMessages.ts
+│       ├── zschemWebviewMessages.test.ts
+│       └── index.ts
+├── guards/
+│   ├── guardCopilotLm.ts
+│   ├── guardCopilotLm.test.ts
+│   ├── guardBoundSuggestion.ts
+│   ├── guardBoundSuggestion.test.ts
+│   ├── guardOutboundForward.ts
+│   ├── guardProviderId.ts
+│   ├── guardProviderId.test.ts
+│   └── (sin barrel; importar por ruta)
+├── types/
+│   ├── typeCompletion.ts
+│   ├── typeDestinations.ts
+│   ├── typeSuggestionStyle.ts
+│   ├── typeOpencodeClient.ts
+│   ├── typeCompletionUi.ts
+│   └── index.ts
+└── state/
     ├── loading/
-    │   ├── loadingPhase.ts
-    │   ├── loadingLabels.ts
+    │   ├── stateLoadingPhase.ts
+    │   ├── stateLoadingLabels.ts
     │   └── index.ts
-    ├── provider/
-    │   ├── providerId.ts
-    │   ├── providerState.ts
-    │   ├── providerStatusModule.ts
-    │   └── index.ts
-    └── index.ts
+    └── provider/
+        ├── stateProviderId.ts
+        ├── stateProviderRecord.ts
+        ├── stateProviderModule.ts
+        └── index.ts
 ```
 
 ---
 
-## Qué entra aquí
+## Qué entra en cada familia
 
-- Heurísticas sin estado sobre errores o texto del modelo (`guards/*`)
-- Tipos de request/result de motores LM (`types/completion.ts`)
-- Constantes por defecto del pipeline (`types/params.ts`)
-- Unions e interfaces de estado (`state/*`)
+| Carpeta | Rol |
+|--------|-----|
+| **`constants/`** (`cons*`) | Literales, `as const`, IDs de comando, defaults de pipeline. |
+| **`validations/schemas/`** (`zschem*`) | Esquemas Zod y tipos inferidos; sin `safeParse` con logging ni VS Code. |
+| **`guards/`** (`guard*`) | Predicados y funciones puras (errores LM, recorte de texto, forward VSX). |
+| **`types/`** (`type*`) | Interfaces, unions, tipos de request/result (sin `vscode`; p. ej. `CompletionCancellationToken`). |
+| **`state/`** (`state*`) | Formas de estado del host (loading, provider) sin mutación. |
 
 ## Qué NO entra aquí
 
-- Estado mutable → `system/runtime/`, `ui/provider/`
-- Mensajes webview Zod → `api/contracts/`
+- Estado mutable y orquestación → `system/runtime/`, `ui/provider/`
+- Parsers del boundary con logging → `api/protocols/` (importan `zschem*` desde aquí)

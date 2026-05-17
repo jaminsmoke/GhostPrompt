@@ -10,8 +10,8 @@ import type { LogEmitSink } from './emitContract';
 export class Logger {
   /**
    * Crea un logger ligado a un módulo estable y a un sink de emisión.
-   * @param {string} moduleName Nombre estable del módulo (aparece en `LogEntry.module`).
-   * @param {LogEmitSink} sink Gestor que materializa `LogEntry` y despacha.
+   * @param {string} moduleName - Nombre estable del módulo (aparece en `LogEntry.module`).
+   * @param {LogEmitSink} sink - Gestor que materializa `LogEntry` y despacha.
    */
   constructor(
     private readonly moduleName: string,
@@ -20,8 +20,8 @@ export class Logger {
 
   /**
    * Emite un evento de depuración si el nivel configurado lo permite.
-   * @param {string} message Código de evento (por ejemplo, `request-start`).
-   * @param {Record<string, unknown>} [data] Metadatos; puede incluir `captureId`.
+   * @param {string} message - Código de evento (por ejemplo, `request-start`).
+   * @param {Record<string, unknown>} [data] - Metadatos; puede incluir `captureId`.
    * @returns {void} Sin valor de retorno.
    */
   debug(message: string, data?: Record<string, unknown>): void {
@@ -30,8 +30,8 @@ export class Logger {
 
   /**
    * Emite un evento informativo si el nivel configurado lo permite.
-   * @param {string} message Código de evento.
-   * @param {Record<string, unknown>} [data] Metadatos; puede incluir `captureId`.
+   * @param {string} message - Código de evento.
+   * @param {Record<string, unknown>} [data] - Metadatos; puede incluir `captureId`.
    * @returns {void} Sin valor de retorno.
    */
   info(message: string, data?: Record<string, unknown>): void {
@@ -40,8 +40,8 @@ export class Logger {
 
   /**
    * Emite una advertencia si el nivel configurado lo permite.
-   * @param {string} message Código de evento.
-   * @param {Record<string, unknown>} [data] Metadatos; puede incluir `captureId`.
+   * @param {string} message - Código de evento.
+   * @param {Record<string, unknown>} [data] - Metadatos; puede incluir `captureId`.
    * @returns {void} Sin valor de retorno.
    */
   warn(message: string, data?: Record<string, unknown>): void {
@@ -50,9 +50,9 @@ export class Logger {
 
   /**
    * Emite un error si el nivel configurado lo permite.
-   * @param {string} message Código de evento.
-   * @param {Record<string, unknown>} [data] Metadatos; puede incluir `captureId`.
-   * @param {unknown} [cause] Error u objeto lanzado.
+   * @param {string} message - Código de evento.
+   * @param {Record<string, unknown>} [data] - Metadatos; puede incluir `captureId`.
+   * @param {unknown} [cause] - Error u objeto lanzado.
    * @returns {void} Sin valor de retorno.
    */
   error(message: string, data?: Record<string, unknown>, cause?: unknown): void {

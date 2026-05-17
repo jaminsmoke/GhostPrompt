@@ -1,5 +1,5 @@
 /**
- * @file Barrel del protocolo de estado de carga (fases + etiquetas UI).
+ * @file Barrel de contratos de estado de carga (suggest).
  */
-export * from './loadingPhase';
-export * from './loadingLabels';
+export type * from './stateLoadingPhase';
+export * from './stateLoadingLabels';

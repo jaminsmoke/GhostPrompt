@@ -1,7 +1,9 @@
 /**
  * @file Tests de enrutamiento de fuentes de completado.
  */
-import { describe, expect, it, vi } from 'vitest';
+
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 vi.mock('../provider/ollama/routing/routingModelId', () => ({
   looksLikeOllamaModelId: (id: string) => id.includes(':') && !id.includes('/'),
@@ -18,41 +20,41 @@ vi.mock('../provider/opencode/routingModelId', () => ({
 
 import { resolveCompletionSourceForRequest } from './resolveCompletionSource';
 
-describe('resolveCompletionSourceForRequest', () => {
-  it('devuelve única fuente cuando hay una sola habilitada', () => {
-    expect(resolveCompletionSourceForRequest('auto', ['copilot'])).toBe('copilot');
-    expect(resolveCompletionSourceForRequest('auto', ['opencode'])).toBe('opencode');
-    expect(resolveCompletionSourceForRequest('auto', ['ollama'])).toBe('ollama');
+vitest.describe('resolveCompletionSourceForRequest', () => {
+  vitest.it('devuelve única fuente cuando hay una sola habilitada', () => {
+    vitest.expect(resolveCompletionSourceForRequest('auto', ['copilot'])).toBe('copilot');
+    vitest.expect(resolveCompletionSourceForRequest('auto', ['opencode'])).toBe('opencode');
+    vitest.expect(resolveCompletionSourceForRequest('auto', ['ollama'])).toBe('ollama');
   });
 
-  it('prioriza Copilot con auto cuando hay varias fuentes', () => {
-    expect(resolveCompletionSourceForRequest('auto', ['copilot', 'ollama'])).toBe('copilot');
-    expect(resolveCompletionSourceForRequest('auto', ['opencode', 'ollama'])).toBe('opencode');
+  vitest.it('prioriza Copilot con auto cuando hay varias fuentes', () => {
+    vitest.expect(resolveCompletionSourceForRequest('auto', ['copilot', 'ollama'])).toBe('copilot');
+    vitest.expect(resolveCompletionSourceForRequest('auto', ['opencode', 'ollama'])).toBe('opencode');
   });
 
-  it('enruta ids OpenCode al source correcto', () => {
-    expect(resolveCompletionSourceForRequest('anthropic/claude-3', ['copilot', 'opencode'])).toBe(
+  vitest.it('enruta ids OpenCode al source correcto', () => {
+    vitest.expect(resolveCompletionSourceForRequest('anthropic/claude-3', ['copilot', 'opencode'])).toBe(
       'opencode',
     );
-    expect(resolveCompletionSourceForRequest('gpt-4o-mini', ['copilot', 'opencode'])).toBe(
+    vitest.expect(resolveCompletionSourceForRequest('gpt-4o-mini', ['copilot', 'opencode'])).toBe(
       'copilot',
     );
-    expect(resolveCompletionSourceForRequest('auto', ['copilot', 'opencode'])).toBe('copilot');
+    vitest.expect(resolveCompletionSourceForRequest('auto', ['copilot', 'opencode'])).toBe('copilot');
   });
 
-  it('enruta ids Ollama al source correcto', () => {
-    expect(
+  vitest.it('enruta ids Ollama al source correcto', () => {
+    vitest.expect(
       resolveCompletionSourceForRequest('mistral:latest', ['copilot', 'opencode', 'ollama']),
     ).toBe('ollama');
   });
 
-  it('vuelve a Copilot si el modelo no coincide con OpenCode ni Ollama', () => {
-    expect(resolveCompletionSourceForRequest('gpt-4o-mini', ['copilot', 'opencode', 'ollama'])).toBe(
+  vitest.it('vuelve a Copilot si el modelo no coincide con OpenCode ni Ollama', () => {
+    vitest.expect(resolveCompletionSourceForRequest('gpt-4o-mini', ['copilot', 'opencode', 'ollama'])).toBe(
       'copilot',
     );
   });
 
-  it('fallback a ollama si no hay copilot ni opencode', () => {
-    expect(resolveCompletionSourceForRequest('unknown', ['ollama'])).toBe('ollama');
+  vitest.it('fallback a ollama si no hay copilot ni opencode', () => {
+    vitest.expect(resolveCompletionSourceForRequest('unknown', ['ollama'])).toBe('ollama');
   });
 });

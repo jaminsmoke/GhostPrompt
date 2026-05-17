@@ -20,6 +20,15 @@
 
 ```text
 system/
+├── internals/
+│   ├── protocols/               # Contratos puros (ver protocols/README.md)
+│   │   ├── constants/           # cons*
+│   │   ├── guards/              # guard*
+│   │   ├── types/               # type*
+│   │   ├── state/               # state*
+│   │   └── validations/schemas/ # zschem* (p. ej. zschemWebviewMessages.ts)
+│   └── config/                  # Lectores tipados de ghostPrompt.* (sin vscode en protocols)
+├── runtime/                     # Orquestación suggest, coordinator, provider status
 ├── log/
 │   ├── breadcrumbs.ts
 │   ├── emitContract.ts
@@ -31,8 +40,6 @@ system/
 │   └── transports/
 │       ├── file.ts
 │       └── outputChannel.ts
-├── contracts/
-│   └── webviewMessageSchemas.ts # Schemas Zod canónicos host ↔ webview
 ├── policies/
 │   └── SuggestionRequestGovernor.ts  # Legacy: límites/caché; no en hot path suggest
 └── build/
@@ -119,12 +126,12 @@ Script de verificación CI/dev que:
 | Subdominio   | Importa de   |
 | ------------ | ------------ |
 | `log/`       | `vscode`, FS |
-| `contracts/` | `zod`        |
+| `internals/protocols/validations/schemas/` | `zod` (contratos host↔webview) |
 | `build/`     | Node `fs`    |
 
-## `contracts/webviewMessageSchemas.ts`
+## `internals/protocols/validations/schemas/zschemWebviewMessages.ts`
 
-**Single source of truth** para los contratos de mensajes entre webview y host.
+**Single source of truth** para los contratos Zod de mensajes entre webview y host. El host parsea vía `api/protocols/webviewProtocols.ts`; el webview React vía `ui/webview/react/validators/parseWebviewInbound.ts`.
 
 ### Schemas Zod
 
@@ -149,6 +156,6 @@ Script de verificación CI/dev que:
 
 | Test                                             | Qué cubre                 |
 | ------------------------------------------------ | ------------------------- |
-| `shared/webviewMessageSchemas.test.ts`           | Validación de schemas Zod |
+| `protocols/validations/schemas/zschemWebviewMessages.test.ts` | Validación de schemas Zod |
 | `logOpenCodePerfCapture.test.ts`                 | Logging de perf capture   |
 | `host/ghostPromptWebviewInboundHandlers.test.ts` | Uso de logs en handlers   |

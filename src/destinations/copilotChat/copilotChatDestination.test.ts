@@ -1,7 +1,8 @@
 /**
  * @file Unit tests for the Copilot Chat destination forwarding logic.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 import type { DestinationProvider } from '../destinationRegistry';
 
@@ -13,33 +14,33 @@ vi.mock('vscode', () => ({
   },
 }));
 
-beforeEach(() => {
+vitest.beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe('copilotChatDestination', () => {
-  it('exporta sendToChat que llama a workbench.action.chat.open', async () => {
+vitest.describe('copilotChatDestination', () => {
+  vitest.it('exporta sendToChat que llama a workbench.action.chat.open', async () => {
     const { sendToChat } = (await import('./copilotChatDestination')) as {
       sendToChat: (query: string) => Promise<void>;
     };
     await sendToChat('test prompt');
-    expect(executeCommandMock).toHaveBeenCalledWith('workbench.action.chat.open', {
+    vitest.expect(executeCommandMock).toHaveBeenCalledWith('workbench.action.chat.open', {
       query: 'test prompt',
     });
   });
 
-  it('se registra automaticamente en destinationRegistry como copilotChat', async () => {
+  vitest.it('se registra automaticamente en destinationRegistry como copilotChat', async () => {
     // Importar el módulo real (efecto secundario: se registra el provider)
     await import('./copilotChatDestination');
     const { getDestinationProviderForId } = (await import('../destinationRegistry')) as {
-      getDestinationProviderForId(id: 'copilotChat'): DestinationProvider | undefined;
+      getDestinationProviderForId: (id: 'copilotChat') => DestinationProvider | undefined;
     };
     const provider = getDestinationProviderForId('copilotChat');
-    expect(provider).toBeDefined();
+    vitest.expect(provider).toBeDefined();
     if (!provider) {
       return;
     }
-    expect(provider.id).toBe('copilotChat');
-    expect(typeof provider.sendPrompt).toBe('function');
+    vitest.expect(provider.id).toBe('copilotChat');
+    vitest.expect(typeof provider.sendPrompt).toBe('function');
   });
 });

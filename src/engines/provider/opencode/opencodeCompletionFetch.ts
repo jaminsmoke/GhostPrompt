@@ -9,7 +9,7 @@ import type { CompletionRequestOptions } from '../../../system/internals/protoco
 
 /**
  * Resuelve el id de modelo a usar (sin auto-selección por ahora).
- * @param {string | undefined} preferredModelId Modelo preferido o `auto`.
+ * @param {string | undefined} preferredModelId - Modelo preferido o `auto`.
  * @returns {string | undefined} Id de modelo o undefined.
  */
 export function resolveOpenCodeModelId(preferredModelId: string | undefined): string | undefined {
@@ -21,16 +21,16 @@ export function resolveOpenCodeModelId(preferredModelId: string | undefined): st
 
 /**
  * Ejecuta prompt OpenCode y devuelve el texto bruto del LM.
- * @param {string} userText Texto del usuario.
- * @param {string} modelId Identificador del modelo OpenCode.
- * @param {Pick<CompletionRequestOptions, 'token' | 'requestTimeoutMs' | 'onLoadingPhase'>} options Opciones de la petición.
+ * @param {string} userText - Texto del usuario.
+ * @param {string} modelId - Identificador del modelo OpenCode.
+ * @param {Pick<CompletionRequestOptions, 'token' | 'requestTimeoutMs' | 'onLoadingPhase'>} options - Opciones de la petición.
  * @returns {Promise<string>} Texto de completion sin post-proceso.
  * @throws {Error} En timeout, cancelación o fallo de red.
  */
 export async function fetchOpenCodeCompletionText(
   userText: string,
   modelId: string,
-  options: Pick<CompletionRequestOptions, 'token' | 'requestTimeoutMs' | 'onLoadingPhase'>,
+  options: Pick<CompletionRequestOptions, 'onLoadingPhase' | 'requestTimeoutMs' | 'token'>,
 ): Promise<string> {
   const { token, requestTimeoutMs = 30_000, onLoadingPhase } = options;
 

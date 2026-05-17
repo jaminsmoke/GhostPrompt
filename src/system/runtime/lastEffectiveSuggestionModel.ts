@@ -15,7 +15,7 @@ export function getLastEffectiveSuggestionModel(): SuggestionModelDescriptor | u
 
 /**
  * Registra el modelo devuelto por una suggestion exitosa.
- * @param {SuggestionModelDescriptor | undefined} model Descriptor del modelo usado.
+ * @param {SuggestionModelDescriptor | undefined} model - Descriptor del modelo usado.
  */
 export function setLastEffectiveSuggestionModel(model: SuggestionModelDescriptor | undefined): void {
   _lastEffectiveModel = model;

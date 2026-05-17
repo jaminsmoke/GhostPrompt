@@ -1,23 +1,23 @@
 /**
  * @file Barra inferior compartida del webview GhostPrompt.
  */
-interface BottomBarProps {
+interface BottomBarProperties {
   status: string;
   isLoading: boolean;
   canSend: boolean;
   onSend: () => void;
 }
 
-const errorPatterns = /^Error/i;
-const successPatterns = /Modelo listo|Suggestion aceptada|Sugerencia recibida/i;
+const errorPatterns = /^error/iu;
+const successPatterns = /modelo listo|suggestion aceptada|sugerencia recibida/iu;
 
 /**
  * Devuelve el icono de estado para el mensaje de estado.
- * @param {string} status Texto de estado.
- * @param {boolean} isLoading Indica si el estado es de carga.
- * @returns {string | null} Icono de estado o `null` si no hay icono.
+ * @param {string} status - Texto de estado.
+ * @param {boolean} isLoading - Indica si el estado es de carga.
+ * @returns {string | undefined} Icono de estado si aplica.
  */
-function statusIcon(status: string, isLoading: boolean): string | null {
+function statusIcon(status: string, isLoading: boolean): string | undefined {
   if (isLoading) {
     return '\u25CB';
   }
@@ -27,34 +27,35 @@ function statusIcon(status: string, isLoading: boolean): string | null {
   if (successPatterns.test(status)) {
     return '\u2713';
   }
-  return null;
+  return undefined;
 }
 
 /**
  * Barra inferior de estado y botón de envío para el webview.
- * @param {BottomBarProps} props Propiedades del componente BottomBar.
+ * @param {BottomBarProperties} props - Propiedades del componente BottomBar.
  * @returns {import('react').JSX.Element} Elemento JSX con estado y botón de envío.
  */
-export function BottomBar(props: BottomBarProps) {
+export function BottomBar(props: BottomBarProperties) {
   const { status, isLoading, canSend, onSend } = props;
   const icon = statusIcon(status, isLoading);
   const isError = errorPatterns.test(status);
   const isSuccess = successPatterns.test(status);
-  const colorClass = isError
-    ? 'text-[var(--vscode-errorForeground)]'
-    : isSuccess
-      ? 'text-[var(--vscode-testing-iconPassed)]'
-      : 'text-[var(--vscode-descriptionForeground)]';
+  let colorClass = 'text-[var(--vscode-descriptionForeground)]';
+  if (isError) {
+    colorClass = 'text-[var(--vscode-errorForeground)]';
+  } else if (isSuccess) {
+    colorClass = 'text-[var(--vscode-testing-iconPassed)]';
+  }
 
   return (
     <div className="flex flex-col gap-1 mt-2 pt-2 border-t border-(--vscode-widget-border)">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 min-h-5">
-          {icon !== null && (
+          {icon !== undefined && 
             <span className={`text-xs ${isLoading ? 'animate-spin' : ''}`} aria-hidden="true">
               {icon}
             </span>
-          )}
+          }
           <span
             id="status-text"
             className={`text-xs ${colorClass}`}

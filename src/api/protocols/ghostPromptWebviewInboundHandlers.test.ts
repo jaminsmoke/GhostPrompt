@@ -1,12 +1,13 @@
 /**
  * @file Pruebas de handlers inbound del webview GhostPrompt.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 const sendToChatMock = vi.hoisted(() => vi.fn<(text: string) => Promise<void>>());
 const applyWebviewUpdateSettingMock = vi.hoisted(() => vi.fn());
 const workspaceConfigGetMock = vi.hoisted(() => vi.fn((key: string, fallback: unknown) => fallback));
-const handleGhostPromptSuggestMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const handleGhostPromptSuggestMock = vi.hoisted(() => vi.fn().mockResolvedValue());
 const getActiveDestinationProviderMock = vi.hoisted(
   () =>
     vi.fn<
@@ -24,7 +25,7 @@ const MockCancellationTokenSource = vi.hoisted(
       public cancel(): void {
         this.token.isCancellationRequested = true;
       }
-      public dispose(): void {}
+      public dispose(): void { return; }
     },
 );
 
@@ -40,27 +41,31 @@ vi.mock('vscode', () => ({
     }),
   },
   extensions: {
-    getExtension: vi.fn(() => undefined),
+    getExtension: vi.fn(() => { return; }),
   },
   window: {
     showErrorMessage: windowShowErrorMessageMock,
   },
-  ['CancellationTokenSource']: MockCancellationTokenSource,
-  ['Disposable']: class {
+  'CancellationTokenSource': MockCancellationTokenSource,
+  'Disposable': class {
     constructor(private readonly _fn: () => void) {}
     dispose(): void {
       this._fn();
     }
   },
-  ['Uri']: {
-    joinPath: (...parts: Array<{ fsPath?: string } | string>) => ({
-      fsPath: parts.map((p) => (typeof p === 'string' ? p : (p.fsPath ?? ''))).join('/'),
+  'Uri': {
+    joinPath: (...parts: (string | { fsPath?: string })[]) => ({
+      fsPath: parts
+        .map((p) => {
+          return typeof p === 'string' ? p : p.fsPath ?? '';
+        })
+        .join('/'),
     }),
   },
 }));
 
 vi.mock('../../destinations/destinationRegistry', () => ({
-  getGhostPromptAgentDestination: () =>
+  getAgentDestination: () =>
     workspaceConfigGetMock('agentDestination', 'copilotChat') as string,
   getActiveDestinationProvider: () => getActiveDestinationProviderMock(),
 }));
@@ -88,7 +93,7 @@ import {
 } from './inboundHandlers';
 
 import type { GhostPromptSuggestDeps } from '../../system/runtime/suggestRuntime';
-import type { Uri, Webview } from 'vscode';
+import type * as Vscode from 'vscode';
 
 /**
  * Returns minimal suggest runtime dependencies for inbound handler tests.
@@ -104,17 +109,17 @@ function minimalSuggestDeps(): GhostPromptSuggestDeps {
   };
 }
 
-describe('ghostPromptWebviewInboundHandlers', () => {
-  beforeEach(() => {
+vitest.describe('ghostPromptWebviewInboundHandlers', () => {
+  vitest.beforeEach(() => {
     vi.clearAllMocks();
-    workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) =>
-      key === 'agentDestination' ? 'copilotChat' : fallback,
-    );
+    workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) => {
+      return key === 'agentDestination' ? 'copilotChat' : fallback;
+    });
     resetGhostPromptHostRuntimeForTests();
   });
 
-  describe('handleGhostPromptInboundDraftChanged', () => {
-    it('no actualiza el store si originViewId no coincide con la vista', () => {
+  vitest.describe('handleGhostPromptInboundDraftChanged', () => {
+    vitest.it('no actualiza el store si originViewId no coincide con la vista', () => {
       const broadcast = vi.fn();
       handleGhostPromptInboundDraftChanged(
         {
@@ -127,11 +132,11 @@ describe('ghostPromptWebviewInboundHandlers', () => {
           broadcastDraftSync: broadcast,
         },
       );
-      expect(getMultiViewDraftText()).toBe('');
-      expect(broadcast).not.toHaveBeenCalled();
+      vitest.expect(getMultiViewDraftText()).toBe('');
+      vitest.expect(broadcast).not.toHaveBeenCalled();
     });
 
-    it('persiste el borrador y notifica a la otra vista', () => {
+    vitest.it('persiste el borrador y notifica a la otra vista', () => {
       const broadcast = vi.fn();
       handleGhostPromptInboundDraftChanged(
         {
@@ -144,49 +149,49 @@ describe('ghostPromptWebviewInboundHandlers', () => {
           broadcastDraftSync: broadcast,
         },
       );
-      expect(getMultiViewDraftText()).toBe('texto');
-      expect(broadcast).toHaveBeenCalledWith('ghostPrompt.input', 'texto');
+      vitest.expect(getMultiViewDraftText()).toBe('texto');
+      vitest.expect(broadcast).toHaveBeenCalledWith('ghostPrompt.input', 'texto');
     });
   });
 
-  describe('handleGhostPromptInboundInit', () => {
-    it('publica settings y rehidrata el borrador del store', async () => {
+  vitest.describe('handleGhostPromptInboundInit', () => {
+    vitest.it('publica settings y rehidrata el borrador del store', async () => {
       setMultiViewDraftText('persistido');
-      const postSettings = vi.fn().mockResolvedValue(undefined);
+      const postSettings = vi.fn().mockResolvedValue();
       const postMessage = vi.fn();
-      const webview = { postMessage } as unknown as Webview;
+      const webview = { postMessage } as unknown as Vscode.Webview;
 
       await handleGhostPromptInboundInit(webview, postSettings);
 
-      expect(postSettings).toHaveBeenCalledWith(webview);
-      expect(postMessage).toHaveBeenCalledWith({
+      vitest.expect(postSettings).toHaveBeenCalledWith(webview);
+      vitest.expect(postMessage).toHaveBeenCalledWith({
         type: 'draftHydrate',
         text: 'persistido',
       });
     });
   });
 
-  describe('handleGhostPromptInboundSend', () => {
-    it('registra el envío, envía al chat y limpia vistas', async () => {
+  vitest.describe('handleGhostPromptInboundSend', () => {
+    vitest.it('registra el envío, envía al chat y limpia vistas', async () => {
       const clearAll = vi.fn();
-      const dataUri = { fsPath: '/global-store' } as Uri;
+      const dataUri = { fsPath: '/global-store' } as Vscode.Uri;
 
       await handleGhostPromptInboundSend({ type: 'send', text: 'prompt final' }, dataUri, clearAll);
 
-      expect(sendToChatMock).toHaveBeenCalledWith('prompt final');
-      expect(clearAll).toHaveBeenCalled();
+      vitest.expect(sendToChatMock).toHaveBeenCalledWith('prompt final');
+      vitest.expect(clearAll).toHaveBeenCalled();
     });
 
-    it('no hace nada si text está vacío', async () => {
+    vitest.it('no hace nada si text está vacío', async () => {
       await handleGhostPromptInboundSend(
         { type: 'send', text: '' },
-        { fsPath: '/g' } as Uri,
+        { fsPath: '/g' } as Vscode.Uri,
         vi.fn(),
       );
-      expect(sendToChatMock).not.toHaveBeenCalled();
+      vitest.expect(sendToChatMock).not.toHaveBeenCalled();
     });
 
-    it('muestra error si el provider no tiene sendPrompt registrado', async () => {
+    vitest.it('muestra error si el provider no tiene sendPrompt registrado', async () => {
       getActiveDestinationProviderMock.mockReturnValue({
         id: 'copilotChat' as const,
         sendPrompt: undefined,
@@ -194,43 +199,43 @@ describe('ghostPromptWebviewInboundHandlers', () => {
       const clearAll = vi.fn();
       await handleGhostPromptInboundSend(
         { type: 'send', text: 'prompt final' },
-        { fsPath: '/global-store' } as Uri,
+        { fsPath: '/global-store' } as Vscode.Uri,
         clearAll,
       );
-      expect(sendToChatMock).not.toHaveBeenCalled();
-      expect(windowShowErrorMessageMock).toHaveBeenCalledWith(
+      vitest.expect(sendToChatMock).not.toHaveBeenCalled();
+      vitest.expect(windowShowErrorMessageMock).toHaveBeenCalledWith(
         "GhostPrompt: destino 'copilotChat' no tiene función de envío registrada.",
       );
-      expect(clearAll).not.toHaveBeenCalled();
+      vitest.expect(clearAll).not.toHaveBeenCalled();
     });
 
-    it('no envía si agentDestination es vsOpenCodeX', async () => {
-      workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) =>
-        key === 'agentDestination' ? 'vsOpenCodeX' : fallback,
-      );
+    vitest.it('no envía si agentDestination es vsOpenCodeX', async () => {
+      workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) => {
+      return key === 'agentDestination' ? 'vsOpenCodeX' : fallback;
+    });
       const clearAll = vi.fn();
 
       await handleGhostPromptInboundSend(
         { type: 'send', text: 'prompt final' },
-        { fsPath: '/global-store' } as Uri,
+        { fsPath: '/global-store' } as Vscode.Uri,
         clearAll,
       );
 
-      expect(sendToChatMock).not.toHaveBeenCalled();
-      expect(clearAll).not.toHaveBeenCalled();
+      vitest.expect(sendToChatMock).not.toHaveBeenCalled();
+      vitest.expect(clearAll).not.toHaveBeenCalled();
     });
   });
 
-  describe('dispatchGhostPromptInboundMessage', () => {
-    it('enruta updateSetting a apply + refresh de settings', async () => {
-      applyWebviewUpdateSettingMock.mockResolvedValue(undefined);
-      const broadcastSettings = vi.fn().mockResolvedValue(undefined);
-      const webview = {} as Webview;
+  vitest.describe('dispatchGhostPromptInboundMessage', () => {
+    vitest.it('enruta updateSetting a apply + refresh de settings', async () => {
+      applyWebviewUpdateSettingMock.mockResolvedValue();
+      const broadcastSettings = vi.fn().mockResolvedValue();
+      const webview = {} as Vscode.Webview;
 
       const services: GhostPromptInboundDispatchServices = {
         viewContributionId: 'ghostPrompt.input',
         webview,
-        dataUri: { fsPath: '/g' } as Uri,
+        dataUri: { fsPath: '/g' } as Vscode.Uri,
         postSettings: vi.fn(),
         broadcastDraftSync: vi.fn(),
         broadcastSettingsToAllViews: broadcastSettings,
@@ -248,25 +253,25 @@ describe('ghostPromptWebviewInboundHandlers', () => {
         services,
       );
 
-      expect(applyWebviewUpdateSettingMock).toHaveBeenCalledWith(
-        expect.objectContaining({
+      vitest.expect(applyWebviewUpdateSettingMock).toHaveBeenCalledWith(
+        vitest.expect.objectContaining({
           type: 'updateSetting',
           key: 'suggestionStyle',
           value: 'concise',
         }),
       );
-      expect(broadcastSettings).toHaveBeenCalled();
+      vitest.expect(broadcastSettings).toHaveBeenCalled();
     });
 
-    it('ignora suggest si agentDestination es vsOpenCodeX', async () => {
-      workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) =>
-        key === 'agentDestination' ? 'vsOpenCodeX' : fallback,
-      );
+    vitest.it('ignora suggest si agentDestination es vsOpenCodeX', async () => {
+      workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) => {
+      return key === 'agentDestination' ? 'vsOpenCodeX' : fallback;
+    });
       const broadcastUi = vi.fn();
       const services: GhostPromptInboundDispatchServices = {
         viewContributionId: 'ghostPrompt.input',
-        webview: {} as Webview,
-        dataUri: { fsPath: '/g' } as Uri,
+        webview: {} as Vscode.Webview,
+        dataUri: { fsPath: '/g' } as Vscode.Uri,
         postSettings: vi.fn(),
         broadcastDraftSync: vi.fn(),
         broadcastSettingsToAllViews: vi.fn(),
@@ -283,8 +288,8 @@ describe('ghostPromptWebviewInboundHandlers', () => {
         services,
       );
 
-      expect(handleGhostPromptSuggestMock).not.toHaveBeenCalled();
-      expect(broadcastUi).not.toHaveBeenCalled();
+      vitest.expect(handleGhostPromptSuggestMock).not.toHaveBeenCalled();
+      vitest.expect(broadcastUi).not.toHaveBeenCalled();
     });
   });
 });

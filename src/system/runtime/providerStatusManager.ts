@@ -38,8 +38,8 @@ export class ProviderStatusManager {
   private _onDidChange = new SimpleEventEmitter<ProviderStateRecord[]>();
   readonly onDidChange = this._onDidChange.on.bind(this._onDidChange);
 
-  register(mod: ProviderStatusModule): void {
-    this._modules.set(mod.id, mod);
+  register(statusModule: ProviderStatusModule): void {
+    this._modules.set(statusModule.id, statusModule);
   }
 
   getModule(id: string): ProviderStatusModule | undefined {
@@ -47,17 +47,17 @@ export class ProviderStatusManager {
   }
 
   getAllModules(): ProviderStatusModule[] {
-    return Array.from(this._modules.values());
+    return [...this._modules.values()];
   }
 
   async refreshAll(): Promise<ProviderStateRecord[]> {
     const results: ProviderStateRecord[] = [];
-    for (const mod of this._modules.values()) {
+    for (const statusModule of this._modules.values()) {
       try {
-        const state = await mod.check();
+        const state = await statusModule.check();
         results.push(state);
       } catch {
-        results.push(createProviderErrorRecord(mod));
+        results.push(createProviderErrorRecord(statusModule));
       }
     }
     this._onDidChange.fire(results);
@@ -65,42 +65,42 @@ export class ProviderStatusManager {
   }
 
   async refresh(id: string): Promise<ProviderStateRecord> {
-    const mod = this._modules.get(id);
-    if (!mod) {
+    const statusModule = this._modules.get(id);
+    if (!statusModule) {
       throw new Error(`Proveedor "${id}" no registrado`);
     }
     try {
-      const state = await mod.check();
+      const state = await statusModule.check();
       this._onDidChange.fire([state]);
       return state;
     } catch {
-      const errorState = createProviderErrorRecord(mod);
+      const errorState = createProviderErrorRecord(statusModule);
       this._onDidChange.fire([errorState]);
       return errorState;
     }
   }
 
   async start(id: string): Promise<ProviderStateRecord> {
-    const mod = this._modules.get(id);
-    if (!mod) {
+    const statusModule = this._modules.get(id);
+    if (!statusModule) {
       throw new Error(`Proveedor "${id}" no registrado`);
     }
-    if (!mod.start) {
+    if (!statusModule.start) {
       throw new Error(`Proveedor "${id}" no soporta iniciar`);
     }
-    await mod.start();
+    await statusModule.start();
     return this.refresh(id);
   }
 
   async stop(id: string): Promise<ProviderStateRecord> {
-    const mod = this._modules.get(id);
-    if (!mod) {
+    const statusModule = this._modules.get(id);
+    if (!statusModule) {
       throw new Error(`Proveedor "${id}" no registrado`);
     }
-    if (!mod.stop) {
+    if (!statusModule.stop) {
       throw new Error(`Proveedor "${id}" no soporta detener`);
     }
-    await mod.stop();
+    await statusModule.stop();
     return this.refresh(id);
   }
 

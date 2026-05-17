@@ -17,8 +17,8 @@ export type EmitPayload = {
  */
 export type LogEmitSink = {
   /**
-   * @param {EmitPayload} payload Carga del evento.
+   * @param {EmitPayload} payload - Carga del evento.
    * @returns {void} Void.
    */
-  emit(payload: EmitPayload): void;
+  emit: (payload: EmitPayload) => void;
 };

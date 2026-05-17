@@ -4,7 +4,7 @@
 
 /**
  * Indica si el mensaje de error encaja con bloqueo de cuota premium de Copilot LM.
- * @param {string} message Texto del error devuelto por la API.
+ * @param {string} message - Texto del error devuelto por la API.
  * @returns {boolean} `true` si el mensaje sugiere cuota premium agotada.
  */
 export function isPremiumQuotaCopilotError(message: string): boolean {
@@ -18,7 +18,7 @@ export function isPremiumQuotaCopilotError(message: string): boolean {
 
 /**
  * Indica si el texto de respuesta parece una negativa de asistencia típica de Copilot.
- * @param {string} text Texto acumulado de la respuesta del modelo.
+ * @param {string} text - Texto acumulado de la respuesta del modelo.
  * @returns {boolean} `true` si se interpreta como rechazo de contenido.
  */
 export function looksLikeCopilotRefusal(text: string): boolean {
@@ -27,7 +27,7 @@ export function looksLikeCopilotRefusal(text: string): boolean {
     return false;
   }
   if (normalized.startsWith("i'm sorry") || normalized.startsWith('im sorry')) {
-    return /assist|help|provide|cannot|can't|unable/.test(normalized);
+    return /assist|help|provide|cannot|can't|unable/u.test(normalized);
   }
   return (
     normalized.includes("can't assist") ||

@@ -10,7 +10,7 @@ export const GHOSTPROMPT_LOG_CHANNEL_NAME = 'GhostPrompt Log';
 
 /**
  * Formatea marca de tiempo ISO a `HH:mm:ss.SSS` local.
- * @param {string} iso Fecha ISO 8601.
+ * @param {string} iso - Fecha ISO 8601.
  * @returns {string} Fragmento horario legible.
  */
 export function formatLocalTime(iso: string): string {
@@ -24,7 +24,7 @@ export function formatLocalTime(iso: string): string {
 
 /**
  * Serializa `data` para anexarlo a la línea de log; ante fallo devuelve un literal seguro.
- * @param {Record<string, unknown>} data Metadatos del evento.
+ * @param {Record<string, unknown>} data - Metadatos del evento.
  * @returns {string} JSON o cadena de marcador de posición.
  */
 function safeJson(data: Record<string, unknown>): string {
@@ -56,7 +56,7 @@ export class OutputChannelLogTransport {
 
   /**
    * Serializa una entrada a una línea humana.
-   * @param {LogEntry} entry Entrada estructurada.
+   * @param {LogEntry} entry - Entrada estructurada.
    * @returns {string} Línea para `appendLine`.
    */
   formatLine(entry: LogEntry): string {
@@ -77,7 +77,7 @@ export class OutputChannelLogTransport {
 
   /**
    * Añade una línea legible al canal GhostPrompt Log.
-   * @param {LogEntry} entry Entrada a volcar al canal.
+   * @param {LogEntry} entry - Entrada a volcar al canal.
    * @returns {Promise<void>} Promesa resuelta tras `appendLine`.
    */
   write(entry: LogEntry): Promise<void> {

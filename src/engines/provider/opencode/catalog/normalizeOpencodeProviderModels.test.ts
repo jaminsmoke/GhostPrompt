@@ -1,12 +1,12 @@
 /**
  * @file Pruebas de normalización de proveedores OpenCode.
  */
-import { describe, expect, it } from 'vitest';
+import * as vitest from 'vitest';
 
 import { normalizeOpencodeProviderModels } from './normalizeOpencodeProviderModels';
 
-describe('normalizeOpencodeProviderModels', () => {
-  it('normalizes object map and array forms equivalently', () => {
+vitest.describe('normalizeOpencodeProviderModels', () => {
+  vitest.it('normalizes object map and array forms equivalently', () => {
     const map = {
       a: { id: 'm1', name: 'One', pricing: '0x' },
       b: { id: 'm2', name: 'Two' },
@@ -15,15 +15,15 @@ describe('normalizeOpencodeProviderModels', () => {
       { id: 'm1', name: 'One', pricing: '0x' },
       { id: 'm2', name: 'Two' },
     ];
-    expect(normalizeOpencodeProviderModels(map)).toEqual(normalizeOpencodeProviderModels(arr));
+    vitest.expect(normalizeOpencodeProviderModels(map)).toEqual(normalizeOpencodeProviderModels(arr));
   });
 
-  it('drops entries without string id', () => {
-    expect(
+  vitest.it('drops entries without string id', () => {
+    vitest.expect(
       normalizeOpencodeProviderModels([
         { id: 'ok', name: 'OK' },
         { name: 'bad' },
-        null,
+        undefined,
       ] as unknown[]),
     ).toHaveLength(1);
   });

@@ -1,7 +1,8 @@
 /**
  * @file Tests del modelo efectivo de suggestion.
  */
-import { beforeEach, describe, expect, it } from 'vitest';
+
+import * as vitest from 'vitest';
 
 import {
   getLastEffectiveSuggestionModel,
@@ -9,15 +10,15 @@ import {
   setLastEffectiveSuggestionModel,
 } from './lastEffectiveSuggestionModel';
 
-describe('lastEffectiveSuggestionModel', () => {
-  beforeEach(() => {
+vitest.describe('lastEffectiveSuggestionModel', () => {
+  vitest.beforeEach(() => {
     resetLastEffectiveSuggestionModel();
   });
 
-  it('persiste y devuelve el último modelo', () => {
+  vitest.it('persiste y devuelve el último modelo', () => {
     setLastEffectiveSuggestionModel({ id: 'm1', label: 'M1', tier: 'included' });
-    expect(getLastEffectiveSuggestionModel()?.id).toBe('m1');
+    vitest.expect(getLastEffectiveSuggestionModel()?.id).toBe('m1');
     resetLastEffectiveSuggestionModel();
-    expect(getLastEffectiveSuggestionModel()).toBeUndefined();
+    vitest.expect(getLastEffectiveSuggestionModel()).toBeUndefined();
   });
 });

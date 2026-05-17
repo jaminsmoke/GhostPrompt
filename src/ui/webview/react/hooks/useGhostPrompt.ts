@@ -2,10 +2,10 @@
  * @file Hook React para el estado y comunicación del webview GhostPrompt.
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
 import { hostQuery } from '../utils/hostQuery';
-import { parseWebviewInboundMessage } from '../validators/webviewMessageSchemas';
+import { parseWebviewInboundMessage } from '../validators/parseWebviewInbound';
 
 import type {
   AgentDestination,
@@ -17,12 +17,11 @@ import type {
   SuggestionModel,
   UpdateSettingMessage,
 } from '../types';
-import type { ChangeEvent } from 'react';
 
 /**
  * Determina si un mensaje de borrador remoto proviene de otra vista GhostPrompt.
- * @param {InboundMessage} message Mensaje entrante desde el host.
- * @param {string} viewId Identificador de la vista actual.
+ * @param {InboundMessage} message - Mensaje entrante desde el host.
+ * @param {string} viewId - Identificador de la vista actual.
  * @returns {message is Extract<InboundMessage, { type: 'draftSync' }>} True si es borrador sincronizado de otra vista.
  */
 export function isDraftSyncForAnotherView(
@@ -34,8 +33,8 @@ export function isDraftSyncForAnotherView(
 
 /**
  * Comprueba si la sugerencia debe saltarse porque el mensaje es un borrador remoto.
- * @param {InboundMessage} message Mensaje entrante desde el host.
- * @param {string} viewId Identificador de la vista actual.
+ * @param {InboundMessage} message - Mensaje entrante desde el host.
+ * @param {string} viewId - Identificador de la vista actual.
  * @returns {boolean} True si debe saltarse la sugerencia.
  */
 export function shouldSkipSuggestionOnRemoteDraft(
@@ -55,53 +54,56 @@ export type GhostPromptInboundCaptureCarrier = {
  * Actualiza el ref de correlación y decide si el mensaje debe ignorarse (respuestas obsoletas).
  * Expuesto para tests unitarios del filtro.
  */
+
 /**
  * Actualiza el ref de correlación y decide si el mensaje entrante debe descartar la respuesta obsoleta.
- * @param {number} refBefore Ref anterior de captura.
- * @param {GhostPromptInboundCaptureCarrier} message Mensaje entrante con posible captureId/broadcast.
+ * @param {number} refBefore - Ref anterior de captura.
+ * @param {GhostPromptInboundCaptureCarrier} message - Mensaje entrante con posible captureId/broadcast.
  * @returns {{ refAfter: number; drop: boolean }} Ref actualizado y bandera de descarte.
  */
-export function ghostPromptApplyInboundCaptureRef(
+export function ghostPromptApplyInboundCaptureReference(
   refBefore: number,
   message: GhostPromptInboundCaptureCarrier,
 ): { refAfter: number; drop: boolean } {
-  let nextRef = refBefore;
+  let nextReference = refBefore;
   if (message.broadcast === true && typeof message.captureId === 'number') {
-    nextRef = Math.max(nextRef, message.captureId);
+    nextReference = Math.max(nextReference, message.captureId);
   }
   if (typeof message.captureId === 'number') {
-    if (message.captureId < nextRef) {
-      return { refAfter: nextRef, drop: true };
+    if (message.captureId < nextReference) {
+      return { refAfter: nextReference, drop: true };
     }
-    if (message.captureId !== nextRef && message.broadcast !== true) {
-      return { refAfter: nextRef, drop: true };
+    if (message.captureId !== nextReference && message.broadcast !== true) {
+      return { refAfter: nextReference, drop: true };
     }
   }
-  return { refAfter: nextRef, drop: false };
+  return { refAfter: nextReference, drop: false };
 }
 
-const getInitialViewId = (): string =>
-  typeof window.__ghostPromptViewId === 'string' ? window.__ghostPromptViewId : '';
+const getInitialViewId = (): string => {
+  const viewId = globalThis.__ghostPromptViewId;
+  return typeof viewId === 'string' ? viewId : '';
+};
 
 const getInitialCapabilities = (): GhostPromptCapabilities =>
-  window.__ghostPromptCapabilities ?? {};
+  globalThis.__ghostPromptCapabilities ?? {};
 
 interface VsCodeApi {
-  postMessage(message: unknown): void;
+  postMessage: (message: unknown) => void;
 }
 
-const windowWithVsCodeApi = window as Window & {
+const globalWithVsCodeApi = globalThis as typeof globalThis & {
   acquireVsCodeApi?: () => VsCodeApi;
 };
 
 const vsCodeApi =
-  typeof windowWithVsCodeApi.acquireVsCodeApi === 'function'
-    ? windowWithVsCodeApi.acquireVsCodeApi()
+  typeof globalWithVsCodeApi.acquireVsCodeApi === 'function'
+    ? globalWithVsCodeApi.acquireVsCodeApi()
     : undefined;
 
 /**
  * Envía un mensaje desde el webview React al host de VS Code.
- * @param {OutboundMessage} message Payload outbound que se transmite al host.
+ * @param {OutboundMessage} message - Payload outbound que se transmite al host.
  * @returns {void}
  */
 export function postToHost(message: OutboundMessage): void {
@@ -110,13 +112,13 @@ export function postToHost(message: OutboundMessage): void {
 
 /**
  * Envía un evento de log estructurado desde el webview al host.
- * @param {'debug' | 'info' | 'warn' | 'error'} level Nivel del log.
- * @param {string} message Mensaje principal.
- * @param {Record<string, unknown> | undefined} [data] Datos adicionales opcionales.
- * @param {number | undefined} [captureId] ID de capture opcional para correlación.
+ * @param {'debug' | 'info' | 'warn' | 'error'} level - Nivel del log.
+ * @param {string} message - Mensaje principal.
+ * @param {Record<string, unknown> | undefined} [data] - Datos adicionales opcionales.
+ * @param {number | undefined} [captureId] - ID de capture opcional para correlación.
  */
 function logToHost(
-  level: 'debug' | 'info' | 'warn' | 'error',
+  level: 'debug' | 'error' | 'info' | 'warn',
   message: string,
   data?: Record<string, unknown>,
   captureId?: number,
@@ -143,18 +145,18 @@ export function useGhostPrompt() {
   const [completionProvider, setCompletionProvider] = useState<CompletionProvider>('copilot');
   const [selectedModelId, setSelectedModelId] = useState('auto');
   const [availableModels, setAvailableModels] = useState<SuggestionModel[]>([]);
-  const [suggestionModelPolicy, setSuggestionModelPolicy] = useState<'nonPremiumOnly' | 'anyModel'>(
+  const [suggestionModelPolicy, setSuggestionModelPolicy] = useState<'anyModel' | 'nonPremiumOnly'>(
     'nonPremiumOnly',
   );
-  const [suggestionStyle, setSuggestionStyle] = useState<'concise' | 'balanced' | 'detailed'>(
+  const [suggestionStyle, setSuggestionStyle] = useState<'balanced' | 'concise' | 'detailed'>(
     'balanced',
   );
   const [debugSuggestions, setDebugSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const currentCaptureId = useRef(0);
-  const debounceTimer = useRef<number | null>(null);
+  const debounceTimer = useRef<number | undefined>(undefined);
   const skipSuggestionOnDraftSync = useRef(false);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const textareaReference = useRef<HTMLTextAreaElement | undefined>(undefined);
   const queryClient = useQueryClient();
 
   const { data: providerStatuses = [], isLoading: statusLoading } = useQuery({
@@ -176,7 +178,9 @@ export function useGhostPrompt() {
         postToHost,
       ),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['providerStatus'] });
+      queryClient.invalidateQueries({ queryKey: ['providerStatus'] }).catch(() => {
+        /* ignore */
+      });
     },
   });
 
@@ -188,12 +192,14 @@ export function useGhostPrompt() {
         postToHost,
       ),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['providerStatus'] });
+      queryClient.invalidateQueries({ queryKey: ['providerStatus'] }).catch(() => {
+        /* ignore */
+      });
     },
   });
 
   const isGhostUiAllowed = useCallback(() => {
-    const input = textareaRef.current;
+    const input = textareaReference.current;
     if (!input) {
       return false;
     }
@@ -282,8 +288,8 @@ export function useGhostPrompt() {
           text: draftText,
           captureId: nextCaptureId,
         });
-      } catch (err) {
-        logToHost('error', 'requestSuggestionFailed', { error: String(err) });
+      } catch (error) {
+        logToHost('error', 'requestSuggestionFailed', { error: String(error) });
         setStatus('Error al solicitar sugerencia.');
         setIsLoading(false);
       }
@@ -300,9 +306,9 @@ export function useGhostPrompt() {
           return;
         }
 
-        const { refAfter, drop } = ghostPromptApplyInboundCaptureRef(
+        const { refAfter, drop } = ghostPromptApplyInboundCaptureReference(
           currentCaptureId.current,
-          message,
+          message as GhostPromptInboundCaptureCarrier,
         );
         currentCaptureId.current = refAfter;
         if (drop) {
@@ -341,22 +347,25 @@ export function useGhostPrompt() {
             }
             break;
           }
-          case 'suggestion':
+          case 'suggestion': {
             setSuggestion(message.suggestion || '');
             setIsLoading(false);
             setStatus('Suggestion recibida. Presiona Tab para aceptar o Envía para enviar.');
             break;
-          case 'suggestion-stream':
+          }
+          case 'suggestion-stream': {
             if (message.text) {
               setSuggestion(message.text);
               setStatus('Suggestion en progreso...');
             }
             break;
-          case 'empty':
+          }
+          case 'empty': {
             setSuggestion('');
             setIsLoading(false);
             setStatus('No hay suggestion disponible.');
             break;
+          }
           case 'loading': {
             const label =
               typeof message.statusText === 'string' && message.statusText.trim().length > 0
@@ -366,37 +375,43 @@ export function useGhostPrompt() {
             setIsLoading(true);
             break;
           }
-          case 'error':
+          case 'error': {
             setSuggestion('');
             setIsLoading(false);
             setStatus(`Error: ${message.message}`);
             break;
-          case 'clear':
+          }
+          case 'clear': {
             setText('');
             setSuggestion('');
             setStatus('Prompt enviado. Escribe otro texto...');
             break;
-          case 'draftHydrate':
+          }
+          case 'draftHydrate': {
             if (shouldSkipSuggestionOnRemoteDraft(message, viewId)) {
               skipSuggestionOnDraftSync.current = true;
             }
             setText(message.text);
             break;
-          case 'draftSync':
+          }
+          case 'draftSync': {
             if (!shouldSkipSuggestionOnRemoteDraft(message, viewId)) {
               return;
             }
             skipSuggestionOnDraftSync.current = true;
             setText(message.text);
             break;
-          case 'providerStatus':
+          }
+          case 'providerStatus': {
             queryClient.setQueryData<CompletionSourceStateRecord[]>(['providerStatus'], message.providers);
             break;
-          default:
+          }
+          default: {
             break;
+          }
         }
-      } catch (err) {
-        logToHost('error', 'handleMessageFailed', { error: String(err) });
+      } catch (error) {
+        logToHost('error', 'handleMessageFailed', { error: String(error) });
       }
     };
 
@@ -407,7 +422,7 @@ export function useGhostPrompt() {
   }, [viewId, queryClient]);
 
   const syncTextareaHeight = useCallback(() => {
-    const input = textareaRef.current;
+    const input = textareaReference.current;
     if (!input) {
       return;
     }
@@ -416,10 +431,10 @@ export function useGhostPrompt() {
   }, []);
 
   useEffect(() => {
-    if (debounceTimer.current !== null) {
-      window.clearTimeout(debounceTimer.current);
+    if (debounceTimer.current !== undefined) {
+      globalThis.clearTimeout(debounceTimer.current);
     }
-    debounceTimer.current = window.setTimeout(() => {
+    debounceTimer.current = globalThis.setTimeout(() => {
       if (skipSuggestionOnDraftSync.current) {
         skipSuggestionOnDraftSync.current = false;
         return;
@@ -430,8 +445,8 @@ export function useGhostPrompt() {
       requestSuggestion(text);
     }, suggestionDebounceMs);
     return () => {
-      if (debounceTimer.current !== null) {
-        window.clearTimeout(debounceTimer.current);
+      if (debounceTimer.current !== undefined) {
+        globalThis.clearTimeout(debounceTimer.current);
       }
     };
   }, [requestSuggestion, suggestionDebounceMs, text, isGhostUiAllowed]);
@@ -457,8 +472,8 @@ export function useGhostPrompt() {
         postToHost({ type: 'draftChanged', text: nextText, originViewId: viewId });
       }
       syncTextareaHeight();
-    } catch (err) {
-      logToHost('error', 'handleTextChangeFailed', { error: String(err) });
+    } catch (error) {
+      logToHost('error', 'handleTextChangeFailed', { error: String(error) });
     }
   };
 
@@ -488,11 +503,14 @@ export function useGhostPrompt() {
     setSelectedModelId(value);
     sendUpdateSetting({ type: 'updateSetting', key: 'selectedModelId', value });
     if (completionProvider === 'ollama' && value) {
-      queryClient.setQueryData<CompletionSourceStateRecord[]>(['providerStatus'], (old) =>
-        old?.map((p) =>
-          p.id === 'ollama' ? { ...p, status: 'starting' as const, statusText: 'Iniciando…' } : p,
-        ),
-      );
+      queryClient.setQueryData<CompletionSourceStateRecord[]>(['providerStatus'], (old) => {
+        return old?.map((p) => {
+          if (p.id === 'ollama') {
+            return { ...p, status: 'starting' as const, statusText: 'Iniciando…' };
+          }
+          return p;
+        });
+      });
     }
   };
 
@@ -537,7 +555,7 @@ export function useGhostPrompt() {
     statusLoading,
     displayStatus,
     providerStatuses,
-    textareaRef,
+    textareaRef: textareaReference,
     canSend,
     isGhostUiAllowed,
     handleCursorCheck,

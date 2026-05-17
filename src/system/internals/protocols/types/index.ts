@@ -1,7 +1,9 @@
 /**
  * @file Barrel de contratos de tipos de completado.
  */
-export * from './boundSuggestionText';
-export * from './completion';
-export * from './opencodeClient';
-export * from './params';
+export * from '../constants/consPipelineDefaults';
+export type * from './typeCompletion';
+export * from './typeOpencodeClient';
+export type * from './typeSuggestionStyle';
+export * from './typeDestinations';
+export * from './typeCompletionUi';

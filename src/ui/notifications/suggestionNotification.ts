@@ -4,6 +4,7 @@
  * Avisos no intrusivos en el host cuando fallan sugerencias por causas accionables.
  * La UI del webview sigue siendo la fuente principal; esto complementa sin sustituir el debug.
  */
+
 import * as vscode from 'vscode';
 
 import type { CompletionResult } from '../../system/internals/protocols/types';
@@ -21,16 +22,14 @@ export function resetSuggestionHostNotificationThrottleForTests(): void {
  * @returns {boolean} True si deben mostrarse avisos de sugerencia en el host.
  */
 function notificationsEnabled(): boolean {
-  return (
-    vscode.workspace
-      .getConfiguration('ghostPrompt')
-      .get<boolean>('showSuggestionIssueNotifications', true) !== false
-  );
+  return vscode.workspace
+    .getConfiguration('ghostPrompt')
+    .get<boolean>('showSuggestionIssueNotifications', true);
 }
 
 /**
  * Determina si se puede mostrar una notificación con throttle.
- * @param {string} key Clave de evento para evitar repetición rápida.
+ * @param {string} key - Clave de evento para evitar repetición rápida.
  * @returns {boolean} True si la notificación puede mostrarse.
  */
 function shouldShow(key: string): boolean {
@@ -45,43 +44,58 @@ function shouldShow(key: string): boolean {
 
 /**
  * Muestra un aviso en el host cuando procede y pasa el throttle.
- * @param {string} text Texto de notificación mostrado al usuario.
- * @param {string} key Clave de notificación para el throttle.
+ * @param {string} text - Texto de notificación mostrado al usuario.
+ * @param {string} key - Clave de notificación para el throttle.
  * @returns {void}
  */
 function notify(text: string, key: string): void {
   if (!shouldShow(key)) {
     return;
   }
-  void vscode.window.showWarningMessage(`GhostPrompt: ${text}`);
+  Promise.resolve(vscode.window.showWarningMessage(`GhostPrompt: ${text}`)).catch(() => {
+    /* ignore */
+  });
 }
 
 type EmptyReason = Extract<CompletionResult, { kind: 'empty' }>['reason'];
 
 /**
  * Obtiene un hint de UI para razones de resultado vacío.
- * @param {EmptyReason} reason Motivo de resultado vacío.
- * @returns {string | null} Mensaje de ayuda o null si no hay hint aplicable.
+ * @param {EmptyReason} reason - Motivo de resultado vacío.
+ * @returns {string | undefined} Mensaje de ayuda si hay hint aplicable.
  */
-function hostHintForEmptyReason(reason: EmptyReason): string | null {
+function hostHintForEmptyReason(reason: EmptyReason): string | undefined {
   switch (reason) {
-    case 'no-model':
+    case 'no-model': {
       return 'No hay motor de sugerencias (Copilot u OpenCode). Revisa fuentes en configuración.';
-    case 'no-included-model':
+    }
+    case 'no-included-model': {
       return 'No hay modelo incluido disponible; revisa la política de modelo o el selector.';
-    case 'premium-quota-blocked':
+    }
+    case 'premium-quota-blocked': {
       return 'Cuota premium agotada: el modo solo incluido está pausando sugerencias.';
-    default:
-      return null;
+    }
+    case 'empty-response':
+    case 'request-timeout':
+    case 'too-short':
+    case 'duplicate-input':
+    case 'rate-limited':
+    case 'session-budget-exhausted':
+    case 'content-blocked': {
+      return undefined;
+    }
+    default: {
+      return undefined;
+    }
   }
 }
 
 /**
  * Traduce mensajes de error técnicos a hints de usuario.
- * @param {string} message Mensaje de error recibido de la sugerencia.
- * @returns {string | null} Texto de hint o null si no se reconoce el error.
+ * @param {string} message - Mensaje de error recibido de la sugerencia.
+ * @returns {string | undefined} Texto de hint si se reconoce el error.
  */
-function hostHintForErrorMessage(message: string): string | null {
+function hostHintForErrorMessage(message: string): string | undefined {
   const lower = message.toLowerCase();
   if (
     lower.includes('premium model quota') ||
@@ -103,8 +117,8 @@ function hostHintForErrorMessage(message: string): string | null {
     return 'No se pudo conectar al servicio de sugerencias. Revisa red u OpenCode.';
   }
   if (
-    /\b401\b/.test(lower) ||
-    /\b403\b/.test(lower) ||
+    /\b401\b/u.test(lower) ||
+    /\b403\b/u.test(lower) ||
     lower.includes('unauthorized') ||
     lower.includes('forbidden')
   ) {
@@ -113,16 +127,16 @@ function hostHintForErrorMessage(message: string): string | null {
   if (
     lower.includes('rate limit') ||
     lower.includes('too many requests') ||
-    /\b429\b/.test(lower)
+    /\b429\b/u.test(lower)
   ) {
     return 'Demasiadas solicitudes; espera un momento o revisa límites en Settings.';
   }
-  return null;
+  return undefined;
 }
 
 /**
  * Tras emitir UI al webview: aviso opcional para fallos accionables (con throttle).
- * @param {CompletionResult} result Resultado del intento de sugerencia que puede generar un hint.
+ * @param {CompletionResult} result - Resultado del intento de sugerencia que puede generar un hint.
  * @returns {void}
  */
 export function maybeNotifySuggestionIssue(result: CompletionResult): void {

@@ -1,9 +1,10 @@
 /**
  * @file Unit tests for Cursor host detection logic.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
-import type { isCursorDesktopHost as isCursorDesktopHostFn } from './cursorHost';
+import type { isCursorDesktopHost as isCursorDesktopHostFunction } from './cursorHost';
 
 const appNameMock = vi.hoisted(() => vi.fn(() => 'Visual Studio Code'));
 
@@ -15,24 +16,24 @@ vi.mock('vscode', () => ({
   },
 }));
 
-describe('cursorHost', () => {
-  beforeEach(() => {
+vitest.describe('cursorHost', () => {
+  vitest.beforeEach(() => {
     vi.clearAllMocks();
     appNameMock.mockReturnValue('Visual Studio Code');
   });
 
-  it('isCursorDesktopHost es false en VS Code', async () => {
+  vitest.it('isCursorDesktopHost es false en VS Code', async () => {
     const { isCursorDesktopHost } = (await import('./cursorHost')) as {
-      isCursorDesktopHost: typeof isCursorDesktopHostFn;
+      isCursorDesktopHost: typeof isCursorDesktopHostFunction;
     };
-    expect(isCursorDesktopHost()).toBe(false);
+    vitest.expect(isCursorDesktopHost()).toBe(false);
   });
 
-  it('isCursorDesktopHost es true cuando appName incluye cursor', async () => {
+  vitest.it('isCursorDesktopHost es true cuando appName incluye cursor', async () => {
     appNameMock.mockReturnValue('Cursor');
     const { isCursorDesktopHost } = (await import('./cursorHost')) as {
-      isCursorDesktopHost: typeof isCursorDesktopHostFn;
+      isCursorDesktopHost: typeof isCursorDesktopHostFunction;
     };
-    expect(isCursorDesktopHost()).toBe(true);
+    vitest.expect(isCursorDesktopHost()).toBe(true);
   });
 });

@@ -1,13 +1,14 @@
 /**
  * @file Pruebas del cliente de API Ollama.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
-const mockFetch = vi.fn<Promise<Response>, [RequestInfo | URL, RequestInit?]>();
+const mockFetch = vi.fn<(input: URL | string, init?: RequestInit) => Promise<Response>>();
 
 vi.stubGlobal('fetch', mockFetch);
 
-afterEach(() => {
+vitest.afterEach(() => {
   vi.restoreAllMocks();
 });
 
@@ -15,108 +16,112 @@ import { listModels, generate } from './ollamaApiClient';
 
 /**
  * Creates a mock fetch Response containing JSON.
- * @param {unknown} data The body payload to serialize.
- * @param {number} status The HTTP status code.
+ * @param {unknown} data - The body payload to serialize.
+ * @param {number} status - The HTTP status code.
  * @returns {unknown} A Response-like object with JSON payload headers.
  */
 function makeJsonResponse(data: unknown, status = 200): Response {
-  return new Response(JSON.stringify(data), {
+  return Response.json(data, {
     status,
     headers: { 'Content-Type': 'application/json' },
   });
 }
 
-describe('ollamaApiClient listModels', () => {
-  beforeEach(() => {
+vitest.describe('ollamaApiClient listModels', () => {
+  vitest.beforeEach(() => {
     mockFetch.mockReset();
   });
 
-  it('returns models array from /api/tags', async () => {
+  vitest.it('returns models array from /api/tags', async () => {
     mockFetch.mockResolvedValue(
       makeJsonResponse({
         models: [
-          { name: 'mistral:latest', ['modified_at']: '2024-01-01', size: 100, digest: 'abc' },
-          { name: 'llama3:latest', ['modified_at']: '2024-01-02', size: 200, digest: 'def' },
+          { name: 'mistral:latest', 'modified_at': '2024-01-01', size: 100, digest: 'abc' },
+          { name: 'llama3:latest', 'modified_at': '2024-01-02', size: 200, digest: 'def' },
         ],
       }),
     );
 
     const models = await listModels();
-    expect(models).toHaveLength(2);
-    expect(models[0].name).toBe('mistral:latest');
-    expect(mockFetch).toHaveBeenCalledWith(
+    vitest.expect(models).toHaveLength(2);
+    vitest.expect(models[0].name).toBe('mistral:latest');
+    vitest.expect(mockFetch).toHaveBeenCalledWith(
       'http://localhost:11434/api/tags',
-      expect.objectContaining({ method: 'GET' }),
+      vitest.expect.objectContaining({ method: 'GET' }),
     );
   });
 
-  it('returns empty array when API returns no models field', async () => {
+  vitest.it('returns empty array when API returns no models field', async () => {
     mockFetch.mockResolvedValue(makeJsonResponse({}));
-    expect(await listModels()).toEqual([]);
+    vitest.expect(await listModels()).toEqual([]);
   });
 
-  it('filters malformed model entries and returns only valid ones', async () => {
+  vitest.it('filters malformed model entries and returns only valid ones', async () => {
     mockFetch.mockResolvedValue(
       makeJsonResponse({
         models: [
-          { name: 'mistral:latest', ['modified_at']: '2024-01-01', size: 100, digest: 'abc' },
-          { name: 'bad-model', ['modified_at']: '2024-01-02' },
+          { name: 'mistral:latest', 'modified_at': '2024-01-01', size: 100, digest: 'abc' },
+          { name: 'bad-model', 'modified_at': '2024-01-02' },
         ],
       }),
     );
 
     const models = await listModels();
-    expect(models).toHaveLength(1);
-    expect(models[0].name).toBe('mistral:latest');
+    vitest.expect(models).toHaveLength(1);
+    vitest.expect(models[0].name).toBe('mistral:latest');
   });
 
-  it('throws on non-ok HTTP status', async () => {
+  vitest.it('throws on non-ok HTTP status', async () => {
     mockFetch.mockResolvedValue(
-      new Response(null, { status: 500, statusText: 'Internal Server Error' }),
+      new Response(undefined, { status: 500, statusText: 'Internal Server Error' }),
     );
-    await expect(listModels()).rejects.toThrow('Ollama HTTP 500');
+    await vitest.expect(listModels()).rejects.toThrow('Ollama HTTP 500');
   });
 
-  it('uses custom baseUrl when provided', async () => {
+  vitest.it('uses custom baseUrl when provided', async () => {
     mockFetch.mockResolvedValue(makeJsonResponse({ models: [] }));
     await listModels({ baseUrl: 'http://my-ollama:8080' });
-    expect(mockFetch).toHaveBeenCalledWith('http://my-ollama:8080/api/tags', expect.anything());
+    vitest.expect(mockFetch).toHaveBeenCalledWith('http://my-ollama:8080/api/tags', vitest.expect.anything());
   });
 
-  it('throws on fetch network error', async () => {
+  vitest.it('throws on fetch network error', async () => {
     mockFetch.mockRejectedValue(new Error('ECONNREFUSED'));
-    await expect(listModels()).rejects.toThrow('ECONNREFUSED');
+    await vitest.expect(listModels()).rejects.toThrow('ECONNREFUSED');
   });
 });
 
-describe('ollamaApiClient generate', () => {
-  beforeEach(() => {
+vitest.describe('ollamaApiClient generate', () => {
+  vitest.beforeEach(() => {
     mockFetch.mockReset();
   });
 
-  it('returns response text from non-streaming generation', async () => {
+  vitest.it('returns response text from non-streaming generation', async () => {
     mockFetch.mockResolvedValue(
       makeJsonResponse({ model: 'mistral:latest', response: 'Hello!', done: true }),
     );
 
     const text = await generate('Hi', 'mistral:latest');
-    expect(text).toBe('Hello!');
-    const [[, init]] = mockFetch.mock.calls as [RequestInfo | URL, RequestInit?][];
-    expect(init).toMatchObject({ method: 'POST' });
-    expect(String(init?.body)).toContain('"stream":false');
+    vitest.expect(text).toBe('Hello!');
+    const [, init] = mockFetch.mock.calls[0] ?? [];
+    vitest.expect(init).toMatchObject({ method: 'POST' });
+    const body = init?.body;
+    if (typeof body !== 'string') {
+      throw new TypeError('expected string request body');
+    }
+    vitest.expect(body).toContain('"stream":false');
   });
 
-  it('returns empty string when response field is missing', async () => {
+  vitest.it('returns empty string when response field is missing', async () => {
     mockFetch.mockResolvedValue(makeJsonResponse({ model: 'mistral:latest', done: true }));
-    expect(await generate('Hi', 'mistral:latest')).toBe('');
+    vitest.expect(await generate('Hi', 'mistral:latest')).toBe('');
   });
 
-  it('returns empty string for malformed non-stream response objects', async () => {
+  vitest.it('returns empty string for malformed non-stream response objects', async () => {
     mockFetch.mockResolvedValue(makeJsonResponse({ foo: 'bar' }));
-    expect(await generate('Hi', 'mistral:latest')).toBe('');
+    vitest.expect(await generate('Hi', 'mistral:latest')).toBe('');
   });
 
-  it('skips malformed streaming chunk lines and returns accumulated text', async () => {
+  vitest.it('skips malformed streaming chunk lines and returns accumulated text', async () => {
     const stream = new ReadableStream({
       start(controller) {
         controller.enqueue(new TextEncoder().encode('{"response":"Hi"}\n'));
@@ -130,25 +135,25 @@ describe('ollamaApiClient generate', () => {
     const preview = vi.fn();
     const text = await generate('Hi', 'mistral:latest', { onStreamPreview: preview });
 
-    expect(text).toBe('Hi there');
-    expect(preview).toHaveBeenLastCalledWith('Hi there');
+    vitest.expect(text).toBe('Hi there');
+    vitest.expect(preview).toHaveBeenLastCalledWith('Hi there');
   });
 
-  it('throws on non-ok HTTP status', async () => {
-    mockFetch.mockResolvedValue(new Response(null, { status: 400, statusText: 'Bad Request' }));
-    await expect(generate('Hi', 'mistral:latest')).rejects.toThrow('Ollama HTTP 400');
+  vitest.it('throws on non-ok HTTP status', async () => {
+    mockFetch.mockResolvedValue(new Response(undefined, { status: 400, statusText: 'Bad Request' }));
+    await vitest.expect(generate('Hi', 'mistral:latest')).rejects.toThrow('Ollama HTTP 400');
   });
 
-  it('propagates abort signal when provided', async () => {
+  vitest.it('propagates abort signal when provided', async () => {
     const controller = new AbortController();
-    mockFetch.mockImplementation((_url: RequestInfo | URL, init?: RequestInit) => {
+    mockFetch.mockImplementation((_url: URL | string, init?: RequestInit) => {
       const signal = init?.signal;
-      expect(signal).toBeDefined();
-      expect(signal?.aborted).toBe(false);
+      vitest.expect(signal).toBeDefined();
+      vitest.expect(signal?.aborted).toBe(false);
       controller.abort();
-      expect(signal?.aborted).toBe(true);
+      vitest.expect(signal?.aborted).toBe(true);
       return Promise.reject(new DOMException('Aborted', 'AbortError'));
     });
-    await expect(generate('Hi', 'mistral:latest', { signal: controller.signal })).rejects.toThrow();
+    await vitest.expect(generate('Hi', 'mistral:latest', { signal: controller.signal })).rejects.toThrow();
   });
 });

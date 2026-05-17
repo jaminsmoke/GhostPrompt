@@ -5,7 +5,7 @@ export {
   OPENCODE_DEFAULT_PORT,
   type OpenCodeClientOptions,
   type OpenCodeSdkClient,
-} from '../../../../system/internals/protocols/types/opencodeClient';
+} from '../../../../system/internals/protocols/types/typeOpencodeClient';
 
 export { createOpenCodeClient } from './createClient';
 export { getGlobalClient, hasGlobalClient, resetGlobalClient } from './clientSingleton';

@@ -12,7 +12,7 @@ import type {
 
 /**
  * Construye descriptor de modelo para mensajes al webview.
- * @param {string} modelId Identificador del modelo OpenCode.
+ * @param {string} modelId - Identificador del modelo OpenCode.
  * @returns {SuggestionModelDescriptor} Descriptor para la UI.
  */
 function describeOpenCodeModel(modelId: string): SuggestionModelDescriptor {
@@ -26,8 +26,8 @@ function describeOpenCodeModel(modelId: string): SuggestionModelDescriptor {
 
 /**
  * Solicita completado a OpenCode y devuelve el resultado del pipeline.
- * @param {string} userText Texto del usuario.
- * @param {CompletionRequestOptions} options Opciones de completado.
+ * @param {string} userText - Texto del usuario.
+ * @param {CompletionRequestOptions} options - Opciones de completado.
  * @returns {Promise<CompletionResult>} Sugerencia, vacío o error.
  */
 export async function requestOpencodeCompletion(
@@ -43,7 +43,7 @@ export async function requestOpencodeCompletion(
 
   onLoadingPhase?.('opencode-start');
 
-  if (!(await ensureOpenCodeClient())) {
+  if (!await ensureOpenCodeClient()) {
     return { kind: 'empty', reason: 'no-model' };
   }
 
@@ -72,15 +72,15 @@ export async function requestOpencodeCompletion(
       suggestion: completionText,
       model: describeOpenCodeModel(modelId),
     };
-  } catch (err) {
+  } catch (error) {
     if (token.isCancellationRequested) {
       return { kind: 'empty', reason: 'request-timeout' };
     }
-    const message = err instanceof Error ? err.message : String(err);
-    if (/timed out|cancelled/i.test(message)) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/timed out|cancelled/iu.test(message)) {
       return { kind: 'empty', reason: 'request-timeout' };
     }
-    if (/ECONNREFUSED|fetch failed|not found|no model/i.test(message)) {
+    if (/econnrefused|fetch failed|not found|no model/iu.test(message)) {
       resetOpenCodeClient();
       return { kind: 'empty', reason: 'no-model' };
     }

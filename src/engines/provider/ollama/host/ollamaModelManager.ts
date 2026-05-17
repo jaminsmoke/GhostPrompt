@@ -29,19 +29,12 @@ class SimpleEventEmitter<T> {
 }
 
 export type OllamaManagerState =
-  | 'idle'
-  | 'checking'
-  | 'ready'
-  | 'listing'
-  | 'starting'
-  | 'ready-model'
-  | 'stopping'
-  | 'error';
+  'checking' | 'error' | 'idle' | 'listing' | 'ready-model' | 'ready' | 'starting' | 'stopping';
 
 class OllamaModelManager {
   private _state: OllamaManagerState = 'idle';
-  private _currentModel: string | null = null;
-  private _ollamaProcess: ChildProcess | null = null;
+  private _currentModel: string | undefined = undefined;
+  private _ollamaProcess: ChildProcess | undefined = undefined;
   private _onDidChangeState = new SimpleEventEmitter<{
     state: OllamaManagerState;
     model?: string;
@@ -54,7 +47,7 @@ class OllamaModelManager {
     return this._state;
   }
 
-  get currentModel(): string | null {
+  get currentModel(): string | undefined {
     return this._currentModel;
   }
 
@@ -63,7 +56,7 @@ class OllamaModelManager {
     this._onDidChangeState.fire({ state, model, message });
   }
 
-  private execAsync(cmd: string, timeoutMs: number = 5000): Promise<string> {
+  private execAsync(cmd: string, timeoutMs = 5000): Promise<string> {
     return new Promise((resolve, reject) => {
       exec(cmd, { timeout: timeoutMs }, (err, stdout, stderr) => {
         if (err) {
@@ -100,7 +93,7 @@ class OllamaModelManager {
   async listInstalledModels(): Promise<string[]> {
     this.setState('listing');
     try {
-      const stdout = await this.execAsync('ollama list', 10000);
+      const stdout = await this.execAsync('ollama list', 10_000);
       const lines = stdout.split('\n').filter((l) => l.trim().length > 0);
       if (lines.length <= 1) {
         return [];
@@ -108,7 +101,7 @@ class OllamaModelManager {
       const models = lines
         .slice(1)
         .map((line) => {
-          const parts = line.trim().split(/\s+/);
+          const parts = line.trim().split(/\s+/u);
           return parts[0];
         })
         .filter(Boolean);
@@ -121,15 +114,15 @@ class OllamaModelManager {
   }
 
   /**
-   * Inicia un modelo vía `ollama run <modelId>` con flags:
+   * Inicia un modelo vía `ollama run &lt;modelId>` con flags:
    * - `--keepalive 5m`: mantiene el modelo cargado 5 minutos tras el último uso
    * - `--nowordwrap`: evita saltos de línea en el output.
    *
    * El proceso se lanza en background con `spawn`. La Promise resuelve cuando
    * stdout/stderr contiene "success", "loaded", "send a message" o "/bye",
    * indicando que el modelo está listo para recibir requests.
-   * @param {string} modelId Nombre del modelo (ej. "mistral:latest").
-   * @param {globalThis.AbortSignal} [signal] Señal de cancelación (opcional).
+   * @param {string} modelId - Nombre del modelo (ej. "mistral:latest").
+   * @param {globalThis.AbortSignal} [signal] - Señal de cancelación (opcional).
    * @throws {Error} Si el modelo no se inicia en 120s (timeout).
    * @throws {Error} Si stderr contiene "error" o "failed".
    * @returns {Promise<void>} Promise que se resuelve cuando el modelo ya está listo o falla.
@@ -137,7 +130,7 @@ class OllamaModelManager {
   startModel(modelId: string, signal?: AbortSignal): Promise<void> {
     if (this._ollamaProcess) {
       this._ollamaProcess.kill();
-      this._ollamaProcess = null;
+      this._ollamaProcess = undefined;
     }
 
     this._currentModel = modelId;
@@ -159,7 +152,7 @@ class OllamaModelManager {
           this.setState('error', modelId, 'Tiempo de espera agotado al iniciar el modelo.');
           reject(new Error('Timeout starting model'));
         }
-      }, 120000);
+      }, 120_000);
 
       const checkOutput = (data: string) => {
         if (resolved) {
@@ -185,12 +178,12 @@ class OllamaModelManager {
         checkOutput(text);
         if (
           !resolved &&
-          /error|failed|not found/i.test(text) &&
+          /error|failed|not found/iu.test(text) &&
           !text.includes('Failed to connect to socket')
         ) {
           resolved = true;
           clearTimeout(startTimeout);
-          this._ollamaProcess = null;
+          this._ollamaProcess = undefined;
           proc.kill();
           this.setState('error', modelId, text.trim());
           reject(new Error(text.trim()));
@@ -203,13 +196,13 @@ class OllamaModelManager {
         }
         resolved = true;
         clearTimeout(startTimeout);
-        this._ollamaProcess = null;
+        this._ollamaProcess = undefined;
         this.setState('error', modelId, err.message);
         reject(err);
       });
 
       proc.on('exit', (code) => {
-        this._ollamaProcess = null;
+        this._ollamaProcess = undefined;
         if (!resolved && code !== 0) {
           resolved = true;
           clearTimeout(startTimeout);
@@ -226,7 +219,7 @@ class OllamaModelManager {
               resolved = true;
               clearTimeout(startTimeout);
               proc.kill();
-              this._ollamaProcess = null;
+              this._ollamaProcess = undefined;
               reject(new Error('Cancelled'));
             }
           },
@@ -238,47 +231,43 @@ class OllamaModelManager {
 
   /**
    * Verifica si hay un modelo cargado actualmente vía `ollama ps`.
-   * Retorna el nombre del modelo activo o null si no hay ninguno.
-   * @returns {Promise<string | null>} Nombre del modelo activo o null.
+   * Retorna el nombre del modelo activo si hay alguno cargado.
+   * @returns {Promise<string | undefined>} Nombre del modelo activo.
    */
-  async ps(): Promise<string | null> {
+  async ps(): Promise<string | undefined> {
     try {
       const stdout = await this.execAsync('ollama ps', 5000);
       const lines = stdout.split('\n').filter((l) => l.trim().length > 0);
       if (lines.length <= 1) {
-        return null;
+        return undefined;
       }
-      const name = lines[1].trim().split(/\s+/)[0];
-      return name || null;
+      const name = lines[1].trim().split(/\s+/u)[0];
+      return name || undefined;
     } catch {
-      return null;
+      return undefined;
     }
   }
 
   /**
    * Detiene un modelo específico o todos si no se especifica modelo.
-   * @param {string | undefined} [modelId] Opcional ID del modelo a detener.
+   * @param {string | undefined} [modelId] - Opcional ID del modelo a detener.
    * @returns {Promise<void>} Promise que indica cuando la operación ha terminado.
    */
   async stopModel(modelId?: string): Promise<void> {
     this.setState('stopping', modelId ?? this._currentModel ?? undefined);
     try {
       const target = modelId ?? this._currentModel ?? '';
-      if (target) {
-        await this.execAsync(`ollama stop ${target}`, 10000);
-      } else {
-        await this.execAsync('ollama stop', 10000);
-      }
+      await (target ? this.execAsync(`ollama stop ${target}`, 10_000) : this.execAsync('ollama stop', 10_000));
     } catch {
       // ollama stop puede fallar si el modelo no estaba corriendo — se ignora
     }
 
     if (this._ollamaProcess && !this._ollamaProcess.killed) {
       this._ollamaProcess.kill();
-      this._ollamaProcess = null;
+      this._ollamaProcess = undefined;
     }
 
-    this._currentModel = null;
+    this._currentModel = undefined;
     this.setState('idle');
   }
 
@@ -296,7 +285,7 @@ class OllamaModelManager {
   dispose(): void {
     if (this._ollamaProcess && !this._ollamaProcess.killed) {
       this._ollamaProcess.kill();
-      this._ollamaProcess = null;
+      this._ollamaProcess = undefined;
     }
     this._onDidChangeState.dispose();
   }

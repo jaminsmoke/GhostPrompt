@@ -33,13 +33,13 @@ export class QueuedNdjsonFileTransport {
 
   /**
    * Configura el directorio de logs y los lectores perezosos de ajustes.
-   * @param {vscode.Uri} logsDir Directorio `.../ghostPrompt/logs/v1`.
-   * @param {() => boolean} isFileLogEnabled Lectura perezosa de `ghostPrompt.logFileEnabled`.
-   * @param {() => number} getMaxBytes Lectura perezosa de `ghostPrompt.logFileMaxBytes`.
-   * @param {number} [maxQueue] Tamaño máximo de cola antes de descartar `DEBUG`.
+   * @param {vscode.Uri} logsDirectory - Directorio `.../ghostPrompt/logs/v1`.
+   * @param {() => boolean} isFileLogEnabled - Lectura perezosa de `ghostPrompt.logFileEnabled`.
+   * @param {() => number} getMaxBytes - Lectura perezosa de `ghostPrompt.logFileMaxBytes`.
+   * @param {number} [maxQueue] - Tamaño máximo de cola antes de descartar `DEBUG`.
    */
   constructor(
-    private readonly logsDir: vscode.Uri,
+    private readonly logsDirectory: vscode.Uri,
     private readonly isFileLogEnabled: () => boolean,
     private readonly getMaxBytes: () => number,
     private readonly maxQueue: number = DEFAULT_MAX_QUEUE,
@@ -55,7 +55,7 @@ export class QueuedNdjsonFileTransport {
 
   /**
    * Encola una entrada para volcado asíncrono a NDJSON y Markdown.
-   * @param {LogEntry} entry Entrada a encolar.
+   * @param {LogEntry} entry - Entrada a encolar.
    * @returns {Promise<void>} Promesa que resuelve tras encolar (no espera al vaciado en disco).
    */
   write(entry: LogEntry): Promise<void> {
@@ -64,11 +64,11 @@ export class QueuedNdjsonFileTransport {
     }
     if (this.queue.length >= this.maxQueue) {
       const idx = this.queue.findIndex((e) => e.level === 'DEBUG');
-      if (idx >= 0) {
+      if (idx === -1) {
+        this.queue.shift();
+      } else {
         this.queue.splice(idx, 1);
         this.droppedDebug += 1;
-      } else {
-        this.queue.shift();
       }
       if (!this.warnedBackpressure && this.droppedDebug > 10) {
         this.warnedBackpressure = true;
@@ -99,7 +99,9 @@ export class QueuedNdjsonFileTransport {
     this.flushScheduled = true;
     queueMicrotask(() => {
       this.flushScheduled = false;
-      void this.flushOnce();
+      this.flushOnce().catch(() => {
+        /* ignore */
+      });
     });
   }
 
@@ -123,22 +125,22 @@ export class QueuedNdjsonFileTransport {
       if (batch.length === 0) {
         return;
       }
-      await vscode.workspace.fs.createDirectory(this.logsDir);
+      await vscode.workspace.fs.createDirectory(this.logsDirectory);
       await this.appendNdjsonBatch(batch);
       await this.appendMarkdownBatch(batch);
       if (this.queue.length > 0) {
         this.scheduleFlush();
       }
-    } catch (e) {
+    } catch (error) {
       this.writeErrors += 1;
-      console.error('[GhostPrompt] File log transport write failed', e);
+      console.error('[GhostPrompt] File log transport write failed', error);
     } finally {
       this.flushing = false;
     }
   }
 
   private async appendNdjsonBatch(batch: LogEntry[]): Promise<void> {
-    const ndjsonUri = vscode.Uri.joinPath(this.logsDir, EVENTS_FILE);
+    const ndjsonUri = vscode.Uri.joinPath(this.logsDirectory, EVENTS_FILE);
     await this.maybeRotate(ndjsonUri);
     const lines = batch.map((b) => `${JSON.stringify(b)}\n`).join('');
     let existing = Buffer.alloc(0);
@@ -147,12 +149,12 @@ export class QueuedNdjsonFileTransport {
     } catch {
       // archivo nuevo
     }
-    const next = Buffer.concat([existing, Buffer.from(lines, 'utf-8')]);
+    const next = Buffer.concat([existing, Buffer.from(lines, 'utf8')]);
     await vscode.workspace.fs.writeFile(ndjsonUri, next);
   }
 
   private async maybeRotate(ndjsonUri: vscode.Uri): Promise<void> {
-    let size = 0;
+    let size: number;
     try {
       const st = await vscode.workspace.fs.stat(ndjsonUri);
       size = st.size;
@@ -165,37 +167,40 @@ export class QueuedNdjsonFileTransport {
     }
     try {
       const raw = await vscode.workspace.fs.readFile(ndjsonUri);
-      const stamp = new Date().toISOString().replace(/[:]/g, '-');
-      const gzUri = vscode.Uri.joinPath(this.logsDir, `events.${stamp}.ndjson.gz`);
+      const stamp = new Date().toISOString().replaceAll(':', '-');
+      const gzUri = vscode.Uri.joinPath(this.logsDirectory, `events.${stamp}.ndjson.gz`);
       const gzipped = await gzipAsync(raw);
       await vscode.workspace.fs.writeFile(gzUri, gzipped);
       await vscode.workspace.fs.delete(ndjsonUri, { useTrash: false });
-    } catch (e) {
+    } catch (error) {
       this.writeErrors += 1;
-      console.error('[GhostPrompt] events.ndjson rotation failed', e);
+      console.error('[GhostPrompt] events.ndjson rotation failed', error);
     }
   }
 
   private async appendMarkdownBatch(batch: LogEntry[]): Promise<void> {
-    const mdUri = vscode.Uri.joinPath(this.logsDir, SESSION_FILE);
+    const mdUri = vscode.Uri.joinPath(this.logsDirectory, SESSION_FILE);
     const parts: string[] = [];
     for (const e of batch) {
       const data =
         e.data && Object.keys(e.data).length > 0
           ? `\n${Object.entries(e.data)
-              .map(([k, v]) => `${k}=${typeof v === 'string' ? v : JSON.stringify(v)}`)
+              .map(
+                ([k, v]) =>
+                  `${k}=${typeof v === 'string' ? v : JSON.stringify(v)}`,
+              )
               .join('\n')}\n`
           : '\n';
       parts.push(`### ${e.level} ${e.module} ${e.message}\n${data}\n`);
     }
     const block = parts.join('');
-    let existing = '';
+    let existing: string;
     try {
-      existing = Buffer.from(await vscode.workspace.fs.readFile(mdUri)).toString('utf-8');
+      existing = Buffer.from(await vscode.workspace.fs.readFile(mdUri)).toString('utf8');
     } catch {
       existing = '# GhostPrompt Log\n\n';
     }
     const next = existing + block;
-    await vscode.workspace.fs.writeFile(mdUri, Buffer.from(next, 'utf-8'));
+    await vscode.workspace.fs.writeFile(mdUri, Buffer.from(next, 'utf8'));
   }
 }

@@ -1,6 +1,10 @@
 /**
  * @file Tipos compartidos del webview React GhostPrompt.
+ * Tipos de protocolo importados desde `system/internals/protocols/`.
  */
+
+// ── Webview-specific ──────────────────────────────────────────
+
 export type GhostPromptCapabilities = {
   compactToolbar?: boolean;
 };
@@ -10,144 +14,38 @@ declare global {
     __ghostPromptViewId?: string;
     __ghostPromptCapabilities?: GhostPromptCapabilities;
   }
+
+  /** Inyectado en el bundle del webview (`webviewHtml.ts`). */
+  var __ghostPromptViewId: string | undefined;
+  /** Inyectado en el bundle del webview (`webviewHtml.ts`). */
+  var __ghostPromptCapabilities: GhostPromptCapabilities | undefined;
 }
 
-export type AgentDestination = 'copilotChat' | 'vsOpenCodeX' | 'cursorChat';
+export type LogLevel = 'debug' | 'error' | 'info' | 'warn';
 
-export type CompletionProvider = 'copilot' | 'opencode' | 'ollama';
+// ── Desde protocols/state/provider ────────────────────────────
 
 import type {
   ProviderState,
   ProviderStateRecord,
 } from '../../../system/internals/protocols/state/provider';
 
-/** Alias webview del contrato en `protocols/state/provider`. */
 export type CompletionSourceState = ProviderState;
 export type CompletionSourceStateRecord = ProviderStateRecord;
 
-export type SuggestionModel = {
-  id: string;
-  label: string;
-  tier: 'included' | 'premium' | 'unknown';
-  pricing?: string;
-  provider?: string;
-  completionSource?: CompletionProvider;
-};
+export type { ProviderId as CompletionProvider } from '../../../system/internals/protocols/state/provider';
 
-export type SettingsPayload = {
-  completionProvider: CompletionProvider;
-  completionUiKind: 'copilot' | 'opencode' | 'ollama' | 'multi';
-  enabledCompletionSources: CompletionProvider[];
-  suggestionModelPolicy: 'nonPremiumOnly' | 'anyModel';
-  selectedModelId: string;
-  availableModels: SuggestionModel[];
-  suggestionStyle: 'concise' | 'balanced' | 'detailed';
-  effectiveModel?: SuggestionModel;
-  debugSuggestions: boolean;
-  suggestionDebounceMs: number;
-  agentDestination: AgentDestination;
-  vsOpenCodeXExtensionInstalled: boolean;
-  cursorDesktopHost: boolean;
-};
+// ── Desde protocols/types ─────────────────────────────────────
 
-export type InboundMessage =
-  | {
-      type: 'loading';
-      captureId: number;
-      broadcast?: boolean;
-      phase?: string;
-      statusText?: string;
-    }
-  | {
-      type: 'suggestion-stream';
-      text: string;
-      captureId: number;
-      broadcast?: boolean;
-    }
-  | {
-      type: 'suggestion';
-      suggestion: string;
-      captureId: number;
-      model?: SuggestionModel;
-      broadcast?: boolean;
-    }
-  | {
-      type: 'empty';
-      reason:
-        | 'no-model'
-        | 'no-included-model'
-        | 'premium-quota-blocked'
-        | 'empty-response'
-        | 'request-timeout'
-        | 'too-short'
-        | 'duplicate-input'
-        | 'rate-limited'
-        | 'session-budget-exhausted'
-        | 'content-blocked';
-      captureId?: number;
-      broadcast?: boolean;
-    }
-  | {
-      type: 'error';
-      message: string;
-      captureId?: number;
-      broadcast?: boolean;
-    }
-  | {
-      type: 'clear';
-      captureId?: number;
-      broadcast?: boolean;
-    }
-  | {
-      type: 'draftSync';
-      text: string;
-      originViewId: string;
-      captureId?: number;
-      broadcast?: boolean;
-    }
-  | {
-      type: 'draftHydrate';
-      text: string;
-      captureId?: number;
-      broadcast?: boolean;
-    }
-  | {
-      type: 'settings';
-      settings: SettingsPayload;
-      captureId?: number;
-      broadcast?: boolean;
-    }
-  | {
-      type: 'providerStatus';
-      providers: CompletionSourceStateRecord[];
-      captureId?: number;
-      broadcast?: boolean;
-    };
+export type { SuggestionModelDescriptor as SuggestionModel } from '../../../system/internals/protocols/types';
 
-export type UpdateSettingMessage =
-  | { type: 'updateSetting'; key: 'suggestionModelPolicy'; value: 'nonPremiumOnly' | 'anyModel' }
-  | { type: 'updateSetting'; key: 'selectedModelId'; value: string }
-  | { type: 'updateSetting'; key: 'suggestionStyle'; value: 'concise' | 'balanced' | 'detailed' }
-  | { type: 'updateSetting'; key: 'debugSuggestions'; value: boolean }
-  | { type: 'updateSetting'; key: 'completionProvider'; value: CompletionProvider }
-  | { type: 'updateSetting'; key: 'agentDestination'; value: AgentDestination };
+export type { DestinationId as AgentDestination } from '../../../system/internals/protocols/types/typeDestinations';
 
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+// ── Desde protocols/validations/schemas ───────────────────────
 
-export type OutboundMessage =
-  | { type: 'init' }
-  | { type: 'suggest'; text: string; captureId: number }
-  | { type: 'draftChanged'; text: string; originViewId: string }
-  | { type: 'accept'; context: string; suggestion: string }
-  | { type: 'send'; text: string }
-  | { type: 'requestProviderStatus' }
-  | { type: 'startProvider'; provider: string }
-  | { type: 'stopProvider'; provider: string }
-  | {
-      type: 'log';
-      level: LogLevel;
-      message: string;
-      data?: Record<string, unknown>;
-      captureId?: number;
-    }
-  | UpdateSettingMessage;
+export type {
+  WebviewOutboundMessage as InboundMessage,
+  WebviewInboundMessage as OutboundMessage,
+  WebviewSettingsPayload as SettingsPayload,
+  WebviewUpdateSetting as UpdateSettingMessage,
+} from '../../../system/internals/protocols/validations/schemas';

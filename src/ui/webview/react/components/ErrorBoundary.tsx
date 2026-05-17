@@ -1,25 +1,23 @@
 /**
  * @file Manejador de errores React para el webview GhostPrompt.
  */
-import { Component } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 
 import { postToHost } from '../hooks/useGhostPrompt';
 
-import type { ErrorInfo, ReactNode } from 'react';
-
-interface ErrorBoundaryProps {
+interface ErrorBoundaryProperties {
   children: ReactNode;
 }
 
 interface ErrorBoundaryState {
   hasError: boolean;
-  error: Error | null;
+  error: Error | undefined;
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
+export class ErrorBoundary extends Component<ErrorBoundaryProperties, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProperties) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: undefined };
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
@@ -41,7 +39,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   handleReload = () => {
-    this.setState({ hasError: false, error: null });
+    this.setState({ hasError: false, error: undefined });
   };
 
   render() {

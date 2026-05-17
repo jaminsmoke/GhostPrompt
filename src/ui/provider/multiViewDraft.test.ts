@@ -1,7 +1,8 @@
 /**
  * @file Tests del borrador compartido multi-vista.
  */
-import { beforeEach, describe, expect, it } from 'vitest';
+
+import * as vitest from 'vitest';
 
 import {
   getMultiViewDraftText,
@@ -9,19 +10,19 @@ import {
   setMultiViewDraftText,
 } from './multiViewDraft';
 
-describe('multiViewDraft', () => {
-  beforeEach(() => {
+vitest.describe('multiViewDraft', () => {
+  vitest.beforeEach(() => {
     resetMultiViewDraftText();
   });
 
-  it('get devuelve cadena vacía tras reset', () => {
-    expect(getMultiViewDraftText()).toBe('');
+  vitest.it('get devuelve cadena vacía tras reset', () => {
+    vitest.expect(getMultiViewDraftText()).toBe('');
   });
 
-  it('set persiste el texto hasta el siguiente reset', () => {
+  vitest.it('set persiste el texto hasta el siguiente reset', () => {
     setMultiViewDraftText('hola');
-    expect(getMultiViewDraftText()).toBe('hola');
+    vitest.expect(getMultiViewDraftText()).toBe('hola');
     resetMultiViewDraftText();
-    expect(getMultiViewDraftText()).toBe('');
+    vitest.expect(getMultiViewDraftText()).toBe('');
   });
 });

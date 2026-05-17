@@ -1,7 +1,8 @@
 /**
  * @file Pruebas del catálogo de modelos Ollama.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 const { listModelsMock, getConfigurationMock, configMock } = vi.hoisted(() => ({
   listModelsMock: vi.fn(),
@@ -31,13 +32,13 @@ vi.mock('../http/ollamaApiClient', () => ({
 
 import { listOllamaSuggestionModels } from './ollamaModelCatalog';
 
-describe('listOllamaSuggestionModels', () => {
-  beforeEach(() => {
+vitest.describe('listOllamaSuggestionModels', () => {
+  vitest.beforeEach(() => {
     vi.clearAllMocks();
     getConfigurationMock.mockReturnValue(configMock);
   });
 
-  it('returns normalized descriptors sorted by label and excludes configured models', async () => {
+  vitest.it('returns normalized descriptors sorted by label and excludes configured models', async () => {
     listModelsMock.mockResolvedValue([
       { name: 'zeta:latest' },
       { name: 'alpha:latest' },
@@ -55,7 +56,7 @@ describe('listOllamaSuggestionModels', () => {
 
     const models = await listOllamaSuggestionModels('anyModel');
 
-    expect(models).toEqual([
+    vitest.expect(models).toEqual([
       {
         id: 'alpha:latest',
         label: 'alpha:latest',
@@ -73,12 +74,12 @@ describe('listOllamaSuggestionModels', () => {
     ]);
   });
 
-  it('returns unavailable fallback when Ollama API fails', async () => {
+  vitest.it('returns unavailable fallback when Ollama API fails', async () => {
     listModelsMock.mockRejectedValue(new Error('Network error'));
 
     const models = await listOllamaSuggestionModels('anyModel');
 
-    expect(models).toEqual([
+    vitest.expect(models).toEqual([
       {
         id: 'ollama/unavailable',
         label: 'Ollama (no disponible)',

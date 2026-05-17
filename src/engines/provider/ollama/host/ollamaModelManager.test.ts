@@ -1,7 +1,8 @@
 /**
  * @file Pruebas del gestor de modelos Ollama.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
 
 const { execMock, spawnMock } = vi.hoisted(() => ({
   execMock: vi.fn(),
@@ -38,18 +39,24 @@ function createFakeProcess(): { proc: ChildProcess; events: ChildProcessEvents }
     stdout: {
       on(event: string, callback: (data: Buffer) => void) {
         events.stdout.set(event, callback);
-        return { dispose: () => {} };
+        return {
+          dispose: () => {},
+        };
       },
     },
     stderr: {
       on(event: string, callback: (data: Buffer) => void) {
         events.stderr.set(event, callback);
-        return { dispose: () => {} };
+        return {
+          dispose: () => {},
+        };
       },
     },
     on(event: string, callback: (value: unknown) => void) {
       events.events.set(event, callback);
-      return { dispose: () => {} };
+      return {
+        dispose: () => {},
+      };
     },
     kill: vi.fn(() => {
       (proc as unknown as { killed: boolean }).killed = true;
@@ -60,73 +67,73 @@ function createFakeProcess(): { proc: ChildProcess; events: ChildProcessEvents }
   return { proc, events };
 }
 
-describe('OllamaModelManager', () => {
-  beforeEach(() => {
+vitest.describe('OllamaModelManager', () => {
+  vitest.beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
+  vitest.afterEach(() => {
     ollamaModelManager.dispose();
   });
 
-  it('checkInstallation resolves and sets ready state on success', async () => {
+  vitest.it('checkInstallation resolves and sets ready state on success', async () => {
     execMock.mockImplementation(
       (
         cmd: string,
         options: { timeout?: number },
-        callback: (error: Error | null, stdout: string, stderr: string) => void,
+        callback: (error: Error | undefined, stdout: string, stderr: string) => void,
       ) => {
-        callback(null, 'ollama 1.0.0', '');
+        callback(undefined, 'ollama 1.0.0', '');
         return {} as ChildProcess;
       },
     );
 
     const version = await ollamaModelManager.checkInstallation();
 
-    expect(version).toBe('ollama 1.0.0');
-    expect(ollamaModelManager.state).toBe('ready');
+    vitest.expect(version).toBe('ollama 1.0.0');
+    vitest.expect(ollamaModelManager.state).toBe('ready');
   });
 
-  it('checkInstallation rejects and sets error state when ollama is not installed', async () => {
+  vitest.it('checkInstallation rejects and sets error state when ollama is not installed', async () => {
     execMock.mockImplementation(
       (
         cmd: string,
         options: { timeout?: number },
-        callback: (error: Error | null, stdout: string, stderr: string) => void,
+        callback: (error: Error | undefined, stdout: string, stderr: string) => void,
       ) => {
         callback(new Error('Not found'), '', 'ollama: command not found');
         return {} as ChildProcess;
       },
     );
 
-    await expect(ollamaModelManager.checkInstallation()).rejects.toThrow('Ollama not installed');
-    expect(ollamaModelManager.state).toBe('error');
+    await vitest.expect(ollamaModelManager.checkInstallation()).rejects.toThrow('Ollama not installed');
+    vitest.expect(ollamaModelManager.state).toBe('error');
   });
 
-  it('listInstalledModels parses model names from ollama list output', async () => {
+  vitest.it('listInstalledModels parses model names from ollama list output', async () => {
     execMock.mockImplementation(
       (
         cmd: string,
         options: { timeout?: number },
-        callback: (error: Error | null, stdout: string, stderr: string) => void,
+        callback: (error: Error | undefined, stdout: string, stderr: string) => void,
       ) => {
-        callback(null, 'NAME\nmodel-a 100\nmodel-b 200\n', '');
+        callback(undefined, 'NAME\nmodel-a 100\nmodel-b 200\n', '');
         return {} as ChildProcess;
       },
     );
 
     const models = await ollamaModelManager.listInstalledModels();
 
-    expect(models).toEqual(['model-a', 'model-b']);
-    expect(ollamaModelManager.state).toBe('ready');
+    vitest.expect(models).toEqual(['model-a', 'model-b']);
+    vitest.expect(ollamaModelManager.state).toBe('ready');
   });
 
-  it('listInstalledModels returns empty array and error state when list fails', async () => {
+  vitest.it('listInstalledModels returns empty array and error state when list fails', async () => {
     execMock.mockImplementation(
       (
         cmd: string,
         options: { timeout?: number },
-        callback: (error: Error | null, stdout: string, stderr: string) => void,
+        callback: (error: Error | undefined, stdout: string, stderr: string) => void,
       ) => {
         callback(new Error('Command failed'), '', '');
         return {} as ChildProcess;
@@ -135,33 +142,33 @@ describe('OllamaModelManager', () => {
 
     const models = await ollamaModelManager.listInstalledModels();
 
-    expect(models).toEqual([]);
-    expect(ollamaModelManager.state).toBe('error');
+    vitest.expect(models).toEqual([]);
+    vitest.expect(ollamaModelManager.state).toBe('error');
   });
 
-  it('ps returns the active model name from ollama ps output', async () => {
+  vitest.it('ps returns the active model name from ollama ps output', async () => {
     execMock.mockImplementation(
       (
         cmd: string,
         options: { timeout?: number },
-        callback: (error: Error | null, stdout: string, stderr: string) => void,
+        callback: (error: Error | undefined, stdout: string, stderr: string) => void,
       ) => {
-        callback(null, 'NAME\nmodel-a running\n', '');
+        callback(undefined, 'NAME\nmodel-a running\n', '');
         return {} as ChildProcess;
       },
     );
 
     const active = await ollamaModelManager.ps();
 
-    expect(active).toBe('model-a');
+    vitest.expect(active).toBe('model-a');
   });
 
-  it('ps returns null when ollama ps fails', async () => {
+  vitest.it('ps returns undefined when ollama ps fails', async () => {
     execMock.mockImplementation(
       (
         cmd: string,
         options: { timeout?: number },
-        callback: (error: Error | null, stdout: string, stderr: string) => void,
+        callback: (error: Error | undefined, stdout: string, stderr: string) => void,
       ) => {
         callback(new Error('failed'), '', '');
         return {} as ChildProcess;
@@ -170,46 +177,46 @@ describe('OllamaModelManager', () => {
 
     const active = await ollamaModelManager.ps();
 
-    expect(active).toBeNull();
+    vitest.expect(active).toBeUndefined();
   });
 
-  it('stopModel calls ollama stop for the target model and resets state', async () => {
+  vitest.it('stopModel calls ollama stop for the target model and resets state', async () => {
     execMock.mockImplementation(
       (
         cmd: string,
         options: { timeout?: number },
-        callback: (error: Error | null, stdout: string, stderr: string) => void,
+        callback: (error: Error | undefined, stdout: string, stderr: string) => void,
       ) => {
-        callback(null, '', '');
+        callback(undefined, '', '');
         return {} as ChildProcess;
       },
     );
 
     await ollamaModelManager.stopModel('model-a');
 
-    expect(execMock).toHaveBeenCalledWith('ollama stop model-a', expect.anything(), expect.any(Function));
-    expect(ollamaModelManager.state).toBe('idle');
+    vitest.expect(execMock).toHaveBeenCalledWith('ollama stop model-a', vitest.expect.anything(), vitest.expect.any(Function));
+    vitest.expect(ollamaModelManager.state).toBe('idle');
   });
 
-  it('startModel resolves when stdout emits a ready indicator', async () => {
+  vitest.it('startModel resolves when stdout emits a ready indicator', async () => {
     const { proc, events } = createFakeProcess();
     spawnMock.mockReturnValue(proc);
 
     const modelPromise = ollamaModelManager.startModel('model-a');
     events.stdout.get('data')?.(Buffer.from('loaded\n'));
 
-    await expect(modelPromise).resolves.toBeUndefined();
-    expect(ollamaModelManager.state).toBe('ready-model');
+    await vitest.expect(modelPromise).resolves.toBeUndefined();
+    vitest.expect(ollamaModelManager.state).toBe('ready-model');
   });
 
-  it('startModel rejects when stderr emits a failure message', async () => {
+  vitest.it('startModel rejects when stderr emits a failure message', async () => {
     const { proc, events } = createFakeProcess();
     spawnMock.mockReturnValue(proc);
 
     const modelPromise = ollamaModelManager.startModel('model-b');
     events.stderr.get('data')?.(Buffer.from('error failed to start\n'));
 
-    await expect(modelPromise).rejects.toThrow('error failed to start');
-    expect(ollamaModelManager.state).toBe('error');
+    await vitest.expect(modelPromise).rejects.toThrow('error failed to start');
+    vitest.expect(ollamaModelManager.state).toBe('error');
   });
 });
