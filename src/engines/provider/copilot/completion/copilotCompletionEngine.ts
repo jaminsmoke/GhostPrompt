@@ -16,7 +16,28 @@ import {
 import { describeModel, selectModelByPolicy } from '../catalog/modelCatalog';
 import { collectLmResponse } from '../lm/collectLmResponse';
 
-let premiumQuotaBlocked = false;
+const premiumQuotaBlockedState = { value: false };
+
+/**
+ * Clasifica un error de Copilot LM sin operaciones asíncronas (compatible con `require-atomic-updates`).
+ * @param {unknown} error - Error capturado en la petición.
+ * @param {CompletionRequestOptions['policy']} policy - Política de modelo activa.
+ * @returns {CompletionResult} Resultado vacío, de error o cuota premium bloqueada.
+ */
+function mapCopilotCompletionError(
+  error: unknown,
+  policy: CompletionRequestOptions['policy'],
+): CompletionResult {
+  if (error instanceof Error && /request-timeout/iu.test(error.message)) {
+    return { kind: 'empty', reason: 'request-timeout' };
+  }
+  const message = error instanceof Error ? error.message : 'Unknown error';
+  if (policy === 'nonPremiumOnly' && isPremiumQuotaCopilotError(message)) {
+    premiumQuotaBlockedState.value = true;
+    return { kind: 'empty', reason: 'premium-quota-blocked' };
+  }
+  return { kind: 'error', message };
+}
 
 /**
  * Solicita texto al LM de Copilot y devuelve el resultado crudo (sin acotación ni heurísticas de rechazo).
@@ -38,7 +59,7 @@ export async function requestCopilotLmCompletion(
     requestTimeoutMs = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
     onLoadingPhase,
   } = options;
-  if (policy === 'nonPremiumOnly' && premiumQuotaBlocked) {
+  if (policy === 'nonPremiumOnly' && premiumQuotaBlockedState.value) {
     return { kind: 'empty', reason: 'premium-quota-blocked' };
   }
 
@@ -84,14 +105,6 @@ export async function requestCopilotLmCompletion(
     if (token.isCancellationRequested) {
       throw error;
     }
-    if (error instanceof Error && /request-timeout/iu.test(error.message)) {
-      return { kind: 'empty', reason: 'request-timeout' };
-    }
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    if (policy === 'nonPremiumOnly' && isPremiumQuotaCopilotError(message)) {
-      premiumQuotaBlocked = true;
-      return { kind: 'empty', reason: 'premium-quota-blocked' };
-    }
-    return { kind: 'error', message };
+    return mapCopilotCompletionError(error, policy);
   }
 }

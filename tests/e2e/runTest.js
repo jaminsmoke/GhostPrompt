@@ -31,8 +31,8 @@ async function main() {
       reuseMachineInstall: true
     });
   } catch (error) {
-    console.error('Failed to run E2E tests');
-    console.error(error);
+    process.stderr.write('Failed to run E2E tests\n');
+    process.stderr.write(`${String(error)}\n`);
     process.exit(1);
   }
 }

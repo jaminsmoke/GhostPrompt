@@ -72,8 +72,8 @@ export class QueuedNdjsonFileTransport {
       }
       if (!this.warnedBackpressure && this.droppedDebug > 10) {
         this.warnedBackpressure = true;
-        console.warn(
-          `[GhostPrompt] Log file queue backpressure: dropped DEBUG entries (count=${this.droppedDebug}).`,
+        process.stderr.write(
+          `[GhostPrompt] Log file queue backpressure: dropped DEBUG entries (count=${this.droppedDebug}).\n`,
         );
       }
     }
@@ -133,7 +133,7 @@ export class QueuedNdjsonFileTransport {
       }
     } catch (error) {
       this.writeErrors += 1;
-      console.error('[GhostPrompt] File log transport write failed', error);
+      process.stderr.write(`[GhostPrompt] File log transport write failed ${String(error)}\n`);
     } finally {
       this.flushing = false;
     }
@@ -174,7 +174,7 @@ export class QueuedNdjsonFileTransport {
       await vscode.workspace.fs.delete(ndjsonUri, { useTrash: false });
     } catch (error) {
       this.writeErrors += 1;
-      console.error('[GhostPrompt] events.ndjson rotation failed', error);
+      process.stderr.write(`[GhostPrompt] events.ndjson rotation failed ${String(error)}\n`);
     }
   }
 

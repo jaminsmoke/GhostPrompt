@@ -24,7 +24,7 @@ async function testActivateExtension() {
   assert.ok(extension, 'Extension should be found');
   await extension.activate();
   assert.strictEqual(extension.isActive, true);
-  console.log('PASS: activate extension');
+  process.stdout.write('PASS: activate extension\n');
 }
 
 /**
@@ -41,7 +41,7 @@ async function testExecuteSafeCommands() {
     await vscode.commands.executeCommand(command);
   }
 
-  console.log('PASS: execute safe commands');
+  process.stdout.write('PASS: execute safe commands\n');
 }
 
 /**
@@ -52,7 +52,7 @@ async function testReadWorkspaceConfig() {
   const config = vscode.workspace.getConfiguration('ghostPrompt');
   const value = config.get('debugSuggestions');
   assert.notStrictEqual(value, undefined, 'ghostPrompt.debugSuggestions should be readable from configuration');
-  console.log('PASS: read workspace configuration');
+  process.stdout.write('PASS: read workspace configuration\n');
 }
 
 module.exports = { runTests };

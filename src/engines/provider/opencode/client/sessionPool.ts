@@ -96,8 +96,9 @@ export async function getSession(client?: OpenCodeSdkClient): Promise<string> {
  */
 export async function closeAllSessions(client?: OpenCodeSdkClient): Promise<void> {
   const c = client ?? getGlobalClient();
-  await Promise.all(sessionPool.map((e) => deleteSessionInternal(e.sessionId, c)));
+  const activeSessions = [...sessionPool];
   sessionPool = [];
+  await Promise.all(activeSessions.map((e) => deleteSessionInternal(e.sessionId, c)));
 }
 
 /**

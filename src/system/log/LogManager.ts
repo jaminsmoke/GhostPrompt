@@ -101,8 +101,9 @@ export function initGhostPromptLogging(context: vscode.ExtensionContext): void {
  * @returns {Promise<void>} Promesa que termina cuando los transports se han cerrado.
  */
 export async function disposeGhostPromptLogging(): Promise<void> {
-  await singleton?.disposeAll();
+  const active = singleton;
   singleton = undefined;
+  await active?.disposeAll();
 }
 
 /**
