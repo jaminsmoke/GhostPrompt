@@ -3,7 +3,7 @@
  */
 import * as vitest from 'vitest';
 
-import { levelIndex, parseLogLevelString, shouldEmit } from './levels';
+import { levelIndex, parseLogLevelString, shouldEmit } from '../internals/protocols/guards/guardLogLevel';
 
 vitest.describe('levels', () => {
   vitest.it('parseLogLevelString normaliza entradas', () => {

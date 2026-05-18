@@ -1,7 +1,7 @@
 /**
  * @file Anillo de migajas por `captureId` (FIFO, tamaño acotado).
  */
-import type { Breadcrumb } from './types';
+import type { Breadcrumb } from '../internals/protocols/types/typeLog';
 
 const DEFAULT_MAX_PER_CAPTURE = 20;
 

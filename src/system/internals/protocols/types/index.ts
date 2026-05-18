@@ -7,3 +7,4 @@ export * from './typeOpencodeClient';
 export type * from './typeSuggestionStyle';
 export * from './typeDestinations';
 export * from './typeCompletionUi';
+export type * from './typeLog';

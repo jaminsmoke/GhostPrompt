@@ -8,16 +8,27 @@ import {
   hasAnyConfigurationInspectScope,
   isDefined,
 } from '../internals/isDefined';
+import {
+  LOG_FILE_ROTATE_MAX_BYTES,
+  LOG_LEGACY_MD_PREVIEW_MAX_CHARS,
+} from '../internals/protocols/constants/consLogLimits';
+import {
+  parseLogLevelString,
+  shouldEmit,
+} from '../internals/protocols/guards/guardLogLevel';
 
 import { CaptureBreadcrumbStore } from './breadcrumbs';
-import { parseLogLevelString, shouldEmit, type LogLevelName } from './levels';
 import { Logger } from './Logger';
-import { LOG_FILE_ROTATE_MAX_BYTES, LOG_LEGACY_MD_PREVIEW_MAX_CHARS } from './logLimits';
 import { QueuedNdjsonFileTransport } from './transports/file';
 import { OutputChannelLogTransport } from './transports/outputChannel';
 
-import type { EmitPayload, LogEmitSink } from './emitContract';
-import type { LogEntry, LogTransport } from './types';
+import type {
+  EmitPayload,
+  LogEmitSink,
+  LogEntry,
+  LogLevelName,
+  LogTransport,
+} from '../internals/protocols/types/typeLog';
 
 /**
  * Resuelve el nivel mínimo visible según `logLevel` explícito o shim `debugSuggestions`.

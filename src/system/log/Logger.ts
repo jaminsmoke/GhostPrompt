@@ -1,7 +1,7 @@
 /**
  * @file Logger por módulo (`module` estable en NDJSON).
  */
-import type { LogEmitSink } from './emitContract';
+import type { LogEmitSink } from '../internals/protocols/types/typeLog';
 
 /**
  * API de logging por módulo canónico (`suggest`, `inbound`, …).

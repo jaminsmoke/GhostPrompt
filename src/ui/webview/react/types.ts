@@ -21,7 +21,7 @@ declare global {
   }
 }
 
-export type LogLevel = 'debug' | 'error' | 'info' | 'warn';
+export type { LogLevel } from '../../../system/internals/protocols/types/typeLog';
 
 // ── Desde protocols/state/provider ────────────────────────────
 

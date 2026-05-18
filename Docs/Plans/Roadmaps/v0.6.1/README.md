@@ -6,7 +6,8 @@ Extracción y consolidación de protocolos puros hacia `system/internals/protoco
 
 | Orden | Documento | Descripción |
 | ----- | --------- | ----------- |
-| 1 | [01-protocols-extraction.md](./01-protocols-extraction.md) | Fases de extracción, archivos afectados, tests y criterios de aceptación |
+| 1 | [01-protocols-extraction.md](./01-protocols-extraction.md) | Fases PA–PM: `SuggestionStyle`, destinos, schemas webview, renaming, símbolos |
+| 2 | [02-protocols-extraction-log.md](./02-protocols-extraction-log.md) | Fase QA (cerrada) + backlog QB/QD: log → `protocols/`, routing guards, `instruction` |
 
 ## Contexto
 
@@ -26,10 +27,15 @@ La v0.6 ya estableció `system/internals/protocols/` como la capa de contratos p
 - `CompletionCancellationToken` (sin `vscode` en protocols) — PK 🟢
 - Barrido docs y rutas legacy — PM 🟢
 - **v0.6.1 protocols extraction:** completado (PA–PM). Ver [`01-protocols-extraction.md`](./01-protocols-extraction.md).
+- Extracción log → `protocols/` (`consLogLimits`, `typeLog`, `guardLogLevel`) — QA 🟢
+- Guards routing `looksLike*ModelId` — QB ⚪
+- Destino `buildCompletionInstruction` (`sugcore/`) — QD ⚪
 
 Convención de nombres: [`Docs/ExtensionArchitecture/NamingConventions.md`](../../ExtensionArchitecture/NamingConventions.md).
 
 ## Estado
 
 - **Hito v0.6.0** publicado.
-- **v0.6.1:** Extracción de protocols completada (PA–PM) en [`01-protocols-extraction.md`](./01-protocols-extraction.md).
+- **v0.6.1 fase 1:** Extracción de protocols (PA–PM) completada en [`01-protocols-extraction.md`](./01-protocols-extraction.md).
+- **v0.6.1 fase 2:** Extracción de `system/log/` (QA.1–QA.7) completada en [`02-protocols-extraction-log.md`](./02-protocols-extraction-log.md).
+- **v0.6.1 fase 3:** Backlog QB/QD (routing guards, `instruction`) — pendiente en el mismo doc.

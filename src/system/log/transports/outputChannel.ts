@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 
 import { clearOptionalProperty } from '../../internals/isDefined';
 
-import type { LogEntry } from '../types';
+import type { LogEntry } from '../../internals/protocols/types/typeLog';
 
 /** Nombre visible del canal (histórico: *GhostPrompt Suggestions*). */
 export const GHOSTPROMPT_LOG_CHANNEL_NAME = 'GhostPrompt Log';

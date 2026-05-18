@@ -6,7 +6,7 @@ import { gzip } from 'node:zlib';
 
 import * as vscode from 'vscode';
 
-import type { LogEntry } from '../types';
+import type { LogEntry } from '../../internals/protocols/types/typeLog';
 
 const gzipAsync = promisify(gzip);
 

@@ -16,6 +16,7 @@ protocols/
 │   ├── consOutboundForwardKinds.ts
 │   ├── consVsOpenCodeX.ts
 │   ├── consCursorChat.ts
+│   ├── consLogLimits.ts
 │   └── index.ts
 ├── validations/
 │   └── schemas/
@@ -30,13 +31,15 @@ protocols/
 │   ├── guardOutboundForward.ts
 │   ├── guardProviderId.ts
 │   ├── guardProviderId.test.ts
-│   └── (sin barrel; importar por ruta)
+│   ├── guardLogLevel.ts
+│   └── index.ts
 ├── types/
 │   ├── typeCompletion.ts
 │   ├── typeDestinations.ts
 │   ├── typeSuggestionStyle.ts
 │   ├── typeOpencodeClient.ts
 │   ├── typeCompletionUi.ts
+│   ├── typeLog.ts
 │   └── index.ts
 └── state/
     ├── loading/
@@ -65,4 +68,5 @@ protocols/
 ## Qué NO entra aquí
 
 - Estado mutable y orquestación → `system/runtime/`, `ui/provider/`
+- Implementación de logging (`Logger`, transports, `LogManager`) → `system/log/` (importa tipos y guards desde aquí; el barrel público re-exporta contratos puros)
 - Parsers del boundary con logging → `api/protocols/` (importan `zschem*` desde aquí)

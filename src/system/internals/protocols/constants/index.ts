@@ -6,3 +6,4 @@ export * from './consPipelineDefaults';
 export * from './consVsOpenCodeX';
 export * from './consDestinations';
 export * from './consCursorChat';
+export * from './consLogLimits';

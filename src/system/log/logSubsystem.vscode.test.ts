@@ -10,7 +10,7 @@ import { emptyConfigurationInspect } from '../internals/testing/mockVscodeConfig
 
 import { QueuedNdjsonFileTransport } from './transports/file';
 
-import type { LogEntry } from './types';
+import type { LogEntry } from '../internals/protocols/types/typeLog';
 
 const hoisted = vi.hoisted(() => ({
   files: new Map<string, Uint8Array>(),

@@ -1,15 +1,14 @@
 /**
- * @file Niveles de log: orden de severidad y helpers sin dependencia de VS Code.
+ * @file Guards y clasificadores de niveles de log (severidad).
  */
 
-/** Etiqueta serializada en `LogEntry` / NDJSON. */
-export type LogLevelName = 'DEBUG' | 'ERROR' | 'INFO' | 'WARN';
+import type { LogLevelName } from '../types/typeLog';
 
-/** Orden creciente de “verbosidad” (ERROR es el más restrictivo al filtrar por defecto). */
+/** Orden creciente de "verbosidad" (ERROR es el más restrictivo al filtrar por defecto). */
 export const LOG_LEVEL_ORDER: readonly LogLevelName[] = ['ERROR', 'WARN', 'INFO', 'DEBUG'] as const;
 
 /**
- * Convierte una cadena de configuración (`ghostPrompt.logLevel`) a `LogLevelName`.
+ * Convierte una cadena de configuración a `LogLevelName`.
  * @param {string | undefined} raw - Valor en minúsculas o mezcla; por defecto `info`.
  * @returns {LogLevelName} Nivel canónico.
  */
@@ -39,7 +38,7 @@ export function levelIndex(level: LogLevelName): number {
 /**
  * Indica si una entrada con `entryLevel` debe emitirse cuando el umbral mínimo es `minLevel`.
  * @param {LogLevelName} entryLevel - Severidad del evento.
- * @param {LogLevelName} minLevel - Umbral mínimo configurado (por ejemplo, `INFO` excluye solo `DEBUG`).
+ * @param {LogLevelName} minLevel - Umbral mínimo configurado.
  * @returns {boolean} Verdadero si el evento debe mostrarse o persistirse.
  */
 export function shouldEmit(entryLevel: LogLevelName, minLevel: LogLevelName): boolean {

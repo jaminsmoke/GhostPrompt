@@ -6,7 +6,7 @@ import * as vitest from 'vitest';
 
 import { Logger } from './Logger';
 
-import type { LogEmitSink, EmitPayload } from './emitContract';
+import type { EmitPayload, LogEmitSink } from '../internals/protocols/types/typeLog';
 
 vitest.describe('Logger', () => {
   vitest.it('debug emits payload with correct level and module', () => {
