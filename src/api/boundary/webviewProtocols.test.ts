@@ -5,7 +5,16 @@ import * as vitest from 'vitest';
 import { vi } from 'vitest';
 
 import { DEFAULT_SUGGESTION_DEBOUNCE_MS } from '../../system/internals/protocols/constants/consPipelineDefaults';
-import { webviewInboundMessageSchema as canonicalInboundSchema } from '../../system/internals/protocols/validations/schemas/zschemWebviewMessages';
+import {
+  invalidWebviewSettingsBadTierEnvelope,
+  minimalWebviewSettingsPayload,
+  webviewOutboundInvalidFixtures,
+  webviewOutboundValidFixtures,
+} from '../../system/internals/protocols/validations/schemas/fixtures/webviewOutboundMessageFixtures';
+import {
+  webviewInboundMessageSchema as canonicalInboundSchema,
+  webviewOutboundMessageSchema,
+} from '../../system/internals/protocols/validations/schemas/zschemWebviewMessages';
 import { emptyConfigurationInspect } from '../../system/internals/testing/mockVscodeConfigurationInspect';
 
 vi.mock('vscode', () => ({
@@ -31,25 +40,11 @@ vi.mock('vscode', () => ({
 import {
   parseOutboundSettingsEnvelope,
   parseWebviewInboundMessage,
+  parseWebviewOutboundMessage,
   webviewInboundMessageSchema,
   webviewOutboundSettingsEnvelopeSchema,
   webviewSettingsPayloadSchema,
 } from './webviewProtocols';
-
-const minimalSettingsPayload = {
-  completionProvider: 'copilot' as const,
-  completionUiKind: 'copilot' as const,
-  enabledCompletionSources: ['copilot'] as const,
-  suggestionModelPolicy: 'nonPremiumOnly' as const,
-  selectedModelId: 'auto',
-  availableModels: [] as const,
-  suggestionStyle: 'balanced' as const,
-  debugSuggestions: false,
-  suggestionDebounceMs: DEFAULT_SUGGESTION_DEBOUNCE_MS,
-  agentDestination: 'copilotChat' as const,
-  vsOpenCodeXExtensionInstalled: false,
-  cursorDesktopHost: false,
-};
 
 vitest.describe('webviewProtocols (v0.3.1 Fase B)', () => {
   vitest.it('reexporta el mismo schema inbound que el módulo canónico en protocols', () => {
@@ -143,38 +138,40 @@ vitest.describe('webviewProtocols (v0.3.1 Fase B)', () => {
   });
 
   vitest.it('acepta sobre settings saliente válido', () => {
-    const envelope = {
-      type: 'settings' as const,
-      settings: {
-        ...minimalSettingsPayload,
-        availableModels: [
-          {
-            id: 'm',
-            label: 'M',
-            tier: 'included' as const,
-            completionSource: 'copilot' as const,
-          },
-        ],
-      },
-    };
+    const envelope = webviewOutboundValidFixtures.find((f) => f.id === 'settings-with-model')?.raw;
+    vitest.expect(envelope).toBeDefined();
     vitest.expect(parseOutboundSettingsEnvelope(envelope)).toEqual(envelope);
     vitest.expect(webviewOutboundSettingsEnvelopeSchema.safeParse(envelope).success).toBe(true);
   });
 
   vitest.it('rechaza settings saliente con tier inválido', () => {
-    const bad = {
-      type: 'settings' as const,
-      settings: {
-        ...minimalSettingsPayload,
-        availableModels: [{ id: 'x', label: 'X', tier: 'free' }],
+    vitest.expect(parseOutboundSettingsEnvelope(invalidWebviewSettingsBadTierEnvelope)).toBe(false);
+  });
+
+  vitest.describe('paridad host → webview (fixtures compartidos con webview)', () => {
+    vitest.it.each(webviewOutboundValidFixtures.map((fixture) => [fixture.id, fixture.raw]))(
+      'parseWebviewOutboundMessage acepta %s',
+      (_id, raw) => {
+        const fromSchema = webviewOutboundMessageSchema.safeParse(raw);
+        vitest.expect(fromSchema.success).toBe(true);
+        if (!fromSchema.success) {
+          return;
+        }
+        vitest.expect(parseWebviewOutboundMessage(raw)).toEqual(fromSchema.data);
       },
-    };
-    vitest.expect(parseOutboundSettingsEnvelope(bad)).toBe(false);
+    );
+
+    vitest.it.each(
+      webviewOutboundInvalidFixtures.map((raw, index) => [`#${index}`, raw] as const),
+    )('parseWebviewOutboundMessage rechaza %s', (_label, raw) => {
+      vitest.expect(webviewOutboundMessageSchema.safeParse(raw).success).toBe(false);
+      vitest.expect(parseWebviewOutboundMessage(raw)).toBe(false);
+    });
   });
 
   vitest.it('webviewSettingsPayloadSchema coincide con modelo descriptor', () => {
     const r = webviewSettingsPayloadSchema.safeParse({
-      ...minimalSettingsPayload,
+      ...minimalWebviewSettingsPayload,
       effectiveModel: {
         id: 'a',
         label: 'A',
@@ -192,5 +189,11 @@ vitest.describe('webviewProtocols (v0.3.1 Fase B)', () => {
       value: 'concise',
     });
     vitest.expect(r.success).toBe(true);
+  });
+
+  vitest.it('DEFAULT_SUGGESTION_DEBOUNCE_MS sigue en fixtures mínimos', () => {
+    vitest.expect(minimalWebviewSettingsPayload.suggestionDebounceMs).toBe(
+      DEFAULT_SUGGESTION_DEBOUNCE_MS,
+    );
   });
 });

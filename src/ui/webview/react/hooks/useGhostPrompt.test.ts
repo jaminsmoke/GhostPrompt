@@ -6,7 +6,10 @@ import * as vitest from 'vitest';
 const globalWithWindow = globalThis as unknown as { window?: unknown };
 globalWithWindow.window = globalWithWindow;
 
-import { DEFAULT_SUGGESTION_DEBOUNCE_MS } from '../../../../system/internals/protocols/constants/consPipelineDefaults';
+import {
+  minimalWebviewSettingsPayload,
+  webviewOutboundValidFixtures,
+} from '../../../../system/internals/protocols/validations/schemas/fixtures/webviewOutboundMessageFixtures';
 import { parseWebviewInboundMessage } from '../validators/parseWebviewInbound';
 
 import type * as UseGhostPromptModule from './useGhostPrompt';
@@ -75,7 +78,7 @@ vitest.describe('useGhostPrompt draft sync and hydrate handling', () => {
 });
 
 vitest.describe('webview inbound message validation', () => {
-  vitest.it('returns undefined for invalid inbound payloads', () => {
+  vitest.it('returns false for invalid inbound payloads', () => {
     const invalidPayload = {
       type: 'settings',
       settings: {
@@ -87,25 +90,10 @@ vitest.describe('webview inbound message validation', () => {
   });
 
   vitest.it('accepts valid settings payloads', () => {
-    const validPayload = {
-      type: 'settings',
-      settings: {
-        completionProvider: 'copilot',
-        completionUiKind: 'copilot',
-        enabledCompletionSources: ['copilot'],
-        suggestionModelPolicy: 'nonPremiumOnly',
-        selectedModelId: 'auto',
-        availableModels: [],
-        suggestionStyle: 'balanced',
-        debugSuggestions: false,
-        suggestionDebounceMs: DEFAULT_SUGGESTION_DEBOUNCE_MS,
-        agentDestination: 'copilotChat',
-        vsOpenCodeXExtensionInstalled: false,
-        cursorDesktopHost: false,
-      },
-    } as const;
-
+    const validPayload = webviewOutboundValidFixtures.find((f) => f.id === 'settings')?.raw;
+    vitest.expect(validPayload).toBeDefined();
     vitest.expect(parseWebviewInboundMessage(validPayload)).toEqual(validPayload);
+    vitest.expect(minimalWebviewSettingsPayload.completionProvider).toBe('copilot');
   });
 });
 

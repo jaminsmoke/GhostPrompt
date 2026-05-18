@@ -42,4 +42,5 @@ Convención de nombres: [`Docs/ExtensionArchitecture/NamingConventions.md`](../.
 - **v0.6.1 fase 2:** Extracción de `system/log/` (QA.1–QA.7) completada en [`02-protocols-extraction-log.md`](./02-protocols-extraction-log.md).
 - **v0.6.1 fase 3:** Backlog QB/QD (routing guards, `instruction`) — pendiente en el mismo doc.
 - **v0.6.1 fase 4:** Higiene interna de `protocols/` (QB–QF) completada en [`03-protocols-hygiene.md`](./03-protocols-hygiene.md).
-- **v0.6.1 fase 5:** Higiene de UI webview (PA–PD) en progreso en [`04-webview-ui-hygiene.md`](./04-webview-ui-hygiene.md).
+- **v0.6.1 fase 5:** Higiene de UI webview (PA–PD) completada en [`04-webview-ui-hygiene.md`](./04-webview-ui-hygiene.md).
+- **Continuación v0.6.2:** Consolidación boundary + contratos webview (FA–FE) — [`../v0.6.2/README.md`](../v0.6.2/README.md).
