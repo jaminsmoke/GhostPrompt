@@ -3,7 +3,7 @@
  */
 import { useRef, useState, type Dispatch, type RefObject, type SetStateAction } from 'react';
 
-import { DEFAULT_SUGGESTION_DEBOUNCE_MS } from '../../../../system/internals/protocols/constants/consPipelineDefaults';
+import { DEFAULT_SUGGESTION_DEBOUNCE_MS } from '../webviewProtocolConstants';
 
 import type {
   AgentDestination,

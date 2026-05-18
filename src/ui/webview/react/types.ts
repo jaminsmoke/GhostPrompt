@@ -1,6 +1,9 @@
 /**
- * @file Tipos compartidos del webview React GhostPrompt.
- * Tipos de protocolo importados desde `system/internals/protocols/`.
+ * @file Barrel de **tipos** del webview React GhostPrompt.
+ *
+ * Tipos de protocolo reexportados desde `system/internals/protocols/`.
+ * Constantes runtime (`cons*`) en `webviewProtocolConstants.ts`.
+ * Schemas Zod en `webviewProtocolSchemas.ts` (parseo inbound del panel).
  */
 
 // ── Webview-specific ──────────────────────────────────────────

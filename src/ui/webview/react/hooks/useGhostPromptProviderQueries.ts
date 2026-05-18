@@ -3,8 +3,8 @@
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { WEBVIEW_PROVIDER_STATUS_STALE_MS } from '../../../../system/internals/protocols/constants/consPipelineDefaults';
 import { hostQuery } from '../utils/hostQuery';
+import { WEBVIEW_PROVIDER_STATUS_STALE_MS } from '../webviewProtocolConstants';
 
 import { postToHost } from './ghostPromptPostMessage';
 

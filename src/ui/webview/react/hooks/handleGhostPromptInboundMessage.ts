@@ -1,11 +1,8 @@
 /**
  * @file Despacho de mensajes inbound del host hacia el estado del webview GhostPrompt.
  */
-import {
-  DEFAULT_SUGGESTION_DEBOUNCE_MS,
-  MIN_SUGGESTION_DEBOUNCE_MS,
-} from '../../../../system/internals/protocols/constants/consPipelineDefaults';
 import { parseWebviewInboundMessage } from '../validators/parseWebviewInbound';
+import { DEFAULT_SUGGESTION_DEBOUNCE_MS, MIN_SUGGESTION_DEBOUNCE_MS } from '../webviewProtocolConstants';
 
 import {
   ghostPromptApplyInboundCaptureReference,

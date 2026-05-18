@@ -5,7 +5,7 @@
 import { useCallback, useEffect } from 'react';
 
 import { isDefined } from '../../../../system/internals/isDefined';
-import { WEBVIEW_TEXTAREA_MIN_HEIGHT_PX } from '../../../../system/internals/protocols/constants/consPipelineDefaults';
+import { WEBVIEW_TEXTAREA_MIN_HEIGHT_PX } from '../webviewProtocolConstants';
 
 import { logToHost } from './ghostPromptLog';
 import { postToHost } from './ghostPromptPostMessage';

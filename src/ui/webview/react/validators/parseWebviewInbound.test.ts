@@ -7,7 +7,7 @@ import {
   webviewOutboundInvalidFixtures,
   webviewOutboundValidFixtures,
 } from '../../../../system/internals/protocols/validations/schemas/fixtures/webviewOutboundMessageFixtures';
-import { webviewOutboundMessageSchema } from '../../../../system/internals/protocols/validations/schemas/zschemWebviewMessages';
+import { webviewOutboundMessageSchema } from '../webviewProtocolSchemas';
 
 import { parseWebviewInboundMessage } from './parseWebviewInbound';
 

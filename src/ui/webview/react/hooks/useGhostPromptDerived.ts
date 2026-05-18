@@ -3,7 +3,7 @@
  */
 import { useCallback, useMemo } from 'react';
 
-import { WEBVIEW_DEBUG_TEXT_PREVIEW_CHARS } from '../../../../system/internals/protocols/constants/consPipelineDefaults';
+import { WEBVIEW_DEBUG_TEXT_PREVIEW_CHARS } from '../webviewProtocolConstants';
 
 import { logToHost } from './ghostPromptLog';
 import { postToHost } from './ghostPromptPostMessage';

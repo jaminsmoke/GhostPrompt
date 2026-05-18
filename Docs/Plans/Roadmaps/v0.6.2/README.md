@@ -34,7 +34,7 @@ Límites de capa: [`Docs/Owners.md`](../../Owners.md).
 | ---- | ---- | ------ |
 | **FA** | Eliminar `api/protocols/` y alinear entrada `api/` | Completado |
 | **FB** | Paridad parse mensajes webview ↔ host | Completado |
-| **FC** | Afinar barrel de tipos React (`ui/webview/react/types.ts`) | Pendiente |
+| **FC** | Afinar barrel de tipos React (`ui/webview/react/types.ts`) | Completado |
 | **FD** | Docs / CHANGELOG / referencias `api/protocols` | Pendiente |
 | **FE** | Verificación release 0.6.2 | Pendiente |
 

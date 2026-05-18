@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   WEBVIEW_TEXTAREA_COMPACT_MIN_HEIGHT_PX,
   WEBVIEW_TEXTAREA_MIN_HEIGHT_PX,
-} from '../../../../system/internals/protocols/constants/consPipelineDefaults';
+} from '../webviewProtocolConstants';
 
 interface PromptInputProperties {
   text: string;

@@ -8,7 +8,7 @@
  * no confundir con `webviewInboundMessageSchema` (webview → host), que vive en
  * `api/boundary/webviewProtocols.ts`.
  */
-import { webviewOutboundMessageSchema } from '../../../../system/internals/protocols/validations/schemas/zschemWebviewMessages';
+import { webviewOutboundMessageSchema } from '../webviewProtocolSchemas';
 
 import type { InboundMessage } from '../types';
 

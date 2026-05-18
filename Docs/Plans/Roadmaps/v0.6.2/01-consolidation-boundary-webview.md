@@ -78,12 +78,12 @@ flowchart TB
 
 > **Motivo:** `ui/webview/react/types.ts` ya reexporta tipos desde `protocols/` (bien). Revisar que no queden tipos locales duplicados ni imports directos largos en componentes cuando el barrel basta.
 
-| # | Tarea | Archivo |
-| - | ----- | ------- |
-| C1 | Inventariar imports `../../../../system/internals/protocols/...` en `ui/webview/react/` | grep / depcruise |
-| C2 | Donde solo se necesite un tipo, importar desde `./types` o `../types` | hooks, components |
-| C3 | Mantener constantes `cons*` importadas desde `protocols/constants` (runtime en bundle) — no mover a `types.ts` | hooks existentes |
-| C4 | Verificar que `OutboundMessage` / `InboundMessage` sigan siendo alias de schemas Zod | `types.ts` |
+| # | Tarea | Archivo | Estado |
+| - | ----- | ------- | ------ |
+| C1 | Inventariar imports profundos a `protocols/` en `ui/webview/react/` | grep / depcruise | ✅ |
+| C2 | Tipos solo desde `./types` o `../types` (ya estaba en hooks/components) | — | ✅ |
+| C3 | Constantes runtime vía `webviewProtocolConstants.ts` (no en `types.ts`) | `webviewProtocolConstants.ts` | ✅ |
+| C4 | `InboundMessage` / `OutboundMessage` alias Zod; schemas en `webviewProtocolSchemas.ts` | `types.ts`, `parseWebviewInbound.ts` | ✅ |
 
 **Criterio de hecho:** Menos rutas profundas repetidas; `types.ts` sigue siendo el único barrel de tipos del webview. 0 ciclos nuevos en `depcruise`.
 
@@ -133,6 +133,7 @@ Paralelizable: FC puede hacerse por PRs pequeños mientras FB avanza.
 | 2026-05-18 | — | Plan v0.6.2 creado (FA–FE). Pendiente de inicio. |
 | 2026-05-18 | FA | Eliminado `src/api/protocols/` y duplicado `api/settings/applyWebviewUpdate*`. `npm run check` verde. |
 | 2026-05-18 | FB | Fixtures `webviewOutboundMessageFixtures.ts`, tests paridad webview + boundary. JSDoc `parseWebviewInbound`. |
+| 2026-05-18 | FC | Barrels `webviewProtocolConstants.ts` y `webviewProtocolSchemas.ts`; sin imports `../../../../protocols` en hooks. |
 
 ## Bitácora
 
