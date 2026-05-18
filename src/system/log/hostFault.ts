@@ -1,6 +1,8 @@
 /**
  * @file Fallos del host: canal GhostPrompt Log canónico y líneas de arranque.
  */
+import { isDefined } from '../internals/isDefined';
+
 import {
   appendGhostPromptOutputLine,
   getGhostPromptOutputChannel,
@@ -8,30 +10,42 @@ import {
 } from './transports/outputChannel';
 
 import type { LogEntry } from '../internals/protocols/types/typeLog';
-import type { OutputChannel } from 'vscode';
 
 const bootstrapFormatter = new OutputChannelLogTransport();
 
 /**
+ * Serializa un error capturado para el canal de log.
  * @param {unknown} cause - Valor de error opcional.
- * @returns {NonNullable<LogEntry['error']> | null} Payload serializable o null.
+ * @returns {NonNullable<LogEntry['error']> | false} Payload serializable o `false` si no hay causa.
  */
-function toHostFaultError(cause: unknown): NonNullable<LogEntry['error']> | null {
+function toHostFaultError(cause: unknown): NonNullable<LogEntry['error']> | false {
   if (cause instanceof Error) {
     return { name: cause.name, message: cause.message, stack: cause.stack };
   }
-  if (cause === null || cause === undefined) {
-    return null;
+  if (!isDefined(cause)) {
+    return false;
   }
-  return { name: 'Error', message: String(cause) };
+  if (typeof cause === 'object') {
+    return { name: 'Error', message: JSON.stringify(cause) };
+  }
+  if (typeof cause === 'string') {
+    return { name: 'Error', message: cause };
+  }
+  if (typeof cause === 'number' || typeof cause === 'boolean' || typeof cause === 'bigint') {
+    return { name: 'Error', message: cause.toString() };
+  }
+  if (typeof cause === 'symbol') {
+    return { name: 'Error', message: cause.description ?? 'symbol' };
+  }
+  return { name: 'Error', message: 'unknown' };
 }
 
 /**
  * Devuelve el canal **GhostPrompt Log**, creándolo si hace falta.
  * @param {boolean} [preserveFocus] - Si es true, no roba el foco del editor.
- * @returns {OutputChannel} Canal canónico de la extensión.
+ * @returns {import('vscode').OutputChannel} Canal canónico de la extensión.
  */
-export function revealGhostPromptLogChannel(preserveFocus = false): OutputChannel {
+export function revealGhostPromptLogChannel(preserveFocus = false) {
   const channel = getGhostPromptOutputChannel();
   channel.show(preserveFocus);
   return channel;
@@ -57,8 +71,8 @@ export function writeGhostPromptLogBootstrap(message: string): void {
  * @param {string} scope - Módulo o área (`extension`, `ui`, …).
  * @param {string} message - Código de evento.
  * @param {unknown} [cause] - Error original.
- * @param {{ reveal?: boolean }} [options] - Opciones; si `reveal` no es false, abre GhostPrompt Log.
- * @param options.reveal
+ * @param {{ reveal?: boolean }} [options] - Opciones de presentación.
+ * @param {boolean} [options.reveal] - Si no es `false`, abre el panel GhostPrompt Log.
  * @returns {void}
  */
 export function reportHostFault(
@@ -73,8 +87,10 @@ export function reportHostFault(
     level: 'ERROR',
     module: scope,
     message,
-    ...errorPayload === null ? {} : { error: errorPayload },
   };
+  if (errorPayload !== false) {
+    entry.error = errorPayload;
+  }
   appendGhostPromptOutputLine(bootstrapFormatter.formatLine(entry));
   if (options?.reveal !== false) {
     getGhostPromptOutputChannel().show(true);

@@ -14,6 +14,7 @@ import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from '../destinations/v
 import { ollamaModelManager } from '../engines/provider/ollama';
 import { resetClient } from '../engines/provider/opencode/client';
 import { registerProviderStatusRegistry } from '../engines/runtime/providerStatusRegistry';
+import { isDefined } from '../system/internals/isDefined';
 import {
   disposeGhostPromptLogging,
   ensureSuggestionDebugChannel,
@@ -27,19 +28,25 @@ import {
 import { appendGhostPromptOutputLine } from '../system/log/transports/outputChannel';
 import { MiniInputViewProvider } from '../ui/provider/MiniInputViewProvider';
 
+interface ExtensionPackageManifest {
+  version?: string;
+}
+
 /**
  * Activa la extensión GhostPrompt.
  * @param {vscode.ExtensionContext} context - Contexto de la extensión proporcionado por VS Code.
+ * @throws {Error} Si el registro de vistas o comandos falla de forma irrecuperable.
  */
 export function activate(context: vscode.ExtensionContext): void {
-  const package_ = context.extension.packageJSON as { version?: string };
-  const version = typeof package_.version === 'string' ? package_.version : 'unknown';
+  const extensionPackage = context.extension.packageJSON as ExtensionPackageManifest;
+  const version =
+    typeof extensionPackage.version === 'string' ? extensionPackage.version : 'unknown';
   appendGhostPromptOutputLine(`[GhostPrompt] Activating extension v${version}…`);
   initGhostPromptLogging(context);
   const log = getLogger('extension');
 
   try {
-    log.info('activate-start', { version: String(context.extension.packageJSON.version ?? '') });
+    log.info('activate-start', { version });
     registerProviderStatusRegistry();
     const sidebarProvider = new MiniInputViewProvider(context, MiniInputViewProvider.viewId);
     const panelProvider = new MiniInputViewProvider(context, MiniInputViewProvider.panelViewId);
@@ -101,7 +108,12 @@ export function activate(context: vscode.ExtensionContext): void {
   } catch (error: unknown) {
     reportHostFault('extension', 'activate-failed', error);
     log.error('activate-failed', {}, error);
-    void vscode.window.showErrorMessage(formatHostFaultMessage(error));
+    const errorNotification = vscode.window.showErrorMessage(formatHostFaultMessage(error));
+    if (isDefined(errorNotification)) {
+      Promise.resolve(errorNotification).catch(() => {
+        /* El fallo ya quedó en GhostPrompt Log vía reportHostFault. */
+      });
+    }
     throw error;
   }
 }

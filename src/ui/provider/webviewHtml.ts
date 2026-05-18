@@ -72,7 +72,8 @@ export function buildGhostPromptWebviewFaultHtml(detail: string): string {
 const EXTERNAL_SCRIPT_IN_BODY_PATTERN = /<script\b[^>]*\bsrc=[^>]*>\s*<\/script>/giu;
 
 /**
- *
+ * Genera un nonce aleatorio para Content-Security-Policy del webview.
+ * @returns {string} Cadena alfanumérica de 32 caracteres.
  */
 export function generateGhostPromptWebviewNonce(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -85,6 +86,42 @@ export type GhostPromptWebviewHtmlParameters = {
   viewContributionId: string;
   capabilitiesPayload: Record<string, unknown>;
 };
+
+type WebviewHtmlBuildDiagnostics = {
+  viewContributionId: string;
+  reactIndexHtmlPath: string;
+  finalHtml: string;
+  bodySlice: string;
+  cssInlinedBytes: number;
+};
+
+/**
+ * Registra métricas del HTML generado para diagnóstico VSIX / F5.
+ * @param {WebviewHtmlBuildDiagnostics} diagnostics - Datos del ensamblado.
+ * @returns {void}
+ */
+function logWebviewHtmlBuilt(diagnostics: WebviewHtmlBuildDiagnostics): void {
+  const { viewContributionId, reactIndexHtmlPath, finalHtml, bodySlice, cssInlinedBytes } =
+    diagnostics;
+  const scriptSourceMatch =
+    /<script\b[^>]*\bsrc=["'](?<scriptSrc>[^"']+)["']/iu.exec(finalHtml);
+  const hasExternalStylesheetLink = /<link\b[^>]*\brel=["']stylesheet["']/iu.test(finalHtml);
+  const bundleScriptsInBody = (bodySlice.match(EXTERNAL_SCRIPT_IN_BODY_PATTERN) ?? []).length;
+
+  getLogger('ui').info('webview-html-built', {
+    viewContributionId,
+    bundlePath: reactIndexHtmlPath,
+    hasModuleScript: finalHtml.includes('type="module"'),
+    hasCrossOrigin: /\bcrossorigin\b/iu.test(finalHtml),
+    scriptCount: (finalHtml.match(/<script\b/giu) ?? []).length,
+    bundleScriptsInBody,
+    hasRootDiv: bodySlice.includes('id="root"'),
+    hasBootPlaceholder: bodySlice.includes('gp-boot'),
+    scriptSrc: scriptSourceMatch?.groups?.scriptSrc ?? '',
+    cssInlinedBytes,
+    hasExternalStylesheetLink,
+  });
+}
 
 /**
  * Construye el HTML del webview a partir del bundle React generado por Vite,
@@ -164,26 +201,17 @@ export function buildGhostPromptWebviewHtml(params: GhostPromptWebviewHtmlParame
     `${bootStyles}\n${bootDiagnostics}\n${scriptInjection}\n</head>`,
   );
   const finalHtml = moveExternalScriptsToBodyEnd(ensureScriptNonces(htmlWithInjection, nonce));
-  const scriptSourceMatch = /<script\b[^>]*\bsrc=["']([^"']+)["']/iu.exec(finalHtml);
-  const hasExternalStylesheetLink = /<link\b[^>]*\brel=["']stylesheet["']/iu.test(finalHtml);
   const bodyIndex = finalHtml.indexOf('<body');
   const bodyCloseIndex = finalHtml.indexOf('</body>');
   const bodySlice =
     bodyIndex !== -1 && bodyCloseIndex > bodyIndex ? finalHtml.slice(bodyIndex, bodyCloseIndex) : '';
-  const bundleScriptsInBody = (bodySlice.match(EXTERNAL_SCRIPT_IN_BODY_PATTERN) ?? []).length;
 
-  getLogger('ui').info('webview-html-built', {
+  logWebviewHtmlBuilt({
     viewContributionId,
-    bundlePath: reactIndexHtmlPath,
-    hasModuleScript: finalHtml.includes('type="module"'),
-    hasCrossOrigin: /\bcrossorigin\b/iu.test(finalHtml),
-    scriptCount: (finalHtml.match(/<script\b/giu) ?? []).length,
-    bundleScriptsInBody,
-    hasRootDiv: bodySlice.includes('id="root"'),
-    hasBootPlaceholder: bodySlice.includes('gp-boot'),
-    scriptSrc: scriptSourceMatch?.[1] ?? '',
+    reactIndexHtmlPath,
+    finalHtml,
+    bodySlice,
     cssInlinedBytes,
-    hasExternalStylesheetLink,
   });
 
   return finalHtml;

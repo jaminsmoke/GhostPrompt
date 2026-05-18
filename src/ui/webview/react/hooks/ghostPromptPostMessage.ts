@@ -1,6 +1,8 @@
 /**
  * @file Envío de mensajes desde el webview React al host VS Code.
  */
+import { clearOptionalProperty } from '../../../../system/internals/isDefined';
+
 import type { OutboundMessage } from '../types';
 
 interface VsCodeApi {
@@ -21,14 +23,14 @@ export function getGhostPromptVsCodeApi(): VsCodeApi | undefined {
     return globalWithVsCodeApi.__ghostPromptVsCodeApi;
   }
   if (typeof globalWithVsCodeApi.acquireVsCodeApi !== 'function') {
-    return undefined;
+    return globalWithVsCodeApi.__ghostPromptVsCodeApi;
   }
   try {
     globalWithVsCodeApi.__ghostPromptVsCodeApi = globalWithVsCodeApi.acquireVsCodeApi();
-    return globalWithVsCodeApi.__ghostPromptVsCodeApi;
   } catch {
-    return undefined;
+    clearOptionalProperty(globalWithVsCodeApi, '__ghostPromptVsCodeApi');
   }
+  return globalWithVsCodeApi.__ghostPromptVsCodeApi;
 }
 
 /**

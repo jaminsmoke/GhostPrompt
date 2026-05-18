@@ -3,24 +3,22 @@
  */
 import * as vscode from 'vscode';
 
+import { clearOptionalProperty } from '../../internals/isDefined';
 import { GHOSTPROMPT_LOG_CHANNEL_NAME } from '../../internals/protocols/constants/consLogLimits';
 
 import type { LogEntry } from '../../internals/protocols/types/typeLog';
 
-
-
 /** Canal compartido por bootstrap, LogManager y hostFault (una sola instancia VS Code). */
-let sharedGhostPromptLogChannel: vscode.OutputChannel | null = null;
+const sharedGhostPromptLogChannelSlot: { channel?: vscode.OutputChannel } = {};
 
 /**
  * Devuelve el canal **GhostPrompt Log** canónico (creación perezosa, idempotente).
  * @returns {vscode.OutputChannel} Canal de la extensión en el panel Salida.
  */
 export function getGhostPromptOutputChannel(): vscode.OutputChannel {
-  if (sharedGhostPromptLogChannel === null) {
-    sharedGhostPromptLogChannel = vscode.window.createOutputChannel(GHOSTPROMPT_LOG_CHANNEL_NAME);
-  }
-  return sharedGhostPromptLogChannel;
+  sharedGhostPromptLogChannelSlot.channel ??=
+    vscode.window.createOutputChannel(GHOSTPROMPT_LOG_CHANNEL_NAME);
+  return sharedGhostPromptLogChannelSlot.channel;
 }
 
 /**
@@ -37,8 +35,8 @@ export function appendGhostPromptOutputLine(line: string): void {
  * @returns {void}
  */
 export function disposeGhostPromptOutputChannel(): void {
-  sharedGhostPromptLogChannel?.dispose();
-  sharedGhostPromptLogChannel = null;
+  sharedGhostPromptLogChannelSlot.channel?.dispose();
+  clearOptionalProperty(sharedGhostPromptLogChannelSlot, 'channel');
 }
 
 const TIME_FIELD_PAD_WIDTH = 2;

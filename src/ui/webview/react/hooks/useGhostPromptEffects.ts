@@ -4,6 +4,7 @@
  */
 import { useCallback, useEffect } from 'react';
 
+import { isDefined } from '../../../../system/internals/isDefined';
 import { WEBVIEW_TEXTAREA_MIN_HEIGHT_PX } from '../../../../system/internals/protocols/constants/consPipelineDefaults';
 
 import { logToHost } from './ghostPromptLog';
@@ -21,25 +22,41 @@ interface GhostPromptInboundEffectInput {
   queryClient: ReturnType<typeof useQueryClient>;
 }
 
-/**
- * Suscripción a mensajes inbound del host y efecto de debounce de sugerencias.
- * @param {object} input - Contexto de efectos (inbound + debounce).
- * @returns {{ syncTextareaHeight: () => void }} Utilidad para sincronizar altura del textarea.
- */
 const preMountBuffer: unknown[] = [];
 let preMountInstalled = false;
+
+/**
+ * Acumula mensajes del host antes de que React registre su listener.
+ * @param {MessageEvent} event - Evento `message` del webview.
+ * @returns {void}
+ */
 function handlePreMountMessage(event: MessageEvent): void {
   preMountBuffer.push(event.data);
 }
+
+/**
+ * Instala el listener de pre-montaje una sola vez.
+ * @returns {void}
+ */
 function installPreMountBuffer(): void {
-  if (preMountInstalled) return;
+  if (preMountInstalled) {
+    return;
+  }
   preMountInstalled = true;
   window.addEventListener('message', handlePreMountMessage);
 }
-if (typeof window?.addEventListener === 'function') {
+
+if (typeof window.addEventListener === 'function') {
   installPreMountBuffer();
 }
 
+/**
+ * Suscripción a mensajes inbound del host y efecto de debounce de sugerencias.
+ * @param {object} input - Contexto de efectos (inbound + debounce).
+ * @param {() => boolean} input.isGhostUiAllowed - Indica si la UI ghost está permitida.
+ * @param {(draftText: string) => void} input.requestSuggestion - Dispara sugerencia con debounce.
+ * @returns {{ syncTextareaHeight: () => void }} Utilidad para sincronizar altura del textarea.
+ */
 export function useGhostPromptEffects(
   input: GhostPromptInboundEffectInput & {
     isGhostUiAllowed: () => boolean;
@@ -107,7 +124,10 @@ export function useGhostPromptEffects(
 
     window.addEventListener('message', handleMessage);
     while (preMountBuffer.length > 0) {
-      const bufferedData = preMountBuffer.shift()!;
+      const bufferedData = preMountBuffer.shift();
+      if (!isDefined(bufferedData)) {
+        break;
+      }
       handleGhostPromptInboundMessage({ data: bufferedData } as MessageEvent, inboundContext);
     }
     postToHost({ type: 'init' });

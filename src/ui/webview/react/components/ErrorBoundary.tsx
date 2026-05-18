@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProperties, ErrorBound
   }
 
   handleReload = () => {
-    window.location.reload();
+    globalThis.location.reload();
   };
 
   render() {

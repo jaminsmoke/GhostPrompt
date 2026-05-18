@@ -562,7 +562,7 @@ const importRulesCore = {
         'vite.config.ts',
         'eslint/**',
         'tests/**',
-        'src/ui/webview/**',
+        'src/**',
       ],
       optionalDependencies: false,
       peerDependencies: true,
@@ -860,7 +860,11 @@ const coreDeferredTranche7Rules = {
   'no-underscore-dangle': [
     'error',
     {
-      allow: ['__ghostPromptViewId', '__ghostPromptCapabilities'],
+      allow: [
+        '__ghostPromptViewId',
+        '__ghostPromptCapabilities',
+        '__ghostPromptVsCodeApi',
+      ],
       allowAfterThis: true,
       allowAfterSuper: true,
       allowFunctionParams: true,
@@ -927,6 +931,8 @@ const coreDeferredTranche10Rules = {
         'formatLine',
         'touchConfig',
         'webviewCapabilitiesPayload',
+        'ensureChannel',
+        'handleReload',
         'ps',
       ],
     },

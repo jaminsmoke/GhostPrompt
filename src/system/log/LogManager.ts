@@ -35,6 +35,19 @@ import type {
 } from '../internals/protocols/types/typeLog';
 
 /**
+ * Lee la versión del manifiesto de extensión cuando el contexto de test no expone `extension`.
+ * @param {vscode.ExtensionContext} context - Contexto de activación.
+ * @returns {string} Versión semver o `unknown`.
+ */
+function readExtensionVersion(context: vscode.ExtensionContext): string {
+  if (!isDefined(context.extension)) {
+    return 'unknown';
+  }
+  const extensionPackage = context.extension.packageJSON as { version?: string };
+  return typeof extensionPackage.version === 'string' ? extensionPackage.version : 'unknown';
+}
+
+/**
  * Resuelve el nivel mínimo visible según `logLevel` explícito o shim `debugSuggestions`.
  * @param {vscode.WorkspaceConfiguration} cfg - Sección `ghostPrompt` de VS Code.
  * @returns {LogLevelName} Umbral aplicado a transports.
@@ -319,10 +332,9 @@ export function initGhostPromptLogging(context: vscode.ExtensionContext): void {
   }
   setLogManagerSingleton(new LogManager(context));
   getLogManagerSingleton()?.ensureOutputChannel();
-  const package_ = context.extension?.packageJSON as { version?: string } | undefined;
-  const version = typeof package_?.version === 'string' ? package_.version : 'unknown';
+  const version = readExtensionVersion(context);
   writeGhostPromptLogBootstrap(`GhostPrompt Log initialized (extension ${version}).`);
-  getLogger('extension').info('logging-ready', {
+  getLogManagerSingleton()?.getLoggerInstance('extension').info('logging-ready', {
     channel: 'GhostPrompt Log',
     effectiveLevel: resolveEffectiveMinLevelName(),
   });

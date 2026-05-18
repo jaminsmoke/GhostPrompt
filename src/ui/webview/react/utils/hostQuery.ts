@@ -9,17 +9,20 @@ import type { OutboundMessage } from '../types';
  * @param {OutboundMessage} msg - Mensaje outbound enviado al host.
  * @param {string} responseType - Tipo de respuesta esperado en el evento de mensaje.
  * @param {(m: OutboundMessage) => void} sendMessage - Función para enviar el mensaje outbound al host.
- * @param {number} [timeoutMs=15000] - Tiempo máximo de espera en milisegundos.
- * @returns {Promise<T | undefined>} Promesa con la respuesta o `undefined` si expira el timeout.
+ * @param {number} [timeoutMs] - Tiempo máximo de espera en milisegundos (por defecto 15000).
+ * @returns {Promise<T | undefined>} Promesa con la respuesta o sin valor si expira el timeout.
  */
 export function hostQuery<T>(
   msg: OutboundMessage,
   responseType: string,
   sendMessage: (m: OutboundMessage) => void,
-  timeoutMs: number = 15_000,
+  timeoutMs = 15_000,
 ): Promise<T | undefined> {
   return new Promise((resolve) => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    const finish = (value?: T): void => {
+      resolve(value);
+    };
+    const queryTimer: { id?: ReturnType<typeof setTimeout> } = {};
     const handler = (e: MessageEvent) => {
       const rawPayload = e.data as unknown;
       if (typeof rawPayload !== 'object' || !rawPayload) {
@@ -30,16 +33,16 @@ export function hostQuery<T>(
         return;
       }
       window.removeEventListener('message', handler);
-      if (timer !== undefined) {
-        clearTimeout(timer);
+      if (queryTimer.id) {
+        clearTimeout(queryTimer.id);
       }
-      resolve(rawPayload as T);
+      finish(rawPayload as T);
     };
-    window.addEventListener('message', handler);
-    timer = setTimeout(() => {
+    queryTimer.id = setTimeout(() => {
       window.removeEventListener('message', handler);
-      resolve(undefined);
+      finish();
     }, timeoutMs);
+    window.addEventListener('message', handler);
     sendMessage(msg);
   });
 }

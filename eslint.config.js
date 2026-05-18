@@ -164,6 +164,8 @@ module.exports = [
       'init-declarations': 'off',
       'no-useless-return': 'off',
       'no-promise-executor-return': 'off',
+      'prefer-reflect': 'off',
+      'no-underscore-dangle': 'off',
     },
   },
   {
