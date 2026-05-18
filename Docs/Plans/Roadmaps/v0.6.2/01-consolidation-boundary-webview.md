@@ -135,6 +135,7 @@ Paralelizable: FC puede hacerse por PRs pequeños mientras FB avanza.
 | 2026-05-18 | FB | Fixtures `webviewOutboundMessageFixtures.ts`, tests paridad webview + boundary. JSDoc `parseWebviewInbound`. |
 | 2026-05-18 | FC | Barrels `webviewProtocolConstants.ts` y `webviewProtocolSchemas.ts`; sin imports `../../../../protocols` en hooks. |
 | 2026-05-18 | FD | `Owners`, `ARCHITECTURE`, `NamingConventions`, `CHANGELOG` 0.6.2; ruta activa `api/boundary` en `Cursor.md`. |
+| 2026-05-18 | FE | `npm run vsix` → `ghost-prompt-0.6.2.vsix` (1.73 MB). Smoke: activación, panel, log, `init` — manual. |
 
 ## Bitácora
 

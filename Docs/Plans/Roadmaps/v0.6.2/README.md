@@ -36,7 +36,7 @@ Límites de capa: [`Docs/Owners.md`](../../Owners.md).
 | **FB** | Paridad parse mensajes webview ↔ host | Completado |
 | **FC** | Afinar barrel de tipos React (`ui/webview/react/types.ts`) | Completado |
 | **FD** | Docs / CHANGELOG / referencias `api/protocols` | Completado |
-| **FE** | Verificación release 0.6.2 | Pendiente |
+| **FE** | Verificación release 0.6.2 | En curso (VSIX `0.6.2` empaquetado; smoke manual pendiente) |
 
 ## Verificación habitual (cada fase)
 
