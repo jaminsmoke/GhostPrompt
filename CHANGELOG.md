@@ -2,6 +2,25 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.6.2] - 2026-05-18
+
+Consolidación boundary host↔webview (roadmap v0.6.2 FA–FC): una sola línea de contratos sobre `system/internals/protocols/` sin carpeta legacy `api/protocols/`.
+
+### Added
+
+- **Barrels webview:** `ui/webview/react/webviewProtocolConstants.ts` y `webviewProtocolSchemas.ts` para constantes `cons*` y schemas Zod del panel sin rutas profundas repetidas.
+- **Paridad parse:** fixtures `webviewOutboundMessageFixtures.ts` y tests `parseWebviewInbound.test.ts` + ampliación de `api/boundary/webviewProtocols.test.ts` (mismo schema host→panel).
+
+### Removed
+
+- **`src/api/protocols/`** — shims duplicados de `api/boundary/` (handlers, tests, mocks).
+- **`src/api/settings/applyWebviewUpdate.ts`** — duplicado; canónico en `system/internals/config/write/applyWebviewUpdateSetting.ts`.
+
+### Changed
+
+- **Imports `api/`:** parseo con logging y dispatch inbound solo desde `api/boundary/` (`api/index.ts` reexporta boundary).
+- **Webview React:** hooks y componentes importan tipos/constantes vía barrels locales; `parseWebviewInbound.ts` documentado como validación de mensajes **host→panel** (`webviewOutboundMessageSchema`).
+
 ## [Unreleased]
 
 ### Added

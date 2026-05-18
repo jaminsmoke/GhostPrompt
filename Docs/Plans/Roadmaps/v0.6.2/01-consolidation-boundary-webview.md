@@ -91,12 +91,12 @@ flowchart TB
 
 ## Fase FD — Documentación y referencias
 
-| # | Tarea | Archivo |
-| - | ----- | ------- |
-| D1 | Actualizar `Docs/Owners.md` y `Docs/ARCHITECTURE.md`: solo `api/boundary/`, no `api/protocols/` | docs |
-| D2 | Actualizar `NamingConventions.md` (parsers con log → `api/boundary/`) | ExtensionArchitecture |
-| D3 | Entrada `CHANGELOG.md` sección 0.6.2 | changelog |
-| D4 | Enlazar este roadmap desde `v0.6.1/README.md` como continuación | README v0.6.1 |
+| # | Tarea | Archivo | Estado |
+| - | ----- | ------- | ------ |
+| D1 | Actualizar `Docs/Owners.md` y `Docs/ARCHITECTURE.md`: solo `api/boundary/`, no `api/protocols/` | docs | ✅ |
+| D2 | Actualizar `NamingConventions.md` (parsers con log → `api/boundary/`) | ExtensionArchitecture | ✅ |
+| D3 | Entrada `CHANGELOG.md` sección 0.6.2 | changelog | ✅ |
+| D4 | Enlazar este roadmap desde `v0.6.1/README.md` como continuación | README v0.6.1 | ✅ (ya enlazado) |
 
 **Criterio de hecho:** `rg "api/protocols"` en `Docs/` solo hits históricos acotados o ninguno en rutas activas.
 
@@ -134,6 +134,7 @@ Paralelizable: FC puede hacerse por PRs pequeños mientras FB avanza.
 | 2026-05-18 | FA | Eliminado `src/api/protocols/` y duplicado `api/settings/applyWebviewUpdate*`. `npm run check` verde. |
 | 2026-05-18 | FB | Fixtures `webviewOutboundMessageFixtures.ts`, tests paridad webview + boundary. JSDoc `parseWebviewInbound`. |
 | 2026-05-18 | FC | Barrels `webviewProtocolConstants.ts` y `webviewProtocolSchemas.ts`; sin imports `../../../../protocols` en hooks. |
+| 2026-05-18 | FD | `Owners`, `ARCHITECTURE`, `NamingConventions`, `CHANGELOG` 0.6.2; ruta activa `api/boundary` en `Cursor.md`. |
 
 ## Bitácora
 

@@ -23,7 +23,7 @@ Filas = carpetas principales de `src/`. Columnas = reglas de dependencia y rol.
 
 | Carpeta `src/` | Rol | Depende típicamente de | No debe importar desde |
 | -------------- | --- | ---------------------- | ---------------------- |
-| **`ui/`** | Interfaz: `ui/webview/` (sandbox), `ui/provider/` (WebviewViewProvider), `ui/notifications/`. | `system/internals/protocols/`, `api/`, `system/runtime/`, `destinations/`, `engines/` (solo catálogo/routing expuesto), `vscode`. | Lógica pesada de orquestación suggest (vive en `system/runtime/`). |
+| **`ui/`** | Interfaz: `ui/webview/` (sandbox), `ui/provider/` (WebviewViewProvider), `ui/notifications/`. En React: `types.ts`, `webviewProtocolConstants.ts`, `webviewProtocolSchemas.ts` como barrels finos sobre `protocols/`. | `system/internals/protocols/`, `api/`, `system/runtime/`, `destinations/`, `engines/` (solo catálogo/routing expuesto), `vscode`. | Lógica pesada de orquestación suggest (vive en `system/runtime/`). Importar `api/boundary` desde el webview. |
 | **`extension/`** | Entry point: comandos, vistas, `activate` / `deactivate`. | `ui/provider/`, `engines/` (registro motores), `destinations/`, `system/log/`, `vscode`. | Orquestación suggest, parsers Zod con logging (`api/boundary/`). |
 | **`api/`** | Capa delgada webview↔host: `boundary/` (parseo+log+dispatch), `settings/settingsPostMessage` (ensamblador). | `system/internals/protocols/`, `system/internals/config/`, `system/runtime/`, `engines/`, `destinations/`, `vscode`. | Duplicar lectura/escritura de config fuera de `config/`. |
 | **`engines/`** | Motores LM (`copilot/`, `opencode/`, `ollama/`), `completion/buildCompletionInstruction.ts`, `config/completionSources.ts`, `routing/`, `catalog/mergedModelCatalog.ts`. | `system/internals/protocols/`, `engines/completion/`, `system/log/`, `vscode`. | `api/` (evitar ciclos host). |
@@ -60,7 +60,7 @@ No es cobertura de líneas al 100 %; es **contrato de tests que deben seguir pas
 | Área `src/` | Ficheros de test relevantes (Vitest) |
 | ----------- | ------------------------------------ |
 | `extension/extension.ts` | Indirecto: `ui/provider/MiniInputViewProvider.test.ts` |
-| `ui/` (webview, provider, notifications) | `MiniInputViewProvider.test.ts`, `multiViewDraft.test.ts`, `webviewToolbarParity.test.ts`, `webviewThemeTokens.test.ts`, `ui/webview/react/App.test.tsx`, `ui/webview/react/hooks/useGhostPrompt.test.ts`, `ui/notifications/suggestionHostNotification.test.ts` |
+| `ui/` (webview, provider, notifications) | `MiniInputViewProvider.test.ts`, `multiViewDraft.test.ts`, `webviewToolbarParity.test.ts`, `webviewThemeTokens.test.ts`, `ui/webview/react/App.test.tsx`, `ui/webview/react/hooks/useGhostPrompt.test.ts`, `ui/webview/react/validators/parseWebviewInbound.test.ts`, `ui/notifications/suggestionHostNotification.test.ts` |
 | `api/boundary/*` | `api/boundary/webviewProtocols.test.ts`, `api/boundary/ghostPromptWebviewInboundHandlers.test.ts`, `system/internals/protocols/validations/schemas/zschemWebviewMessages.test.ts` |
 | `api/settings/*` | `MiniInputViewProvider.test.ts` (flujo settings) |
 | `system/internals/config/read/` | Indirecto vía `MiniInputViewProvider.test.ts`, `suggestRuntime.test.ts` |
@@ -143,3 +143,4 @@ Orden recomendado; cada fase es **independiente** si la anterior está estable.
 | 2026-05-18 | QA–QD: contratos en `protocols/`; `buildCompletionInstruction` → `engines/completion/`; `sugcore/` eliminado. |
 | 2026-05-16 | **Paso 2:** Matriz y mapa de tests alineados con `src/` actual; zona ESLint `protocols/` (reemplaza `sugcore/`). |
 | 2026-05-16 | **QG:** `config/read|write/`, `api/boundary/`; shims eliminados en QG.6. |
+| 2026-05-18 | **v0.6.2:** eliminado `api/protocols/`; barrels webview (`webviewProtocolConstants`, `webviewProtocolSchemas`); paridad parse host↔panel. |

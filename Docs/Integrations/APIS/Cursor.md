@@ -75,6 +75,6 @@ Si `ghostPrompt.agentDestination` = `cursorChat` pero el host **no** es Cursor: 
 - Send Cursor: [`src/destinations/cursor/cursorChatDestination.ts`](../../../src/destinations/cursor/cursorChatDestination.ts)
 - Comandos / descubrimiento: [`src/destinations/cursor/cursorChatCommands.ts`](../../../src/destinations/cursor/cursorChatCommands.ts)
 - Patrón Copilot Chat: [`src/destinations/copilotChat/copilotChatDestination.ts`](../../../src/destinations/copilotChat/copilotChatDestination.ts)
-- Send desde webview: [`src/api/protocols/inboundHandlers.ts`](../../../src/api/protocols/inboundHandlers.ts)
+- Send desde webview: [`src/api/boundary/inboundHandlers.ts`](../../../src/api/boundary/inboundHandlers.ts)
 - Detección host: [`src/destinations/cursor/cursorHost.ts`](../../../src/destinations/cursor/cursorHost.ts)
 - Roadmap: [`01-cursor-chat-destination.md`](../../Plans/Roadmaps/v0.6/Destinations/01-cursor-chat-destination.md)

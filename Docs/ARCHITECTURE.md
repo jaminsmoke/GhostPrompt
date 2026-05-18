@@ -83,6 +83,10 @@
 | `src/ui/webview/react/index.html`                  | Shell HTML; Vite entry template. CSP, URIs de assets inyectados en runtime por `webviewHtml.ts`.                                                                                                                                                            |
 | `src/ui/webview/dist/react/index.html` (build)     | Bundle generado por Vite desde `src/ui/webview/react/` (`npm run build:webview`).                                                                                                                                                                           |
 | `src/ui/webview/react/index.css`                   | Tailwind + variables VS Code; ghost text.                                                                                                                                                                                                                   |
+| `src/ui/webview/react/types.ts`                    | Barrel de tipos del panel (reexport desde `protocols/`).                                                                                                                                                                                                    |
+| `src/ui/webview/react/webviewProtocolConstants.ts` | Barrel de constantes runtime `cons*` para hooks/componentes.                                                                                                                                                                                                |
+| `src/ui/webview/react/webviewProtocolSchemas.ts`   | Reexport de schemas Zod usados en el sandbox (p. ej. `webviewOutboundMessageSchema`).                                                                                                                                                                       |
+| `src/ui/webview/react/validators/parseWebviewInbound.ts` | Parseo host→panel (`webviewOutboundMessageSchema`); sin logging; tests de paridad con `api/boundary/webviewProtocols.ts`.                                                                                                                              |
 
 ---
 
@@ -154,7 +158,14 @@ Each debounce cycle increments `currentCaptureId` (webview-local counter). The h
 
 ## 4. Host ↔ Webview message protocol
 
-Los mensajes son JSON. Contratos **Zod** en `src/system/internals/protocols/validations/schemas/zschemWebviewMessages.ts`; el host valida entrada con `parseWebviewInboundMessage` (`api/boundary/webviewProtocols.ts`). El webview React valida salida con `parseWebviewInbound` (`ui/webview/react/validators/parseWebviewInbound.ts`).
+Los mensajes son JSON. Contratos **Zod** en `src/system/internals/protocols/validations/schemas/zschemWebviewMessages.ts`.
+
+| Dirección | Schema | Parser |
+| --------- | ------ | ------ |
+| Webview → host | `webviewInboundMessageSchema` | `parseWebviewInboundMessage` en `api/boundary/webviewProtocols.ts` (con logging) |
+| Host → webview | `webviewOutboundMessageSchema` | `parseWebviewInboundMessage` en `ui/webview/react/validators/parseWebviewInbound.ts` (sin `api/` ni log) |
+
+Fixtures compartidos: `system/internals/protocols/validations/schemas/fixtures/webviewOutboundMessageFixtures.ts` (tests de paridad host y panel).
 
 ### Webview → Host (resumen)
 

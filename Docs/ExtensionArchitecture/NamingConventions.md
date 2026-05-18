@@ -10,7 +10,7 @@
 
 ### Rol de la capa
 
-`protocols/` es la fuente única de **contratos puros**: tipos, constantes, validación, guards y formas de estado **declarativas**. Sin estado mutable en tiempo de ejecución, sin `vscode`, sin logging en parsers (los parsers con side effects viven en `api/protocols/` e importan desde aquí).
+`protocols/` es la fuente única de **contratos puros**: tipos, constantes, validación, guards y formas de estado **declarativas**. Sin estado mutable en tiempo de ejecución, sin `vscode`, sin logging en parsers (los parsers con side effects viven en `api/boundary/` e importan esquemas desde aquí).
 
 La **carpeta** indica la familia; el **prefijo del archivo** refuerza el rol y permite grepear (`cons*`, `zschem*`, …) sin ambigüedad.
 
@@ -103,7 +103,8 @@ Dentro de `state/` pueden existir subcarpetas (`loading/`, `provider/`); el pref
 
 - Consumidores externos importan desde **barrels** (`protocols/types/index.ts`, `protocols/constants/index.ts`, …) cuando existan.
 - Rutas directas al fichero prefijado son válidas en migraciones o tests co-localizados.
-- `api/protocols/webviewProtocols.ts` importa esquemas desde `validations/schemas/zschem*.ts`, no redefine Zod en `api/`.
+- `api/boundary/webviewProtocols.ts` importa esquemas desde `validations/schemas/zschem*.ts`, no redefine Zod en `api/`.
+- En el webview React: tipos desde `ui/webview/react/types.ts`; constantes `cons*` desde `webviewProtocolConstants.ts`; schemas Zod desde `webviewProtocolSchemas.ts` (sin importar `api/` ni `system/log/`).
 
 ### Relación con otra documentación
 
