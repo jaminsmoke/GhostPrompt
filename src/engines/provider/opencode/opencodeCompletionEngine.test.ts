@@ -5,10 +5,15 @@
 import * as vitest from 'vitest';
 import { vi } from 'vitest';
 
+import {
+  OPENCODE_DEFAULT_PORT,
+  type OpenCodeSdkClient,
+} from '../../../system/internals/protocols/types/typeOpencodeClient';
+import { emptyConfigurationInspect } from '../../../system/internals/testing/mockVscodeConfigurationInspect';
+
 import { resetClient } from './client';
 import { requestOpencodeCompletion } from './opencodeCompletionEngine';
 
-import type { OpenCodeSdkClient } from '../../../system/internals/protocols/types/typeOpencodeClient';
 import type * as Vscode from 'vscode';
 
 const sessionCreateMock = vi.fn<(...args: [unknown?]) => Promise<unknown>>();
@@ -40,18 +45,14 @@ vi.mock('vscode', () => ({
   workspace: {
     getConfiguration: () => ({
       get: (key: string, fallback?: unknown) => getCfgMock(key, fallback),
-      inspect: vi.fn(() => ({
-        globalValue: undefined,
-        workspaceValue: undefined,
-        workspaceFolderValue: undefined,
-      })),
+      inspect: vi.fn(() => emptyConfigurationInspect),
     }),
   },
 }));
 
 /**
  * Creates a mock cancellation token for OpenCode tests.
- * @returns {{ isCancellationRequested: boolean; onCancellationRequested: (cb: () => void) => { dispose(): void } }} A token-like object with cancellation support.
+ * @returns {object} Token compatible con CancellationToken de VS Code.
  */
 function makeToken() {
   const listeners: (() => void)[] = [];
@@ -64,7 +65,9 @@ function makeToken() {
       };
     },
     cancel: () => {
-      for (const l of listeners) {l();}
+      for (const listener of listeners) {
+        listener();
+      }
     },
   };
 }
@@ -73,8 +76,12 @@ vitest.beforeEach(() => {
   resetClient();
   vi.clearAllMocks();
   getCfgMock.mockImplementation((key: string, fallback?: unknown) => {
-    if (key === 'opencodePort') {return 4096;}
-    if (key === 'opencodeAuthToken') {return;}
+    if (key === 'opencodePort') {
+      return OPENCODE_DEFAULT_PORT;
+    }
+    if (key === 'opencodeAuthToken') {
+      return fallback;
+    }
     return fallback;
   });
   configGetMock.mockResolvedValue({ data: { status: 'ok' } });

@@ -2,5 +2,5 @@
  * @file Constantes de integración host GhostPrompt ↔ extensión VSOpenCodeX (VS Code).
  */
 
-/** Identificador del comando VS Code que registra VSOpenCodeX para recibir el payload inline (sin campo `broadcast`). */
+/** Comando VS Code de VSOpenCodeX para payload inline (sin `broadcast`). */
 export const VS_OPEN_CODE_X_INLINE_UI_COMMAND = 'vsopencodex.ghostPromptInlineUi';

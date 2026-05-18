@@ -3,12 +3,17 @@
  */
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
+import {
+  WEBVIEW_TEXTAREA_COMPACT_MIN_HEIGHT_PX,
+  WEBVIEW_TEXTAREA_MIN_HEIGHT_PX,
+} from '../../../../system/internals/protocols/constants/consPipelineDefaults';
+
 interface PromptInputProperties {
   text: string;
   suggestion: string;
   vsxActive: boolean;
   compact: boolean;
-  textareaRef: React.RefObject<HTMLTextAreaElement | undefined>;
+  textareaRef: React.RefObject<HTMLTextAreaElement | false>;
   isGhostUiAllowed: () => boolean;
   onTextChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSend: () => void;
@@ -23,9 +28,9 @@ interface PromptInputProperties {
  * @param {string} props.suggestion - Sugerencia fantasma a mostrar.
  * @param {boolean} props.vsxActive - Indica si VSOpenCodeX está activo.
  * @param {boolean} props.compact - Usa diseño compacto.
- * @param {import('react').RefObject<globalThis.HTMLTextAreaElement | undefined>} props.textareaRef - Referencia del textarea.
- * @param {() => boolean} props.isGhostUiAllowed - Comprueba si se puede aceptar la sugerencia.
- * @param {(e: import('react').ChangeEvent<globalThis.HTMLTextAreaElement>) => void} props.onTextChange - Controlador de cambios de texto.
+ * @param {import('react').RefObject<HTMLTextAreaElement | undefined>} props.textareaRef - Referencia del textarea.
+ * @param {() => boolean} props.isGhostUiAllowed - Si se puede aceptar la sugerencia.
+ * @param {(e: import('react').ChangeEvent<HTMLTextAreaElement>) => void} props.onTextChange - Cambio de texto.
  * @param {() => void} props.onSend - Controlador de envío de prompt.
  * @param {() => void} props.onAccept - Controlador de aceptación de la sugerencia.
  * @returns {import('react').JSX.Element} JSX del textarea y la sugerencia.
@@ -43,15 +48,18 @@ export function PromptInput(props: PromptInputProperties): React.JSX.Element {
     onAccept,
     onCursorCheck,
   } = props;
-  const ghostReference = useRef<HTMLPreElement | undefined>(undefined);
+  const ghostReference = useRef<HTMLPreElement | false>(false);
 
   const syncTextareaHeight = useCallback(() => {
     const input = textareaRef.current;
-    if (!input) {
+    if (input === false) {
       return;
     }
     input.style.height = 'auto';
-    input.style.height = `${Math.max(input.scrollHeight, compact ? 80 : 120)}px`;
+    input.style.height = `${Math.max(
+      input.scrollHeight,
+      compact ? WEBVIEW_TEXTAREA_COMPACT_MIN_HEIGHT_PX : WEBVIEW_TEXTAREA_MIN_HEIGHT_PX,
+    )}px`;
   }, [textareaRef, compact]);
 
   useEffect(() => {
@@ -61,7 +69,7 @@ export function PromptInput(props: PromptInputProperties): React.JSX.Element {
   const syncScroll = useCallback(() => {
     const input = textareaRef.current;
     const ghost = ghostReference.current;
-    if (input && ghost) {
+    if (input && ghost !== false) {
       ghost.scrollTop = input.scrollTop;
       ghost.scrollLeft = input.scrollLeft;
     }
@@ -69,7 +77,7 @@ export function PromptInput(props: PromptInputProperties): React.JSX.Element {
 
   const ghostContent = useMemo(() => {
     if (!suggestion || !text.trim()) {
-      return;
+      return false;
     }
     return (
       <pre

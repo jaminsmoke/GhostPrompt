@@ -12,13 +12,16 @@ import type { SuggestionModelTier } from '../../../../system/internals/protocols
  * @param {string} pricing - Cadena de pricing como '0x' o '1x'.
  * @returns {number | undefined} Multiplicador si el formato es válido.
  */
-function parsePricingMultiplier(pricing: string): number | undefined {
-  const match = /^(\d+(?:\.\d+)?)x$/iu.exec(pricing.trim());
-  if (!match) {
-    return undefined;
+function parsePricingMultiplier(pricing: string): number | false {
+  const match = /^(?<multiplier>\d+(?:\.\d+)?)x$/iu.exec(pricing.trim());
+  if (!match?.groups?.multiplier) {
+    return false;
   }
-  const parsed = Number(match[1]);
-  return Number.isFinite(parsed) ? parsed : undefined;
+  const parsed = Number(match.groups.multiplier);
+  if (!Number.isFinite(parsed)) {
+    return false;
+  }
+  return parsed;
 }
 
 export type OpencodeTierResult = {
@@ -27,7 +30,7 @@ export type OpencodeTierResult = {
 };
 
 /**
- * Orden: `pricing` multiplicador (`0x` / `1x`) → flag `free` → proveedor **opencode** → backends locales por **id de proveedor**.
+ * Orden: pricing → flag free → proveedor opencode → backends locales por id.
  * @param {string} providerID - Identificador del proveedor OpenCode.
  * @param {string} _modelID - ID del modelo OpenCode.
  * @param {string} _modelDisplayName - Nombre visible del modelo.
@@ -43,7 +46,7 @@ export function classifyOpencodeModelTier(
   const pricingRaw = typeof raw.pricing === 'string' ? raw.pricing.trim() : '';
   if (pricingRaw) {
     const mult = parsePricingMultiplier(pricingRaw);
-    if (mult !== undefined) {
+    if (mult !== false) {
       return {
         tier: mult === 0 ? 'included' : 'premium',
         pricing: pricingRaw,
@@ -52,11 +55,11 @@ export function classifyOpencodeModelTier(
   }
 
   if (raw.free === true) {
-    return { tier: 'included', pricing: pricingRaw || undefined };
+    return { tier: 'included', ...pricingRaw ? { pricing: pricingRaw } : {} };
   }
 
   if (providerID === 'opencode') {
-    return { tier: 'included', pricing: pricingRaw || undefined };
+    return { tier: 'included', ...pricingRaw ? { pricing: pricingRaw } : {} };
   }
 
   const localish = ['ollama', 'lmstudio', 'jan', 'local', 'llamacpp'];
@@ -64,5 +67,5 @@ export function classifyOpencodeModelTier(
     return { tier: 'included' };
   }
 
-  return { tier: 'unknown', pricing: pricingRaw || undefined };
+  return { tier: 'unknown', ...pricingRaw ? { pricing: pricingRaw } : {} };
 }

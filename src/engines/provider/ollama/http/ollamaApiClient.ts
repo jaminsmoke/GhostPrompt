@@ -27,7 +27,7 @@ function resolveUrl(path: string, baseUrl?: string): string {
 /**
  * Construye las opciones de cabecera y señal para una petición Ollama.
  * @param {OllamaClientOptions} options - Opciones de cliente que pueden incluir señal de cancelación.
- * @returns {{ headers: Record<string, string>; signal?: globalThis.AbortSignal }} Objeto con cabeceras y señal para fetch.
+ * @returns {object} Cabeceras y señal opcional para fetch.
  */
 function buildOptions(options: OllamaClientOptions): {
   headers: Record<string, string>;
@@ -125,7 +125,7 @@ export async function listModels(options: OllamaClientOptions = {}): Promise<Oll
  * Genera texto desde Ollama usando el prompt y modelo especificados.
  * @param {string} prompt - Texto de entrada para el modelo.
  * @param {string} model - Identificador del modelo Ollama.
- * @param {OllamaClientOptions & { onStreamPreview?: (text: string) => void; system?: string; options?: Record<string, unknown>; }} [options] - Opciones de generación y streaming.
+ * @param {object} [options] - Opciones de generación y streaming.
  * @returns {Promise<string>} Texto generado completo.
  */
 export async function generate(
@@ -180,7 +180,7 @@ export async function generate(
  * @param {string} prompt - Texto para enviar al modelo.
  * @param {string} model - Modelo Ollama a usar.
  * @param {string} url - URL de la API generate.
- * @param {OllamaClientOptions & { onStreamPreview?: (text: string) => void; system?: string; options?: Record<string, unknown>; }} options - Opciones de generación y streaming.
+ * @param {object} options - Opciones de generación y streaming.
  * @param {number} timeoutMs - Timeout en milisegundos para la operación.
  * @returns {Promise<string>} Texto completo generado.
  */
@@ -232,38 +232,39 @@ async function streamGenerate(
       throw new Error('Ollama stream response body is null');
     }
 
-    let fullText = '';
-    let buffer = '';
-
     const decoder = new TextDecoder();
-    for (;;) {
+
+    const appendLines = (lines: string[], accumulated: string): string => {
+      let nextText = accumulated;
+      for (const line of lines) {
+        if (line.trim()) {
+          try {
+            const chunk = JSON.parse(line) as unknown;
+            const chunkParse = ollamaGenerateResponseChunkSchema.safeParse(chunk);
+            if (chunkParse.success && chunkParse.data.response) {
+              nextText += chunkParse.data.response;
+              options.onStreamPreview?.(nextText);
+            }
+          } catch {
+            // skip malformed lines
+          }
+        }
+      }
+      return nextText;
+    };
+
+    const pumpStream = async (accumulated: string, pending: string): Promise<string> => {
       const readResult = await reader.read();
       if (readResult.done) {
-        break;
+        return accumulated;
       }
-      buffer += decoder.decode(readResult.value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() ?? '';
+      const combined = pending + decoder.decode(readResult.value, { stream: true });
+      const lines = combined.split('\n');
+      const remainder = lines.pop() ?? '';
+      return pumpStream(appendLines(lines, accumulated), remainder);
+    };
 
-      for (const line of lines) {
-        if (!line.trim()) {
-          continue;
-        }
-        try {
-          const chunk = JSON.parse(line) as unknown;
-          const chunkParse = ollamaGenerateResponseChunkSchema.safeParse(chunk);
-          if (!chunkParse.success || !chunkParse.data.response) {
-            continue;
-          }
-          fullText += chunkParse.data.response;
-          options.onStreamPreview?.(fullText);
-        } catch {
-          // skip malformed lines
-        }
-      }
-    }
-
-    return fullText;
+    return await pumpStream('', '');
   } catch (error) {
     clearTimeout(timeoutId);
     if (error instanceof Error && error.name === 'AbortError') {

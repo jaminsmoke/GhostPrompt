@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import {
   maybeNotifySuggestionIssue,
   resetSuggestionHostNotificationThrottleForTests,
+  SUGGESTION_HOST_NOTIFICATION_THROTTLE_MS,
 } from './suggestionNotification';
 
 const showWarningMessageMock = vi.hoisted(() => vi.fn());
@@ -40,7 +41,7 @@ vitest.describe('maybeNotifySuggestionIssue', () => {
     maybeNotifySuggestionIssue({ kind: 'empty', reason: 'no-model' });
     maybeNotifySuggestionIssue({ kind: 'empty', reason: 'no-model' });
     vitest.expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(1);
-    vi.advanceTimersByTime(91_000);
+    vi.advanceTimersByTime(SUGGESTION_HOST_NOTIFICATION_THROTTLE_MS + 1000);
     maybeNotifySuggestionIssue({ kind: 'empty', reason: 'no-model' });
     vitest.expect(vscode.window.showWarningMessage).toHaveBeenCalledTimes(2);
     vi.useRealTimers();

@@ -17,7 +17,7 @@ const successPatterns = /modelo listo|suggestion aceptada|sugerencia recibida/iu
  * @param {boolean} isLoading - Indica si el estado es de carga.
  * @returns {string | undefined} Icono de estado si aplica.
  */
-function statusIcon(status: string, isLoading: boolean): string | undefined {
+function statusIcon(status: string, isLoading: boolean): string {
   if (isLoading) {
     return '\u25CB';
   }
@@ -27,7 +27,7 @@ function statusIcon(status: string, isLoading: boolean): string | undefined {
   if (successPatterns.test(status)) {
     return '\u2713';
   }
-  return undefined;
+  return '';
 }
 
 /**
@@ -51,7 +51,7 @@ export function BottomBar(props: BottomBarProperties) {
     <div className="flex flex-col gap-1 mt-2 pt-2 border-t border-(--vscode-widget-border)">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 min-h-5">
-          {icon !== undefined && 
+          {icon.length > 0 && 
             <span className={`text-xs ${isLoading ? 'animate-spin' : ''}`} aria-hidden="true">
               {icon}
             </span>

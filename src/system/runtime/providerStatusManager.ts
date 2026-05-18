@@ -2,33 +2,9 @@
  * @file Administrador de estado de proveedores LM (registry + refresh/start/stop).
  */
 import { createProviderErrorRecord } from './createProviderErrorRecord';
+import { SimpleEventEmitter } from './simpleEventEmitter';
 
 import type { ProviderStateRecord, ProviderStatusModule } from '../internals/protocols/state/provider';
-
-type Listener<T> = (data: T) => void;
-
-class SimpleEventEmitter<T> {
-  private _listeners: Listener<T>[] = [];
-
-  on(listener: Listener<T>): { dispose: () => void } {
-    this._listeners.push(listener);
-    return {
-      dispose: () => {
-        this._listeners = this._listeners.filter((l) => l !== listener);
-      },
-    };
-  }
-
-  fire(data: T): void {
-    for (const listener of this._listeners) {
-      listener(data);
-    }
-  }
-
-  dispose(): void {
-    this._listeners = [];
-  }
-}
 
 /**
  * Registro central de módulos de estado de proveedores y notificaciones de cambio.
@@ -51,15 +27,15 @@ export class ProviderStatusManager {
   }
 
   async refreshAll(): Promise<ProviderStateRecord[]> {
-    const results: ProviderStateRecord[] = [];
-    for (const statusModule of this._modules.values()) {
-      try {
-        const state = await statusModule.check();
-        results.push(state);
-      } catch {
-        results.push(createProviderErrorRecord(statusModule));
-      }
-    }
+    const results = await Promise.all(
+      [...this._modules.values()].map(async (statusModule) => {
+        try {
+          return await statusModule.check();
+        } catch {
+          return createProviderErrorRecord(statusModule);
+        }
+      }),
+    );
     this._onDidChange.fire(results);
     return results;
   }

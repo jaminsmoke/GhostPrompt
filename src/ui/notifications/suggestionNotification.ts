@@ -7,9 +7,14 @@
 
 import * as vscode from 'vscode';
 
+import { isDefined } from '../../system/internals/isDefined';
+
 import type { CompletionResult } from '../../system/internals/protocols/types';
 
-const THROTTLE_MS = 90_000;
+/** Ventana mínima entre avisos repetidos del mismo motivo (ms). */
+export const SUGGESTION_HOST_NOTIFICATION_THROTTLE_MS = 90_000;
+
+const THROTTLE_MS = SUGGESTION_HOST_NOTIFICATION_THROTTLE_MS;
 const lastShownAt = new Map<string, number>();
 
 /** Solo para tests — vacía el throttle entre casos. */
@@ -35,7 +40,7 @@ function notificationsEnabled(): boolean {
 function shouldShow(key: string): boolean {
   const now = Date.now();
   const prev = lastShownAt.get(key);
-  if (prev !== undefined && now - prev < THROTTLE_MS) {
+  if (isDefined(prev) && now - prev < THROTTLE_MS) {
     return false;
   }
   lastShownAt.set(key, now);
@@ -64,30 +69,17 @@ type EmptyReason = Extract<CompletionResult, { kind: 'empty' }>['reason'];
  * @param {EmptyReason} reason - Motivo de resultado vacío.
  * @returns {string | undefined} Mensaje de ayuda si hay hint aplicable.
  */
-function hostHintForEmptyReason(reason: EmptyReason): string | undefined {
-  switch (reason) {
-    case 'no-model': {
-      return 'No hay motor de sugerencias (Copilot u OpenCode). Revisa fuentes en configuración.';
-    }
-    case 'no-included-model': {
-      return 'No hay modelo incluido disponible; revisa la política de modelo o el selector.';
-    }
-    case 'premium-quota-blocked': {
-      return 'Cuota premium agotada: el modo solo incluido está pausando sugerencias.';
-    }
-    case 'empty-response':
-    case 'request-timeout':
-    case 'too-short':
-    case 'duplicate-input':
-    case 'rate-limited':
-    case 'session-budget-exhausted':
-    case 'content-blocked': {
-      return undefined;
-    }
-    default: {
-      return undefined;
-    }
+function hostHintForEmptyReason(reason: EmptyReason): string | false {
+  if (reason === 'no-model') {
+    return 'No hay motor de sugerencias (Copilot u OpenCode). Revisa fuentes en configuración.';
   }
+  if (reason === 'no-included-model') {
+    return 'No hay modelo incluido disponible; revisa la política de modelo o el selector.';
+  }
+  if (reason === 'premium-quota-blocked') {
+    return 'Cuota premium agotada: el modo solo incluido está pausando sugerencias.';
+  }
+  return false;
 }
 
 /**
@@ -95,7 +87,7 @@ function hostHintForEmptyReason(reason: EmptyReason): string | undefined {
  * @param {string} message - Mensaje de error recibido de la sugerencia.
  * @returns {string | undefined} Texto de hint si se reconoce el error.
  */
-function hostHintForErrorMessage(message: string): string | undefined {
+function hostHintForErrorMessage(message: string): string | false {
   const lower = message.toLowerCase();
   if (
     lower.includes('premium model quota') ||
@@ -131,7 +123,7 @@ function hostHintForErrorMessage(message: string): string | undefined {
   ) {
     return 'Demasiadas solicitudes; espera un momento o revisa límites en Settings.';
   }
-  return undefined;
+  return false;
 }
 
 /**

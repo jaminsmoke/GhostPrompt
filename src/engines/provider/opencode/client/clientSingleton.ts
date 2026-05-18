@@ -1,16 +1,18 @@
 /**
  * @file Singleton del cliente SDK OpenCode en el proceso de la extensión.
  */
+import { isDefined } from '../../../../system/internals/isDefined';
+
 import type { OpenCodeSdkClient } from '../../../../system/internals/protocols/types/typeOpencodeClient';
 
-let globalClient: OpenCodeSdkClient | undefined;
+const openCodeClientSlot: { current?: OpenCodeSdkClient } = {};
 
 /**
  * Registra el cliente global (uso interno tras `createOpenCodeClient`).
  * @param {OpenCodeSdkClient} client - Instancia del SDK.
  */
 export function setGlobalOpenCodeClient(client: OpenCodeSdkClient): void {
-  globalClient = client;
+  openCodeClientSlot.current = client;
 }
 
 /**
@@ -19,10 +21,10 @@ export function setGlobalOpenCodeClient(client: OpenCodeSdkClient): void {
  * @throws {Error} Si el cliente no está inicializado.
  */
 export function getGlobalClient(): OpenCodeSdkClient {
-  if (!globalClient) {
+  if (!openCodeClientSlot.current) {
     throw new Error('OpenCode client no inicializado. Llama a createOpenCodeClient primero.');
   }
-  return globalClient;
+  return openCodeClientSlot.current;
 }
 
 /**
@@ -30,12 +32,12 @@ export function getGlobalClient(): OpenCodeSdkClient {
  * @returns {boolean} `true` si `createOpenCodeClient` ya registró un cliente global.
  */
 export function hasGlobalClient(): boolean {
-  return globalClient !== undefined;
+  return isDefined(openCodeClientSlot.current);
 }
 
 /**
  * Elimina la referencia al cliente global.
  */
 export function resetGlobalClient(): void {
-  globalClient = undefined;
+  delete openCodeClientSlot.current;
 }

@@ -33,11 +33,10 @@ export async function listMergedSuggestionModels(
   const seen = new Set<string>();
   const deduped: SuggestionModelDescriptor[] = [];
   for (const d of merged) {
-    if (seen.has(d.id)) {
-      continue;
+    if (!seen.has(d.id)) {
+      seen.add(d.id);
+      deduped.push(d);
     }
-    seen.add(d.id);
-    deduped.push(d);
   }
   return deduped;
 }

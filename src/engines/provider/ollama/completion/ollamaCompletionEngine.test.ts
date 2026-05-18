@@ -27,7 +27,7 @@ import { requestOllamaCompletion } from './ollamaCompletionEngine';
 
 /**
  * Creates a minimal cancellation token-like object for tests.
- * @returns {{ isCancellationRequested: boolean; onCancellationRequested: (cb: () => void) => { dispose(): void } }} An object compatible with vscode CancellationToken semantics.
+ * @returns {object} Token compatible con CancellationToken de VS Code.
  */
 function makeToken() {
   return {
@@ -38,18 +38,28 @@ function makeToken() {
   };
 }
 
-vitest.describe('requestOllamaCompletion', () => {
-  vitest.beforeEach(() => {
-    configGetMock.mockReset();
-    mockListModels.mockReset();
-    mockGenerate.mockReset();
+/**
+ * Restaura mocks del motor Ollama antes de cada test.
+ * @returns {void}
+ */
+function resetOllamaCompletionMocks(): void {
+  configGetMock.mockReset();
+  mockListModels.mockReset();
+  mockGenerate.mockReset();
 
-    configGetMock.mockImplementation((key: string, defaultValue: unknown) => {
-      if (key === 'ollamaBaseUrl') {return 'http://localhost:11434';}
-      if (key === 'ollamaExcludedModelIds') {return [];}
-      return defaultValue;
-    });
+  configGetMock.mockImplementation((key: string, defaultValue: unknown) => {
+    if (key === 'ollamaBaseUrl') {
+      return 'http://localhost:11434';
+    }
+    if (key === 'ollamaExcludedModelIds') {
+      return [];
+    }
+    return defaultValue;
   });
+}
+
+vitest.describe('requestOllamaCompletion (model resolution)', () => {
+  vitest.beforeEach(resetOllamaCompletionMocks);
 
   vitest.it('returns suggestion when generate succeeds with explicit model', async () => {
     mockGenerate.mockResolvedValue(' suggested completion text');
@@ -120,11 +130,19 @@ vitest.describe('requestOllamaCompletion', () => {
 
     vitest.expect(result).toEqual({ kind: 'empty', reason: 'no-model' });
   });
+});
+
+vitest.describe('requestOllamaCompletion (exclusions y errores)', () => {
+  vitest.beforeEach(resetOllamaCompletionMocks);
 
   vitest.it('respects excluded model ids when resolving auto', async () => {
     configGetMock.mockImplementation((key: string, defaultValue: unknown) => {
-      if (key === 'ollamaBaseUrl') {return 'http://localhost:11434';}
-      if (key === 'ollamaExcludedModelIds') {return ['llama3:latest'];}
+      if (key === 'ollamaBaseUrl') {
+        return 'http://localhost:11434';
+      }
+      if (key === 'ollamaExcludedModelIds') {
+        return ['llama3:latest'];
+      }
       return defaultValue;
     });
 
@@ -151,8 +169,12 @@ vitest.describe('requestOllamaCompletion', () => {
 
   vitest.it('returns empty no-model when all models are excluded', async () => {
     configGetMock.mockImplementation((key: string, defaultValue: unknown) => {
-      if (key === 'ollamaBaseUrl') {return 'http://localhost:11434';}
-      if (key === 'ollamaExcludedModelIds') {return ['llama3:latest', 'mistral:latest'];}
+      if (key === 'ollamaBaseUrl') {
+        return 'http://localhost:11434';
+      }
+      if (key === 'ollamaExcludedModelIds') {
+        return ['llama3:latest', 'mistral:latest'];
+      }
       return defaultValue;
     });
 

@@ -3,14 +3,17 @@
  */
 import * as vscode from 'vscode';
 
+import { hasAnyConfigurationInspectScope, isDefined } from '../internals/isDefined';
+
 import { CaptureBreadcrumbStore } from './breadcrumbs';
 import { parseLogLevelString, shouldEmit, type LogLevelName } from './levels';
 import { Logger } from './Logger';
+import { LOG_FILE_ROTATE_MAX_BYTES, LOG_LEGACY_MD_PREVIEW_MAX_CHARS } from './logLimits';
 import { QueuedNdjsonFileTransport } from './transports/file';
 import { OutputChannelLogTransport } from './transports/outputChannel';
 
 import type { EmitPayload, LogEmitSink } from './emitContract';
-import type { Breadcrumb, LogEntry, LogTransport } from './types';
+import type { LogEntry, LogTransport } from './types';
 
 /**
  * Resuelve el nivel mínimo visible según `logLevel` explícito o shim `debugSuggestions`.
@@ -21,10 +24,7 @@ export function resolveEffectiveMinLevelName(
   cfg: vscode.WorkspaceConfiguration = vscode.workspace.getConfiguration('ghostPrompt'),
 ): LogLevelName {
   const inspected = cfg.inspect<string>('logLevel');
-  const explicit =
-    inspected?.globalValue !== undefined ||
-    inspected?.workspaceValue !== undefined ||
-    inspected?.workspaceFolderValue !== undefined;
+  const explicit = hasAnyConfigurationInspectScope(inspected);
   if (explicit) {
     return parseLogLevelString(cfg.get<string>('logLevel', 'info'));
   }
@@ -51,18 +51,43 @@ function toErrorPayload(err: unknown): NonNullable<LogEntry['error']> {
  * @param {Record<string, unknown>} [data] - Metadatos opcionales del evento.
  * @returns {number | undefined} Identificador o `undefined`.
  */
-function extractCaptureId(data?: Record<string, unknown>): number | undefined {
+function extractCaptureId(data?: Record<string, unknown>): number | false {
   if (!data) {
-    return undefined;
+    return false;
   }
   const v = data.captureId;
   if (typeof v === 'number' && Number.isFinite(v)) {
     return v;
   }
-  return undefined;
+  return false;
 }
 
-let singleton: LogManager | undefined;
+const logManagerSlot: { current?: LogManager } = {};
+
+/**
+ * Devuelve la instancia activa del singleton de logging.
+ * @returns {LogManager | undefined} Instancia activa o ausente.
+ */
+function getLogManagerSingleton(): LogManager | undefined {
+  return logManagerSlot.current;
+}
+
+/**
+ * Registra la instancia activa del singleton de logging.
+ * @param {LogManager} next - Instancia a registrar.
+ * @returns {void}
+ */
+function setLogManagerSingleton(next: LogManager): void {
+  logManagerSlot.current = next;
+}
+
+/**
+ * Elimina la instancia activa del singleton de logging.
+ * @returns {void}
+ */
+function clearLogManagerSingleton(): void {
+  delete logManagerSlot.current;
+}
 
 const inactiveSink: LogEmitSink = {
   emit() {
@@ -77,21 +102,21 @@ const inactiveLoggers = new Map<string, Logger>();
  * @returns {void} Sin valor de retorno.
  */
 export function initGhostPromptLogging(context: vscode.ExtensionContext): void {
-  if (singleton) {
+  if (getLogManagerSingleton()) {
     return;
   }
-  singleton = new LogManager(context);
+  setLogManagerSingleton(new LogManager(context));
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('ghostPrompt')) {
-        singleton?.touchConfig();
+        getLogManagerSingleton()?.touchConfig();
       }
     }),
     new vscode.Disposable(() => {
-      singleton?.disposeAll().catch(() => {
+      getLogManagerSingleton()?.disposeAll().catch(() => {
         /* ignore */
       });
-      singleton = undefined;
+      clearLogManagerSingleton();
     }),
   );
 }
@@ -101,18 +126,19 @@ export function initGhostPromptLogging(context: vscode.ExtensionContext): void {
  * @returns {Promise<void>} Promesa que termina cuando los transports se han cerrado.
  */
 export async function disposeGhostPromptLogging(): Promise<void> {
-  const active = singleton;
-  singleton = undefined;
+  const active = getLogManagerSingleton();
+  clearLogManagerSingleton();
   await active?.disposeAll();
 }
 
 /**
- * Obtiene el logger de un módulo. Si aún no se ha llamado a {@link initGhostPromptLogging}, el sink no registra eventos.
+ * Obtiene el logger de un módulo (no registra hasta `initGhostPromptLogging`).
  * @param {string} moduleName - Nombre estable (`suggest`, `inbound`, …).
  * @returns {Logger} Instancia reutilizada por módulo.
  */
 export function getLogger(moduleName: string): Logger {
-  if (!singleton) {
+  const active = getLogManagerSingleton();
+  if (!active) {
     let l = inactiveLoggers.get(moduleName);
     if (!l) {
       l = new Logger(moduleName, inactiveSink);
@@ -120,7 +146,7 @@ export function getLogger(moduleName: string): Logger {
     }
     return l;
   }
-  return singleton.getLoggerInstance(moduleName);
+  return active.getLoggerInstance(moduleName);
 }
 
 /**
@@ -129,7 +155,7 @@ export function getLogger(moduleName: string): Logger {
  * @returns {void} Sin valor de retorno.
  */
 export function flushLogCapture(captureId: number): void {
-  singleton?.flushCaptureInternal(captureId);
+  getLogManagerSingleton()?.flushCaptureInternal(captureId);
 }
 
 /**
@@ -150,7 +176,7 @@ export async function toggleSuggestionDebug(): Promise<boolean> {
   const next = !current;
   await config.update('debugSuggestions', next, vscode.ConfigurationTarget.Global);
   if (next) {
-    singleton?.ensureOutputChannel();
+    getLogManagerSingleton()?.ensureOutputChannel();
     getLogger('extension').info('debug-shim-enabled', {
       hint: 'Open GhostPrompt Log output channel for structured logs.',
     });
@@ -163,7 +189,7 @@ export async function toggleSuggestionDebug(): Promise<boolean> {
  * @returns {void} Sin valor de retorno.
  */
 export function ensureSuggestionDebugChannel(): vscode.OutputChannel | undefined {
-  return singleton?.ensureOutputChannel();
+  return getLogManagerSingleton()?.ensureOutputChannel();
 }
 
 /**
@@ -215,7 +241,9 @@ class LogManager implements LogEmitSink {
       logsDirectory,
       () => vscode.workspace.getConfiguration('ghostPrompt').get<boolean>('logFileEnabled', true),
       () =>
-        vscode.workspace.getConfiguration('ghostPrompt').get<number>('logFileMaxBytes', 5_242_880),
+        vscode.workspace
+          .getConfiguration('ghostPrompt')
+          .get<number>('logFileMaxBytes', LOG_FILE_ROTATE_MAX_BYTES),
     );
     this.transports.push(this.outputTransport, this.fileTransport);
     this.runLegacyMarkdownMigration(logsDirectory).catch(() => {
@@ -243,33 +271,38 @@ class LogManager implements LogEmitSink {
     }
     bases.set(this.context.globalStorageUri.toString(), this.context.globalStorageUri);
 
-    const entries: LogEntry[] = [];
-    for (const base of bases.values()) {
-      for (const fileName of ['suggestions.md', 'conversation.md'] as const) {
+    const legacyTargets = [...bases.values()].flatMap((base) =>
+      (['suggestions.md', 'conversation.md'] as const).map((fileName) => ({ base, fileName })),
+    );
+    const snapshotGroups = await Promise.all(
+      legacyTargets.map(async ({ base, fileName }): Promise<LogEntry[]> => {
         const fileUri = vscode.Uri.joinPath(base, fileName);
         try {
           const bytes = await vscode.workspace.fs.readFile(fileUri);
           const text = Buffer.from(bytes).toString('utf8').trim();
           if (text.length === 0) {
-            continue;
+            return [];
           }
-          entries.push({
-            timestamp: new Date().toISOString(),
-            level: 'INFO',
-            module: 'migration',
-            message: 'legacy-md-snapshot',
-            data: {
-              fileName,
-              source: base.toString(),
-              charCount: text.length,
-              preview: text.slice(0, 4000),
+          return [
+            {
+              timestamp: new Date().toISOString(),
+              level: 'INFO',
+              module: 'migration',
+              message: 'legacy-md-snapshot',
+              data: {
+                fileName,
+                source: base.toString(),
+                charCount: text.length,
+                preview: text.slice(0, LOG_LEGACY_MD_PREVIEW_MAX_CHARS),
+              },
             },
-          });
+          ];
         } catch {
-          // Fichero ausente o ilegible: se ignora.
+          return [];
         }
-      }
-    }
+      }),
+    );
+    const entries: LogEntry[] = snapshotGroups.flat();
     for (const e of entries) {
       this.fileTransport.write(e).catch(() => {
         /* ignore */
@@ -343,20 +376,20 @@ class LogManager implements LogEmitSink {
     }
     const timestamp = new Date().toISOString();
     const captureId = extractCaptureId(payload.data);
-    let breadcrumbs: Breadcrumb[] | undefined;
-    if ((payload.level === 'WARN' || payload.level === 'ERROR') && captureId !== undefined) {
-      breadcrumbs = this.crumbs.snapshot(captureId);
-    }
+    const warnOrError = payload.level === 'WARN' || payload.level === 'ERROR';
+    const breadcrumbPayload =
+      warnOrError && captureId !== false ? { breadcrumbs: this.crumbs.snapshot(captureId) } : {};
+    const errorPayload = isDefined(payload.cause) ? { error: toErrorPayload(payload.cause) } : {};
     const entry: LogEntry = {
       timestamp,
       level: payload.level,
       module: payload.module,
       message: payload.message,
       data: payload.data,
-      breadcrumbs,
-      error: payload.cause === undefined ? undefined : toErrorPayload(payload.cause),
+      ...breadcrumbPayload,
+      ...errorPayload,
     };
-    if (captureId !== undefined) {
+    if (captureId !== false) {
       this.crumbs.push(captureId, {
         level: payload.level,
         message: payload.message,
@@ -376,8 +409,6 @@ class LogManager implements LogEmitSink {
    * @returns {Promise<void>} Promesa que termina cuando los transports han finalizado.
    */
   async disposeAll(): Promise<void> {
-    for (const t of this.transports) {
-      await t.dispose();
-    }
+    await Promise.all(this.transports.map((transport) => transport.dispose()));
   }
 }

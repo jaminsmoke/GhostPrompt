@@ -50,14 +50,13 @@ export async function listSuggestionModels(
   for (const candidate of filtered) {
     const descriptor = describeModel(candidate);
     const dedupeKey = buildModelDedupeKey(descriptor);
-    if (seen.has(dedupeKey)) {
-      continue;
+    if (!seen.has(dedupeKey)) {
+      seen.add(dedupeKey);
+      descriptors.push({
+        ...descriptor,
+        completionSource: 'copilot',
+      });
     }
-    seen.add(dedupeKey);
-    descriptors.push({
-      ...descriptor,
-      completionSource: 'copilot',
-    });
   }
   return descriptors;
 }
@@ -158,7 +157,7 @@ function classifyTierFromPricing(model: unknown): SuggestionModelTier {
     return 'unknown';
   }
   const multiplier = parsePricingMultiplier(normalized);
-  if (multiplier === undefined) {
+  if (multiplier === false) {
     return 'unknown';
   }
   return multiplier === 0 ? 'included' : 'premium';
@@ -169,12 +168,15 @@ function classifyTierFromPricing(model: unknown): SuggestionModelTier {
  * @param {unknown} pricing - Valor bruto de pricing.
  * @returns {string | undefined} Pricing limpio o undefined si no es válido.
  */
-function normalizePricing(pricing: unknown): string | undefined {
+function normalizePricing(pricing: unknown): string | false {
   if (typeof pricing !== 'string') {
-    return undefined;
+    return false;
   }
   const value = pricing.trim();
-  return value.length > 0 ? value : undefined;
+  if (value.length === 0) {
+    return false;
+  }
+  return value;
 }
 
 /**
@@ -182,13 +184,16 @@ function normalizePricing(pricing: unknown): string | undefined {
  * @param {string} pricing - Cadena de pricing a parsear.
  * @returns {number | undefined} Multiplicador numérico o undefined si no coincide.
  */
-function parsePricingMultiplier(pricing: string): number | undefined {
-  const match = /^(\d+(?:\.\d+)?)x$/iu.exec(pricing.trim());
-  if (!match) {
-    return undefined;
+function parsePricingMultiplier(pricing: string): number | false {
+  const match = /^(?<multiplier>\d+(?:\.\d+)?)x$/iu.exec(pricing.trim());
+  if (!match?.groups?.multiplier) {
+    return false;
   }
-  const parsed = Number(match[1]);
-  return Number.isFinite(parsed) ? parsed : undefined;
+  const parsed = Number(match.groups.multiplier);
+  if (!Number.isFinite(parsed)) {
+    return false;
+  }
+  return parsed;
 }
 
 /**
@@ -219,13 +224,13 @@ function buildModelDedupeKey(model: SuggestionModelDescriptor): string {
  * @param {unknown} model - Objeto de modelo con campos id, family o name.
  * @returns {string | undefined} Nombre del proveedor o undefined si no se puede inferir.
  */
-function inferModelProvider(model: unknown): string | undefined {
+function inferModelProvider(model: unknown): string | false {
   const data = model as { id?: string; family?: string; name?: string };
   const fingerprint = `${data.id ?? ''} ${data.family ?? ''} ${data.name ?? ''}`
     .toLowerCase()
     .trim();
   if (!fingerprint) {
-    return undefined;
+    return false;
   }
   if (
     fingerprint.includes('gpt') ||

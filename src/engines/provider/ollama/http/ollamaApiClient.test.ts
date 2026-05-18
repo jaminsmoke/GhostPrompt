@@ -73,7 +73,7 @@ vitest.describe('ollamaApiClient listModels', () => {
 
   vitest.it('throws on non-ok HTTP status', async () => {
     mockFetch.mockResolvedValue(
-      new Response(undefined, { status: 500, statusText: 'Internal Server Error' }),
+      new Response('', { status: 500, statusText: 'Internal Server Error' }),
     );
     await vitest.expect(listModels()).rejects.toThrow('Ollama HTTP 500');
   });
@@ -140,7 +140,7 @@ vitest.describe('ollamaApiClient generate', () => {
   });
 
   vitest.it('throws on non-ok HTTP status', async () => {
-    mockFetch.mockResolvedValue(new Response(undefined, { status: 400, statusText: 'Bad Request' }));
+    mockFetch.mockResolvedValue(new Response('', { status: 400, statusText: 'Bad Request' }));
     await vitest.expect(generate('Hi', 'mistral:latest')).rejects.toThrow('Ollama HTTP 400');
   });
 

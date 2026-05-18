@@ -1,6 +1,7 @@
 /**
  * @file Recolecta texto incremental desde `vscode.LanguageModelChatResponse` (Copilot LM).
  */
+import { isDefined } from '../../../../system/internals/isDefined';
 import { DEFAULT_MODEL_REQUEST_TIMEOUT_MS } from '../../../../system/internals/protocols/types';
 
 import type * as vscode from 'vscode';
@@ -16,16 +17,17 @@ export async function collectLmResponse(
   response: vscode.LanguageModelChatResponse,
   timeoutMs: number = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
 ): Promise<string> {
-  let completion = '';
   const iterator = response.text[Symbol.asyncIterator]();
-  for (;;) {
+
+  const collectNext = async (completion: string): Promise<string> => {
     const nextChunk = await awaitNextChunkWithTimeout(iterator, timeoutMs);
     if (nextChunk.done) {
-      break;
+      return completion;
     }
-    completion += nextChunk.value;
-  }
-  return completion;
+    return collectNext(completion + nextChunk.value);
+  };
+
+  return collectNext('');
 }
 
 /**
@@ -49,7 +51,7 @@ async function awaitNextChunkWithTimeout(
       }),
     ]);
   } finally {
-    if (timeoutHandle !== undefined) {
+    if (isDefined(timeoutHandle)) {
       clearTimeout(timeoutHandle);
     }
   }

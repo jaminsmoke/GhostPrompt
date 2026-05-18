@@ -87,9 +87,14 @@ export class QueuedNdjsonFileTransport {
    * @returns {Promise<void>} Promesa que termina cuando la cola está vacía.
    */
   async dispose(): Promise<void> {
-    while (this.queue.length > 0 || this.flushing) {
+    const drainQueue = async (): Promise<void> => {
+      if (this.queue.length === 0 && !this.flushing) {
+        return;
+      }
       await this.flushOnce();
-    }
+      await drainQueue();
+    };
+    await drainQueue();
   }
 
   private scheduleFlush(): void {
@@ -156,8 +161,8 @@ export class QueuedNdjsonFileTransport {
   private async maybeRotate(ndjsonUri: vscode.Uri): Promise<void> {
     let size: number;
     try {
-      const st = await vscode.workspace.fs.stat(ndjsonUri);
-      size = st.size;
+      const { size: fileSize } = await vscode.workspace.fs.stat(ndjsonUri);
+      size = fileSize;
     } catch {
       size = 0;
     }

@@ -5,6 +5,9 @@ import * as vitest from 'vitest';
 import { vi } from 'vitest';
 import * as vscode from 'vscode';
 
+import { isDefined } from '../internals/isDefined';
+import { emptyConfigurationInspect } from '../internals/testing/mockVscodeConfigurationInspect';
+
 import { QueuedNdjsonFileTransport } from './transports/file';
 
 import type { LogEntry } from './types';
@@ -63,11 +66,7 @@ vi.mock('vscode', () => {
           }
           return defaultValue;
         }),
-        inspect: vi.fn(() => ({
-          globalValue: undefined,
-          workspaceValue: undefined,
-          workspaceFolderValue: undefined,
-        })),
+        inspect: vi.fn(() => emptyConfigurationInspect),
       })),
       onDidChangeConfiguration: vi.fn(() => ({ dispose: vi.fn() })),
     },
@@ -127,14 +126,14 @@ vitest.describe('QueuedNdjsonFileTransport (mock vscode)', () => {
     await t.dispose();
     const nd = hoisted.files.get(ndPath);
     vitest.expect(nd).toBeDefined();
-    if (nd === undefined) {
+    if (!isDefined(nd)) {
       throw new Error('expected ndjson bytes');
     }
     const text = Buffer.from(nd).toString('utf8');
     vitest.expect(text).toContain('"message":"one"');
     const md = hoisted.files.get(mdPath);
     vitest.expect(md).toBeDefined();
-    if (md === undefined) {
+    if (!isDefined(md)) {
       throw new Error('expected markdown bytes');
     }
     vitest.expect(Buffer.from(md).toString('utf8')).toContain('one');

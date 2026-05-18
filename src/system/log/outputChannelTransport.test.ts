@@ -16,6 +16,8 @@ vi.mock('vscode', () => ({
 
 import { formatLocalTime, OutputChannelLogTransport } from './transports/outputChannel';
 
+const EXPECTED_LOCAL_TIME_FORMAT_LENGTH = 12;
+
 vitest.describe('formatLocalTime', () => {
   vitest.it('formats ISO string to HH:mm:ss.SSS', () => {
     vitest.expect(formatLocalTime('2026-05-15T10:30:45.123Z')).toMatch(/^\d{2}:\d{2}:\d{2}\.\d{3}$/u);
@@ -24,7 +26,7 @@ vitest.describe('formatLocalTime', () => {
   vitest.it('pads single-digit values with zeros', () => {
     const result = formatLocalTime('2026-01-01T01:02:03.004Z');
     vitest.expect(result).toMatch(/^\d{2}:\d{2}:\d{2}\.\d{3}$/u);
-    vitest.expect(result.length).toBe(12);
+    vitest.expect(result.length).toBe(EXPECTED_LOCAL_TIME_FORMAT_LENGTH);
   });
 });
 

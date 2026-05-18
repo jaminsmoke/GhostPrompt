@@ -11,6 +11,8 @@ import * as vitest from 'vitest';
 
 const repoRoot = join(import.meta.dirname, '../../..');
 
+const WEBVIEW_TOOLBAR_SETTING_GROUP_COUNT = 4;
+
 /**
  * Reads a file relative to the repository root.
  * @param {string} relativePath - The relative path from the repo root.
@@ -22,8 +24,10 @@ function read(relativePath: string): string {
 
 vitest.describe('React webview toolbar parity', () => {
   vitest.it('GhostToolbar defines exactly four setting groups with stable data-keys', () => {
-    const source = read('src/ui/webview/react/components/GhostToolbar.tsx');
-    vitest.expect(source.match(/data-key="/gu)?.length).toBe(4);
+    const toolbar = read('src/ui/webview/react/components/GhostToolbar.tsx');
+    const panels = read('src/ui/webview/react/components/GhostToolbarPanels.tsx');
+    const source = `${toolbar}\n${panels}`;
+    vitest.expect(source.match(/data-key="/gu)?.length).toBe(WEBVIEW_TOOLBAR_SETTING_GROUP_COUNT);
     for (const key of [
       'completionProvider',
       'agentDestination',

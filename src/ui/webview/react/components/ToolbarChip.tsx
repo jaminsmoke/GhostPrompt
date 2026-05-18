@@ -38,15 +38,18 @@ const renderChipLabel = (chipLabel: string | undefined, compact?: boolean) => {
   );
 };
 
-const renderToggleButton = (
-  isOpen: boolean,
-  id: string | undefined,
-  tooltip: string | undefined,
-  disabled: boolean | undefined,
-  compact: boolean | undefined,
-  onToggle: () => void,
-  label: string,
-) => {
+type ToggleButtonRenderOptions = {
+  isOpen: boolean;
+  id: string | undefined;
+  tooltip: string | undefined;
+  disabled: boolean | undefined;
+  compact: boolean | undefined;
+  onToggle: () => void;
+  label: string;
+};
+
+const renderToggleButton = (options: ToggleButtonRenderOptions) => {
+  const { isOpen, id, tooltip, disabled, compact, onToggle, label } = options;
   const buttonClass = `inline-flex items-center gap-1 rounded-md border px-2 py-1 text-sm transition
             ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
             ${
@@ -97,15 +100,11 @@ const renderToggleButton = (
 export function ToolbarChip(props: ToolbarChipProperties) {
   const { label, chipLabel, tooltip, isOpen, onToggle, onClose, children, id, compact, disabled } =
     props;
-  const ref = useRef<HTMLDivElement | undefined>(undefined);
+  const ref = useRef<HTMLDivElement | false>(false);
 
   useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
     const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (ref.current !== false && !ref.current.contains(e.target as Node)) {
         onClose();
       }
     };
@@ -116,13 +115,18 @@ export function ToolbarChip(props: ToolbarChipProperties) {
       }
     };
 
-    const timer = setTimeout(() => {
-      document.addEventListener('click', handleClick);
-      document.addEventListener('keydown', handleKey);
-    }, 0);
+    let timer: ReturnType<typeof setTimeout> | false = false;
+    if (isOpen) {
+      timer = setTimeout(() => {
+        document.addEventListener('click', handleClick);
+        document.addEventListener('keydown', handleKey);
+      }, 0);
+    }
 
     return () => {
-      clearTimeout(timer);
+      if (timer !== false) {
+        clearTimeout(timer);
+      }
       document.removeEventListener('click', handleClick);
       document.removeEventListener('keydown', handleKey);
     };
@@ -132,7 +136,7 @@ export function ToolbarChip(props: ToolbarChipProperties) {
     <div ref={ref as unknown as React.Ref<HTMLDivElement>} className="inline-flex flex-col gap-0">
       {renderChipLabel(chipLabel, compact)}
       <div className="relative">
-        {renderToggleButton(isOpen, id, tooltip, disabled, compact, onToggle, label)}
+        {renderToggleButton({ isOpen, id, tooltip, disabled, compact, onToggle, label })}
 
         {isOpen && 
           <div className="absolute top-full left-0 z-50 mt-0.5 min-w-45 rounded-md border border-(--vscode-dropdown-border) bg-(--vscode-dropdown-background) shadow-lg">

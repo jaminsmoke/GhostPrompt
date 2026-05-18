@@ -3,6 +3,8 @@
  */
 import * as vscode from 'vscode';
 
+import { clearOptionalProperty } from '../internals/isDefined';
+
 /**
  * Gestiona el captureId activo y el token de cancelación de la suggestion en curso.
  */
@@ -47,7 +49,7 @@ export class SuggestionRequestCoordinator {
    */
   disposeTokenIfActive(tokenSource: vscode.CancellationTokenSource): void {
     if (this._activeSuggestionToken === tokenSource) {
-      this._activeSuggestionToken = undefined;
+      clearOptionalProperty(this, '_activeSuggestionToken');
       tokenSource.dispose();
     }
   }
@@ -58,7 +60,7 @@ export class SuggestionRequestCoordinator {
   reset(): void {
     this._activeSuggestionToken?.cancel();
     this._activeSuggestionToken?.dispose();
-    this._activeSuggestionToken = undefined;
+    clearOptionalProperty(this, '_activeSuggestionToken');
     this._activeCaptureId = 0;
   }
 }

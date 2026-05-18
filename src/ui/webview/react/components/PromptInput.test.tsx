@@ -1,6 +1,7 @@
 /**
  * @file Pruebas unitarias del componente PromptInput del webview.
  */
+import { createRef } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import * as vitest from 'vitest';
 import { vi } from 'vitest';
@@ -21,7 +22,7 @@ function createMockProperties(overrides: Record<string, unknown> = {}) {
     suggestion: '',
     vsxActive: false,
     compact: false,
-    textareaRef: { current: undefined },
+    textareaRef: createRef<HTMLTextAreaElement>(),
     isGhostUiAllowed: () => false,
     onTextChange: vi.fn(),
     onSend: vi.fn(),
@@ -36,9 +37,12 @@ function createMockProperties(overrides: Record<string, unknown> = {}) {
  * @param {string} html - The rendered HTML string to inspect.
  * @returns {string | undefined} The first &lt;pre> element markup if present.
  */
-function extractPre(html: string): string | undefined {
+function extractPre(html: string): string | false {
   const match = /<pre[\S\s]*?<\/pre>/u.exec(html);
-  return match ? match[0] : undefined;
+  if (!match) {
+    return false;
+  }
+  return match[0];
 }
 
 vitest.describe('PromptInput ghost overlay', () => {
@@ -59,7 +63,7 @@ vitest.describe('PromptInput ghost overlay', () => {
       <PromptInput {...createMockProperties({ text: 'hello', suggestion: '' })} />,
     );
 
-    vitest.expect(extractPre(html)).toBeUndefined();
+    vitest.expect(extractPre(html)).toBe(false);
   });
 
   vitest.it('hides overlay when text is empty', () => {
@@ -67,7 +71,7 @@ vitest.describe('PromptInput ghost overlay', () => {
       <PromptInput {...createMockProperties({ text: '', suggestion: 'world' })} />,
     );
 
-    vitest.expect(extractPre(html)).toBeUndefined();
+    vitest.expect(extractPre(html)).toBe(false);
   });
 
   vitest.it('ghost pre has alignment classes matching textarea', () => {

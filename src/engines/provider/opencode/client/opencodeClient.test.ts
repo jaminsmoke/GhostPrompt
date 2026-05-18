@@ -5,6 +5,8 @@
 import * as vitest from 'vitest';
 import { vi } from 'vitest';
 
+import { OPENCODE_DEFAULT_PORT } from '../../../../system/internals/protocols/types/typeOpencodeClient';
+
 import type * as OpencodeClientModule from './index';
 import type * as TypeOpencodeClientModule from '../../../../system/internals/protocols/types/typeOpencodeClient';
 
@@ -39,7 +41,7 @@ vitest.describe('opencode client', () => {
     const loadedModule = (await import(
       '../../../../system/internals/protocols/types/typeOpencodeClient'
     )) as typeof TypeOpencodeClientModule;
-    vitest.expect(loadedModule.OPENCODE_DEFAULT_PORT).toBe(4096);
+    vitest.expect(loadedModule.OPENCODE_DEFAULT_PORT).toBe(OPENCODE_DEFAULT_PORT);
   });
 
   vitest.it('createOpenCodeClient devuelve un cliente y lo almacena como global', async () => {

@@ -13,7 +13,9 @@ vi.mock('../provider/opencode/routingModelId', () => ({
   looksLikeOpencodeModelId: (id: string) => {
     const t = id.trim();
     const slash = t.indexOf('/');
-    if (slash <= 0 || slash === t.length - 1) { return false; }
+    if (slash <= 0 || slash === t.length - 1) {
+      return false;
+    }
     return !t.includes('//') && t.split('/').length === 2;
   },
 }));

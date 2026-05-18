@@ -69,6 +69,8 @@ vitest.describe('Logger', () => {
     logger.info('b');
     logger.warn('c');
     logger.error('d');
-    for (const e of emitted) {vitest.expect(e.module).toBe('fixed-module');}
+    for (const entry of emitted) {
+      vitest.expect(entry.module).toBe('fixed-module');
+    }
   });
 });

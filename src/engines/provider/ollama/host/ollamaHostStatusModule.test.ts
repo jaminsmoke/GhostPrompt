@@ -17,6 +17,8 @@ vi.mock('vscode', () => ({
 
 import { ollamaStatusModule } from './ollamaHostStatusModule';
 
+type ExecCallback = (error: Error | undefined, stdout: string, stderr: string) => void;
+
 vitest.describe('ollamaStatusModule', () => {
   vitest.beforeEach(() => {
     vi.clearAllMocks();
@@ -24,7 +26,7 @@ vitest.describe('ollamaStatusModule', () => {
 
   vitest.it('retorna unavailable si ollama --version falla', async () => {
     execMock.mockImplementationOnce(
-      (_cmd: string, _options: unknown, callback: (error: Error | undefined, stdout: string, stderr: string) => void) => {
+      (_cmd: string, _options: unknown, callback: ExecCallback) => {
         callback(new Error('not found'), '', 'command not found');
       },
     );
@@ -37,22 +39,27 @@ vitest.describe('ollamaStatusModule', () => {
   vitest.it('retorna stopped si hay modelos pero ninguno activo', async () => {
     execMock
       .mockImplementationOnce(
-        (_cmd: string, _options: unknown, callback: (error: Error | undefined, stdout: string, stderr: string) => void) => {
-          callback(undefined, 'ollama version 0.5.0', '');
+        (_cmd: string, _options: unknown, callback: ExecCallback) => {
+          callback(false as unknown as Error | undefined, 'ollama version 0.5.0', '');
         },
       )
       .mockImplementationOnce(
-        (_cmd: string, _options: unknown, callback: (error: Error | undefined, stdout: string, stderr: string) => void) => {
+        (_cmd: string, _options: unknown, callback: ExecCallback) => {
           callback(
-            undefined,
-            'NAME\tID\tSIZE\tMODIFIED\nmistral:latest\tabc123\t4.2GB\t2 days ago\nllama3:latest\tdef456\t6.1GB\t1 day ago\n',
+            false as unknown as Error | undefined,
+            [
+              'NAME\tID\tSIZE\tMODIFIED',
+              'mistral:latest\tabc123\t4.2GB\t2 days ago',
+              'llama3:latest\tdef456\t6.1GB\t1 day ago',
+              '',
+            ].join('\n'),
             '',
           );
         },
       )
       .mockImplementationOnce(
-        (_cmd: string, _options: unknown, callback: (error: Error | undefined, stdout: string, stderr: string) => void) => {
-          callback(undefined, 'NAME\tID\tSIZE\tMODIFIED\n', '');
+        (_cmd: string, _options: unknown, callback: ExecCallback) => {
+          callback(false as unknown as Error | undefined, 'NAME\tID\tSIZE\tMODIFIED\n', '');
         },
       );
 
@@ -65,16 +72,16 @@ vitest.describe('ollamaStatusModule', () => {
   vitest.it('retorna running si hay un modelo activo en ollama ps', async () => {
     execMock
       .mockImplementationOnce(
-        (_cmd: string, _options: unknown, callback: (error: Error | undefined, stdout: string, stderr: string) => void) => {
-          callback(undefined, 'ollama version 0.5.0', '');
+        (_cmd: string, _options: unknown, callback: ExecCallback) => {
+          callback(false as unknown as Error | undefined, 'ollama version 0.5.0', '');
         },
       )
       .mockImplementationOnce(
-        (_cmd: string, _options: unknown, callback: (error: Error | undefined, stdout: string, stderr: string) => void) => {
-        callback(undefined, 'NAME\tID\tSIZE\tMODIFIED\nmistral:latest\tabc123\t4.2GB\t2 days ago\n', '');
+        (_cmd: string, _options: unknown, callback: ExecCallback) => {
+        callback(false as unknown as Error | undefined, 'NAME\tID\tSIZE\tMODIFIED\nmistral:latest\tabc123\t4.2GB\t2 days ago\n', '');
       })
-      .mockImplementationOnce((_cmd: string, _options: unknown, callback: (error: Error | undefined, stdout: string, stderr: string) => void) => {
-        callback(undefined, 'NAME\tID\tCPU\tMEMORY\nmistral:latest\tabc123\t0.1%\t1.2GB/8GB\n', '');
+      .mockImplementationOnce((_cmd: string, _options: unknown, callback: ExecCallback) => {
+        callback(false as unknown as Error | undefined, 'NAME\tID\tCPU\tMEMORY\nmistral:latest\tabc123\t0.1%\t1.2GB/8GB\n', '');
       });
 
     const state = await ollamaStatusModule.check();
@@ -85,11 +92,11 @@ vitest.describe('ollamaStatusModule', () => {
 
   vitest.it('retorna stopped si no hay modelos instalados', async () => {
     execMock
-      .mockImplementationOnce((_cmd: string, _options: unknown, callback: (error: Error | undefined, stdout: string, stderr: string) => void) => {
-        callback(undefined, 'ollama version 0.5.0', '');
+      .mockImplementationOnce((_cmd: string, _options: unknown, callback: ExecCallback) => {
+        callback(false as unknown as Error | undefined, 'ollama version 0.5.0', '');
       })
-      .mockImplementationOnce((_cmd: string, _options: unknown, callback: (error: Error | undefined, stdout: string, stderr: string) => void) => {
-        callback(undefined, 'NAME\tID\tSIZE\tMODIFIED\n', '');
+      .mockImplementationOnce((_cmd: string, _options: unknown, callback: ExecCallback) => {
+        callback(false as unknown as Error | undefined, 'NAME\tID\tSIZE\tMODIFIED\n', '');
       });
 
     const state = await ollamaStatusModule.check();

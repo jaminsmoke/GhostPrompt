@@ -20,10 +20,9 @@ function collectSourceFiles(directory: string): string[] {
     const entryPath = join(directory, dirent.name);
 
     if (dirent.isDirectory()) {
-      if (dirent.name === 'node_modules') {
-        continue;
+      if (dirent.name !== 'node_modules') {
+        files.push(...collectSourceFiles(entryPath));
       }
-      files.push(...collectSourceFiles(entryPath));
     } else if (dirent.isFile() && /\.[jt]sx?$/u.test(dirent.name)) {
       files.push(entryPath);
     }

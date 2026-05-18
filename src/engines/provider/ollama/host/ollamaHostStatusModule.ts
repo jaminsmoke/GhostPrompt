@@ -3,6 +3,11 @@
  */
 import { exec } from 'node:child_process';
 
+import {
+  OLLAMA_CLI_LONG_TIMEOUT_MS,
+  OLLAMA_CLI_SHORT_TIMEOUT_MS,
+} from '../ollamaTimeouts';
+
 import { ollamaModelManager } from './ollamaModelManager';
 
 import type { ProviderStateRecord, ProviderStatusModule } from '../../../../system/internals/protocols/state/provider';
@@ -13,7 +18,7 @@ import type { ProviderStateRecord, ProviderStatusModule } from '../../../../syst
  * @param {number} timeoutMs - Tiempo máximo en milisegundos para la ejecución.
  * @returns {Promise<string>} Salida estándar del comando.
  */
-function execAsync(cmd: string, timeoutMs = 5000): Promise<string> {
+function execAsync(cmd: string, timeoutMs = OLLAMA_CLI_SHORT_TIMEOUT_MS): Promise<string> {
   return new Promise((resolve, reject) => {
     exec(cmd, { timeout: timeoutMs }, (err, stdout, stderr) => {
       if (err) {
@@ -45,7 +50,7 @@ export const ollamaStatusModule: ProviderStatusModule = {
   async check(): Promise<ProviderStateRecord> {
     let version: string;
     try {
-      version = await execAsync('ollama --version', 5000);
+      version = await execAsync('ollama --version', OLLAMA_CLI_SHORT_TIMEOUT_MS);
     } catch {
       return {
         id: 'ollama',
@@ -57,7 +62,7 @@ export const ollamaStatusModule: ProviderStatusModule = {
 
     let models: string[];
     try {
-      const stdout = await execAsync('ollama list', 10_000);
+      const stdout = await execAsync('ollama list', OLLAMA_CLI_LONG_TIMEOUT_MS);
       models = parseModelList(stdout);
     } catch {
       return {

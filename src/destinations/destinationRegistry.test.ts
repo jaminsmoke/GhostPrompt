@@ -13,11 +13,7 @@ vi.mock('vscode', () => ({
   workspace: {
     getConfiguration: () => ({
       get: configGetMock,
-      inspect: () => ({
-        globalValue: undefined,
-        workspaceValue: undefined,
-        workspaceFolderValue: undefined,
-      }),
+      inspect: () => ({}),
     }),
   },
   extensions: {

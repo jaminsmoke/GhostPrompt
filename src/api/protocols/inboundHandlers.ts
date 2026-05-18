@@ -66,7 +66,7 @@ export async function handleGhostPromptInboundInit(
 /**
  * Maneja actualizaciones del borrador desde la UI del webview.
  * @param {WebviewInboundMessage} message - Mensaje de tipo draftChanged.
- * @param {Pick<GhostPromptInboundDispatchServices, "viewContributionId" | "broadcastDraftSync">} services - Servicios de broadcast para sincronizar borradores.
+ * @param {object} services - Servicios de broadcast para sincronizar borradores.
  * @returns {void} Void.
  */
 export function handleGhostPromptInboundDraftChanged(
@@ -86,7 +86,7 @@ export function handleGhostPromptInboundDraftChanged(
  * está presente en los servicios de dispatch.
  * @param {WebviewInboundMessage} message - Mensaje `updateSetting` del webview.
  * @param {() => Promise<void>} broadcastSettingsToAllViews - Callback para re-enviar settings a todas las vistas.
- * @param {GhostPromptInboundDispatchServices | undefined} [dispatchServices] - Servicios de dispatch (broadcastUi, etc.), opcional.
+ * @param {GhostPromptInboundDispatchServices | undefined} [dispatchServices] - Servicios de dispatch opcionales.
  * @returns {Promise<void>} Promise que se resuelve cuando la actualización termina.
  */
 export async function handleGhostPromptInboundUpdateSetting(
@@ -165,6 +165,43 @@ export async function handleGhostPromptInboundSend(
 }
 
 /**
+ * Registra en el logger del host un mensaje `log` enviado desde el webview.
+ * @param {Extract<WebviewInboundMessage, { type: 'log' }>} message - Mensaje de log del webview.
+ * @returns {void}
+ */
+function dispatchGhostPromptLogInbound(
+  message: Extract<WebviewInboundMessage, { type: 'log' }>,
+): void {
+  const log = getLogger('ui');
+  const payload = {
+    message: message.message,
+    data: message.data,
+    captureId: message.captureId,
+  };
+  switch (message.level) {
+    case 'debug': {
+      log.debug('webview-log', payload);
+      break;
+    }
+    case 'info': {
+      log.info('webview-log', payload);
+      break;
+    }
+    case 'warn': {
+      log.warn('webview-log', payload);
+      break;
+    }
+    case 'error': {
+      log.error('webview-log', payload);
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+}
+
+/**
  * Enruta un mensaje inbound del webview al handler correspondiente.
  * @param {WebviewInboundMessage} message - Mensaje entrante parseado desde el webview.
  * @param {GhostPromptInboundDispatchServices} services - Servicios de despacho y broadcasting.
@@ -182,33 +219,7 @@ export async function dispatchGhostPromptInboundMessage(
       return;
     }
     case 'log': {
-      const log = getLogger('ui');
-      const payload = {
-        message: message.message,
-        data: message.data,
-        captureId: message.captureId,
-      };
-      switch (message.level) {
-        case 'debug': {
-          log.debug('webview-log', payload);
-          break;
-        }
-        case 'info': {
-          log.info('webview-log', payload);
-          break;
-        }
-        case 'warn': {
-          log.warn('webview-log', payload);
-          break;
-        }
-        case 'error': {
-          log.error('webview-log', payload);
-          break;
-        }
-        default: {
-          break;
-        }
-      }
+      dispatchGhostPromptLogInbound(message);
       return;
     }
     case 'draftChanged': {

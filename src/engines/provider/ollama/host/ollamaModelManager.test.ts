@@ -83,7 +83,7 @@ vitest.describe('OllamaModelManager', () => {
         options: { timeout?: number },
         callback: (error: Error | undefined, stdout: string, stderr: string) => void,
       ) => {
-        callback(undefined, 'ollama 1.0.0', '');
+        callback(false as unknown as Error | undefined, 'ollama 1.0.0', '');
         return {} as ChildProcess;
       },
     );
@@ -117,7 +117,7 @@ vitest.describe('OllamaModelManager', () => {
         options: { timeout?: number },
         callback: (error: Error | undefined, stdout: string, stderr: string) => void,
       ) => {
-        callback(undefined, 'NAME\nmodel-a 100\nmodel-b 200\n', '');
+        callback(false as unknown as Error | undefined, 'NAME\nmodel-a 100\nmodel-b 200\n', '');
         return {} as ChildProcess;
       },
     );
@@ -153,7 +153,7 @@ vitest.describe('OllamaModelManager', () => {
         options: { timeout?: number },
         callback: (error: Error | undefined, stdout: string, stderr: string) => void,
       ) => {
-        callback(undefined, 'NAME\nmodel-a running\n', '');
+        callback(false as unknown as Error | undefined, 'NAME\nmodel-a running\n', '');
         return {} as ChildProcess;
       },
     );
@@ -177,7 +177,7 @@ vitest.describe('OllamaModelManager', () => {
 
     const active = await ollamaModelManager.ps();
 
-    vitest.expect(active).toBeUndefined();
+    vitest.expect(active).toBe(false);
   });
 
   vitest.it('stopModel calls ollama stop for the target model and resets state', async () => {
@@ -187,7 +187,7 @@ vitest.describe('OllamaModelManager', () => {
         options: { timeout?: number },
         callback: (error: Error | undefined, stdout: string, stderr: string) => void,
       ) => {
-        callback(undefined, '', '');
+        callback(false as unknown as Error | undefined, '', '');
         return {} as ChildProcess;
       },
     );

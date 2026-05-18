@@ -26,11 +26,11 @@ import { getLogger } from '../../system/log';
  * @param {unknown} raw - Datos sin validar recibidos desde el webview.
  * @returns {WebviewInboundMessage | undefined} El mensaje parseado o undefined si no pasa la validación Zod.
  */
-export function parseWebviewInboundMessage(raw: unknown): WebviewInboundMessage | undefined {
+export function parseWebviewInboundMessage(raw: unknown): WebviewInboundMessage | false {
   const r = webviewInboundMessageSchema.safeParse(raw);
   if (!r.success) {
     getLogger('protocols').warn('webview-inbound-invalid', { issues: z.treeifyError(r.error), raw });
-    return undefined;
+    return false;
   }
   return r.data;
 }
@@ -38,15 +38,15 @@ export function parseWebviewInboundMessage(raw: unknown): WebviewInboundMessage 
 /**
  * Valida el sobre `{ type: 'settings', settings }` antes de `postMessage`.
  * @param {unknown} raw - Datos sin validar que vienen del host para el payload de settings.
- * @returns {z.infer<typeof webviewOutboundSettingsEnvelopeSchema> | undefined} El objeto parseado o undefined si no pasa la validación Zod.
+ * @returns {object | undefined} Envelope parseado o undefined si falla Zod.
  */
 export function parseOutboundSettingsEnvelope(
   raw: unknown,
-): z.infer<typeof webviewOutboundSettingsEnvelopeSchema> | undefined {
+): z.infer<typeof webviewOutboundSettingsEnvelopeSchema> | false {
   const r = webviewOutboundSettingsEnvelopeSchema.safeParse(raw);
   if (!r.success) {
     getLogger('protocols').error('settings-envelope-invalid', { issues: z.treeifyError(r.error), raw });
-    return undefined;
+    return false;
   }
   return r.data;
 }
@@ -57,11 +57,11 @@ export function parseOutboundSettingsEnvelope(
  * @param {unknown} raw - Datos sin validar que se enviarán al webview.
  * @returns {WebviewOutboundMessage | undefined} El mensaje parseado o undefined si no pasa la validación Zod.
  */
-export function parseWebviewOutboundMessage(raw: unknown): WebviewOutboundMessage | undefined {
+export function parseWebviewOutboundMessage(raw: unknown): WebviewOutboundMessage | false {
   const r = webviewOutboundMessageSchema.safeParse(raw);
   if (!r.success) {
     getLogger('protocols').warn('webview-outbound-invalid', { issues: z.treeifyError(r.error), raw });
-    return undefined;
+    return false;
   }
   return r.data;
 }

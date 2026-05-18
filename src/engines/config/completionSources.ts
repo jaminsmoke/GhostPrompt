@@ -4,6 +4,7 @@
 
 import * as vscode from 'vscode';
 
+import { hasAnyConfigurationInspectScope } from '../../system/internals/isDefined';
 import { isProviderId } from '../../system/internals/protocols/guards/guardProviderId';
 
 import type { ProviderId } from '../../system/internals/protocols/state/provider';
@@ -17,10 +18,7 @@ export function getEnabledCompletionSources(): ProviderId[] {
   const cfg = vscode.workspace.getConfiguration('ghostPrompt');
   const inspected = cfg.inspect<ProviderId[]>('enabledCompletionSources');
 
-  const explicit =
-    inspected?.globalValue !== undefined ||
-    inspected?.workspaceValue !== undefined ||
-    inspected?.workspaceFolderValue !== undefined;
+  const explicit = hasAnyConfigurationInspectScope(inspected);
 
   if (!explicit) {
     return legacySourcesFromCompletionProvider();
@@ -62,11 +60,7 @@ function normalizeCompletionSources(raw: unknown): ProviderId[] {
   const out: ProviderId[] = [];
   const seen = new Set<ProviderId>();
   for (const item of raw) {
-    if (!isProviderId(item)) {
-      continue;
-    }
-
-    if (!seen.has(item)) {
+    if (isProviderId(item) && !seen.has(item)) {
       seen.add(item);
       out.push(item);
     }

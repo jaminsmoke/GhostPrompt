@@ -8,6 +8,11 @@ import { listSuggestionModels } from '../../engines/provider/copilot/catalog/mod
 import { listMergedSuggestionModels } from '../../engines/provider/mergedModelCatalog';
 import { listOllamaSuggestionModels } from '../../engines/provider/ollama/catalog/ollamaModelCatalog';
 import { listOpencodeSuggestionModels } from '../../engines/provider/opencode/catalog/opencodeModelCatalog';
+import {
+  DEFAULT_SUGGESTION_DEBOUNCE_MS,
+  MAX_SUGGESTION_DEBOUNCE_MS,
+  MIN_SUGGESTION_DEBOUNCE_MS,
+} from '../../system/internals/protocols/constants/consPipelineDefaults';
 import { isSuggestionDebugEnabled } from '../../system/log';
 import { getLastEffectiveSuggestionModel } from '../../system/runtime/lastEffectiveSuggestionModel';
 import {
@@ -16,6 +21,7 @@ import {
   isVsOpenCodeXExtensionInstalled,
 } from '../getters/workspaceGetters';
 import { parseOutboundSettingsEnvelope } from '../protocols/webviewProtocols';
+
 
 import type {
   SuggestionModelDescriptor,
@@ -35,7 +41,7 @@ export type GhostPromptSettingsGetters = {
  * @returns {number} Valor ajustado dentro del rango mínimo y máximo.
  */
 function clampSuggestionDebounceMs(value: number): number {
-  return Math.min(2000, Math.max(150, Math.round(value)));
+  return Math.min(MAX_SUGGESTION_DEBOUNCE_MS, Math.max(MIN_SUGGESTION_DEBOUNCE_MS, Math.round(value)));
 }
 
 /**
@@ -50,7 +56,7 @@ export async function buildAndPostGhostPromptSettings(
 ): Promise<void> {
   const gpCfg = vscode.workspace.getConfiguration('ghostPrompt');
   const suggestionDebounceMs = clampSuggestionDebounceMs(
-    gpCfg.get<number>('suggestionDebounceMs', 800),
+    gpCfg.get<number>('suggestionDebounceMs', DEFAULT_SUGGESTION_DEBOUNCE_MS),
   );
   const policy = getters.getSuggestionModelPolicy();
   const enabledSources = getEnabledCompletionSources();

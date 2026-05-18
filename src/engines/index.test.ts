@@ -4,15 +4,13 @@
 import * as vitest from 'vitest';
 import { vi } from 'vitest';
 
+import { emptyConfigurationInspect } from '../system/internals/testing/mockVscodeConfigurationInspect';
+
 vi.mock('vscode', () => ({
   workspace: {
     getConfiguration: () => ({
       get: vi.fn(() => {}),
-      inspect: vi.fn(() => ({
-        globalValue: undefined,
-        workspaceValue: undefined,
-        workspaceFolderValue: undefined,
-      })),
+      inspect: vi.fn(() => emptyConfigurationInspect),
     }),
   },
   lm: {

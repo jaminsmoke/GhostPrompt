@@ -1,16 +1,18 @@
 /**
  * @file Último modelo efectivo usado en una suggestion exitosa (payload settings).
  */
+import { isDefined } from '../internals/isDefined';
+
 import type { SuggestionModelDescriptor } from '../internals/protocols/types';
 
-let _lastEffectiveModel: SuggestionModelDescriptor | undefined;
+const lastEffectiveModelSlot: { current?: SuggestionModelDescriptor } = {};
 
 /**
  * Devuelve el último modelo con el que se generó una suggestion exitosa.
  * @returns {SuggestionModelDescriptor | undefined} Descriptor del modelo o undefined.
  */
 export function getLastEffectiveSuggestionModel(): SuggestionModelDescriptor | undefined {
-  return _lastEffectiveModel;
+  return lastEffectiveModelSlot.current;
 }
 
 /**
@@ -18,12 +20,16 @@ export function getLastEffectiveSuggestionModel(): SuggestionModelDescriptor | u
  * @param {SuggestionModelDescriptor | undefined} model - Descriptor del modelo usado.
  */
 export function setLastEffectiveSuggestionModel(model: SuggestionModelDescriptor | undefined): void {
-  _lastEffectiveModel = model;
+  if (!isDefined(model)) {
+    delete lastEffectiveModelSlot.current;
+    return;
+  }
+  lastEffectiveModelSlot.current = model;
 }
 
 /**
  * Reinicia el modelo efectivo (tests).
  */
 export function resetLastEffectiveSuggestionModel(): void {
-  _lastEffectiveModel = undefined;
+  delete lastEffectiveModelSlot.current;
 }

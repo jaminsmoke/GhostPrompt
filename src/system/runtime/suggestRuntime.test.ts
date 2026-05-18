@@ -24,11 +24,7 @@ vi.mock('vscode', () => ({
   workspace: {
     getConfiguration: () => ({
       get: wsConfigGetMock,
-      inspect: () => ({
-        globalValue: undefined,
-        workspaceValue: undefined,
-        workspaceFolderValue: undefined,
-      }),
+      inspect: () => ({}),
     }),
   },
   window: {
@@ -39,6 +35,7 @@ vi.mock('vscode', () => ({
 
 import { resolveCompletionSourceForRequest } from '../../engines/routing/resolveCompletionSource';
 import { resetSuggestionHostNotificationThrottleForTests, maybeNotifySuggestionIssue } from '../../ui/notifications/suggestionNotification';
+import { DEFAULT_MAX_SUGGESTION_CHARS } from '../internals/protocols/constants/consPipelineDefaults';
 
 import { resetGhostPromptHostRuntimeForTests } from './resetHostRuntimeForTests';
 import {
@@ -74,28 +71,34 @@ function minimalDeps(overrides?: Partial<GhostPromptSuggestDeps>): GhostPromptSu
     getSuggestionModelPolicy: () => 'nonPremiumOnly',
     getSelectedModelId: () => 'auto',
     getSuggestionStyle: () => 'balanced',
-    getMaxSuggestionChars: () => 180,
+    getMaxSuggestionChars: () => DEFAULT_MAX_SUGGESTION_CHARS,
     notifyIssue: maybeNotifySuggestionIssue,
     ...overrides,
   };
 }
 
-vitest.describe('runGhostPromptSuggestPipeline', () => {
-  vitest.beforeEach(() => {
-    vi.clearAllMocks();
-    wsConfigGetMock.mockImplementation((key: string, fallback: unknown) => fallback);
-    resetSuggestionHostNotificationThrottleForTests();
-    resetGhostPromptHostRuntimeForTests();
-    requestCompletion.mockResolvedValue({
-      kind: 'suggestion',
-      suggestion: 'mocked suggestion text',
-      model: {
-        id: 'copilot/gpt',
-        label: 'GPT',
-        tier: 'included',
-      },
-    });
+/**
+ * Restaura mocks del pipeline de sugerencias antes de cada test.
+ * @returns {void}
+ */
+function suggestPipelineBeforeEach(): void {
+  vi.clearAllMocks();
+  wsConfigGetMock.mockImplementation((key: string, fallback: unknown) => fallback);
+  resetSuggestionHostNotificationThrottleForTests();
+  resetGhostPromptHostRuntimeForTests();
+  requestCompletion.mockResolvedValue({
+    kind: 'suggestion',
+    suggestion: 'mocked suggestion text',
+    model: {
+      id: 'copilot/gpt',
+      label: 'GPT',
+      tier: 'included',
+    },
   });
+}
+
+vitest.describe('runGhostPromptSuggestPipeline', () => {
+  vitest.beforeEach(suggestPipelineBeforeEach);
 
   vitest.it('no emite UI si text está vacío', async () => {
     const deps = minimalDeps();
@@ -169,6 +172,11 @@ vitest.describe('runGhostPromptSuggestPipeline', () => {
       }),
     );
   });
+
+});
+
+vitest.describe('runGhostPromptSuggestPipeline (opencode y errores)', () => {
+  vitest.beforeEach(suggestPipelineBeforeEach);
 
   vitest.it('ruta OpenCode: loading inicial opencode-start y onStreamPreview en opciones', async () => {
     vi.mocked(resolveCompletionSourceForRequest).mockReturnValue('opencode');

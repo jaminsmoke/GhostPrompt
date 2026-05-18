@@ -17,6 +17,8 @@ vi.mock('vscode', () => ({
 
 import { SuggestionRequestCoordinator } from './suggestionRequestCoordinator';
 
+const TEST_CAPTURE_ID = 5;
+
 vitest.describe('SuggestionRequestCoordinator', () => {
   let coordinator: SuggestionRequestCoordinator;
 
@@ -40,9 +42,9 @@ vitest.describe('SuggestionRequestCoordinator', () => {
   });
 
   vitest.it('reset limpia capture y token', () => {
-    coordinator.prepareRequest(5);
+    coordinator.prepareRequest(TEST_CAPTURE_ID);
     coordinator.reset();
     vitest.expect(coordinator.getActiveCaptureId()).toBe(0);
-    vitest.expect(coordinator.isActiveCapture(5)).toBe(false);
+    vitest.expect(coordinator.isActiveCapture(TEST_CAPTURE_ID)).toBe(false);
   });
 });

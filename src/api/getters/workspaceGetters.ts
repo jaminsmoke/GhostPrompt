@@ -5,6 +5,12 @@
 
 import * as vscode from 'vscode';
 
+import {
+  DEFAULT_MAX_SUGGESTION_CHARS,
+  MAX_MAX_SUGGESTION_CHARS,
+  MIN_MAX_SUGGESTION_CHARS,
+} from '../../system/internals/protocols/constants/consPipelineDefaults';
+
 import type { SuggestionStyle } from '../../system/internals/protocols/types';
 
 export {
@@ -33,11 +39,11 @@ export function getGhostPromptSelectedModelId(): string {
 export function getGhostPromptMaxSuggestionChars(): number {
   const rawValue = vscode.workspace
     .getConfiguration('ghostPrompt')
-    .get<number>('maxSuggestionChars', 180);
+    .get<number>('maxSuggestionChars', DEFAULT_MAX_SUGGESTION_CHARS);
   if (!Number.isFinite(rawValue)) {
-    return 180;
+    return DEFAULT_MAX_SUGGESTION_CHARS;
   }
-  return Math.max(40, Math.min(500, Math.floor(rawValue)));
+  return Math.max(MIN_MAX_SUGGESTION_CHARS, Math.min(MAX_MAX_SUGGESTION_CHARS, Math.floor(rawValue)));
 }
 
 /**
@@ -76,7 +82,7 @@ export function getGhostPromptOllamaExcludedModelIds(): string[] {
 
 /**
  * Recopila contexto de proyecto disponible desde el editor activo (texto tal cual del documento, sin normalizar).
- * @returns {{ workspaceName?: string; activeFilePath?: string; activeLanguageId?: string; activeSelection?: string }} Metadata del vscode.workspace y selección activa, si aplica.
+ * @returns {object} Metadata del workspace y selección activa, si aplica.
  */
 export function collectGhostPromptProjectContext(): {
   workspaceName?: string;
@@ -92,11 +98,10 @@ export function collectGhostPromptProjectContext(): {
   const activeLanguageId = editor.document.languageId;
   const activeFilePath = vscode.workspace.asRelativePath(editor.document.uri, false);
   const selected = editor.selection.isEmpty ? '' : editor.document.getText(editor.selection);
-  const activeSelection = selected || undefined;
   return {
     workspaceName,
     activeFilePath,
     activeLanguageId,
-    activeSelection,
+    ...selected ? { activeSelection: selected } : {},
   };
 }

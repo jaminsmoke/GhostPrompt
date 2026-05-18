@@ -12,18 +12,18 @@ import type { CompletionRequestOptions } from '../../../system/internals/protoco
  * @param {string | undefined} preferredModelId - Modelo preferido o `auto`.
  * @returns {string | undefined} Id de modelo o undefined.
  */
-export function resolveOpenCodeModelId(preferredModelId: string | undefined): string | undefined {
+export function resolveOpenCodeModelId(preferredModelId: string | undefined): string | false {
   if (preferredModelId && preferredModelId !== 'auto') {
     return preferredModelId;
   }
-  return undefined;
+  return false;
 }
 
 /**
  * Ejecuta prompt OpenCode y devuelve el texto bruto del LM.
  * @param {string} userText - Texto del usuario.
  * @param {string} modelId - Identificador del modelo OpenCode.
- * @param {Pick<CompletionRequestOptions, 'token' | 'requestTimeoutMs' | 'onLoadingPhase'>} options - Opciones de la petición.
+ * @param {object} options - Opciones de la petición (token, timeout, fases).
  * @returns {Promise<string>} Texto de completion sin post-proceso.
  * @throws {Error} En timeout, cancelación o fallo de red.
  */

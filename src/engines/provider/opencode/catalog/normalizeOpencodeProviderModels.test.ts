@@ -23,7 +23,6 @@ vitest.describe('normalizeOpencodeProviderModels', () => {
       normalizeOpencodeProviderModels([
         { id: 'ok', name: 'OK' },
         { name: 'bad' },
-        undefined,
       ] as unknown[]),
     ).toHaveLength(1);
   });

@@ -11,13 +11,13 @@ interface ErrorBoundaryProperties {
 
 interface ErrorBoundaryState {
   hasError: boolean;
-  error: Error | undefined;
+  error?: Error;
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProperties, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProperties) {
     super(props);
-    this.state = { hasError: false, error: undefined };
+    this.state = { hasError: false };
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
@@ -39,7 +39,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProperties, ErrorBound
   }
 
   handleReload = () => {
-    this.setState({ hasError: false, error: undefined });
+    this.setState({ hasError: false });
   };
 
   render() {

@@ -2,14 +2,14 @@
  * @file Borrador compartido entre Sidebar y Panel (MiniInputViewProvider).
  */
 
-let _draftText = '';
+let sharedDraftText = '';
 
 /**
  * Devuelve el texto del borrador compartido entre vistas.
  * @returns {string} Borrador actual del input GhostPrompt.
  */
 export function getMultiViewDraftText(): string {
-  return _draftText;
+  return sharedDraftText;
 }
 
 /**
@@ -17,12 +17,12 @@ export function getMultiViewDraftText(): string {
  * @param {string} text - Nuevo texto del borrador.
  */
 export function setMultiViewDraftText(text: string): void {
-  _draftText = text;
+  sharedDraftText = text;
 }
 
 /**
  * Reinicia el borrador (tests y tras enviar prompt al destino).
  */
 export function resetMultiViewDraftText(): void {
-  _draftText = '';
+  sharedDraftText = '';
 }

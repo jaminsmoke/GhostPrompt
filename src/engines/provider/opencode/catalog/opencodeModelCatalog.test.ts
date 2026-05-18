@@ -25,14 +25,22 @@ vi.mock('vscode', () => ({
   },
 }));
 
+import { OPENCODE_DEFAULT_PORT } from '../../../../system/internals/protocols/types/typeOpencodeClient';
+
 import { listOpencodeSuggestionModels } from './opencodeModelCatalog';
 
 vitest.beforeEach(() => {
   vi.resetAllMocks();
   cfgGetMock.mockImplementation((key: string, defaultValue: unknown) => {
-    if (key === 'opencodeExcludedModelIds') {return [];}
-    if (key === 'opencodePort') {return 4096;}
-    if (key === 'opencodeAuthToken') {return;}
+    if (key === 'opencodeExcludedModelIds') {
+      return [];
+    }
+    if (key === 'opencodePort') {
+      return OPENCODE_DEFAULT_PORT;
+    }
+    if (key === 'opencodeAuthToken') {
+      return defaultValue;
+    }
     return defaultValue;
   });
 });
@@ -99,9 +107,15 @@ vitest.describe('listOpencodeSuggestionModels', () => {
 
   vitest.it('respects ghostPrompt.opencodeExcludedModelIds', async () => {
     cfgGetMock.mockImplementation((key: string, defaultValue: unknown) => {
-      if (key === 'opencodeExcludedModelIds') {return ['anthropic/claude-3'];}
-      if (key === 'opencodePort') {return 4096;}
-      if (key === 'opencodeAuthToken') {return;}
+      if (key === 'opencodeExcludedModelIds') {
+        return ['anthropic/claude-3'];
+      }
+      if (key === 'opencodePort') {
+      return OPENCODE_DEFAULT_PORT;
+    }
+      if (key === 'opencodeAuthToken') {
+        return defaultValue;
+      }
       return defaultValue;
     });
 

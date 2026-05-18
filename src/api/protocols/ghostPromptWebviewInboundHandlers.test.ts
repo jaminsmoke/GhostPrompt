@@ -18,41 +18,32 @@ const getActiveDestinationProviderMock = vi.hoisted(
     })),
 );
 const windowShowErrorMessageMock = vi.hoisted(() => vi.fn());
-const MockCancellationTokenSource = vi.hoisted(
-  () =>
-    class {
-      public token = { isCancellationRequested: false };
-      public cancel(): void {
-        this.token.isCancellationRequested = true;
-      }
-      public dispose(): void { return; }
-    },
-);
 
-vi.mock('vscode', () => ({
+vi.mock('vscode', async () => {
+  const tokenModule = (await import('./testing/mockCancellationTokenSource')) as unknown as Record<
+    string,
+    new () => { token: { isCancellationRequested: boolean } }
+  >;
+  const disposableModule = (await import('./testing/mockDisposable')) as unknown as Record<
+    string,
+    new (disposeFunction: () => void) => { dispose: () => void }
+  >;
+
+  return {
   workspace: {
     getConfiguration: () => ({
       get: workspaceConfigGetMock,
-      inspect: () => ({
-        globalValue: undefined,
-        workspaceValue: undefined,
-        workspaceFolderValue: undefined,
-      }),
+      inspect: () => ({}),
     }),
   },
   extensions: {
-    getExtension: vi.fn(() => { return; }),
+    getExtension: vi.fn(),
   },
   window: {
     showErrorMessage: windowShowErrorMessageMock,
   },
-  'CancellationTokenSource': MockCancellationTokenSource,
-  'Disposable': class {
-    constructor(private readonly _fn: () => void) {}
-    dispose(): void {
-      this._fn();
-    }
-  },
+  'CancellationTokenSource': tokenModule.MockCancellationTokenSource,
+  'Disposable': disposableModule.MockDisposable,
   'Uri': {
     joinPath: (...parts: (string | { fsPath?: string })[]) => ({
       fsPath: parts
@@ -62,7 +53,8 @@ vi.mock('vscode', () => ({
         .join('/'),
     }),
   },
-}));
+  };
+});
 
 vi.mock('../../destinations/destinationRegistry', () => ({
   getAgentDestination: () =>
@@ -78,6 +70,7 @@ vi.mock('../../system/runtime/suggestRuntime', () => ({
   handleGhostPromptSuggest: handleGhostPromptSuggestMock,
 }));
 
+import { DEFAULT_MAX_SUGGESTION_CHARS } from '../../system/internals/protocols/constants/consPipelineDefaults';
 import { resetGhostPromptHostRuntimeForTests } from '../../system/runtime/resetHostRuntimeForTests';
 import {
   getMultiViewDraftText,
@@ -95,6 +88,7 @@ import {
 import type { GhostPromptSuggestDeps } from '../../system/runtime/suggestRuntime';
 import type * as Vscode from 'vscode';
 
+
 /**
  * Returns minimal suggest runtime dependencies for inbound handler tests.
  * @returns {GhostPromptSuggestDeps} A basic GhostPromptSuggestDeps instance with test-safe defaults.
@@ -105,21 +99,26 @@ function minimalSuggestDeps(): GhostPromptSuggestDeps {
     getSuggestionModelPolicy: () => 'nonPremiumOnly',
     getSelectedModelId: () => 'auto',
     getSuggestionStyle: () => 'balanced',
-    getMaxSuggestionChars: () => 180,
+    getMaxSuggestionChars: () => DEFAULT_MAX_SUGGESTION_CHARS,
   };
 }
 
-vitest.describe('ghostPromptWebviewInboundHandlers', () => {
-  vitest.beforeEach(() => {
-    vi.clearAllMocks();
-    workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) => {
-      return key === 'agentDestination' ? 'copilotChat' : fallback;
-    });
-    resetGhostPromptHostRuntimeForTests();
+/**
+ * Restaura mocks compartidos antes de cada caso de handlers inbound.
+ * @returns {void}
+ */
+function resetInboundHandlerMocks(): void {
+  vi.clearAllMocks();
+  workspaceConfigGetMock.mockImplementation((key: string, fallback: unknown) => {
+    return key === 'agentDestination' ? 'copilotChat' : fallback;
   });
+  resetGhostPromptHostRuntimeForTests();
+}
 
-  vitest.describe('handleGhostPromptInboundDraftChanged', () => {
-    vitest.it('no actualiza el store si originViewId no coincide con la vista', () => {
+vitest.describe('handleGhostPromptInboundDraftChanged', () => {
+  vitest.beforeEach(resetInboundHandlerMocks);
+
+  vitest.it('no actualiza el store si originViewId no coincide con la vista', () => {
       const broadcast = vi.fn();
       handleGhostPromptInboundDraftChanged(
         {
@@ -152,10 +151,12 @@ vitest.describe('ghostPromptWebviewInboundHandlers', () => {
       vitest.expect(getMultiViewDraftText()).toBe('texto');
       vitest.expect(broadcast).toHaveBeenCalledWith('ghostPrompt.input', 'texto');
     });
-  });
+});
 
-  vitest.describe('handleGhostPromptInboundInit', () => {
-    vitest.it('publica settings y rehidrata el borrador del store', async () => {
+vitest.describe('handleGhostPromptInboundInit', () => {
+  vitest.beforeEach(resetInboundHandlerMocks);
+
+  vitest.it('publica settings y rehidrata el borrador del store', async () => {
       setMultiViewDraftText('persistido');
       const postSettings = vi.fn().mockResolvedValue();
       const postMessage = vi.fn();
@@ -169,10 +170,12 @@ vitest.describe('ghostPromptWebviewInboundHandlers', () => {
         text: 'persistido',
       });
     });
-  });
+});
 
-  vitest.describe('handleGhostPromptInboundSend', () => {
-    vitest.it('registra el envío, envía al chat y limpia vistas', async () => {
+vitest.describe('handleGhostPromptInboundSend', () => {
+  vitest.beforeEach(resetInboundHandlerMocks);
+
+  vitest.it('registra el envío, envía al chat y limpia vistas', async () => {
       const clearAll = vi.fn();
       const dataUri = { fsPath: '/global-store' } as Vscode.Uri;
 
@@ -194,7 +197,6 @@ vitest.describe('ghostPromptWebviewInboundHandlers', () => {
     vitest.it('muestra error si el provider no tiene sendPrompt registrado', async () => {
       getActiveDestinationProviderMock.mockReturnValue({
         id: 'copilotChat' as const,
-        sendPrompt: undefined,
       });
       const clearAll = vi.fn();
       await handleGhostPromptInboundSend(
@@ -224,10 +226,12 @@ vitest.describe('ghostPromptWebviewInboundHandlers', () => {
       vitest.expect(sendToChatMock).not.toHaveBeenCalled();
       vitest.expect(clearAll).not.toHaveBeenCalled();
     });
-  });
+});
 
-  vitest.describe('dispatchGhostPromptInboundMessage', () => {
-    vitest.it('enruta updateSetting a apply + refresh de settings', async () => {
+vitest.describe('dispatchGhostPromptInboundMessage', () => {
+  vitest.beforeEach(resetInboundHandlerMocks);
+
+  vitest.it('enruta updateSetting a apply + refresh de settings', async () => {
       applyWebviewUpdateSettingMock.mockResolvedValue();
       const broadcastSettings = vi.fn().mockResolvedValue();
       const webview = {} as Vscode.Webview;
@@ -291,5 +295,4 @@ vitest.describe('ghostPromptWebviewInboundHandlers', () => {
       vitest.expect(handleGhostPromptSuggestMock).not.toHaveBeenCalled();
       vitest.expect(broadcastUi).not.toHaveBeenCalled();
     });
-  });
 });

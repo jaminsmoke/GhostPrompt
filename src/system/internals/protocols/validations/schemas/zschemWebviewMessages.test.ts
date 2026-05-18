@@ -10,11 +10,7 @@ vi.mock('vscode', () => ({
   workspace: {
     getConfiguration: () => ({
       get: vi.fn(),
-      inspect: vi.fn(() => ({
-        globalValue: undefined,
-        workspaceValue: undefined,
-        workspaceFolderValue: undefined,
-      })),
+      inspect: vi.fn(() => ({})),
     }),
   },
   window: {
@@ -31,6 +27,7 @@ vi.mock('vscode', () => ({
 }));
 
 import { webviewInboundMessageSchema as hostInboundSchema } from '../../../../../api/protocols/webviewProtocols';
+import { DEFAULT_SUGGESTION_DEBOUNCE_MS } from '../../constants/consPipelineDefaults';
 
 import {
   webviewInboundMessageSchema,
@@ -114,7 +111,7 @@ vitest.describe('zschemWebviewMessages', () => {
         tier: 'included',
       },
       debugSuggestions: true,
-      suggestionDebounceMs: 800,
+      suggestionDebounceMs: DEFAULT_SUGGESTION_DEBOUNCE_MS,
       agentDestination: 'copilotChat' as const,
       vsOpenCodeXExtensionInstalled: false,
       cursorDesktopHost: false,
@@ -134,7 +131,7 @@ vitest.describe('zschemWebviewMessages', () => {
         availableModels: [],
         suggestionStyle: 'balanced' as const,
         debugSuggestions: false,
-        suggestionDebounceMs: 800,
+        suggestionDebounceMs: DEFAULT_SUGGESTION_DEBOUNCE_MS,
         agentDestination: 'copilotChat' as const,
         vsOpenCodeXExtensionInstalled: false,
         cursorDesktopHost: false,

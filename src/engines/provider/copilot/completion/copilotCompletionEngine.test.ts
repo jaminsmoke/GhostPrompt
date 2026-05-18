@@ -72,7 +72,7 @@ function createHangingTextStream(): AsyncIterable<string> {
 
 /**
  * Creates a minimal cancellation token for tests.
- * @returns {{ isCancellationRequested: boolean; onCancellationRequested: (cb: () => void) => { dispose(): void } }} A fake CancellationToken-like object.
+ * @returns {object} Token compatible con CancellationToken de VS Code.
  */
 function createToken() {
   return {

@@ -5,6 +5,11 @@ import * as vitest from 'vitest';
 import { vi } from 'vitest';
 import * as vscode from 'vscode';
 
+const TEST_MIGRATION_YIELD_MS = 50;
+
+import { isDefined } from '../internals/isDefined';
+import { emptyConfigurationInspect } from '../internals/testing/mockVscodeConfigurationInspect';
+
 import {
   disposeGhostPromptLogging,
   initGhostPromptLogging,
@@ -64,11 +69,7 @@ vi.mock('vscode', () => {
           }
           return defaultValue;
         }),
-        inspect: vi.fn(() => ({
-          globalValue: undefined,
-          workspaceValue: undefined,
-          workspaceFolderValue: undefined,
-        })),
+        inspect: vi.fn(() => emptyConfigurationInspect),
       })),
       onDidChangeConfiguration: vi.fn(() => ({ dispose: vi.fn() })),
     },
@@ -137,7 +138,7 @@ vitest.describe('migración Markdown legacy (LogManager)', () => {
 
     const flagBytes = hoisted.files.get(flagPath);
     vitest.expect(flagBytes).toBeDefined();
-    if (flagBytes === undefined) {
+    if (!isDefined(flagBytes)) {
       throw new Error('expected flag bytes');
     }
     const flag = JSON.parse(Buffer.from(flagBytes).toString('utf8')) as {
@@ -147,7 +148,7 @@ vitest.describe('migración Markdown legacy (LogManager)', () => {
 
     const nd = hoisted.files.get(ndPath);
     vitest.expect(nd).toBeDefined();
-    if (nd === undefined) {
+    if (!isDefined(nd)) {
       throw new Error('expected ndjson bytes');
     }
     const lines = Buffer.from(nd)
@@ -205,7 +206,9 @@ vitest.describe('migración Markdown legacy (LogManager)', () => {
     } as vscode.ExtensionContext;
 
     initGhostPromptLogging(ctx);
-    await new Promise((r) => setTimeout(r, 50));
+    await new Promise((resolve) => {
+      setTimeout(resolve, TEST_MIGRATION_YIELD_MS);
+    });
     await disposeGhostPromptLogging();
 
     vitest.expect(hoisted.files.has(ndPath)).toBe(false);

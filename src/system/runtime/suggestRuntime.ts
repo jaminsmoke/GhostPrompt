@@ -53,6 +53,54 @@ export type GhostPromptSuggestDeps = {
 };
 
 /**
+ * Publica en la UI el resultado final del pipeline de sugerencia.
+ * @param {CompletionResult} result - Resultado normalizado del motor de completion.
+ * @param {number} captureId - Identificador de captura de la petición.
+ * @param {GhostPromptSuggestDeps} deps - Dependencias de broadcast y notificación.
+ * @returns {void}
+ */
+function broadcastSuggestPipelineOutcome(
+  result: CompletionResult,
+  captureId: number,
+  deps: GhostPromptSuggestDeps,
+): void {
+  const log = getLogger('suggest');
+  if (result.kind === 'suggestion') {
+    setLastEffectiveSuggestionModel(result.model);
+    log.info('request-success', {
+      captureId,
+      suggestionChars: result.suggestion.length,
+      model: result.model?.id ?? 'unknown',
+      modelTier: result.model?.tier ?? 'unknown',
+    });
+    deps.broadcastUi({
+      type: 'suggestion',
+      suggestion: result.suggestion,
+      ...result.model ? { model: result.model } : {},
+      captureId,
+    });
+    return;
+  }
+  if (result.kind === 'empty') {
+    log.info('request-empty', { captureId, reason: result.reason });
+    deps.broadcastUi({
+      type: 'empty',
+      reason: result.reason,
+      captureId,
+    });
+    deps.notifyIssue?.(result);
+    return;
+  }
+  log.error('request-error', { captureId, detail: result.message });
+  deps.broadcastUi({
+    type: 'error',
+    message: result.message,
+    captureId,
+  });
+  deps.notifyIssue?.(result);
+}
+
+/**
  * Ejecuta el flujo completo de suggestion para un par texto + captureId (tras validar entrada).
  * @param {WebviewInboundMessage} message - Mensaje de sugerencia recibido desde el webview.
  * @param {GhostPromptSuggestDeps} deps - Dependencias y callbacks necesarios para el pipeline.
@@ -115,7 +163,7 @@ export async function runGhostPromptSuggestPipeline(
       perfCaptureId: captureId,
       token: tokenSource.token,
       policy,
-      preferredModelId: selectedModelId === 'auto' ? undefined : selectedModelId,
+      ...selectedModelId === 'auto' ? {} : { preferredModelId: selectedModelId },
       style,
       onLoadingPhase: emitLoadingPhase,
       ...routedSource === 'opencode' || routedSource === 'ollama'
@@ -144,37 +192,7 @@ export async function runGhostPromptSuggestPipeline(
       return;
     }
 
-    if (result.kind === 'suggestion') {
-      setLastEffectiveSuggestionModel(result.model);
-      log.info('request-success', {
-        captureId,
-        suggestionChars: result.suggestion.length,
-        model: result.model?.id ?? 'unknown',
-        modelTier: result.model?.tier ?? 'unknown',
-      });
-      deps.broadcastUi({
-        type: 'suggestion',
-        suggestion: result.suggestion,
-        ...result.model ? { model: result.model } : {},
-        captureId,
-      });
-    } else if (result.kind === 'empty') {
-      log.info('request-empty', { captureId, reason: result.reason });
-      deps.broadcastUi({
-        type: 'empty',
-        reason: result.reason,
-        captureId,
-      });
-      deps.notifyIssue?.(result);
-    } else {
-      log.error('request-error', { captureId, detail: result.message });
-      deps.broadcastUi({
-        type: 'error',
-        message: result.message,
-        captureId,
-      });
-      deps.notifyIssue?.(result);
-    }
+    broadcastSuggestPipelineOutcome(result, captureId, deps);
   } catch {
     log.warn('request-cancelled', { captureId });
   } finally {

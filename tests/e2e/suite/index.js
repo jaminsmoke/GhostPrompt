@@ -3,6 +3,8 @@
  */
 const { runTests } = require('./extension.test.js');
 
+const E2E_EXIT_SETTLE_MS = 5000;
+
 /**
  * Waits for the given number of milliseconds.
  * @param {number} ms - Time in milliseconds to wait.
@@ -21,7 +23,7 @@ async function run() {
   process.stdout.write(
     'E2E tests completed. Waiting 5 seconds before exit to allow VS Code extension startup logs to settle.\n',
   );
-  await sleep(5000);
+  await sleep(E2E_EXIT_SETTLE_MS);
 }
 
 module.exports = { run };

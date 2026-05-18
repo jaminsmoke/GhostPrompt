@@ -6,7 +6,7 @@
  *
  * - **protocols/** — Validación Zod en el boundary postMessage, router de mensajes inbound.
  * - **settings/** — Construcción/envío del envelope `settings`, aplicación de `updateSetting`.
- * - **getters/** — Lectores de configuración `vscode.workspace` + resolución de destino agente; `readGhostPromptSuggestionModelPolicy` se reexporta desde `system/internals/config/` (ver barrel al final de este archivo).
+ * - **getters/** — Lectores de workspace y destino agente (policy en `system/internals/config/`).
  */
 
 // Protocols

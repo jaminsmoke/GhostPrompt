@@ -8,6 +8,8 @@ import { collectLmResponse } from './collectLmResponse';
 
 import type * as Vscode from 'vscode';
 
+const TEST_STREAM_TIMEOUT_MS = 50;
+
 /**
  * Creates a mock Vscode.LanguageModelChatResponse with a text async iterator.
  * @param {string[]} chunks - The text chunks to emit from the generated stream.
@@ -15,14 +17,25 @@ import type * as Vscode from 'vscode';
  * @returns {unknown} A fake Vscode.LanguageModelChatResponse for testing.
  */
 function createMockResponse(chunks: string[], delayMs = 0): Vscode.LanguageModelChatResponse {
-  const asyncIterator = (async function* () {
-    for (const chunk of chunks) {
-      if (delayMs > 0) {
-        await new Promise((r) => setTimeout(r, delayMs));
-      }
-      yield chunk;
+  /**
+   * Emite trozos de texto simulando latencia opcional entre fragmentos.
+   * @param {number} index - Índice del trozo actual en `chunks`.
+   * @yields {string} Siguiente fragmento de la respuesta simulada.
+   */
+  async function* emitChunks(index: number): AsyncGenerator<string> {
+    if (index >= chunks.length) {
+      return;
     }
-  })();
+    if (delayMs > 0) {
+      await new Promise((resolve) => {
+        setTimeout(resolve, delayMs);
+      });
+    }
+    yield chunks[index];
+    yield* emitChunks(index + 1);
+  }
+
+  const asyncIterator = emitChunks(0);
 
   return {
     text: {
@@ -67,6 +80,8 @@ vitest.describe('collectLmResponse', () => {
       text: asyncIterator,
     } as unknown as Vscode.LanguageModelChatResponse;
 
-    await vitest.expect(collectLmResponse(response, 50)).rejects.toThrow('request-timeout');
+    await vitest
+      .expect(collectLmResponse(response, TEST_STREAM_TIMEOUT_MS))
+      .rejects.toThrow('request-timeout');
   });
 });

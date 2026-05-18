@@ -10,7 +10,7 @@ import type { WebviewInboundMessage } from '../protocols/webviewProtocols';
 
 /**
  * Aplica una actualización de configuración enviada desde el webview.
- * @param {Extract<WebviewInboundMessage, { type: "updateSetting" }>} message - Mensaje de configuración recibido del webview.
+ * @param {object} message - Mensaje `updateSetting` recibido del webview.
  * @returns {Promise<void>} Promise que se resuelve una vez aplicados los cambios.
  */
 export async function applyWebviewUpdateSetting(
@@ -48,8 +48,6 @@ export async function applyWebviewUpdateSetting(
     await config.update('debugSuggestions', message.value, vscode.ConfigurationTarget.Global);
     return;
   }
-  const value = parseAgentDestination(
-    typeof message.value === 'string' ? message.value : undefined,
-  );
+  const value = parseAgentDestination(typeof message.value === 'string' ? message.value : '');
   await config.update('agentDestination', value, vscode.ConfigurationTarget.Global);
 }

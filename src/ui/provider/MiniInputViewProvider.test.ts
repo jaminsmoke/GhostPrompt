@@ -4,6 +4,10 @@
 import * as vitest from 'vitest';
 import { vi } from 'vitest';
 
+import {
+  DEFAULT_MAX_SUGGESTION_CHARS,
+  DEFAULT_SUGGESTION_DEBOUNCE_MS,
+} from '../../system/internals/protocols/constants/consPipelineDefaults';
 import { suggestionLoadingStatusText } from '../../system/internals/protocols/state/loading';
 import { resetGhostPromptHostRuntimeForTests } from '../../system/runtime/resetHostRuntimeForTests';
 
@@ -18,6 +22,8 @@ import type * as SuggestRuntimeModule from '../../system/runtime/suggestRuntime'
 type GhostPromptSuggestDeps = SuggestRuntimeModule.GhostPromptSuggestDeps;
 
 type TestSuggestionModel = SuggestionModelDescriptor;
+
+const THIRD_BROADCAST_POST_INDEX = 3;
 
 const {
   requestCompletionMock,
@@ -44,7 +50,9 @@ const {
   };
 });
 
-let suggestHandler: ((message: unknown) => Promise<void> | void) | undefined;
+const suggestHandlerSlot: {
+  current?: (message: unknown) => Promise<void> | void;
+} = {};
 const postMessageMock = vi.fn();
 
 vi.mock('fs', () => ({
@@ -116,22 +124,24 @@ vi.mock('../../api/protocols/webviewProtocols', async (importOriginal) => {
   const actual = await importOriginal<typeof WebviewProtocolsModule>();
   return {
     ...actual,
-    parseWebviewInboundMessage: (raw: unknown) => {
+    parseWebviewInboundMessage: (
+      raw: unknown,
+    ): WebviewProtocolsModule.WebviewInboundMessage | undefined => {
+      let parsed: WebviewProtocolsModule.WebviewInboundMessage | undefined;
       if (
         typeof raw === 'object' &&
         'type' in raw &&
         typeof raw.type === 'string'
       ) {
         const msg = raw as Record<string, unknown>;
-        if (
+        const isInvalidSuggest =
           msg.type === 'suggest' &&
-          (typeof msg.captureId !== 'number' || typeof msg.text !== 'string')
-        ) {
-          return;
+          (typeof msg.captureId !== 'number' || typeof msg.text !== 'string');
+        if (!isInvalidSuggest) {
+          parsed = raw as WebviewProtocolsModule.WebviewInboundMessage;
         }
-        return raw;
       }
-      
+      return parsed;
     },
   };
 });
@@ -153,9 +163,8 @@ vi.mock('../../api/settings/settingsPostMessage', async (importOriginal) => {
             selectedModelId: 'auto',
             availableModels: models,
             suggestionStyle: 'balanced',
-            effectiveModel: undefined,
             debugSuggestions: false,
-            suggestionDebounceMs: 800,
+            suggestionDebounceMs: DEFAULT_SUGGESTION_DEBOUNCE_MS,
             agentDestination: 'copilotChat',
             vsOpenCodeXExtensionInstalled: false,
             cursorDesktopHost: false,
@@ -168,7 +177,7 @@ vi.mock('../../api/settings/settingsPostMessage', async (importOriginal) => {
 
 vi.mock('../../api/getters/workspaceGetters', () => ({
   collectGhostPromptProjectContext: () => ({}),
-  getGhostPromptMaxSuggestionChars: () => 180,
+  getGhostPromptMaxSuggestionChars: () => DEFAULT_MAX_SUGGESTION_CHARS,
   getGhostPromptSelectedModelId: () => 'auto',
   getGhostPromptSuggestionStyle: () => 'balanced',
   getAgentDestination: () => 'copilotChat',
@@ -196,15 +205,11 @@ vi.mock('vscode', () => ({
           return 1;
         }
         if (key === 'maxSuggestionChars') {
-          return 180;
+          return DEFAULT_MAX_SUGGESTION_CHARS;
         }
         return fallback;
       },
-      inspect: () => ({
-        globalValue: undefined,
-        workspaceValue: undefined,
-        workspaceFolderValue: undefined,
-      }),
+      inspect: () => ({}),
     }),
   },
   'Uri': {
@@ -221,10 +226,10 @@ vi.mock('vscode', () => ({
 
 /**
  * Creates a mocked MiniInputViewProvider webview view for tests.
- * @returns {{ webview: { cspSource: string; options: object; html: string; asWebviewUri: (uri: { fsPath: string }) => { toString(): string }; onDidReceiveMessage: (handler: (message: unknown) => void | Promise<void>) => void; postMessage: typeof postMessageMock } }} A test view object with a mock webview.
+ * @returns {object} Vista de prueba con webview mock.
  */
 function createView() {
-  suggestHandler = undefined;
+  delete suggestHandlerSlot.current;
   postMessageMock.mockReset();
 
   return {
@@ -234,19 +239,25 @@ function createView() {
       html: '',
       asWebviewUri: (uri: { fsPath: string }) => ({ toString: () => `webview://${uri.fsPath}` }),
       onDidReceiveMessage: (handler: (message: unknown) => Promise<void> | void) => {
-        suggestHandler = handler;
+        suggestHandlerSlot.current = handler;
       },
       postMessage: postMessageMock,
     },
   };
 }
 
-vitest.describe('MiniInputViewProvider', () => {
-  vitest.beforeEach(() => {
-    vi.clearAllMocks();
-    resetGhostPromptHostRuntimeForTests();
-    MiniInputViewProvider.clearWebviewRegistrationsForTests();
-  });
+/**
+ * Restaura estado compartido antes de cada test de MiniInputViewProvider.
+ * @returns {void}
+ */
+function resetMiniInputProviderTests(): void {
+  vi.clearAllMocks();
+  resetGhostPromptHostRuntimeForTests();
+  MiniInputViewProvider.clearWebviewRegistrationsForTests();
+}
+
+vitest.describe('MiniInputViewProvider (suggest)', () => {
+  vitest.beforeEach(resetMiniInputProviderTests);
 
   vitest.it('publica loading y suggestion cuando requestCompletion responde sugerencia', async () => {
     const view = createView();
@@ -266,7 +277,7 @@ vitest.describe('MiniInputViewProvider', () => {
     });
 
     provider.resolveWebviewView(view as never, {} as never, {} as never);
-    await suggestHandler?.({ type: 'suggest', text: 'hola', captureId: 1 });
+    await suggestHandlerSlot.current?.({ type: 'suggest', text: 'hola', captureId: 1 });
 
     vitest.expect(postMessageMock).toHaveBeenNthCalledWith(1, {
       type: 'loading',
@@ -301,7 +312,7 @@ vitest.describe('MiniInputViewProvider', () => {
     });
 
     provider.resolveWebviewView(view as never, {} as never, {} as never);
-    await suggestHandler?.({ type: 'suggest', text: 'texto distinto', captureId: 2 });
+    await suggestHandlerSlot.current?.({ type: 'suggest', text: 'texto distinto', captureId: 2 });
 
     vitest.expect(postMessageMock).toHaveBeenNthCalledWith(2, {
       type: 'empty',
@@ -330,7 +341,7 @@ vitest.describe('MiniInputViewProvider', () => {
 
     provider.resolveWebviewView(view as never, {} as never, {} as never);
 
-    await suggestHandler?.({ type: 'suggest', text: ' ', captureId: 3 });
+    await suggestHandlerSlot.current?.({ type: 'suggest', text: ' ', captureId: 3 });
     vitest.expect(postMessageMock).toHaveBeenLastCalledWith({
       type: 'empty',
       reason: 'too-short',
@@ -339,7 +350,7 @@ vitest.describe('MiniInputViewProvider', () => {
     });
     vitest.expect(requestCompletionMock).not.toHaveBeenCalled();
 
-    await suggestHandler?.({ type: 'suggest', text: 'hola mundo', captureId: 4 });
+    await suggestHandlerSlot.current?.({ type: 'suggest', text: 'hola mundo', captureId: 4 });
     vitest.expect(postMessageMock).toHaveBeenNthCalledWith(2, {
       type: 'loading',
       captureId: 4,
@@ -347,7 +358,7 @@ vitest.describe('MiniInputViewProvider', () => {
       statusText: suggestionLoadingStatusText('copilot'),
       broadcast: true,
     });
-    vitest.expect(postMessageMock).toHaveBeenNthCalledWith(3, {
+    vitest.expect(postMessageMock).toHaveBeenNthCalledWith(THIRD_BROADCAST_POST_INDEX, {
       type: 'suggestion',
       suggestion: 'continuacion valida',
       model: { id: 'gpt-4o-mini', label: 'GPT-4o mini', tier: 'included' },
@@ -356,6 +367,10 @@ vitest.describe('MiniInputViewProvider', () => {
     });
     vitest.expect(requestCompletionMock).toHaveBeenCalledOnce();
   });
+});
+
+vitest.describe('MiniInputViewProvider (settings y contrato)', () => {
+  vitest.beforeEach(resetMiniInputProviderTests);
 
   vitest.it('ignora mensajes entrantes que no pasan el contrato Zod', async () => {
     const view = createView();
@@ -368,7 +383,7 @@ vitest.describe('MiniInputViewProvider', () => {
       MiniInputViewProvider.viewId,
     );
     provider.resolveWebviewView(view as never, {} as never, {} as never);
-    await suggestHandler?.({
+    await suggestHandlerSlot.current?.({
       type: 'suggest',
       text: 'hola',
       captureId: '1',
@@ -427,7 +442,7 @@ vitest.describe('MiniInputViewProvider', () => {
     ]);
 
     provider.resolveWebviewView(view as never, {} as never, {} as never);
-    await suggestHandler?.({ type: 'init' });
+    await suggestHandlerSlot.current?.({ type: 'init' });
 
     const firstPost = postMessageMock.mock.calls[0]?.[0] as {
       type: string;
@@ -441,7 +456,7 @@ vitest.describe('MiniInputViewProvider', () => {
     vitest.expect(firstPost.type).toBe('settings');
     vitest.expect(firstPost.settings.completionUiKind).toBe('copilot');
     vitest.expect(firstPost.settings.enabledCompletionSources).toEqual(['copilot']);
-    vitest.expect(firstPost.settings.suggestionDebounceMs).toBe(800);
+    vitest.expect(firstPost.settings.suggestionDebounceMs).toBe(DEFAULT_SUGGESTION_DEBOUNCE_MS);
     vitest.expect(firstPost.settings.availableModels).toEqual([
       {
         id: 'gpt-4o-mini',

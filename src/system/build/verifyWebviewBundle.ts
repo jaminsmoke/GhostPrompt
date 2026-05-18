@@ -18,15 +18,15 @@ if (!existsSync(indexHtmlPath)) {
 }
 
 const html = readFileSync(indexHtmlPath, 'utf8');
-const scriptMatch = /<script[^>]+src="([^"]+)"[^>]*>/u.exec(html);
-if (!scriptMatch) {
+const scriptMatch = /<script[^>]+src="(?<src>[^"]+)"[^>]*>/u.exec(html);
+if (!scriptMatch?.groups?.src) {
   process.stderr.write(
     '[GhostPrompt] No se encontró un script válido en src/ui/webview/dist/react/index.html.\n',
   );
   process.exit(1);
 }
 
-const scriptPath = join(reactBuildRoot, scriptMatch[1].replace(/^\.\//u, ''));
+const scriptPath = join(reactBuildRoot, scriptMatch.groups.src.replace(/^\.\//u, ''));
 if (!existsSync(scriptPath)) {
   process.stderr.write(`[GhostPrompt] No se encontró el asset de script compilado: ${scriptPath}\n`);
   process.exit(1);

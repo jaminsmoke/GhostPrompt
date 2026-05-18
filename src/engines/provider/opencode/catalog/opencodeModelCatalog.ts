@@ -22,6 +22,48 @@ type OpencodeProvidersBundle = {
   }[];
 };
 
+type OpencodeProviderRow = NonNullable<OpencodeProvidersBundle['providers']>[number];
+
+/**
+ * Construye un descriptor de modelo OpenCode si pasa filtros de duplicado, exclusión y política.
+ * @param {OpencodeProviderRow} provider - Proveedor del catálogo OpenCode.
+ * @param {ReturnType<typeof normalizeOpencodeProviderModels>[number]} model - Modelo normalizado.
+ * @param {ReadonlySet<string>} seenComposite - IDs compuestos ya emitidos en el proveedor.
+ * @param {ReadonlySet<string>} excluded - IDs excluidos por configuración.
+ * @param {SuggestionModelPolicy} policy - Política de filtrado premium.
+ * @returns {SuggestionModelDescriptor | undefined} Descriptor o `undefined` si se omite.
+ */
+function buildOpencodeModelDescriptor(
+  provider: OpencodeProviderRow,
+  model: ReturnType<typeof normalizeOpencodeProviderModels>[number],
+  seenComposite: Set<string>,
+  excluded: ReadonlySet<string>,
+  policy: SuggestionModelPolicy,
+): SuggestionModelDescriptor | false {
+  const id = `${provider.id}/${model.id}`;
+  if (seenComposite.has(id) || excluded.has(id)) {
+    return false;
+  }
+  seenComposite.add(id);
+
+  const labelSource = typeof model.name === 'string' ? model.name.trim() : model.id;
+  const rawRecord = model as Record<string, unknown>;
+  const { tier, pricing } = classifyOpencodeModelTier(provider.id, model.id, labelSource, rawRecord);
+
+  if (policy === 'nonPremiumOnly' && tier === 'premium') {
+    return false;
+  }
+
+  return {
+    id,
+    label: labelSource || model.id,
+    tier,
+    ...pricing ? { pricing } : {},
+    provider: typeof provider.name === 'string' && provider.name.trim() ? provider.name.trim() : provider.id,
+    completionSource: 'opencode',
+  };
+}
+
 /**
  * Lista modelos instalados/configurados en OpenCode para el dropdown.
  * Vacío si no hay conexión o no hay CLI.
@@ -52,48 +94,25 @@ export async function listOpencodeSuggestionModels(
 
   try {
     const raw = await sdkClient.config.providers();
-    const data =
+    const providers =
       raw && typeof raw === 'object' && 'data' in raw
-        ? (raw as { data?: OpencodeProvidersBundle }).data
-        : undefined;
-    const providers = data?.providers ?? [];
+        ? (raw as { data?: OpencodeProvidersBundle }).data?.providers ?? []
+        : [];
     const descriptors: SuggestionModelDescriptor[] = [];
 
     for (const p of providers) {
       const seenComposite = new Set<string>();
 
       for (const model of normalizeOpencodeProviderModels(p.models)) {
-        const id = `${p.id}/${model.id}`;
-        if (seenComposite.has(id)) {
-          continue;
+        const descriptor = buildOpencodeModelDescriptor(p, model, seenComposite, excluded, policy);
+        if (descriptor) {
+          descriptors.push(descriptor);
         }
-        seenComposite.add(id);
-
-        if (excluded.has(id)) {
-          continue;
-        }
-
-        const labelSource = typeof model.name === 'string' ? model.name.trim() : model.id;
-        const rawRecord = model as Record<string, unknown>;
-        const { tier, pricing } = classifyOpencodeModelTier(p.id, model.id, labelSource, rawRecord);
-
-        if (policy === 'nonPremiumOnly' && tier === 'premium') {
-          continue;
-        }
-
-        descriptors.push({
-          id,
-          label: labelSource || model.id,
-          tier,
-          ...pricing ? { pricing } : {},
-          provider: typeof p.name === 'string' && p.name.trim() ? p.name.trim() : p.id,
-          completionSource: 'opencode',
-        });
       }
     }
 
     return descriptors.toSorted((a, b) =>
-      a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }),
+      a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }),
     );
   } catch {
     return [];

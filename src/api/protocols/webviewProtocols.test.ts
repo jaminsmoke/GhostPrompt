@@ -4,15 +4,14 @@
 import * as vitest from 'vitest';
 import { vi } from 'vitest';
 
+import { DEFAULT_SUGGESTION_DEBOUNCE_MS } from '../../system/internals/protocols/constants/consPipelineDefaults';
+import { emptyConfigurationInspect } from '../../system/internals/testing/mockVscodeConfigurationInspect';
+
 vi.mock('vscode', () => ({
   workspace: {
     getConfiguration: () => ({
       get: vi.fn(),
-      inspect: vi.fn(() => ({
-        globalValue: undefined,
-        workspaceValue: undefined,
-        workspaceFolderValue: undefined,
-      })),
+      inspect: vi.fn(() => emptyConfigurationInspect),
     }),
   },
   window: {
@@ -44,9 +43,8 @@ const minimalSettingsPayload = {
   selectedModelId: 'auto',
   availableModels: [] as const,
   suggestionStyle: 'balanced' as const,
-  effectiveModel: undefined,
   debugSuggestions: false,
-  suggestionDebounceMs: 800,
+  suggestionDebounceMs: DEFAULT_SUGGESTION_DEBOUNCE_MS,
   agentDestination: 'copilotChat' as const,
   vsOpenCodeXExtensionInstalled: false,
   cursorDesktopHost: false,
@@ -107,36 +105,36 @@ vitest.describe('webviewProtocols (v0.3.1 Fase B)', () => {
   });
 
   vitest.it('rechaza mensajes entrantes inválidos', () => {
-    vitest.expect(parseWebviewInboundMessage()).toBeUndefined();
-    vitest.expect(parseWebviewInboundMessage({})).toBeUndefined();
+    vitest.expect(parseWebviewInboundMessage()).toBe(false);
+    vitest.expect(parseWebviewInboundMessage({})).toBe(false);
     vitest.expect(
       parseWebviewInboundMessage({
         type: 'suggest',
         text: 'x',
         captureId: '1',
       }),
-    ).toBeUndefined();
+    ).toBe(false);
     vitest.expect(
       parseWebviewInboundMessage({
         type: 'updateSetting',
         key: 'debugSuggestions',
         value: 'true',
       }),
-    ).toBeUndefined();
+    ).toBe(false);
     vitest.expect(
       parseWebviewInboundMessage({
         type: 'updateSetting',
         key: 'suggestionStyle',
         value: 'fancy',
       }),
-    ).toBeUndefined();
+    ).toBe(false);
     vitest.expect(
       parseWebviewInboundMessage({
         type: 'updateSetting',
         key: 'agentDestination',
         value: 'other',
       }),
-    ).toBeUndefined();
+    ).toBe(false);
   });
 
   vitest.it('acepta sobre settings saliente válido', () => {
@@ -166,7 +164,7 @@ vitest.describe('webviewProtocols (v0.3.1 Fase B)', () => {
         availableModels: [{ id: 'x', label: 'X', tier: 'free' }],
       },
     };
-    vitest.expect(parseOutboundSettingsEnvelope(bad)).toBeUndefined();
+    vitest.expect(parseOutboundSettingsEnvelope(bad)).toBe(false);
   });
 
   vitest.it('webviewSettingsPayloadSchema coincide con modelo descriptor', () => {

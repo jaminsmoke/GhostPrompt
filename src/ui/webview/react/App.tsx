@@ -10,7 +10,7 @@ import { GhostToolbar } from './components/GhostToolbar';
 import { PromptInput } from './components/PromptInput';
 import { useGhostPrompt } from './hooks/useGhostPrompt';
 
-export { postToHost } from './hooks/useGhostPrompt';
+export { postToHost } from './hooks/ghostPromptPostMessage';
 
 /**
  * Componente raíz del webview React de GhostPrompt (entrada principal de la UI React).
@@ -77,7 +77,7 @@ export function App() {
         onStopProvider={stopProvider}
       />
 
-      {vsxActive ? 
+      {vsxActive && 
         <p
           id="gp-vsx-surface-note"
           className="rounded-md border border-(--vscode-widget-border) bg-(--vscode-textBlockQuote-background) px-3 py-2 mb-2 text-sm text-(--vscode-sideBar-foreground)"
@@ -87,7 +87,7 @@ export function App() {
           VSOpenCodeX para redactar y enviar; las sugerencias siguen el modelo y chips configurados
           aquí.
         </p>
-       : undefined}
+      }
 
       <PromptInput
         compact={compact}

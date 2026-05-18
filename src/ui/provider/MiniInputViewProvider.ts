@@ -5,12 +5,12 @@
  *
  * Composición de dependencias y flujos para GhostPrompt input v0.5.3.
  *
- * - Contratos Zod y parseo: `api/protocols/webviewProtocols.ts` (schemas en `system/internals/protocols/validations/schemas/`).
+ * - Contratos Zod: `api/protocols/webviewProtocols.ts` y schemas en `validations/schemas/`.
  * - HTML/CSP y plantilla: `ui/provider/webviewHtml.ts`.
  * - Mensaje `settings` → webview: `api/settings/settingsPostMessage.ts`.
  * - Mensaje `suggest`: `core/suggest/runSuggest.ts`.
- * - Router/handlers webview → host (`init`, `draftChanged`, `updateSetting`, `send`, `accept`): `api/protocols/inboundHandlers.ts`.
- * - Lectura de workspace / contexto editor: `api/getters/workspaceGetters.ts`; política de modelo de sugerencias: `system/internals/config/readGhostPromptSuggestionModelPolicy.ts`.
+ * - Handlers webview → host: `api/protocols/inboundHandlers.ts`.
+ * - Workspace y política de modelo: getters + `readGhostPromptSuggestionModelPolicy`.
  * - Actualización desde chips (`updateSetting`): `api/settings/applyWebviewUpdate.ts`.
  *
  * Registra la vista en el activity bar y el panel inferior (C2).
@@ -27,7 +27,7 @@
  * - `draftChanged` (webview → host): texto del borrador para sincronizar vistas.
  * - `draftSync` / `draftHydrate` (host → webview): aplicar borrador remoto o estado inicial.
  * - Mensajes de suggestion pueden llevar `broadcast: true` para espejar Sidebar + Panel.
- * - Esquemas Zod (`system/internals/protocols/validations/schemas/zschemWebviewMessages.ts`); parseo en `api/protocols/webviewProtocols.ts`.
+ * - Esquemas Zod en `zschemWebviewMessages.ts`; parseo en `api/protocols/webviewProtocols.ts`.
  */
 import * as vscode from 'vscode';
 
@@ -62,16 +62,16 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /** View ID for the bottom panel container. */
   public static readonly panelViewId = 'ghostPrompt.inputPanel';
 
-  private static readonly _instances = new Set<MiniInputViewProvider>();
+  private static readonly instances = new Set<MiniInputViewProvider>();
 
-  private _view?: vscode.WebviewView;
+  private webviewView?: vscode.WebviewView;
 
   constructor(
-    private readonly _context: vscode.ExtensionContext,
+    private readonly extensionContext: vscode.ExtensionContext,
     /** Identificador de contribución de la vista (`ghostPrompt.input` vs `ghostPrompt.inputPanel`). */
     public readonly viewContributionId: string,
   ) {
-    MiniInputViewProvider._instances.add(this);
+    MiniInputViewProvider.instances.add(this);
   }
 
   /**
@@ -79,7 +79,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * @internal
    */
   public static clearWebviewRegistrationsForTests(): void {
-    MiniInputViewProvider._instances.clear();
+    MiniInputViewProvider.instances.clear();
   }
 
   /**
@@ -90,14 +90,14 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * Se valida con `parseWebviewOutboundMessage` en desarrollo.
    * @returns {void}
    */
-  private static _broadcastUi(payload: Record<string, unknown>): void {
+  private static broadcastUi(payload: Record<string, unknown>): void {
     const message = { ...payload, broadcast: true };
     const validated = parseWebviewOutboundMessage(message);
     if (!validated) {
       return;
     }
-    for (const instance of MiniInputViewProvider._instances) {
-      instance._view?.webview.postMessage(validated);
+    for (const instance of MiniInputViewProvider.instances) {
+      instance.webviewView?.webview.postMessage(validated);
     }
     forwardGhostPromptInlineUiToVsOpenCodeIfApplicable(validated);
   }
@@ -108,22 +108,20 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * @param {string} text - Texto del borrador que se sincroniza.
    * @returns {void}
    */
-  private static _broadcastDraftSync(originViewId: string, text: string): void {
-    for (const instance of MiniInputViewProvider._instances) {
-      if (instance.viewContributionId === originViewId) {
-        continue;
+  private static broadcastDraftSync(originViewId: string, text: string): void {
+    for (const instance of MiniInputViewProvider.instances) {
+      if (instance.viewContributionId !== originViewId) {
+        const msg = { type: 'draftSync' as const, text, originViewId };
+        const validated = parseWebviewOutboundMessage(msg);
+        if (validated) {
+          instance.webviewView?.webview.postMessage(validated);
+        }
       }
-      const msg = { type: 'draftSync' as const, text, originViewId };
-      const validated = parseWebviewOutboundMessage(msg);
-      if (!validated) {
-        continue;
-      }
-      instance._view?.webview.postMessage(validated);
     }
   }
 
   /** Vacía el composer en todas las vistas (p. Ej. Tras enviar al chat). */
-  private static _broadcastClearAll(): void {
+  private static broadcastClearAll(): void {
     forwardGhostPromptInlineUiToVsOpenCodeIfApplicable({
       type: 'clear',
       broadcast: true,
@@ -133,15 +131,15 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     if (!validated) {
       return;
     }
-    for (const instance of MiniInputViewProvider._instances) {
-      instance._view?.webview.postMessage(validated);
+    for (const instance of MiniInputViewProvider.instances) {
+      instance.webviewView?.webview.postMessage(validated);
     }
   }
 
   private static ghostPromptSuggestDeps(): GhostPromptSuggestDeps {
     return {
-      broadcastUi: (...args: Parameters<typeof MiniInputViewProvider._broadcastUi>) =>
-        MiniInputViewProvider._broadcastUi(...args),
+      broadcastUi: (...args: Parameters<typeof MiniInputViewProvider.broadcastUi>) =>
+        MiniInputViewProvider.broadcastUi(...args),
       getSuggestionModelPolicy: () => readGhostPromptSuggestionModelPolicy(),
       getSelectedModelId: () => getGhostPromptSelectedModelId(),
       getSuggestionStyle: () => getGhostPromptSuggestionStyle(),
@@ -168,7 +166,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     );
   }
 
-  private async _postSettings(webview: vscode.Webview): Promise<void> {
+  private async postSettings(webview: vscode.Webview): Promise<void> {
     await buildAndPostGhostPromptSettings(webview, {
       getSuggestionModelPolicy: () => readGhostPromptSuggestionModelPolicy(),
       getSelectedModelId: () => getGhostPromptSelectedModelId(),
@@ -176,22 +174,22 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  private async _postSettingsIfReady(): Promise<void> {
-    if (!this._view) {
+  private async postSettingsIfReady(): Promise<void> {
+    if (!this.webviewView) {
       return;
     }
-    await this._postSettings(this._view.webview);
+    await this.postSettings(this.webviewView.webview);
   }
 
-  private static async _broadcastSettingsToAllViews(): Promise<void> {
+  private static async broadcastSettingsToAllViews(): Promise<void> {
     await Promise.all(
-      Array.from(MiniInputViewProvider._instances, (instance) => instance._postSettingsIfReady()),
+      Array.from(MiniInputViewProvider.instances, (instance) => instance.postSettingsIfReady()),
     );
   }
 
   /** Actualiza chips + lista de modelos en Sidebar y Panel (tras cambiar Settings). */
   public static async refreshSettingsAllViews(): Promise<void> {
-    await MiniInputViewProvider._broadcastSettingsToAllViews();
+    await MiniInputViewProvider.broadcastSettingsToAllViews();
   }
 
   /**
@@ -201,7 +199,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * @param {string} value - Nuevo valor de la configuración.
    * @returns {Promise<void>} Promise que se resuelve cuando el lifecycle termina.
    */
-  private static async _onSettingChanged(
+  private static async onSettingChanged(
     key: 'completionProvider' | 'selectedModelId',
     value: string,
   ): Promise<void> {
@@ -213,13 +211,13 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         // Best-effort: el status se refresca igual.
       }
       const providers = await providerStatusManager.refreshAll();
-      MiniInputViewProvider._broadcastUi({ type: 'providerStatus', providers });
+      MiniInputViewProvider.broadcastUi({ type: 'providerStatus', providers });
     }
 
     if (key === 'completionProvider' && value !== 'ollama') {
       await ollamaModelManager.stopAll();
       const providers = await providerStatusManager.refreshAll();
-      MiniInputViewProvider._broadcastUi({ type: 'providerStatus', providers });
+      MiniInputViewProvider.broadcastUi({ type: 'providerStatus', providers });
     }
   }
 
@@ -235,17 +233,17 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * Por defecto vacío: misma UX en ambas superficies.
    * @returns {Record<string, unknown>} Payload de capacidades para el webview.
    */
-  private _webviewCapabilitiesPayload(): Record<string, unknown> {
+  private webviewCapabilitiesPayload(): Record<string, unknown> {
     return {};
   }
 
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
-    _context: vscode.WebviewViewResolveContext,
-    _token: vscode.CancellationToken,
+    _resolveContext: vscode.WebviewViewResolveContext,
+    _cancellationToken: vscode.CancellationToken,
   ): void {
-    this._view = webviewView;
-    const { extensionUri, storageUri, globalStorageUri } = this._context;
+    this.webviewView = webviewView;
+    const { extensionUri, storageUri, globalStorageUri } = this.extensionContext;
     const dataUri = storageUri ?? globalStorageUri;
 
     webviewView.webview.options = {
@@ -256,7 +254,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
       ],
     };
 
-    webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+    webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
 
     webviewView.webview.onDidReceiveMessage(async (raw: unknown) => {
       const uiLog = getLogger('ui');
@@ -271,19 +269,19 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         viewContributionId: this.viewContributionId,
         webview: webviewView.webview,
         dataUri,
-        postSettings: (w) => this._postSettings(w),
-        broadcastDraftSync: (...args: Parameters<typeof MiniInputViewProvider._broadcastDraftSync>) =>
-          MiniInputViewProvider._broadcastDraftSync(...args),
+        postSettings: (w) => this.postSettings(w),
+        broadcastDraftSync: (...args: Parameters<typeof MiniInputViewProvider.broadcastDraftSync>) =>
+          MiniInputViewProvider.broadcastDraftSync(...args),
         broadcastSettingsToAllViews: (
-          ...args: Parameters<typeof MiniInputViewProvider._broadcastSettingsToAllViews>
-        ) => MiniInputViewProvider._broadcastSettingsToAllViews(...args),
-        broadcastClearAll: (...args: Parameters<typeof MiniInputViewProvider._broadcastClearAll>) =>
-          MiniInputViewProvider._broadcastClearAll(...args),
-        broadcastUi: (...args: Parameters<typeof MiniInputViewProvider._broadcastUi>) =>
-          MiniInputViewProvider._broadcastUi(...args),
+          ...args: Parameters<typeof MiniInputViewProvider.broadcastSettingsToAllViews>
+        ) => MiniInputViewProvider.broadcastSettingsToAllViews(...args),
+        broadcastClearAll: (...args: Parameters<typeof MiniInputViewProvider.broadcastClearAll>) =>
+          MiniInputViewProvider.broadcastClearAll(...args),
+        broadcastUi: (...args: Parameters<typeof MiniInputViewProvider.broadcastUi>) =>
+          MiniInputViewProvider.broadcastUi(...args),
         suggestDeps: MiniInputViewProvider.ghostPromptSuggestDeps(),
-        onSettingChanged: (...args: Parameters<typeof MiniInputViewProvider._onSettingChanged>) =>
-          MiniInputViewProvider._onSettingChanged(...args),
+        onSettingChanged: (...args: Parameters<typeof MiniInputViewProvider.onSettingChanged>) =>
+          MiniInputViewProvider.onSettingChanged(...args),
       });
     });
   }
@@ -293,12 +291,12 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * @param {vscode.Webview} webview - The webview instance to generate HTML for.
    * @returns {string} HTML string for the webview.
    */
-  private _getHtmlForWebview(webview: vscode.Webview): string {
+  private getHtmlForWebview(webview: vscode.Webview): string {
     return buildGhostPromptWebviewHtml({
-      extensionUri: this._context.extensionUri,
+      extensionUri: this.extensionContext.extensionUri,
       webview,
       viewContributionId: this.viewContributionId,
-      capabilitiesPayload: this._webviewCapabilitiesPayload(),
+      capabilitiesPayload: this.webviewCapabilitiesPayload(),
     });
   }
 }

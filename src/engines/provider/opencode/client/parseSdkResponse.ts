@@ -38,22 +38,22 @@ export function extractPromptText(result: unknown): string {
 /**
  * Extrae texto delta de un evento de stream OpenCode.
  * @param {unknown} data - Evento bruto de stream.
- * @returns {string | undefined} Texto delta o undefined si no hay texto.
+ * @returns {string | false} Texto delta o `false` si no hay texto.
  */
-export function extractDeltaText(data: unknown): string | undefined {
+export function extractDeltaText(data: unknown): string | false {
   if (!data || typeof data !== 'object') {
-    return undefined;
+    return false;
   }
   const d = data as Record<string, unknown>;
   if (d.type !== 'message') {
-    return undefined;
+    return false;
   }
   const part = d.part as Record<string, unknown> | undefined;
   if (!part) {
-    return undefined;
+    return false;
   }
   if (part.field !== 'text' || typeof part.delta !== 'string') {
-    return undefined;
+    return false;
   }
   return part.delta;
 }

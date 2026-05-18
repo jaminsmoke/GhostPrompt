@@ -4,6 +4,7 @@
 
 import * as vscode from 'vscode';
 
+import { hasAnyConfigurationInspectScope } from '../system/internals/isDefined';
 import {  VS_OPEN_CODE_X_EXTENSION_ID } from '../system/internals/protocols/constants/consDestinations';
 import {
   parseAgentDestination,
@@ -63,11 +64,7 @@ function isAgentDestinationExplicitlyConfigured(): boolean {
     if (!inspected) {
       return true;
     }
-    return (
-      inspected.globalValue !== undefined ||
-      inspected.workspaceValue !== undefined ||
-      inspected.workspaceFolderValue !== undefined
-    );
+    return hasAnyConfigurationInspectScope(inspected);
   } catch {
     return true;
   }

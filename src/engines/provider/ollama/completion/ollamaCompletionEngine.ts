@@ -36,7 +36,7 @@ function describeOllamaModel(modelName: string): SuggestionModelDescriptor {
  */
 async function resolveOllamaModel(
   preferredModelId: string | undefined,
-): Promise<string | undefined> {
+): Promise<string | false> {
   if (preferredModelId && preferredModelId !== 'auto') {
     return preferredModelId;
   }
@@ -47,9 +47,12 @@ async function resolveOllamaModel(
   try {
     const models = await listModels({ baseUrl });
     const available = models.map((m) => m.name).filter((name) => !excluded.has(name));
-    return available.length > 0 ? available[0] : undefined;
+    if (available.length === 0) {
+      return false;
+    }
+    return available[0];
   } catch {
-    return undefined;
+    return false;
   }
 }
 
@@ -103,7 +106,9 @@ export async function requestOllamaCompletion(
       baseUrl,
       requestTimeoutMs,
       signal: abortController.signal,
-      onStreamPreview: onStreamPreview ? (text: string) => onStreamPreview(text) : undefined,
+      ...onStreamPreview
+        ? { onStreamPreview: (text: string) => onStreamPreview(text) }
+        : {},
     });
 
     if (token.isCancellationRequested) {

@@ -6,6 +6,7 @@ import * as vitest from 'vitest';
 const globalWithWindow = globalThis as unknown as { window?: unknown };
 globalWithWindow.window = globalWithWindow;
 
+import { DEFAULT_SUGGESTION_DEBOUNCE_MS } from '../../../../system/internals/protocols/constants/consPipelineDefaults';
 import { parseWebviewInboundMessage } from '../validators/parseWebviewInbound';
 
 import type * as UseGhostPromptModule from './useGhostPrompt';
@@ -15,10 +16,11 @@ let shouldSkipSuggestionOnRemoteDraft: typeof UseGhostPromptModule.shouldSkipSug
 let ghostPromptApplyInboundCaptureReference: typeof UseGhostPromptModule.ghostPromptApplyInboundCaptureReference;
 
 vitest.beforeAll(async () => {
-  const loadedModule = await import('./useGhostPrompt');
-  isDraftSyncForAnotherView = loadedModule.isDraftSyncForAnotherView;
-  shouldSkipSuggestionOnRemoteDraft = loadedModule.shouldSkipSuggestionOnRemoteDraft;
-  ghostPromptApplyInboundCaptureReference = loadedModule.ghostPromptApplyInboundCaptureReference;
+  ({
+    isDraftSyncForAnotherView,
+    shouldSkipSuggestionOnRemoteDraft,
+    ghostPromptApplyInboundCaptureReference,
+  } = await import('./useGhostPrompt'));
 });
 
 vitest.describe('useGhostPrompt draft sync and hydrate handling', () => {
@@ -81,7 +83,7 @@ vitest.describe('webview inbound message validation', () => {
       },
     } as unknown;
 
-    vitest.expect(parseWebviewInboundMessage(invalidPayload)).toBeUndefined();
+    vitest.expect(parseWebviewInboundMessage(invalidPayload)).toBe(false);
   });
 
   vitest.it('accepts valid settings payloads', () => {
@@ -96,7 +98,7 @@ vitest.describe('webview inbound message validation', () => {
         availableModels: [],
         suggestionStyle: 'balanced',
         debugSuggestions: false,
-        suggestionDebounceMs: 800,
+        suggestionDebounceMs: DEFAULT_SUGGESTION_DEBOUNCE_MS,
         agentDestination: 'copilotChat',
         vsOpenCodeXExtensionInstalled: false,
         cursorDesktopHost: false,

@@ -29,11 +29,7 @@ const mockedVscode = {
   workspace: {
     getConfiguration: () => ({
       get: configGetMock,
-      inspect: () => ({
-        globalValue: undefined,
-        workspaceValue: undefined,
-        workspaceFolderValue: undefined,
-      }),
+      inspect: () => ({}),
     }),
   },
   extensions: {
@@ -58,17 +54,21 @@ vi.mock('../../system/log', () => ({
   }),
 }));
 
-vitest.describe('vsOpenCodeXDestination', () => {
-  vitest.beforeEach(() => {
-    vi.resetModules();
-    vi.clearAllMocks();
-    configGetMock.mockImplementation((key: string, fallback: unknown) => {
-      return key === 'agentDestination' ? 'copilotChat' : fallback;
-    });
-    getExtensionMock.mockReturnValue();
+/**
+ * Restaura mocks del destino VSOpenCodeX antes de cada test.
+ * @returns {void}
+ */
+function resetVsOpenCodeXDestinationMocks(): void {
+  vi.resetModules();
+  vi.clearAllMocks();
+  configGetMock.mockImplementation((key: string, fallback: unknown) => {
+    return key === 'agentDestination' ? 'copilotChat' : fallback;
   });
+  getExtensionMock.mockReturnValue();
+}
 
-  vitest.describe('forwardGhostPromptInlineUiToVsOpenCodeIfApplicable', () => {
+vitest.describe('forwardGhostPromptInlineUiToVsOpenCodeIfApplicable', () => {
+  vitest.beforeEach(resetVsOpenCodeXDestinationMocks);
     vitest.it('no llama executeCommand si destino es Copilot', async () => {
       configGetMock.mockImplementation((key: string, fallback: unknown) => {
       return key === 'agentDestination' ? 'copilotChat' : fallback;
@@ -168,9 +168,10 @@ vitest.describe('vsOpenCodeXDestination', () => {
       });
       vitest.expect(executeCommandMock).not.toHaveBeenCalled();
     });
-  });
+});
 
-  vitest.describe('notifyIfVsxAgentDestinationWithoutVsOpenCodeX', () => {
+vitest.describe('notifyIfVsxAgentDestinationWithoutVsOpenCodeX', () => {
+  vitest.beforeEach(resetVsOpenCodeXDestinationMocks);
     vitest.it('no notifica si destino es copilotChat', async () => {
       configGetMock.mockImplementation((key: string, fallback: unknown) => {
       return key === 'agentDestination' ? 'copilotChat' : fallback;
@@ -229,5 +230,4 @@ vitest.describe('vsOpenCodeXDestination', () => {
       notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
       vitest.expect(showInformationMessageMock).not.toHaveBeenCalled();
     });
-  });
 });

@@ -37,9 +37,14 @@ async function testExecuteSafeCommands() {
     'ghostPrompt.toggleSuggestionDebug'
   ];
 
-  for (const command of commands) {
-    await vscode.commands.executeCommand(command);
-  }
+  const runCommandAt = async (index) => {
+    if (index >= commands.length) {
+      return;
+    }
+    await vscode.commands.executeCommand(commands[index]);
+    await runCommandAt(index + 1);
+  };
+  await runCommandAt(0);
 
   process.stdout.write('PASS: execute safe commands\n');
 }
@@ -51,7 +56,7 @@ async function testExecuteSafeCommands() {
 async function testReadWorkspaceConfig() {
   const config = vscode.workspace.getConfiguration('ghostPrompt');
   const value = config.get('debugSuggestions');
-  assert.notStrictEqual(value, undefined, 'ghostPrompt.debugSuggestions should be readable from configuration');
+  assert.notStrictEqual(value, 'ghostPrompt.debugSuggestions should be readable from configuration');
   process.stdout.write('PASS: read workspace configuration\n');
 }
 

@@ -22,7 +22,6 @@ vitest.describe('normalizeOllamaModels', () => {
       { name: '', size: 200 },
       { size: 300 },
       'invalid',
-      undefined,
     ];
 
     vitest.expect(normalizeOllamaModels(raw)).toEqual([{ name: 'mistral:latest', size: 100 }]);

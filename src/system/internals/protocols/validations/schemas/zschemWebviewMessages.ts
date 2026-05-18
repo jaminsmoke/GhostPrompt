@@ -5,6 +5,10 @@
 import { z } from 'zod';
 
 import {
+  MAX_SUGGESTION_DEBOUNCE_MS,
+  MIN_SUGGESTION_DEBOUNCE_MS,
+} from '../../constants/consPipelineDefaults';
+import {
   COMPLETION_UI_KIND_VALUES,
   COMPLETION_UI_SOURCE_VALUES,
 } from '../../types/typeCompletionUi';
@@ -32,7 +36,7 @@ export const webviewSettingsPayloadSchema = z.object({
   effectiveModel: suggestionModelDescriptorSchema.optional(),
   debugSuggestions: z.boolean(),
   /** Tiempo de inactividad tras teclear antes de pedir suggestion (webview debounce). */
-  suggestionDebounceMs: z.number().min(150).max(2000),
+  suggestionDebounceMs: z.number().min(MIN_SUGGESTION_DEBOUNCE_MS).max(MAX_SUGGESTION_DEBOUNCE_MS),
   /** Destino del agente: Copilot Chat, VSOpenCodeX o Cursor Chat (v0.6). */
   agentDestination: z.enum(['copilotChat', 'vsOpenCodeX', 'cursorChat']),
   /** Si la extensión VSOpenCodeX está instalada (control destino en webview). */

@@ -34,7 +34,7 @@ export async function listOllamaSuggestionModels(
       .map((model) => ollamaModelToDescriptor(model));
 
     return descriptors.toSorted((a, b) =>
-      a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }),
+      a.label.localeCompare(b.label, 'es', { sensitivity: 'base' }),
     );
   } catch {
     return [

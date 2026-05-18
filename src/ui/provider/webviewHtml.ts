@@ -48,9 +48,9 @@ export function buildGhostPromptWebviewHtml(params: GhostPromptWebviewHtmlParame
   const rawHtml = readFileSync(reactIndexHtmlPath, 'utf8');
   const reactAssetRoot = vscode.Uri.joinPath(extensionUri, 'src', 'ui', 'webview', 'dist', 'react');
   const htmlWithAssets = rawHtml.replaceAll(
-    /(src|href)="\.\/([^\s"]+)"/gu,
+    /(?<attr>src|href)="\.\/(?<relativePath>[^\s"]+)"/gu,
     (_match: string, attr: string, relativePath: string) => {
-    const assetUri = webview.asWebviewUri(vscode.Uri.joinPath(reactAssetRoot, relativePath));
+      const assetUri = webview.asWebviewUri(vscode.Uri.joinPath(reactAssetRoot, relativePath));
       return `${attr}="${assetUri.toString()}"`;
     },
   );

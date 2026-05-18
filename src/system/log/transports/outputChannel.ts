@@ -3,10 +3,15 @@
  */
 import * as vscode from 'vscode';
 
+import { clearOptionalProperty } from '../../internals/isDefined';
+
 import type { LogEntry } from '../types';
 
 /** Nombre visible del canal (histórico: *GhostPrompt Suggestions*). */
 export const GHOSTPROMPT_LOG_CHANNEL_NAME = 'GhostPrompt Log';
+
+const TIME_FIELD_PAD_WIDTH = 2;
+const TIME_MS_FIELD_PAD_WIDTH = 3;
 
 /**
  * Formatea marca de tiempo ISO a `HH:mm:ss.SSS` local.
@@ -15,10 +20,10 @@ export const GHOSTPROMPT_LOG_CHANNEL_NAME = 'GhostPrompt Log';
  */
 export function formatLocalTime(iso: string): string {
   const d = new Date(iso);
-  const hh = d.getHours().toString().padStart(2, '0');
-  const mm = d.getMinutes().toString().padStart(2, '0');
-  const ss = d.getSeconds().toString().padStart(2, '0');
-  const ms = d.getMilliseconds().toString().padStart(3, '0');
+  const hh = d.getHours().toString().padStart(TIME_FIELD_PAD_WIDTH, '0');
+  const mm = d.getMinutes().toString().padStart(TIME_FIELD_PAD_WIDTH, '0');
+  const ss = d.getSeconds().toString().padStart(TIME_FIELD_PAD_WIDTH, '0');
+  const ms = d.getMilliseconds().toString().padStart(TIME_MS_FIELD_PAD_WIDTH, '0');
   return `${hh}:${mm}:${ss}.${ms}`;
 }
 
@@ -91,7 +96,7 @@ export class OutputChannelLogTransport {
    */
   dispose(): Promise<void> {
     this.channel?.dispose();
-    this.channel = undefined;
+    clearOptionalProperty(this, 'channel');
     return Promise.resolve();
   }
 }
