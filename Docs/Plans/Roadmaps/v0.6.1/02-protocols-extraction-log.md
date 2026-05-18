@@ -200,9 +200,74 @@ Verificación en código: canónicos `consLogLimits`, `typeLog`, `guardLogLevel`
 
 ---
 
+## Fases QE+ (post-QD — gobernanza y limpieza)
+
+> **Motivo:** Con QA–QD cerrados, el riesgo principal es **regresión de capas** (imports cruzados) y **rutas fantasma** en índices de búsqueda o docs. QE prioriza ESLint + inventario; QF es opcional (mover test de paridad).
+
+### Inventario de candidatos (2026-05-16)
+
+| Símbolo / área | Destino canónico | ¿Mover a `protocols/`? | Prioridad |
+| -------------- | ---------------- | ------------------------ | --------- |
+| `GhostPromptInbound*Services`, `GhostPromptSuggestDeps` | `api/protocols/`, `system/runtime/` | No — DI/orquestación host | — |
+| `EngineProvider`, `resolveProvider` | `engines/routing/` | No — adaptadores con motores | — |
+| `readGhostPromptSuggestionModelPolicy` | `system/internals/config/` | No — usa `vscode` | — |
+| Validadores HTTP Ollama / constantes client OpenCode | `engines/provider/*/http/` | No — contrato API terceros | — |
+| `filterCursorChatCandidateCommands` | `destinations/cursor/` | No — solo capa destinations | Baja |
+| `buildCompletionInstruction` | `engines/completion/` | No (QD) | — |
+| Archivos legacy sin prefijo (`completion.ts`, `copilotLm.ts`, `loadingLabels.ts`, …) | Ya renombrados a `type*`, `guard*`, `state*` | Auditar y borrar si reaparecen en disco | Media (QE.2) |
+| Zona ESLint `sugcore/` | Obsoleta | Sustituir por zona `protocols/` | Alta (QE.1) |
+
+**Verificación en disco (2026-05-16):** en `protocols/types/`, `protocols/guards/` y `protocols/state/loading/` solo existen nombres canónicos (`typeCompletion.ts`, `guardCopilotLm.ts`, `stateLoadingLabels.ts`, …). No hay shims legacy que importar.
+
+---
+
+### QE — Zona ESLint `protocols/` (pureza de capa)
+
+#### QE.1 — Activar zona en `eslint/active-rules.js`
+
+- [x] Sustituir target `./src/sugcore/**/*` por `./src/system/internals/protocols/**/*`
+- [x] Bloquear imports desde `ui/`, `api/`, `engines/`, `destinations/`, `extension/`, `system/log/`, `system/runtime/`
+- [x] Paridad schema host ↔ canónico en `api/protocols/webviewProtocols.test.ts` (sin import `api/` desde `protocols/`)
+- [x] Actualizar `Docs/Owners.md` (matriz + tabla ESLint)
+
+**Criterio de hecho:** `npm run lint` sin violaciones en `src/system/internals/protocols/` (salvo el test exceptuado).
+
+#### QE.2 — Auditoría de rutas fantasma
+
+- [x] Búsqueda de imports a `sugcore/`, `core/` y nombres legacy en `protocols/` — 0 coincidencias en `src/`
+- [x] Árbol `protocols/` en disco: solo prefijos canónicos (`type*`, `guard*`, `state*`, `cons*`, `zschem*`)
+- [x] `src/sugcore/` ausente del árbol
+
+**Criterio de hecho:** 0 referencias activas en `src/` a `sugcore/` o shims legacy en `protocols/`.
+
+#### QE.3 — Verificar regresión
+
+- [x] `npm run check` — 0 errores (287 tests)
+
+**Criterio de hecho:** Build, lint, typecheck y tests en verde.
+
+---
+
+### QF — Test de paridad schema (cerrado vía QE.1)
+
+> **Decisión (2026-05-16):** opción **A** — paridad `webviewInboundMessageSchema` en `api/protocols/webviewProtocols.test.ts`; `zschemWebviewMessages.test.ts` solo valida el canónico.
+
+---
+
+## Estado QE+
+
+| Fase | Descripción | Estado |
+| ---- | ----------- | ------ |
+| QE.1 | Zona ESLint `protocols/` + `Owners.md` | 🟢 Completado |
+| QE.2 | Auditoría rutas fantasma / shims | 🟢 Completado |
+| QE.3 | Verificar regresión (`npm run check`) | 🟢 Completado |
+| QF.1 | Paridad schema host ↔ protocols | 🟢 Completado (opción A, vía QE.1) |
+
+---
+
 ## Fuera de alcance explícito (no abrir fase)
 
-- `no-ternary` / más tranches ESLint cosméticos → después de rutas canónicas estables
+- `no-ternary` / más tranches ESLint cosméticos → después de rutas canónicas estables (QE.3 en verde)
 - `resolveCompletionSourceForRequest` → queda en `engines/routing/` (solo engines/runtime)
 - Tipos DI (`GhostPromptSuggestDeps`, `GhostPromptInbound*Services`) → quedan en runtime / `api/protocols/`
 
@@ -224,3 +289,6 @@ Verificación en código: canónicos `consLogLimits`, `typeLog`, `guardLogLevel`
 | 2026-05-18 | — | Revisión post-QA: fases QB y QD desglosadas con tabla de estado; QC fusionada en QA.7. |
 | 2026-05-18 | QB | **QB completa:** `guardModelRouting.ts`; re-exports en engines; `ui/` ya no importa `engines/provider` por guards. `npm run check` — 287 tests. |
 | 2026-05-18 | QD | **QD completa:** `buildCompletionInstruction` → `engines/completion/`; `sugcore/` eliminado. Decisión (b). |
+| 2026-05-16 | QE | **Paso 3:** inventario QE+ (tabla candidatos); fases QE.1–QE.3 y QF.1 en backlog. |
+| 2026-05-16 | QE.1 | Zona ESLint `protocols/` activa; `Owners.md` alineado (sin `core/` ni `sugcore/`). |
+| 2026-05-16 | QE.3 | `npm run check` verde (287 tests); paridad schema movida a `api/protocols/webviewProtocols.test.ts`. |

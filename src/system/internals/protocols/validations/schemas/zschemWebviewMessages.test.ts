@@ -1,6 +1,6 @@
 /**
  * @file Cobertura de variantes de mensaje webview; schemas canónicos en este directorio.
- * Comprueba alineación con `api/protocols/webviewProtocols.ts` (mismo objeto `webviewInboundMessageSchema`).
+ * Paridad host ↔ canónico: `api/protocols/webviewProtocols.test.ts`.
  */
 
 import * as vitest from 'vitest';
@@ -26,7 +26,6 @@ vi.mock('vscode', () => ({
   },
 }));
 
-import { webviewInboundMessageSchema as hostInboundSchema } from '../../../../../api/protocols/webviewProtocols';
 import { DEFAULT_SUGGESTION_DEBOUNCE_MS } from '../../constants/consPipelineDefaults';
 
 import {
@@ -37,10 +36,6 @@ import {
 } from './zschemWebviewMessages';
 
 vitest.describe('zschemWebviewMessages', () => {
-  vitest.it('el host reexporta el mismo schema inbound que el módulo canónico', () => {
-    vitest.expect(hostInboundSchema).toBe(webviewInboundMessageSchema);
-  });
-
   vitest.it('acepta todas las variantes inbound documentadas', () => {
     const samples = [
       { type: 'init' as const },

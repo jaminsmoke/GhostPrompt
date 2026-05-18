@@ -523,10 +523,18 @@ const importRulesCore = {
     {
       zones: [
         {
-          target: './src/sugcore/**/*',
-          from: ['./src/ui/provider/**/*', './src/ui/notifications/**/*', './src/api/**/*'],
+          target: './src/system/internals/protocols/**/*',
+          from: [
+            './src/ui/**/*',
+            './src/api/**/*',
+            './src/engines/**/*',
+            './src/destinations/**/*',
+            './src/extension/**/*',
+            './src/system/log/**/*',
+            './src/system/runtime/**/*',
+          ],
           message:
-            'sugcore no debe importar desde ui/provider, ui/notifications ni api. Ver Docs/Owners.md.',
+            'protocols/ es capa pura: sin imports desde ui, api, engines, destinations, extension, log ni runtime. Ver Docs/Owners.md.',
         },
         {
           target: './src/system/log/**/*',

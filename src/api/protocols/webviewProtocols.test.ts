@@ -5,6 +5,7 @@ import * as vitest from 'vitest';
 import { vi } from 'vitest';
 
 import { DEFAULT_SUGGESTION_DEBOUNCE_MS } from '../../system/internals/protocols/constants/consPipelineDefaults';
+import { webviewInboundMessageSchema as canonicalInboundSchema } from '../../system/internals/protocols/validations/schemas/zschemWebviewMessages';
 import { emptyConfigurationInspect } from '../../system/internals/testing/mockVscodeConfigurationInspect';
 
 vi.mock('vscode', () => ({
@@ -51,6 +52,10 @@ const minimalSettingsPayload = {
 };
 
 vitest.describe('webviewProtocols (v0.3.1 Fase B)', () => {
+  vitest.it('reexporta el mismo schema inbound que el módulo canónico en protocols', () => {
+    vitest.expect(webviewInboundMessageSchema).toBe(canonicalInboundSchema);
+  });
+
   vitest.it('acepta mensajes entrantes válidos', () => {
     vitest.expect(parseWebviewInboundMessage({ type: 'init' })).toEqual({ type: 'init' });
     vitest.expect(
