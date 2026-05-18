@@ -125,6 +125,32 @@ module.exports = [
     },
   },
   {
+    files: ['src/ui/webview/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'vscode',
+              message: 'El sandbox webview no importa la API de VS Code.',
+            },
+          ],
+          patterns: [
+            {
+              group: ['**/out/**'],
+              message: 'Importar desde src/; out/ es artefacto compilado.',
+            },
+            {
+              group: ['**/src/ui/webview/dist/**'],
+              message: 'No importar el bundle del webview como módulo.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['src/ui/webview/react/components/GhostToolbarPanels.tsx'],
     rules: {
       '@typescript-eslint/no-use-before-define': 'off',

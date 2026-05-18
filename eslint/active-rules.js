@@ -35,16 +35,13 @@ const CORE_PERMANENT_SKIP = new Set([
 
 /** Límites, estilo opinado o migración masiva — tranche core 11+. */
 const CORE_DEFERRED_SKIP = new Set([
-  'no-restricted-imports',
   'no-restricted-globals',
   'no-restricted-properties',
   'no-restricted-syntax',
   'no-restricted-modules',
-  'no-restricted-exports',
   'id-match',
   'id-blacklist',
   'id-denylist',
-  'camelcase',
   'one-var',
   'no-shadow',
   'no-use-before-define',
@@ -955,6 +952,37 @@ const coreDeferredTranche12Rules = {
 };
 
 /**
+ * Grupo 26 — core diferidas (tranche 13): camelCase, imports/exports restringidos.
+ * @type {import('eslint').Linter.RulesRecord}
+ */
+const coreDeferredTranche13Rules = {
+  camelcase: [
+    'error',
+    {
+      properties: 'never',
+      ignoreDestructuring: true,
+      ignoreImports: true,
+    },
+  ],
+  'no-restricted-imports': [
+    'error',
+    {
+      patterns: [
+        {
+          group: ['**/out/**'],
+          message: 'Importar desde src/; out/ es artefacto compilado.',
+        },
+        {
+          group: ['**/src/ui/webview/dist/**'],
+          message: 'No importar el bundle del webview como módulo.',
+        },
+      ],
+    },
+  ],
+  'no-restricted-exports': 'error',
+};
+
+/**
  * Grupo 13 — unicorn tranche 3 (antes en `UNICORN_PERMANENT_SKIP`).
  * @type {import('eslint').Linter.RulesRecord}
  */
@@ -1054,6 +1082,7 @@ const sharedActiveRules = {
   ...coreDeferredTranche10Rules,
   ...coreDeferredTranche11Rules,
   ...coreDeferredTranche12Rules,
+  ...coreDeferredTranche13Rules,
   ...typescriptStylisticCompanionRules,
   ...typescriptRecommendedTypeCheckedCompanionRules,
   ...typescriptStrictTypeCheckedCompanionRules,
@@ -1098,6 +1127,7 @@ module.exports = {
   coreDeferredTranche10Rules,
   coreDeferredTranche11Rules,
   coreDeferredTranche12Rules,
+  coreDeferredTranche13Rules,
   typescriptRules,
   typescriptRecommendedRules,
   typescriptStylisticRules,
