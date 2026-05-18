@@ -35,8 +35,6 @@ const CORE_PERMANENT_SKIP = new Set([
 
 /** Límites, estilo opinado o migración masiva — tranche core 11+. */
 const CORE_DEFERRED_SKIP = new Set([
-  'no-process-env',
-  'no-process-exit',
   'no-restricted-imports',
   'no-restricted-globals',
   'no-restricted-properties',
@@ -45,25 +43,14 @@ const CORE_DEFERRED_SKIP = new Set([
   'no-restricted-exports',
   'no-inline-comments',
   'capitalized-comments',
-  'init-declarations',
-  'class-methods-use-this',
-  'id-length',
   'id-match',
   'id-blacklist',
   'id-denylist',
   'camelcase',
   'one-var',
-  'strict',
   'no-shadow',
   'no-use-before-define',
   'no-ternary',
-  'prefer-reflect',
-  'global-require',
-  'no-new-require',
-  'no-mixed-requires',
-  'no-sync',
-  'handle-callback-err',
-  'callback-return',
 ]);
 
 /** Formato/espaciado (Prettier/convención del repo no las fija aún). */
@@ -907,6 +894,60 @@ const coreDeferredTranche8Rules = {
 };
 
 /**
+ * Grupo 22 — core diferidas (tranche 9): CommonJS, `strict` y callbacks Node.
+ * @type {import('eslint').Linter.RulesRecord}
+ */
+const coreDeferredTranche9Rules = {
+  'callback-return': 'error',
+  'prefer-reflect': 'error',
+  'global-require': 'error',
+  'no-new-require': 'error',
+  'no-mixed-requires': 'error',
+  strict: ['error', 'never'],
+  'no-process-exit': 'error',
+};
+
+/**
+ * Grupo 23 — core diferidas (tranche 10): inicialización, métodos de clase y callbacks Node.
+ * @type {import('eslint').Linter.RulesRecord}
+ */
+const coreDeferredTranche10Rules = {
+  'handle-callback-err': 'error',
+  'init-declarations': ['error', 'always'],
+  'class-methods-use-this': [
+    'error',
+    {
+      exceptMethods: [
+        'cancel',
+        'componentDidCatch',
+        'dispose',
+        'formatLine',
+        'touchConfig',
+        'webviewCapabilitiesPayload',
+        'ps',
+      ],
+    },
+  ],
+};
+
+/**
+ * Grupo 24 — core diferidas (tranche 11): `process.env`, longitud de identificadores y I/O síncrono.
+ * @type {import('eslint').Linter.RulesRecord}
+ */
+const coreDeferredTranche11Rules = {
+  'no-process-env': 'error',
+  'id-length': [
+    'error',
+    {
+      min: 2,
+      exceptions: ['_', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'],
+      properties: 'never',
+    },
+  ],
+  'no-sync': 'error',
+};
+
+/**
  * Grupo 13 — unicorn tranche 3 (antes en `UNICORN_PERMANENT_SKIP`).
  * @type {import('eslint').Linter.RulesRecord}
  */
@@ -1002,6 +1043,9 @@ const sharedActiveRules = {
   ...coreDeferredTranche6Rules,
   ...coreDeferredTranche7Rules,
   ...coreDeferredTranche8Rules,
+  ...coreDeferredTranche9Rules,
+  ...coreDeferredTranche10Rules,
+  ...coreDeferredTranche11Rules,
   ...typescriptStylisticCompanionRules,
   ...typescriptRecommendedTypeCheckedCompanionRules,
   ...typescriptStrictTypeCheckedCompanionRules,
@@ -1042,6 +1086,9 @@ module.exports = {
   coreDeferredTranche6Rules,
   coreDeferredTranche7Rules,
   coreDeferredTranche8Rules,
+  coreDeferredTranche9Rules,
+  coreDeferredTranche10Rules,
+  coreDeferredTranche11Rules,
   typescriptRules,
   typescriptRecommendedRules,
   typescriptStylisticRules,

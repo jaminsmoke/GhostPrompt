@@ -48,10 +48,11 @@ export const ollamaStatusModule: ProviderStatusModule = {
   label: 'Ollama',
 
   async check(): Promise<ProviderStateRecord> {
-    let version: string;
-    try {
-      version = await execAsync('ollama --version', OLLAMA_CLI_SHORT_TIMEOUT_MS);
-    } catch {
+    const version: string | false = await execAsync(
+      'ollama --version',
+      OLLAMA_CLI_SHORT_TIMEOUT_MS,
+    ).catch((): false => false);
+    if (version === false) {
       return {
         id: 'ollama',
         status: 'unavailable',
@@ -60,11 +61,10 @@ export const ollamaStatusModule: ProviderStatusModule = {
       };
     }
 
-    let models: string[];
-    try {
-      const stdout = await execAsync('ollama list', OLLAMA_CLI_LONG_TIMEOUT_MS);
-      models = parseModelList(stdout);
-    } catch {
+    const models: string[] | false = await execAsync('ollama list', OLLAMA_CLI_LONG_TIMEOUT_MS)
+      .then((stdout) => parseModelList(stdout))
+      .catch((): false => false);
+    if (models === false) {
       return {
         id: 'ollama',
         status: 'stopped',

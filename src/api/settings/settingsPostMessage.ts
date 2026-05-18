@@ -62,20 +62,18 @@ export async function buildAndPostGhostPromptSettings(
   const enabledSources = getEnabledCompletionSources();
   const completionUiKind = getCompletionUiKind();
   const completionProvider = completionUiKind === 'multi' ? 'copilot' : completionUiKind;
-  let availableModels: SuggestionModelDescriptor[];
-  try {
+  const availableModels = await (async (): Promise<SuggestionModelDescriptor[]> => {
     if (enabledSources.length > 1) {
-      availableModels = await listMergedSuggestionModels(policy, enabledSources);
-    } else if (enabledSources[0] === 'opencode') {
-      availableModels = await listOpencodeSuggestionModels(policy);
-    } else if (enabledSources[0] === 'ollama') {
-      availableModels = await listOllamaSuggestionModels(policy);
-    } else {
-      availableModels = await listSuggestionModels(policy);
+      return listMergedSuggestionModels(policy, enabledSources);
     }
-  } catch {
-    availableModels = [];
-  }
+    if (enabledSources[0] === 'opencode') {
+      return listOpencodeSuggestionModels(policy);
+    }
+    if (enabledSources[0] === 'ollama') {
+      return listOllamaSuggestionModels(policy);
+    }
+    return listSuggestionModels(policy);
+  })().catch(() => []);
   const envelope = {
     type: 'settings' as const,
     settings: {

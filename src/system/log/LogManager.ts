@@ -3,7 +3,11 @@
  */
 import * as vscode from 'vscode';
 
-import { hasAnyConfigurationInspectScope, isDefined } from '../internals/isDefined';
+import {
+  clearOptionalProperty,
+  hasAnyConfigurationInspectScope,
+  isDefined,
+} from '../internals/isDefined';
 
 import { CaptureBreadcrumbStore } from './breadcrumbs';
 import { parseLogLevelString, shouldEmit, type LogLevelName } from './levels';
@@ -278,7 +282,7 @@ function setLogManagerSingleton(next: LogManager): void {
  * @returns {void}
  */
 function clearLogManagerSingleton(): void {
-  delete logManagerSlot.current;
+  clearOptionalProperty(logManagerSlot, 'current');
 }
 
 const inactiveSink: LogEmitSink = {

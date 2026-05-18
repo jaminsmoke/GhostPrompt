@@ -24,7 +24,7 @@ import {
 } from './webviewProtocols';
 
 export type GhostPromptInboundBroadcastServices = {
-  broadcastDraftSync: (originViewId: string, text: string) => void;
+  broadcastDraftToPeers: (originViewId: string, text: string) => void;
   broadcastSettingsToAllViews: () => Promise<void>;
   broadcastClearAll: () => void;
   broadcastUi: (payload: Record<string, unknown>) => void;
@@ -71,13 +71,13 @@ export async function handleGhostPromptInboundInit(
  */
 export function handleGhostPromptInboundDraftChanged(
   message: Extract<WebviewInboundMessage, { type: 'draftChanged' }>,
-  services: Pick<GhostPromptInboundDispatchServices, 'broadcastDraftSync' | 'viewContributionId'>,
+  services: Pick<GhostPromptInboundDispatchServices, 'broadcastDraftToPeers' | 'viewContributionId'>,
 ): void {
   if (message.originViewId !== services.viewContributionId) {
     return;
   }
   setMultiViewDraftText(message.text);
-  services.broadcastDraftSync(message.originViewId, message.text);
+  services.broadcastDraftToPeers(message.originViewId, message.text);
 }
 
 /**

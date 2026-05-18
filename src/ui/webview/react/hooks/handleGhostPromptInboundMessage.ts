@@ -28,7 +28,7 @@ export type GhostPromptInboundHandlerContext = {
   queryClient: QueryClient;
   getCaptureId: () => number;
   setCaptureId: (value: number) => void;
-  markSkipDraftSync: () => void;
+  armSkipSuggestionOnDraftRelay: () => void;
   setCompletionProvider: Dispatch<SetStateAction<CompletionProvider>>;
   setSelectedModelId: Dispatch<SetStateAction<string>>;
   setAvailableModels: Dispatch<SetStateAction<SuggestionModel[]>>;
@@ -164,7 +164,7 @@ function applyGhostPromptDraftAndProviderInbound(
     }
     case 'draftHydrate': {
       if (shouldSkipSuggestionOnRemoteDraft(message, handler.viewId)) {
-        handler.markSkipDraftSync();
+        handler.armSkipSuggestionOnDraftRelay();
       }
       handler.setText(message.text);
       break;
@@ -173,7 +173,7 @@ function applyGhostPromptDraftAndProviderInbound(
       if (!shouldSkipSuggestionOnRemoteDraft(message, handler.viewId)) {
         return;
       }
-      handler.markSkipDraftSync();
+      handler.armSkipSuggestionOnDraftRelay();
       handler.setText(message.text);
       break;
     }

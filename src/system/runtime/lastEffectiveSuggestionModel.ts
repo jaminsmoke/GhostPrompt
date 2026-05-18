@@ -1,7 +1,7 @@
 /**
  * @file Último modelo efectivo usado en una suggestion exitosa (payload settings).
  */
-import { isDefined } from '../internals/isDefined';
+import { clearOptionalProperty, isDefined } from '../internals/isDefined';
 
 import type { SuggestionModelDescriptor } from '../internals/protocols/types';
 
@@ -21,7 +21,7 @@ export function getLastEffectiveSuggestionModel(): SuggestionModelDescriptor | u
  */
 export function setLastEffectiveSuggestionModel(model: SuggestionModelDescriptor | undefined): void {
   if (!isDefined(model)) {
-    delete lastEffectiveModelSlot.current;
+    clearOptionalProperty(lastEffectiveModelSlot, 'current');
     return;
   }
   lastEffectiveModelSlot.current = model;
@@ -31,5 +31,5 @@ export function setLastEffectiveSuggestionModel(model: SuggestionModelDescriptor
  * Reinicia el modelo efectivo (tests).
  */
 export function resetLastEffectiveSuggestionModel(): void {
-  delete lastEffectiveModelSlot.current;
+  clearOptionalProperty(lastEffectiveModelSlot, 'current');
 }

@@ -42,7 +42,7 @@ class OllamaModelManager {
     this._onDidChangeState.fire({ state, model, message });
   }
 
-  private execAsync(cmd: string, timeoutMs = OLLAMA_CLI_SHORT_TIMEOUT_MS): Promise<string> {
+  private static execAsync(cmd: string, timeoutMs = OLLAMA_CLI_SHORT_TIMEOUT_MS): Promise<string> {
     return new Promise((resolve, reject) => {
       exec(cmd, { timeout: timeoutMs }, (err, stdout, stderr) => {
         if (err) {
@@ -62,7 +62,7 @@ class OllamaModelManager {
   async checkInstallation(): Promise<string> {
     this.setState('checking');
     try {
-      const version = await this.execAsync('ollama --version', OLLAMA_CLI_SHORT_TIMEOUT_MS);
+      const version = await OllamaModelManager.execAsync('ollama --version', OLLAMA_CLI_SHORT_TIMEOUT_MS);
       this.setState('ready');
       return version;
     } catch {
@@ -79,7 +79,7 @@ class OllamaModelManager {
   async listInstalledModels(): Promise<string[]> {
     this.setState('listing');
     try {
-      const stdout = await this.execAsync('ollama list', OLLAMA_CLI_LONG_TIMEOUT_MS);
+      const stdout = await OllamaModelManager.execAsync('ollama list', OLLAMA_CLI_LONG_TIMEOUT_MS);
       const lines = stdout.split('\n').filter((l) => l.trim().length > 0);
       if (lines.length <= 1) {
         return [];
@@ -222,7 +222,7 @@ class OllamaModelManager {
    */
   async ps(): Promise<string | false> {
     try {
-      const stdout = await this.execAsync('ollama ps', OLLAMA_CLI_SHORT_TIMEOUT_MS);
+      const stdout = await OllamaModelManager.execAsync('ollama ps', OLLAMA_CLI_SHORT_TIMEOUT_MS);
       const lines = stdout.split('\n').filter((l) => l.trim().length > 0);
       if (lines.length <= 1) {
         return false;
@@ -247,8 +247,8 @@ class OllamaModelManager {
     try {
       const target = modelId ?? this._currentModel ?? '';
       await (target
-        ? this.execAsync(`ollama stop ${target}`, OLLAMA_CLI_LONG_TIMEOUT_MS)
-        : this.execAsync('ollama stop', OLLAMA_CLI_LONG_TIMEOUT_MS));
+        ? OllamaModelManager.execAsync(`ollama stop ${target}`, OLLAMA_CLI_LONG_TIMEOUT_MS)
+        : OllamaModelManager.execAsync('ollama stop', OLLAMA_CLI_LONG_TIMEOUT_MS));
     } catch {
       // ollama stop puede fallar si el modelo no estaba corriendo — se ignora
     }

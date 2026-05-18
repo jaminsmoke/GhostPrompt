@@ -128,7 +128,7 @@ vitest.describe('handleGhostPromptInboundDraftChanged', () => {
         },
         {
           viewContributionId: 'ghostPrompt.input',
-          broadcastDraftSync: broadcast,
+          broadcastDraftToPeers: broadcast,
         },
       );
       vitest.expect(getMultiViewDraftText()).toBe('');
@@ -145,7 +145,7 @@ vitest.describe('handleGhostPromptInboundDraftChanged', () => {
         },
         {
           viewContributionId: 'ghostPrompt.input',
-          broadcastDraftSync: broadcast,
+          broadcastDraftToPeers: broadcast,
         },
       );
       vitest.expect(getMultiViewDraftText()).toBe('texto');
@@ -241,7 +241,7 @@ vitest.describe('dispatchGhostPromptInboundMessage', () => {
         webview,
         dataUri: { fsPath: '/g' } as Vscode.Uri,
         postSettings: vi.fn(),
-        broadcastDraftSync: vi.fn(),
+        broadcastDraftToPeers: vi.fn(),
         broadcastSettingsToAllViews: broadcastSettings,
         broadcastClearAll: vi.fn(),
         broadcastUi: vi.fn(),
@@ -277,7 +277,7 @@ vitest.describe('dispatchGhostPromptInboundMessage', () => {
         webview: {} as Vscode.Webview,
         dataUri: { fsPath: '/g' } as Vscode.Uri,
         postSettings: vi.fn(),
-        broadcastDraftSync: vi.fn(),
+        broadcastDraftToPeers: vi.fn(),
         broadcastSettingsToAllViews: vi.fn(),
         broadcastClearAll: vi.fn(),
         broadcastUi: vi.fn(),

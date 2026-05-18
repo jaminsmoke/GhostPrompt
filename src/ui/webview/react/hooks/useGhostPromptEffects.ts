@@ -65,7 +65,7 @@ export function useGhostPromptEffects(
       setCaptureId: (value) => {
         currentCaptureId.current = value;
       },
-      markSkipDraftSync: () => {
+      armSkipSuggestionOnDraftRelay: () => {
         skipSuggestionOnDraftSync.current = true;
       },
       setCompletionProvider,

@@ -135,6 +135,7 @@ module.exports = [
     rules: {
       '@typescript-eslint/unbound-method': 'off',
       '@typescript-eslint/no-empty-function': 'off',
+      'init-declarations': 'off',
       'no-useless-return': 'off',
       'no-promise-executor-return': 'off',
     },

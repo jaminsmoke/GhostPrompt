@@ -108,7 +108,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * @param {string} text - Texto del borrador que se sincroniza.
    * @returns {void}
    */
-  private static broadcastDraftSync(originViewId: string, text: string): void {
+  private static broadcastDraftToPeers(originViewId: string, text: string): void {
     for (const instance of MiniInputViewProvider.instances) {
       if (instance.viewContributionId !== originViewId) {
         const msg = { type: 'draftSync' as const, text, originViewId };
@@ -166,7 +166,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     );
   }
 
-  private async postSettings(webview: vscode.Webview): Promise<void> {
+  private static async postSettings(webview: vscode.Webview): Promise<void> {
     await buildAndPostGhostPromptSettings(webview, {
       getSuggestionModelPolicy: () => readGhostPromptSuggestionModelPolicy(),
       getSelectedModelId: () => getGhostPromptSelectedModelId(),
@@ -178,7 +178,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     if (!this.webviewView) {
       return;
     }
-    await this.postSettings(this.webviewView.webview);
+    await MiniInputViewProvider.postSettings(this.webviewView.webview);
   }
 
   private static async broadcastSettingsToAllViews(): Promise<void> {
@@ -269,9 +269,9 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         viewContributionId: this.viewContributionId,
         webview: webviewView.webview,
         dataUri,
-        postSettings: (w) => this.postSettings(w),
-        broadcastDraftSync: (...args: Parameters<typeof MiniInputViewProvider.broadcastDraftSync>) =>
-          MiniInputViewProvider.broadcastDraftSync(...args),
+        postSettings: (w) => MiniInputViewProvider.postSettings(w),
+        broadcastDraftToPeers: (...args: Parameters<typeof MiniInputViewProvider.broadcastDraftToPeers>) =>
+          MiniInputViewProvider.broadcastDraftToPeers(...args),
         broadcastSettingsToAllViews: (
           ...args: Parameters<typeof MiniInputViewProvider.broadcastSettingsToAllViews>
         ) => MiniInputViewProvider.broadcastSettingsToAllViews(...args),

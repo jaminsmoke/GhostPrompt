@@ -126,8 +126,8 @@ vi.mock('../../api/protocols/webviewProtocols', async (importOriginal) => {
     ...actual,
     parseWebviewInboundMessage: (
       raw: unknown,
-    ): WebviewProtocolsModule.WebviewInboundMessage | undefined => {
-      let parsed: WebviewProtocolsModule.WebviewInboundMessage | undefined;
+    ): WebviewProtocolsModule.WebviewInboundMessage | false => {
+      let parsed: WebviewProtocolsModule.WebviewInboundMessage | false = false;
       if (
         typeof raw === 'object' &&
         'type' in raw &&
@@ -229,7 +229,7 @@ vi.mock('vscode', () => ({
  * @returns {object} Vista de prueba con webview mock.
  */
 function createView() {
-  delete suggestHandlerSlot.current;
+  Reflect.deleteProperty(suggestHandlerSlot, 'current');
   postMessageMock.mockReset();
 
   return {

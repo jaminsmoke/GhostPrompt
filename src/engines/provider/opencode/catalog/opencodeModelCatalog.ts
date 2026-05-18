@@ -81,14 +81,14 @@ export async function listOpencodeSuggestionModels(
       .filter((id): id is string => typeof id === 'string' && id.trim().length > 0),
   );
 
-  let client: unknown;
-  try {
-    client = await createOpenCodeClient(getOpenCodeClientOptions());
-  } catch {
+  const clientResult = await createOpenCodeClient(getOpenCodeClientOptions()).catch(
+    (): false => false,
+  );
+  if (clientResult === false) {
     return [];
   }
 
-  const sdkClient = client as {
+  const sdkClient = clientResult as unknown as {
     config: { providers: () => Promise<unknown> };
   };
 

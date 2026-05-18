@@ -75,17 +75,21 @@ export async function requestCopilotLmCompletion(
 
   try {
     const instruction = buildCompletionInstruction(userText);
-    let requestTokenSource: vscode.CancellationTokenSource | undefined;
-    let requestCancellation: vscode.Disposable | undefined;
-    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+    let requestTokenSource: vscode.CancellationTokenSource | false = false;
+    let requestCancellation: vscode.Disposable | false = false;
+    let timeoutHandle: ReturnType<typeof setTimeout> | false = false;
     try {
       onLoadingPhase?.('copilot');
       requestTokenSource = new vscode.CancellationTokenSource();
       requestCancellation = token.onCancellationRequested(() => {
-        requestTokenSource?.cancel();
+        if (requestTokenSource !== false) {
+          requestTokenSource.cancel();
+        }
       });
       timeoutHandle = setTimeout(() => {
-        requestTokenSource?.cancel();
+        if (requestTokenSource !== false) {
+          requestTokenSource.cancel();
+        }
       }, requestTimeoutMs);
       onLoadingPhase?.('copilot-generating');
       const response = await model.sendRequest(
@@ -97,9 +101,15 @@ export async function requestCopilotLmCompletion(
       const completion = await collectLmResponse(response, requestTimeoutMs);
       return { kind: 'suggestion', suggestion: completion, model: describeModel(model) };
     } finally {
-      clearTimeout(timeoutHandle);
-      requestCancellation?.dispose();
-      requestTokenSource?.dispose();
+      if (timeoutHandle !== false) {
+        clearTimeout(timeoutHandle);
+      }
+      if (requestCancellation !== false) {
+        requestCancellation.dispose();
+      }
+      if (requestTokenSource !== false) {
+        requestTokenSource.dispose();
+      }
     }
   } catch (error) {
     if (token.isCancellationRequested) {

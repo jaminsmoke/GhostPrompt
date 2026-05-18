@@ -159,12 +159,12 @@ export class QueuedNdjsonFileTransport {
   }
 
   private async maybeRotate(ndjsonUri: vscode.Uri): Promise<void> {
-    let size: number;
+    let size = 0;
     try {
       const { size: fileSize } = await vscode.workspace.fs.stat(ndjsonUri);
       size = fileSize;
     } catch {
-      size = 0;
+      // Archivo inexistente: tamaño 0.
     }
     const maxBytes = this.getMaxBytes();
     if (size < maxBytes) {
@@ -199,11 +199,11 @@ export class QueuedNdjsonFileTransport {
       parts.push(`### ${e.level} ${e.module} ${e.message}\n${data}\n`);
     }
     const block = parts.join('');
-    let existing: string;
+    let existing = '# GhostPrompt Log\n\n';
     try {
       existing = Buffer.from(await vscode.workspace.fs.readFile(mdUri)).toString('utf8');
     } catch {
-      existing = '# GhostPrompt Log\n\n';
+      // Nuevo archivo de sesión.
     }
     const next = existing + block;
     await vscode.workspace.fs.writeFile(mdUri, Buffer.from(next, 'utf8'));

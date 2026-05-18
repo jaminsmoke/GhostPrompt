@@ -1,7 +1,10 @@
 /**
  * @file Singleton del cliente SDK OpenCode en el proceso de la extensión.
  */
-import { isDefined } from '../../../../system/internals/isDefined';
+import {
+  clearOptionalProperty,
+  isDefined,
+} from '../../../../system/internals/isDefined';
 
 import type { OpenCodeSdkClient } from '../../../../system/internals/protocols/types/typeOpencodeClient';
 
@@ -39,5 +42,5 @@ export function hasGlobalClient(): boolean {
  * Elimina la referencia al cliente global.
  */
 export function resetGlobalClient(): void {
-  delete openCodeClientSlot.current;
+  clearOptionalProperty(openCodeClientSlot, 'current');
 }

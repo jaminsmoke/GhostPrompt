@@ -33,7 +33,7 @@ async function main() {
   } catch (error) {
     process.stderr.write('Failed to run E2E tests\n');
     process.stderr.write(`${String(error)}\n`);
-    process.exit(1);
+    process.exitCode = 1;
   }
 }
 

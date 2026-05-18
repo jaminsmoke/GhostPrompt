@@ -1,7 +1,6 @@
 /**
  * @file Recolecta texto incremental desde `vscode.LanguageModelChatResponse` (Copilot LM).
  */
-import { isDefined } from '../../../../system/internals/isDefined';
 import { DEFAULT_MODEL_REQUEST_TIMEOUT_MS } from '../../../../system/internals/protocols/types';
 
 import type * as vscode from 'vscode';
@@ -16,19 +15,19 @@ async function awaitNextChunkWithTimeout(
   iterator: AsyncIterator<string>,
   timeoutMs: number,
 ): Promise<IteratorResult<string>> {
-  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+  const timeoutState = { handle: false as ReturnType<typeof setTimeout> | false };
   try {
     return await Promise.race([
       iterator.next(),
       new Promise<IteratorResult<string>>((_, reject) => {
-        timeoutHandle = setTimeout(() => {
+        timeoutState.handle = setTimeout(() => {
           reject(new Error('request-timeout'));
         }, timeoutMs);
       }),
     ]);
   } finally {
-    if (isDefined(timeoutHandle)) {
-      clearTimeout(timeoutHandle);
+    if (timeoutState.handle !== false) {
+      clearTimeout(timeoutState.handle);
     }
   }
 }
