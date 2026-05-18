@@ -5,11 +5,11 @@ import * as vitest from 'vitest';
 import { vi } from 'vitest';
 
 const { configProvidersMock, fakeSdkClient } = vi.hoisted(() => {
-  const configProvidersMock = vi.fn();
-  const fakeSdkClient = {
-    config: { providers: configProvidersMock },
+  const providersMock = vi.fn();
+  const sdkClient = {
+    config: { providers: providersMock },
   };
-  return { configProvidersMock, fakeSdkClient };
+  return { configProvidersMock: providersMock, fakeSdkClient: sdkClient };
 });
 
 vi.mock('@opencode-ai/sdk', () => ({

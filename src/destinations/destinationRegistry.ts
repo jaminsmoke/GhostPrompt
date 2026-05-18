@@ -36,21 +36,6 @@ export function getDestinationProviderForId(id: DestinationId): DestinationProvi
 }
 
 /**
- * Devuelve el proveedor de destino efectivo que debe usarse actualmente.
- * @returns {DestinationProvider} Provider registrado o fallback de error si no se encuentra uno.
- */
-export function getActiveDestinationProvider(): DestinationProvider {
-  const id = resolveEffectiveDestinationId();
-  return (
-    registry.get(id) ?? {
-      id,
-      sendPrompt: () =>
-        Promise.reject(new Error(`Destination provider '${id}' no está registrado`)),
-    }
-  );
-}
-
-/**
  * Comprueba si el destino del agente fue configurado explícitamente por el usuario.
  * @returns {boolean} True si el usuario configuró agentDestination en algún ámbito.
  */
@@ -102,6 +87,21 @@ export function getAgentDestination(): AgentDestination {
  */
 function resolveEffectiveDestinationId(): DestinationId {
   return getAgentDestination();
+}
+
+/**
+ * Devuelve el proveedor de destino efectivo que debe usarse actualmente.
+ * @returns {DestinationProvider} Provider registrado o fallback de error si no se encuentra uno.
+ */
+export function getActiveDestinationProvider(): DestinationProvider {
+  const id = resolveEffectiveDestinationId();
+  return (
+    registry.get(id) ?? {
+      id,
+      sendPrompt: () =>
+        Promise.reject(new Error(`Destination provider '${id}' no está registrado`)),
+    }
+  );
 }
 
 export {AGENT_DESTINATION_IDS, VS_OPEN_CODE_X_EXTENSION_ID} from '../system/internals/protocols/constants/consDestinations';

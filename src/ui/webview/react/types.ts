@@ -10,15 +10,15 @@ export type GhostPromptCapabilities = {
 };
 
 declare global {
-  interface Window {
-    __ghostPromptViewId?: string;
-    __ghostPromptCapabilities?: GhostPromptCapabilities;
-  }
-
   /** Inyectado en el bundle del webview (`webviewHtml.ts`). */
   var __ghostPromptViewId: string | undefined;
   /** Inyectado en el bundle del webview (`webviewHtml.ts`). */
   var __ghostPromptCapabilities: GhostPromptCapabilities | undefined;
+
+  interface Window {
+    __ghostPromptViewId?: string;
+    __ghostPromptCapabilities?: GhostPromptCapabilities;
+  }
 }
 
 export type LogLevel = 'debug' | 'error' | 'info' | 'warn';

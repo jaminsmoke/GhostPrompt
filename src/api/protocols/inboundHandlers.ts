@@ -202,6 +202,39 @@ function dispatchGhostPromptLogInbound(
 }
 
 /**
+ * Publica el estado actualizado de providers al webview y a las vistas relacionadas.
+ * @param {vscode.Webview} webview - Webview que recibe el mensaje de estado.
+ * @param {GhostPromptInboundDispatchServices} services - Servicios de broadcast y dispatch.
+ * @returns {Promise<void>} Promise que se resuelve cuando el mensaje se disparó.
+ */
+async function postProviderStatus(
+  webview: vscode.Webview,
+  services: GhostPromptInboundDispatchServices,
+): Promise<void> {
+  const providers = await providerStatusManager.refreshAll();
+  const msg = { type: 'providerStatus' as const, providers };
+  const validated = parseWebviewOutboundMessage(msg);
+  if (!validated) {
+    return;
+  }
+  webview.postMessage(validated);
+  services.broadcastUi(validated);
+}
+
+/**
+ * Solicita y publica el estado de los providers al webview.
+ * @param {vscode.Webview} webview - Webview objetivo del mensaje de status.
+ * @param {GhostPromptInboundDispatchServices} services - Servicios de dispatch necesarios.
+ * @returns {Promise<void>} Promise que se resuelve cuando el status se envía.
+ */
+async function handleProviderStatusRequest(
+  webview: vscode.Webview,
+  services: GhostPromptInboundDispatchServices,
+): Promise<void> {
+  await postProviderStatus(webview, services);
+}
+
+/**
  * Enruta un mensaje inbound del webview al handler correspondiente.
  * @param {WebviewInboundMessage} message - Mensaje entrante parseado desde el webview.
  * @param {GhostPromptInboundDispatchServices} services - Servicios de despacho y broadcasting.
@@ -272,37 +305,4 @@ export async function dispatchGhostPromptInboundMessage(
       throw new Error(`Unhandled inbound message: ${String(unreachable)}`);
     }
   }
-}
-
-/**
- * Solicita y publica el estado de los providers al webview.
- * @param {vscode.Webview} webview - Webview objetivo del mensaje de status.
- * @param {GhostPromptInboundDispatchServices} services - Servicios de dispatch necesarios.
- * @returns {Promise<void>} Promise que se resuelve cuando el status se envía.
- */
-async function handleProviderStatusRequest(
-  webview: vscode.Webview,
-  services: GhostPromptInboundDispatchServices,
-): Promise<void> {
-  await postProviderStatus(webview, services);
-}
-
-/**
- * Publica el estado actualizado de providers al webview y a las vistas relacionadas.
- * @param {vscode.Webview} webview - Webview que recibe el mensaje de estado.
- * @param {GhostPromptInboundDispatchServices} services - Servicios de broadcast y dispatch.
- * @returns {Promise<void>} Promise que se resuelve cuando el mensaje se disparó.
- */
-async function postProviderStatus(
-  webview: vscode.Webview,
-  services: GhostPromptInboundDispatchServices,
-): Promise<void> {
-  const providers = await providerStatusManager.refreshAll();
-  const msg = { type: 'providerStatus' as const, providers };
-  const validated = parseWebviewOutboundMessage(msg);
-  if (!validated) {
-    return;
-  }
-  webview.postMessage(validated);
-  services.broadcastUi(validated);
 }

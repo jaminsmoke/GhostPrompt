@@ -10,84 +10,6 @@ import type {
 } from '../../../../system/internals/protocols/types';
 
 /**
- * Selecciona el modelo Copilot adecuado según la política y preferencia.
- * @param {readonly vscode.LanguageModelChat[]} models - Lista de modelos disponibles.
- * @param {SuggestionModelPolicy} policy - Política de selección de modelo.
- * @param {string | undefined} [preferredModelId] - Identificador de modelo preferido opcional.
- * @returns {vscode.LanguageModelChat | undefined} Modelo elegido o undefined si no hay coincidencias.
- */
-export function selectModelByPolicy(
-  models: readonly vscode.LanguageModelChat[],
-  policy: SuggestionModelPolicy,
-  preferredModelId?: string,
-): vscode.LanguageModelChat | undefined {
-  if (preferredModelId) {
-    const preferred = models.find((candidate) => getModelId(candidate) === preferredModelId);
-    if (preferred && (policy === 'anyModel' || isIncludedModel(preferred))) {
-        return preferred;
-      }
-  }
-
-  if (policy === 'anyModel') {
-    return models[0];
-  }
-  return models.find((candidate) => isIncludedModel(candidate));
-}
-
-/**
- * Enumera los modelos Copilot que cumplen la política indicada.
- * @param {SuggestionModelPolicy} policy - Política para filtrar los modelos devueltos.
- * @returns {Promise<SuggestionModelDescriptor[]>} Lista de descriptores de modelo Copilot.
- */
-export async function listSuggestionModels(
-  policy: SuggestionModelPolicy,
-): Promise<SuggestionModelDescriptor[]> {
-  const models = await vscode.lm.selectChatModels({ vendor: 'copilot' });
-  const filtered =
-    policy === 'anyModel' ? models : models.filter((candidate) => isIncludedModel(candidate));
-  const seen = new Set<string>();
-  const descriptors: SuggestionModelDescriptor[] = [];
-  for (const candidate of filtered) {
-    const descriptor = describeModel(candidate);
-    const dedupeKey = buildModelDedupeKey(descriptor);
-    if (!seen.has(dedupeKey)) {
-      seen.add(dedupeKey);
-      descriptors.push({
-        ...descriptor,
-        completionSource: 'copilot',
-      });
-    }
-  }
-  return descriptors;
-}
-
-/**
- * Expuesto para el proveedor LM al armar el resultado de suggestion.
- * @param {unknown} model - Objeto de modelo Copilot a describir.
- * @returns {SuggestionModelDescriptor} Descriptor del modelo.
- */
-export function describeModel(model: unknown): SuggestionModelDescriptor {
-  const data = model as {
-    id?: string;
-    family?: string;
-    name?: string;
-    pricing?: string;
-  };
-  const id = getModelId(model);
-  const label = [data.name?.trim(), data.family?.trim(), id].find(Boolean) ?? id;
-  const pricing = normalizePricing(data.pricing);
-  const tier = classifyModelTier(model);
-  const provider = inferModelProvider(model);
-  return {
-    id,
-    label,
-    tier,
-    ...pricing ? { pricing } : {},
-    ...provider ? { provider } : {},
-  };
-}
-
-/**
  * Resuelve el identificador de un modelo a partir de sus campos disponibles.
  * @param {unknown} model - Objeto de modelo posible.
  * @returns {string} Id del modelo o "unknown" si no se encuentra ninguno.
@@ -97,6 +19,57 @@ function getModelId(model: unknown): string {
   return (
     [data.id?.trim(), data.family?.trim(), data.name?.trim()].find(Boolean) ?? 'unknown'
   );
+}
+
+/**
+ * Normaliza la cadena de pricing de un modelo si es válida.
+ * @param {unknown} pricing - Valor bruto de pricing.
+ * @returns {string | undefined} Pricing limpio o undefined si no es válido.
+ */
+function normalizePricing(pricing: unknown): string | false {
+  if (typeof pricing !== 'string') {
+    return false;
+  }
+  const value = pricing.trim();
+  if (value.length === 0) {
+    return false;
+  }
+  return value;
+}
+
+/**
+ * Extrae el multiplicador numérico de una cadena de pricing tipo `2x`.
+ * @param {string} pricing - Cadena de pricing a parsear.
+ * @returns {number | undefined} Multiplicador numérico o undefined si no coincide.
+ */
+function parsePricingMultiplier(pricing: string): number | false {
+  const match = /^(?<multiplier>\d+(?:\.\d+)?)x$/iu.exec(pricing.trim());
+  if (!match?.groups?.multiplier) {
+    return false;
+  }
+  const parsed = Number(match.groups.multiplier);
+  if (!Number.isFinite(parsed)) {
+    return false;
+  }
+  return parsed;
+}
+
+/**
+ * Clasifica el tier de un modelo en función de la cadena pricing.
+ * @param {unknown} model - Objeto de modelo con posible campo pricing.
+ * @returns {SuggestionModelTier} Tier inferido a partir del precio.
+ */
+function classifyTierFromPricing(model: unknown): SuggestionModelTier {
+  const data = model as { pricing?: string };
+  const normalized = normalizePricing(data.pricing);
+  if (!normalized) {
+    return 'unknown';
+  }
+  const multiplier = parsePricingMultiplier(normalized);
+  if (multiplier === false) {
+    return 'unknown';
+  }
+  return multiplier === 0 ? 'included' : 'premium';
 }
 
 /**
@@ -143,57 +116,6 @@ function classifyModelTier(model: unknown): SuggestionModelTier {
     return tierByPricing;
   }
   return isIncludedModel(model) ? 'included' : 'unknown';
-}
-
-/**
- * Clasifica el tier de un modelo en función de la cadena pricing.
- * @param {unknown} model - Objeto de modelo con posible campo pricing.
- * @returns {SuggestionModelTier} Tier inferido a partir del precio.
- */
-function classifyTierFromPricing(model: unknown): SuggestionModelTier {
-  const data = model as { pricing?: string };
-  const normalized = normalizePricing(data.pricing);
-  if (!normalized) {
-    return 'unknown';
-  }
-  const multiplier = parsePricingMultiplier(normalized);
-  if (multiplier === false) {
-    return 'unknown';
-  }
-  return multiplier === 0 ? 'included' : 'premium';
-}
-
-/**
- * Normaliza la cadena de pricing de un modelo si es válida.
- * @param {unknown} pricing - Valor bruto de pricing.
- * @returns {string | undefined} Pricing limpio o undefined si no es válido.
- */
-function normalizePricing(pricing: unknown): string | false {
-  if (typeof pricing !== 'string') {
-    return false;
-  }
-  const value = pricing.trim();
-  if (value.length === 0) {
-    return false;
-  }
-  return value;
-}
-
-/**
- * Extrae el multiplicador numérico de una cadena de pricing tipo `2x`.
- * @param {string} pricing - Cadena de pricing a parsear.
- * @returns {number | undefined} Multiplicador numérico o undefined si no coincide.
- */
-function parsePricingMultiplier(pricing: string): number | false {
-  const match = /^(?<multiplier>\d+(?:\.\d+)?)x$/iu.exec(pricing.trim());
-  if (!match?.groups?.multiplier) {
-    return false;
-  }
-  const parsed = Number(match.groups.multiplier);
-  if (!Number.isFinite(parsed)) {
-    return false;
-  }
-  return parsed;
 }
 
 /**
@@ -253,4 +175,82 @@ function inferModelProvider(model: unknown): string | false {
     return 'GitHub';
   }
   return 'Other';
+}
+
+/**
+ * Expuesto para el proveedor LM al armar el resultado de suggestion.
+ * @param {unknown} model - Objeto de modelo Copilot a describir.
+ * @returns {SuggestionModelDescriptor} Descriptor del modelo.
+ */
+export function describeModel(model: unknown): SuggestionModelDescriptor {
+  const data = model as {
+    id?: string;
+    family?: string;
+    name?: string;
+    pricing?: string;
+  };
+  const id = getModelId(model);
+  const label = [data.name?.trim(), data.family?.trim(), id].find(Boolean) ?? id;
+  const pricing = normalizePricing(data.pricing);
+  const tier = classifyModelTier(model);
+  const provider = inferModelProvider(model);
+  return {
+    id,
+    label,
+    tier,
+    ...pricing ? { pricing } : {},
+    ...provider ? { provider } : {},
+  };
+}
+
+/**
+ * Selecciona el modelo Copilot adecuado según la política y preferencia.
+ * @param {readonly vscode.LanguageModelChat[]} models - Lista de modelos disponibles.
+ * @param {SuggestionModelPolicy} policy - Política de selección de modelo.
+ * @param {string | undefined} [preferredModelId] - Identificador de modelo preferido opcional.
+ * @returns {vscode.LanguageModelChat | undefined} Modelo elegido o undefined si no hay coincidencias.
+ */
+export function selectModelByPolicy(
+  models: readonly vscode.LanguageModelChat[],
+  policy: SuggestionModelPolicy,
+  preferredModelId?: string,
+): vscode.LanguageModelChat | undefined {
+  if (preferredModelId) {
+    const preferred = models.find((candidate) => getModelId(candidate) === preferredModelId);
+    if (preferred && (policy === 'anyModel' || isIncludedModel(preferred))) {
+        return preferred;
+      }
+  }
+
+  if (policy === 'anyModel') {
+    return models[0];
+  }
+  return models.find((candidate) => isIncludedModel(candidate));
+}
+
+/**
+ * Enumera los modelos Copilot que cumplen la política indicada.
+ * @param {SuggestionModelPolicy} policy - Política para filtrar los modelos devueltos.
+ * @returns {Promise<SuggestionModelDescriptor[]>} Lista de descriptores de modelo Copilot.
+ */
+export async function listSuggestionModels(
+  policy: SuggestionModelPolicy,
+): Promise<SuggestionModelDescriptor[]> {
+  const models = await vscode.lm.selectChatModels({ vendor: 'copilot' });
+  const filtered =
+    policy === 'anyModel' ? models : models.filter((candidate) => isIncludedModel(candidate));
+  const seen = new Set<string>();
+  const descriptors: SuggestionModelDescriptor[] = [];
+  for (const candidate of filtered) {
+    const descriptor = describeModel(candidate);
+    const dedupeKey = buildModelDedupeKey(descriptor);
+    if (!seen.has(dedupeKey)) {
+      seen.add(dedupeKey);
+      descriptors.push({
+        ...descriptor,
+        completionSource: 'copilot',
+      });
+    }
+  }
+  return descriptors;
 }

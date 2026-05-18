@@ -41,6 +41,25 @@ function buildOptions(options: OllamaClientOptions): {
 }
 
 /**
+ * Crea una señal combinada que se aborta cuando cualquiera de las señales internas se aborta.
+ * @param {globalThis.AbortSignal[]} signals - Señales a combinar.
+ * @returns {globalThis.AbortSignal} Señal compuesta de cancelación.
+ */
+function anySignal(signals: globalThis.AbortSignal[]): globalThis.AbortSignal {
+  const controller = new AbortController();
+  for (const signal of signals) {
+    if (signal.aborted) {
+      controller.abort(signal.reason);
+      return controller.signal;
+    }
+    signal.addEventListener('abort', () => controller.abort(signal.reason), {
+      once: true,
+    });
+  }
+  return controller.signal;
+}
+
+/**
  * Realiza una petición fetch y parsea la respuesta JSON con timeout.
  * @param {string} url - URL a la que realizar la petición.
  * @param {globalThis.RequestInit} init - Configuración de la petición fetch.
@@ -76,25 +95,6 @@ async function fetchJson<T>(
 }
 
 /**
- * Crea una señal combinada que se aborta cuando cualquiera de las señales internas se aborta.
- * @param {globalThis.AbortSignal[]} signals - Señales a combinar.
- * @returns {globalThis.AbortSignal} Señal compuesta de cancelación.
- */
-function anySignal(signals: globalThis.AbortSignal[]): globalThis.AbortSignal {
-  const controller = new AbortController();
-  for (const signal of signals) {
-    if (signal.aborted) {
-      controller.abort(signal.reason);
-      return controller.signal;
-    }
-    signal.addEventListener('abort', () => controller.abort(signal.reason), {
-      once: true,
-    });
-  }
-  return controller.signal;
-}
-
-/**
  * Lista modelos disponibles en la instancia de Ollama.
  * @param {OllamaClientOptions} [options] - Opciones de cliente para la petición.
  * @returns {Promise<OllamaModel[]>} Array de modelos disponibles.
@@ -119,60 +119,6 @@ export async function listModels(options: OllamaClientOptions = {}): Promise<Oll
     }
   }
   return validModels;
-}
-
-/**
- * Genera texto desde Ollama usando el prompt y modelo especificados.
- * @param {string} prompt - Texto de entrada para el modelo.
- * @param {string} model - Identificador del modelo Ollama.
- * @param {object} [options] - Opciones de generación y streaming.
- * @returns {Promise<string>} Texto generado completo.
- */
-export async function generate(
-  prompt: string,
-  model: string,
-  options: OllamaClientOptions & {
-    onStreamPreview?: (text: string) => void;
-    system?: string;
-    options?: Record<string, unknown>;
-  } = {},
-): Promise<string> {
-  const url = resolveUrl('/api/generate', options.baseUrl);
-  const timeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
-
-  if (options.onStreamPreview) {
-    return streamGenerate(prompt, model, url, options, timeoutMs);
-  }
-
-  const body: Record<string, unknown> = {
-    model,
-    prompt,
-    stream: false,
-  };
-  if (options.system) {
-    body.system = options.system;
-  }
-  if (options.options) {
-    body.options = options.options;
-  }
-
-  const { headers, signal } = buildOptions(options);
-  const res = await fetchJson<unknown>(
-    url,
-    {
-      method: 'POST',
-      headers,
-      signal,
-      body: JSON.stringify(body),
-    },
-    timeoutMs,
-  );
-
-  const parsed = ollamaGenerateResponseSchema.safeParse(res);
-  if (!parsed.success) {
-    return '';
-  }
-  return parsed.data.response ?? '';
 }
 
 /**
@@ -272,4 +218,58 @@ async function streamGenerate(
     }
     throw error;
   }
+}
+
+/**
+ * Genera texto desde Ollama usando el prompt y modelo especificados.
+ * @param {string} prompt - Texto de entrada para el modelo.
+ * @param {string} model - Identificador del modelo Ollama.
+ * @param {object} [options] - Opciones de generación y streaming.
+ * @returns {Promise<string>} Texto generado completo.
+ */
+export async function generate(
+  prompt: string,
+  model: string,
+  options: OllamaClientOptions & {
+    onStreamPreview?: (text: string) => void;
+    system?: string;
+    options?: Record<string, unknown>;
+  } = {},
+): Promise<string> {
+  const url = resolveUrl('/api/generate', options.baseUrl);
+  const timeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+
+  if (options.onStreamPreview) {
+    return streamGenerate(prompt, model, url, options, timeoutMs);
+  }
+
+  const body: Record<string, unknown> = {
+    model,
+    prompt,
+    stream: false,
+  };
+  if (options.system) {
+    body.system = options.system;
+  }
+  if (options.options) {
+    body.options = options.options;
+  }
+
+  const { headers, signal } = buildOptions(options);
+  const res = await fetchJson<unknown>(
+    url,
+    {
+      method: 'POST',
+      headers,
+      signal,
+      body: JSON.stringify(body),
+    },
+    timeoutMs,
+  );
+
+  const parsed = ollamaGenerateResponseSchema.safeParse(res);
+  if (!parsed.success) {
+    return '';
+  }
+  return parsed.data.response ?? '';
 }

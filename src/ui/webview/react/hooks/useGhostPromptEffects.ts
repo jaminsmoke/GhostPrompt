@@ -143,12 +143,12 @@ export function useGhostPromptEffects(
   ]);
 
   const syncTextareaHeight = useCallback(() => {
-    const input = textareaReference.current;
-    if (input === false) {
+    const textarea = textareaReference.current;
+    if (textarea === false) {
       return;
     }
-    input.style.height = 'auto';
-    input.style.height = `${Math.max(input.scrollHeight, WEBVIEW_TEXTAREA_MIN_HEIGHT_PX)}px`;
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.max(textarea.scrollHeight, WEBVIEW_TEXTAREA_MIN_HEIGHT_PX)}px`;
   }, [textareaReference]);
 
   useEffect(() => {

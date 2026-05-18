@@ -11,27 +11,6 @@ import type { ProviderId } from '../../system/internals/protocols/state/provider
 import type { CompletionUiKind } from '../../system/internals/protocols/types/typeCompletionUi';
 
 /**
- * Devuelve las fuentes de sugerencia activas según configuración o el modo legacy.
- * @returns {ProviderId[]} Lista de proveedores LM habilitados.
- */
-export function getEnabledCompletionSources(): ProviderId[] {
-  const cfg = vscode.workspace.getConfiguration('ghostPrompt');
-  const inspected = cfg.inspect<ProviderId[]>('enabledCompletionSources');
-
-  const explicit = hasAnyConfigurationInspectScope(inspected);
-
-  if (!explicit) {
-    return legacySourcesFromCompletionProvider();
-  }
-
-  const normalized = normalizeCompletionSources(cfg.get('enabledCompletionSources'));
-  if (normalized.length === 0) {
-    return legacySourcesFromCompletionProvider();
-  }
-  return normalized;
-}
-
-/**
  * Mapea la configuración legacy `completionProvider` a las fuentes actuales.
  * @returns {ProviderId[]} Lista de proveedores derivados de la configuración legacy.
  */
@@ -66,6 +45,27 @@ function normalizeCompletionSources(raw: unknown): ProviderId[] {
     }
   }
   return out;
+}
+
+/**
+ * Devuelve las fuentes de sugerencia activas según configuración o el modo legacy.
+ * @returns {ProviderId[]} Lista de proveedores LM habilitados.
+ */
+export function getEnabledCompletionSources(): ProviderId[] {
+  const cfg = vscode.workspace.getConfiguration('ghostPrompt');
+  const inspected = cfg.inspect<ProviderId[]>('enabledCompletionSources');
+
+  const explicit = hasAnyConfigurationInspectScope(inspected);
+
+  if (!explicit) {
+    return legacySourcesFromCompletionProvider();
+  }
+
+  const normalized = normalizeCompletionSources(cfg.get('enabledCompletionSources'));
+  if (normalized.length === 0) {
+    return legacySourcesFromCompletionProvider();
+  }
+  return normalized;
 }
 
 /**

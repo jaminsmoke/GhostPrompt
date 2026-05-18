@@ -119,6 +119,18 @@ module.exports = [
     rules: mergeLintRules(typeAwareActiveRules),
   },
   {
+    files: ['src/ui/webview/react/types.ts'],
+    rules: {
+      'vars-on-top': 'off',
+    },
+  },
+  {
+    files: ['src/ui/webview/react/components/GhostToolbarPanels.tsx'],
+    rules: {
+      '@typescript-eslint/no-use-before-define': 'off',
+    },
+  },
+  {
     files: ['**/*.test.ts', '**/*.test.tsx', '**/*.vscode.test.ts'],
     rules: {
       '@typescript-eslint/unbound-method': 'off',

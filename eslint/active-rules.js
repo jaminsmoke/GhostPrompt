@@ -53,7 +53,6 @@ const CORE_DEFERRED_SKIP = new Set([
   'id-denylist',
   'camelcase',
   'one-var',
-  'vars-on-top',
   'strict',
   'no-shadow',
   'no-use-before-define',
@@ -246,9 +245,7 @@ const TYPESCRIPT_DEFERRED_SKIP = new Set([
   'no-redeclare',
   'no-restricted-imports',
   'no-restricted-types',
-  'no-shadow',
   'no-type-alias',
-  'no-use-before-define',
   'no-unnecessary-parameter-property-assignment',
   'parameter-properties',
   'prefer-destructuring',
@@ -883,6 +880,33 @@ const coreDeferredTranche7Rules = {
 };
 
 /**
+ * Grupo 21 — core diferidas (tranche 8): hoisting de `var`, callbacks Node y sombras TS.
+ * @type {import('eslint').Linter.RulesRecord}
+ */
+const coreDeferredTranche8Rules = {
+  'vars-on-top': 'error',
+  'handle-callback-err': 'error',
+  '@typescript-eslint/no-shadow': [
+    'error',
+    {
+      ignoreFunctionTypeParameterNameValueShadow: true,
+      ignoreTypeValueShadow: true,
+    },
+  ],
+  '@typescript-eslint/no-use-before-define': [
+    'error',
+    {
+      allowNamedExports: false,
+      classes: false,
+      enums: true,
+      functions: false,
+      typedefs: true,
+      variables: true,
+    },
+  ],
+};
+
+/**
  * Grupo 13 — unicorn tranche 3 (antes en `UNICORN_PERMANENT_SKIP`).
  * @type {import('eslint').Linter.RulesRecord}
  */
@@ -977,6 +1001,7 @@ const sharedActiveRules = {
   ...coreDeferredTranche5Rules,
   ...coreDeferredTranche6Rules,
   ...coreDeferredTranche7Rules,
+  ...coreDeferredTranche8Rules,
   ...typescriptStylisticCompanionRules,
   ...typescriptRecommendedTypeCheckedCompanionRules,
   ...typescriptStrictTypeCheckedCompanionRules,
@@ -1016,6 +1041,7 @@ module.exports = {
   coreDeferredTranche5Rules,
   coreDeferredTranche6Rules,
   coreDeferredTranche7Rules,
+  coreDeferredTranche8Rules,
   typescriptRules,
   typescriptRecommendedRules,
   typescriptStylisticRules,

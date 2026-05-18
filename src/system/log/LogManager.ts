@@ -62,165 +62,6 @@ function extractCaptureId(data?: Record<string, unknown>): number | false {
   return false;
 }
 
-const logManagerSlot: { current?: LogManager } = {};
-
-/**
- * Devuelve la instancia activa del singleton de logging.
- * @returns {LogManager | undefined} Instancia activa o ausente.
- */
-function getLogManagerSingleton(): LogManager | undefined {
-  return logManagerSlot.current;
-}
-
-/**
- * Registra la instancia activa del singleton de logging.
- * @param {LogManager} next - Instancia a registrar.
- * @returns {void}
- */
-function setLogManagerSingleton(next: LogManager): void {
-  logManagerSlot.current = next;
-}
-
-/**
- * Elimina la instancia activa del singleton de logging.
- * @returns {void}
- */
-function clearLogManagerSingleton(): void {
-  delete logManagerSlot.current;
-}
-
-const inactiveSink: LogEmitSink = {
-  emit() {
-    /* sink inactivo antes de initGhostPromptLogging */
-  },
-};
-const inactiveLoggers = new Map<string, Logger>();
-
-/**
- * Inicializa transports y suscripciones (idempotente).
- * @param {vscode.ExtensionContext} context - Contexto de activación de la extensión.
- * @returns {void} Sin valor de retorno.
- */
-export function initGhostPromptLogging(context: vscode.ExtensionContext): void {
-  if (getLogManagerSingleton()) {
-    return;
-  }
-  setLogManagerSingleton(new LogManager(context));
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('ghostPrompt')) {
-        getLogManagerSingleton()?.touchConfig();
-      }
-    }),
-    new vscode.Disposable(() => {
-      getLogManagerSingleton()?.disposeAll().catch(() => {
-        /* ignore */
-      });
-      clearLogManagerSingleton();
-    }),
-  );
-}
-
-/**
- * Cierra transports y libera el singleton.
- * @returns {Promise<void>} Promesa que termina cuando los transports se han cerrado.
- */
-export async function disposeGhostPromptLogging(): Promise<void> {
-  const active = getLogManagerSingleton();
-  clearLogManagerSingleton();
-  await active?.disposeAll();
-}
-
-/**
- * Obtiene el logger de un módulo (no registra hasta `initGhostPromptLogging`).
- * @param {string} moduleName - Nombre estable (`suggest`, `inbound`, …).
- * @returns {Logger} Instancia reutilizada por módulo.
- */
-export function getLogger(moduleName: string): Logger {
-  const active = getLogManagerSingleton();
-  if (!active) {
-    let l = inactiveLoggers.get(moduleName);
-    if (!l) {
-      l = new Logger(moduleName, inactiveSink);
-      inactiveLoggers.set(moduleName, l);
-    }
-    return l;
-  }
-  return active.getLoggerInstance(moduleName);
-}
-
-/**
- * Vacía el anillo de migajas de un `captureId` (por ejemplo, al terminar el pipeline).
- * @param {number} captureId - Identificador de correlación.
- * @returns {void} Sin valor de retorno.
- */
-export function flushLogCapture(captureId: number): void {
-  getLogManagerSingleton()?.flushCaptureInternal(captureId);
-}
-
-/**
- * Indica si el umbral efectivo es `DEBUG` (UI y webview de ajustes).
- * @returns {boolean} Verdadero si el usuario vería logs de depuración.
- */
-export function isSuggestionDebugEnabled(): boolean {
-  return resolveEffectiveMinLevelName() === 'DEBUG';
-}
-
-/**
- * Alterna `ghostPrompt.debugSuggestions` (compatibilidad con el comando existente).
- * @returns {Promise<boolean>} Nuevo valor del booleano.
- */
-export async function toggleSuggestionDebug(): Promise<boolean> {
-  const config = vscode.workspace.getConfiguration('ghostPrompt');
-  const current = config.get<boolean>('debugSuggestions', false);
-  const next = !current;
-  await config.update('debugSuggestions', next, vscode.ConfigurationTarget.Global);
-  if (next) {
-    getLogManagerSingleton()?.ensureOutputChannel();
-    getLogger('extension').info('debug-shim-enabled', {
-      hint: 'Open GhostPrompt Log output channel for structured logs.',
-    });
-  }
-  return next;
-}
-
-/**
- * Crea el canal de salida si hace falta, por ejemplo al arrancar con la depuración activa.
- * @returns {void} Sin valor de retorno.
- */
-export function ensureSuggestionDebugChannel(): vscode.OutputChannel | undefined {
-  return getLogManagerSingleton()?.ensureOutputChannel();
-}
-
-/**
- * Registra tiempos de OpenCode en nivel DEBUG (sustituye `logOpenCodePerfCapture` legacy).
- * @param {number | undefined} captureId - Identificador de correlación opcional.
- * @param {string} phase - Fase de medición.
- * @param {string} [details] - Detalle libre (por ejemplo, `elapsedMs=12`).
- * @returns {void} Sin valor de retorno.
- */
-export function logOpenCodePerfCapture(
-  captureId: number | undefined,
-  phase: string,
-  details?: string,
-): void {
-  getLogger('engines').debug('opencode-perf', {
-    captureId,
-    phase,
-    details: details ?? '',
-  });
-}
-
-/**
- * Registra depuración OpenCode en nivel DEBUG (sustituye `logOpenCodeDebug` legacy).
- * @param {string} stage - Etapa del flujo.
- * @param {string} [details] - Detalle opcional.
- * @returns {void} Sin valor de retorno.
- */
-export function logOpenCodeDebug(stage: string, details?: string): void {
-  getLogger('engines').debug('opencode', { stage, details: details ?? '' });
-}
-
 /**
  * Gestor interno que implementa {@link LogEmitSink} y despacha a los transports registrados.
  */
@@ -411,4 +252,163 @@ class LogManager implements LogEmitSink {
   async disposeAll(): Promise<void> {
     await Promise.all(this.transports.map((transport) => transport.dispose()));
   }
+}
+
+const logManagerSlot: { current?: LogManager } = {};
+
+/**
+ * Devuelve la instancia activa del singleton de logging.
+ * @returns {LogManager | undefined} Instancia activa o ausente.
+ */
+function getLogManagerSingleton(): LogManager | undefined {
+  return logManagerSlot.current;
+}
+
+/**
+ * Registra la instancia activa del singleton de logging.
+ * @param {LogManager} next - Instancia a registrar.
+ * @returns {void}
+ */
+function setLogManagerSingleton(next: LogManager): void {
+  logManagerSlot.current = next;
+}
+
+/**
+ * Elimina la instancia activa del singleton de logging.
+ * @returns {void}
+ */
+function clearLogManagerSingleton(): void {
+  delete logManagerSlot.current;
+}
+
+const inactiveSink: LogEmitSink = {
+  emit() {
+    /* sink inactivo antes de initGhostPromptLogging */
+  },
+};
+const inactiveLoggers = new Map<string, Logger>();
+
+/**
+ * Inicializa transports y suscripciones (idempotente).
+ * @param {vscode.ExtensionContext} context - Contexto de activación de la extensión.
+ * @returns {void} Sin valor de retorno.
+ */
+export function initGhostPromptLogging(context: vscode.ExtensionContext): void {
+  if (getLogManagerSingleton()) {
+    return;
+  }
+  setLogManagerSingleton(new LogManager(context));
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration('ghostPrompt')) {
+        getLogManagerSingleton()?.touchConfig();
+      }
+    }),
+    new vscode.Disposable(() => {
+      getLogManagerSingleton()?.disposeAll().catch(() => {
+        /* ignore */
+      });
+      clearLogManagerSingleton();
+    }),
+  );
+}
+
+/**
+ * Cierra transports y libera el singleton.
+ * @returns {Promise<void>} Promesa que termina cuando los transports se han cerrado.
+ */
+export async function disposeGhostPromptLogging(): Promise<void> {
+  const active = getLogManagerSingleton();
+  clearLogManagerSingleton();
+  await active?.disposeAll();
+}
+
+/**
+ * Obtiene el logger de un módulo (no registra hasta `initGhostPromptLogging`).
+ * @param {string} moduleName - Nombre estable (`suggest`, `inbound`, …).
+ * @returns {Logger} Instancia reutilizada por módulo.
+ */
+export function getLogger(moduleName: string): Logger {
+  const active = getLogManagerSingleton();
+  if (!active) {
+    let l = inactiveLoggers.get(moduleName);
+    if (!l) {
+      l = new Logger(moduleName, inactiveSink);
+      inactiveLoggers.set(moduleName, l);
+    }
+    return l;
+  }
+  return active.getLoggerInstance(moduleName);
+}
+
+/**
+ * Vacía el anillo de migajas de un `captureId` (por ejemplo, al terminar el pipeline).
+ * @param {number} captureId - Identificador de correlación.
+ * @returns {void} Sin valor de retorno.
+ */
+export function flushLogCapture(captureId: number): void {
+  getLogManagerSingleton()?.flushCaptureInternal(captureId);
+}
+
+/**
+ * Indica si el umbral efectivo es `DEBUG` (UI y webview de ajustes).
+ * @returns {boolean} Verdadero si el usuario vería logs de depuración.
+ */
+export function isSuggestionDebugEnabled(): boolean {
+  return resolveEffectiveMinLevelName() === 'DEBUG';
+}
+
+/**
+ * Alterna `ghostPrompt.debugSuggestions` (compatibilidad con el comando existente).
+ * @returns {Promise<boolean>} Nuevo valor del booleano.
+ */
+export async function toggleSuggestionDebug(): Promise<boolean> {
+  const config = vscode.workspace.getConfiguration('ghostPrompt');
+  const current = config.get<boolean>('debugSuggestions', false);
+  const next = !current;
+  await config.update('debugSuggestions', next, vscode.ConfigurationTarget.Global);
+  if (next) {
+    getLogManagerSingleton()?.ensureOutputChannel();
+    getLogger('extension').info('debug-shim-enabled', {
+      hint: 'Open GhostPrompt Log output channel for structured logs.',
+    });
+  }
+  return next;
+}
+
+/**
+ * Crea el canal de salida si hace falta, por ejemplo al arrancar con la depuración activa.
+ * @returns {void} Sin valor de retorno.
+ */
+export function ensureSuggestionDebugChannel(): vscode.OutputChannel | undefined {
+  return getLogManagerSingleton()?.ensureOutputChannel();
+}
+
+/**
+ * Registra tiempos de OpenCode en nivel DEBUG (sustituye `logOpenCodePerfCapture` legacy).
+ * @param {number | undefined} captureId - Identificador de correlación opcional.
+ * @param {string} phase - Fase de medición.
+ * @param {string} [details] - Detalle libre (por ejemplo, `elapsedMs=12`).
+ * @returns {void} Sin valor de retorno.
+ */
+export function logOpenCodePerfCapture(
+  captureId: number | undefined,
+  phase: string,
+  details?: string,
+): void {
+  getLogger('engines').debug('opencode-perf', {
+    captureId,
+    phase,
+    details: details ?? '',
+  });
+}
+
+/**
+ * Registra depuración OpenCode en nivel DEBUG (sustituye `logOpenCodeDebug` legacy).
+ * @param {string} stage - Etapa del flujo.
+ * @param {string} [details] - Detalle opcional.
+ * @returns {void} Sin valor de retorno.
+ */
+export function logOpenCodeDebug(stage: string, details?: string): void {
+  getLogger('engines').debug('opencode', { stage, details: details ?? '' });
 }
