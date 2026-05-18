@@ -6,15 +6,24 @@
   font-size: var(--vscode-font-size, 13px);
 }
 
+html,
 body {
   margin: 0;
   padding: 0;
-  background: transparent;
-  color: var(--vscode-editor-foreground, #f8fafc);
+  min-height: 100%;
+  background-color: var(--vscode-sideBar-background, #1e1e1e);
+  color: var(--vscode-foreground, #cccccc);
 }
 
 #root {
   padding: 8px;
+  min-height: 120px;
+}
+
+#gp-boot {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.85;
 }
 
 .error-boundary {

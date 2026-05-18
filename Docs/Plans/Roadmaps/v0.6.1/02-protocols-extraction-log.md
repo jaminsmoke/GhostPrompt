@@ -200,6 +200,74 @@ Verificación en código: canónicos `consLogLimits`, `typeLog`, `guardLogLevel`
 
 ---
 
+## Fases QG (api → system/internals/config + api/boundary)
+
+> **Motivo:** Centralizar lectura/escritura de `ghostPrompt.*` en `system/internals/config/` y renombrar `api/protocols/` → `api/boundary/` (parseo con logging + dispatch, no contrato puro).
+
+### QG.1 — `getters/` → `config/read/`
+
+- [x] Crear `config/read/workspaceConfigGetters.ts` (sin reexports de `destinations/`)
+- [x] Mover `readGhostPromptSuggestionModelPolicy` → `config/read/`
+- [x] Shim `api/getters/workspaceGetters.ts` (config read + destinations)
+- [x] Consumidores canónicos: `MiniInputViewProvider`, tests
+
+**Criterio de hecho:** Lectores `ghostPrompt.*` importables desde `system/internals/config/read/`.
+
+### QG.2 — `applyWebviewUpdate` → `config/write/`
+
+- [x] Crear `config/write/applyWebviewUpdateSetting.ts` (tipos desde `protocols/validations/schemas/`)
+- [x] Test en `config/write/applyWebviewUpdateSetting.test.ts`
+- [x] Shim `api/settings/applyWebviewUpdate.ts`
+- [x] `api/boundary/inboundHandlers` importa desde `config/write/`
+
+**Criterio de hecho:** Escritura `updateSetting` sin dependencia de `api/boundary/`.
+
+### QG.3 — `api/protocols/` → `api/boundary/`
+
+- [x] Mover `webviewProtocols.ts`, `inboundHandlers.ts`, tests y `testing/` mocks
+- [x] Shims en `api/protocols/*`
+- [x] Actualizar `api/index.ts`, `settingsPostMessage`, `suggestRuntime` (tipo desde `protocols/`)
+- [x] Paridad schema: `api/boundary/webviewProtocols.test.ts`
+
+**Criterio de hecho:** 0 implementación duplicada bajo `api/protocols/` (solo shims).
+
+### QG.4 — `settingsPostMessage` (sin mover)
+
+- [x] Permanece en `api/settings/` (ensamblador host→webview con engines/runtime)
+- [x] Imports: `destinations/` + `api/boundary/webviewProtocols`
+
+**Criterio de hecho:** Documentado; no mezclar con `config/read`.
+
+### QG.5 — Verificar regresión
+
+- [x] `npm run check` — 0 errores (287 tests)
+
+### QG.6 — Eliminar shims temporales
+
+- [x] Borrar `api/protocols/` (re-exports a `boundary/`)
+- [x] Borrar `api/getters/workspaceGetters.ts`
+- [x] Borrar `api/settings/applyWebviewUpdate.ts`
+- [x] Borrar `config/readGhostPromptSuggestionModelPolicy.ts` (raíz)
+- [x] Actualizar `api/index.ts` → exporta `config/read`, `config/write`, `destinations/`
+- [x] Actualizar READMEs (`api/`, `config/`, `ARCHITECTURE.md`, `README.md`)
+
+**Criterio de hecho:** 0 archivos shim QG en `src/`; `npm run check` verde.
+
+---
+
+## Estado QG
+
+| Fase | Descripción | Estado |
+| ---- | ----------- | ------ |
+| QG.1 | Getters → `config/read/` | 🟢 Completado |
+| QG.2 | `applyWebviewUpdate` → `config/write/` | 🟢 Completado |
+| QG.3 | `api/protocols/` → `api/boundary/` | 🟢 Completado |
+| QG.4 | `settingsPostMessage` en `api/settings/` | 🟢 Completado |
+| QG.5 | Verificar regresión (`npm run check`) | 🟢 Completado |
+| QG.6 | Eliminar shims temporales | 🟢 Completado |
+
+---
+
 ## Fases QE+ (post-QD — gobernanza y limpieza)
 
 > **Motivo:** Con QA–QD cerrados, el riesgo principal es **regresión de capas** (imports cruzados) y **rutas fantasma** en índices de búsqueda o docs. QE prioriza ESLint + inventario; QF es opcional (mover test de paridad).
@@ -227,7 +295,7 @@ Verificación en código: canónicos `consLogLimits`, `typeLog`, `guardLogLevel`
 
 - [x] Sustituir target `./src/sugcore/**/*` por `./src/system/internals/protocols/**/*`
 - [x] Bloquear imports desde `ui/`, `api/`, `engines/`, `destinations/`, `extension/`, `system/log/`, `system/runtime/`
-- [x] Paridad schema host ↔ canónico en `api/protocols/webviewProtocols.test.ts` (sin import `api/` desde `protocols/`)
+- [x] Paridad schema host ↔ canónico en `api/boundary/webviewProtocols.test.ts` (sin import `api/` desde `protocols/`)
 - [x] Actualizar `Docs/Owners.md` (matriz + tabla ESLint)
 
 **Criterio de hecho:** `npm run lint` sin violaciones en `src/system/internals/protocols/` (salvo el test exceptuado).
@@ -250,7 +318,7 @@ Verificación en código: canónicos `consLogLimits`, `typeLog`, `guardLogLevel`
 
 ### QF — Test de paridad schema (cerrado vía QE.1)
 
-> **Decisión (2026-05-16):** opción **A** — paridad `webviewInboundMessageSchema` en `api/protocols/webviewProtocols.test.ts`; `zschemWebviewMessages.test.ts` solo valida el canónico.
+> **Decisión (2026-05-16):** opción **A** — paridad `webviewInboundMessageSchema` en `api/boundary/webviewProtocols.test.ts`; `zschemWebviewMessages.test.ts` solo valida el canónico.
 
 ---
 
@@ -269,7 +337,7 @@ Verificación en código: canónicos `consLogLimits`, `typeLog`, `guardLogLevel`
 
 - `no-ternary` / más tranches ESLint cosméticos → después de rutas canónicas estables (QE.3 en verde)
 - `resolveCompletionSourceForRequest` → queda en `engines/routing/` (solo engines/runtime)
-- Tipos DI (`GhostPromptSuggestDeps`, `GhostPromptInbound*Services`) → quedan en runtime / `api/protocols/`
+- Tipos DI (`GhostPromptSuggestDeps`, `GhostPromptInbound*Services`) → quedan en runtime / `api/boundary/`
 
 ---
 
@@ -291,4 +359,6 @@ Verificación en código: canónicos `consLogLimits`, `typeLog`, `guardLogLevel`
 | 2026-05-18 | QD | **QD completa:** `buildCompletionInstruction` → `engines/completion/`; `sugcore/` eliminado. Decisión (b). |
 | 2026-05-16 | QE | **Paso 3:** inventario QE+ (tabla candidatos); fases QE.1–QE.3 y QF.1 en backlog. |
 | 2026-05-16 | QE.1 | Zona ESLint `protocols/` activa; `Owners.md` alineado (sin `core/` ni `sugcore/`). |
-| 2026-05-16 | QE.3 | `npm run check` verde (287 tests); paridad schema movida a `api/protocols/webviewProtocols.test.ts`. |
+| 2026-05-16 | QE.3 | `npm run check` verde (287 tests); paridad schema movida a `api/boundary/webviewProtocols.test.ts`. |
+| 2026-05-16 | QG | **QG completa:** `config/read|write/`, `api/boundary/`; `settingsPostMessage` en `api/settings/`. |
+| 2026-05-16 | QG.6 | Shims eliminados (`api/protocols/`, `api/getters/`, `applyWebviewUpdate`, policy shim). |

@@ -5,13 +5,13 @@
  *
  * Composición de dependencias y flujos para GhostPrompt input v0.5.3.
  *
- * - Contratos Zod: `api/protocols/webviewProtocols.ts` y schemas en `validations/schemas/`.
+ * - Contratos Zod: `protocols/validations/schemas/`; parseo boundary: `api/boundary/webviewProtocols.ts`.
  * - HTML/CSP y plantilla: `ui/provider/webviewHtml.ts`.
  * - Mensaje `settings` → webview: `api/settings/settingsPostMessage.ts`.
  * - Mensaje `suggest`: `core/suggest/runSuggest.ts`.
- * - Handlers webview → host: `api/protocols/inboundHandlers.ts`.
- * - Workspace y política de modelo: getters + `readGhostPromptSuggestionModelPolicy`.
- * - Actualización desde chips (`updateSetting`): `api/settings/applyWebviewUpdate.ts`.
+ * - Handlers webview → host: `api/boundary/inboundHandlers.ts`.
+ * - Workspace y política de modelo: `system/internals/config/read/`.
+ * - Actualización desde chips (`updateSetting`): `system/internals/config/write/`.
  *
  * Registra la vista en el activity bar y el panel inferior (C2).
  * Protocolo host↔webview:
@@ -27,26 +27,26 @@
  * - `draftChanged` (webview → host): texto del borrador para sincronizar vistas.
  * - `draftSync` / `draftHydrate` (host → webview): aplicar borrador remoto o estado inicial.
  * - Mensajes de suggestion pueden llevar `broadcast: true` para espejar Sidebar + Panel.
- * - Esquemas Zod en `zschemWebviewMessages.ts`; parseo en `api/protocols/webviewProtocols.ts`.
+ * - Esquemas Zod en `zschemWebviewMessages.ts`; parseo en `api/boundary/webviewProtocols.ts`.
  */
 import * as vscode from 'vscode';
 
+import { dispatchGhostPromptInboundMessage } from '../../api/boundary/inboundHandlers';
+import {
+  parseWebviewInboundMessage,
+  parseWebviewOutboundMessage,
+} from '../../api/boundary/webviewProtocols';
+import { buildAndPostGhostPromptSettings } from '../../api/settings/settingsPostMessage';
+import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from '../../destinations/vsOpenCodeX/vsOpenCodeXDestination';
+import { ollamaModelManager } from '../../engines/provider/ollama';
+import { readGhostPromptSuggestionModelPolicy } from '../../system/internals/config/read/readGhostPromptSuggestionModelPolicy';
 import {
   getGhostPromptMaxSuggestionChars,
   getGhostPromptSelectedModelId,
   getGhostPromptSuggestionStyle,
-} from '../../api/getters/workspaceGetters';
-import { dispatchGhostPromptInboundMessage } from '../../api/protocols/inboundHandlers';
-import {
-  parseWebviewInboundMessage,
-  parseWebviewOutboundMessage,
-} from '../../api/protocols/webviewProtocols';
-import { buildAndPostGhostPromptSettings } from '../../api/settings/settingsPostMessage';
-import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from '../../destinations/vsOpenCodeX/vsOpenCodeXDestination';
-import { ollamaModelManager } from '../../engines/provider/ollama';
-import { readGhostPromptSuggestionModelPolicy } from '../../system/internals/config/readGhostPromptSuggestionModelPolicy';
+} from '../../system/internals/config/read/workspaceConfigGetters';
 import { looksLikeOllamaModelId } from '../../system/internals/protocols/guards/guardModelRouting';
-import { getLogger } from '../../system/log';
+import { getLogger, reportHostFault } from '../../system/log';
 import { providerStatusManager } from '../../system/runtime/providerStatusManager';
 import {
   handleGhostPromptSuggest,
@@ -54,7 +54,7 @@ import {
 } from '../../system/runtime/suggestRuntime';
 import { maybeNotifySuggestionIssue } from '../notifications/suggestionNotification';
 
-import { buildGhostPromptWebviewHtml } from './webviewHtml';
+import { buildGhostPromptWebviewFaultHtml, buildGhostPromptWebviewHtml } from './webviewHtml';
 
 export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /** View ID for the activity bar container. */
@@ -249,12 +249,24 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [
-        vscode.Uri.joinPath(extensionUri, 'src', 'ui', 'webview'),
         vscode.Uri.joinPath(extensionUri, 'src', 'ui', 'webview', 'dist', 'react'),
       ],
     };
 
-    webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
+    try {
+      const html = this.getHtmlForWebview(webviewView.webview);
+      webviewView.webview.html = html;
+      getLogger('ui').info('webview-resolved', {
+        viewContributionId: this.viewContributionId,
+        htmlLength: html.length,
+      });
+    } catch (error: unknown) {
+      const detail = error instanceof Error ? error.message : String(error);
+      getLogger('ui').error('webview-html-failed', { viewContributionId: this.viewContributionId }, error);
+      reportHostFault('ui', 'webview-html-failed', error);
+      webviewView.webview.html = buildGhostPromptWebviewFaultHtml(detail);
+      return;
+    }
 
     webviewView.webview.onDidReceiveMessage(async (raw: unknown) => {
       const uiLog = getLogger('ui');
@@ -265,7 +277,8 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         return;
       }
       uiLog.debug('webview-inbound-parsed', { type: message.type });
-      await dispatchGhostPromptInboundMessage(message, {
+      try {
+        await dispatchGhostPromptInboundMessage(message, {
         viewContributionId: this.viewContributionId,
         webview: webviewView.webview,
         dataUri,
@@ -282,7 +295,11 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         suggestDeps: MiniInputViewProvider.ghostPromptSuggestDeps(),
         onSettingChanged: (...args: Parameters<typeof MiniInputViewProvider.onSettingChanged>) =>
           MiniInputViewProvider.onSettingChanged(...args),
-      });
+        });
+      } catch (error: unknown) {
+        uiLog.error('webview-dispatch-failed', { type: message.type }, error);
+        reportHostFault('ui', 'webview-dispatch-failed', error);
+      }
     });
   }
 

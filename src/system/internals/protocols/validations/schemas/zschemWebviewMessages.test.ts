@@ -1,30 +1,9 @@
 /**
  * @file Cobertura de variantes de mensaje webview; schemas canónicos en este directorio.
- * Paridad host ↔ canónico: `api/protocols/webviewProtocols.test.ts`.
+ * Paridad host ↔ canónico: `api/boundary/webviewProtocols.test.ts`.
  */
 
 import * as vitest from 'vitest';
-import { vi } from 'vitest';
-
-vi.mock('vscode', () => ({
-  workspace: {
-    getConfiguration: () => ({
-      get: vi.fn(),
-      inspect: vi.fn(() => ({})),
-    }),
-  },
-  window: {
-    createOutputChannel: vi.fn(() => ({
-      appendLine: vi.fn(),
-      dispose: vi.fn(),
-    })),
-  },
-  'Uri': {
-    joinPath: (...parts: unknown[]) => ({
-      fsPath: parts.map((p) => { return typeof p === 'string' ? p : String(p); }).join('/'),
-    }),
-  },
-}));
 
 import { DEFAULT_SUGGESTION_DEBOUNCE_MS } from '../../constants/consPipelineDefaults';
 

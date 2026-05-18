@@ -3,12 +3,43 @@
  */
 import * as vscode from 'vscode';
 
-import { clearOptionalProperty } from '../../internals/isDefined';
+import { GHOSTPROMPT_LOG_CHANNEL_NAME } from '../../internals/protocols/constants/consLogLimits';
 
 import type { LogEntry } from '../../internals/protocols/types/typeLog';
 
-/** Nombre visible del canal (histórico: *GhostPrompt Suggestions*). */
-export const GHOSTPROMPT_LOG_CHANNEL_NAME = 'GhostPrompt Log';
+
+
+/** Canal compartido por bootstrap, LogManager y hostFault (una sola instancia VS Code). */
+let sharedGhostPromptLogChannel: vscode.OutputChannel | null = null;
+
+/**
+ * Devuelve el canal **GhostPrompt Log** canónico (creación perezosa, idempotente).
+ * @returns {vscode.OutputChannel} Canal de la extensión en el panel Salida.
+ */
+export function getGhostPromptOutputChannel(): vscode.OutputChannel {
+  if (sharedGhostPromptLogChannel === null) {
+    sharedGhostPromptLogChannel = vscode.window.createOutputChannel(GHOSTPROMPT_LOG_CHANNEL_NAME);
+  }
+  return sharedGhostPromptLogChannel;
+}
+
+/**
+ * Añade una línea de texto sin pasar por el pipeline de niveles (arranque / diagnóstico).
+ * @param {string} line - Texto ya formateado.
+ * @returns {void}
+ */
+export function appendGhostPromptOutputLine(line: string): void {
+  getGhostPromptOutputChannel().appendLine(line);
+}
+
+/**
+ * Libera el canal compartido (por ejemplo en `deactivate`).
+ * @returns {void}
+ */
+export function disposeGhostPromptOutputChannel(): void {
+  sharedGhostPromptLogChannel?.dispose();
+  sharedGhostPromptLogChannel = null;
+}
 
 const TIME_FIELD_PAD_WIDTH = 2;
 const TIME_MS_FIELD_PAD_WIDTH = 3;
@@ -48,15 +79,12 @@ export class OutputChannelLogTransport {
   /** @readonly */
   readonly id = 'ghostPromptOutputChannel';
 
-  private channel: vscode.OutputChannel | undefined;
-
   /**
-   * Crea el canal si aún no existe (idempotente).
+   * Referencia al canal compartido (idempotente).
    * @returns {vscode.OutputChannel} Canal listo para `appendLine`.
    */
   ensureChannel(): vscode.OutputChannel {
-    this.channel ??= vscode.window.createOutputChannel(GHOSTPROMPT_LOG_CHANNEL_NAME);
-    return this.channel;
+    return getGhostPromptOutputChannel();  
   }
 
   /**
@@ -86,7 +114,11 @@ export class OutputChannelLogTransport {
    * @returns {Promise<void>} Promesa resuelta tras `appendLine`.
    */
   write(entry: LogEntry): Promise<void> {
-    this.ensureChannel().appendLine(this.formatLine(entry));
+    const channel = getGhostPromptOutputChannel();
+    channel.appendLine(this.formatLine(entry));
+    if (entry.level === 'ERROR') {
+      channel.show(true);
+    }
     return Promise.resolve();
   }
 
@@ -95,8 +127,8 @@ export class OutputChannelLogTransport {
    * @returns {Promise<void>} Promesa resuelta tras `dispose` del canal si existía.
    */
   dispose(): Promise<void> {
-    this.channel?.dispose();
-    clearOptionalProperty(this, 'channel');
     return Promise.resolve();
   }
 }
+
+export {GHOSTPROMPT_LOG_CHANNEL_NAME} from '../../internals/protocols/constants/consLogLimits';

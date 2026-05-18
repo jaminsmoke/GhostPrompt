@@ -13,8 +13,8 @@ import { resetGhostPromptHostRuntimeForTests } from '../../system/runtime/resetH
 
 import { MiniInputViewProvider } from './MiniInputViewProvider';
 
-import type * as InboundHandlersModule from '../../api/protocols/inboundHandlers';
-import type * as WebviewProtocolsModule from '../../api/protocols/webviewProtocols';
+import type * as InboundHandlersModule from '../../api/boundary/inboundHandlers';
+import type * as WebviewProtocolsModule from '../../api/boundary/webviewProtocols';
 import type * as SettingsPostMessageModule from '../../api/settings/settingsPostMessage';
 import type { SuggestionModelDescriptor } from '../../system/internals/protocols/types';
 import type * as SuggestRuntimeModule from '../../system/runtime/suggestRuntime';
@@ -93,7 +93,7 @@ vi.mock('../../engines/provider/ollama/catalog/ollamaModelCatalog', () => ({
   listOllamaSuggestionModels: vi.fn(() => Promise.resolve([])),
 }));
 
-vi.mock('../../api/protocols/inboundHandlers', async (importOriginal) => {
+vi.mock('../../api/boundary/inboundHandlers', async (importOriginal) => {
   const actual = await importOriginal<typeof InboundHandlersModule>();
   return {
     ...actual,
@@ -117,7 +117,7 @@ vi.mock('../../api/protocols/inboundHandlers', async (importOriginal) => {
   };
 });
 
-vi.mock('../../api/protocols/webviewProtocols', async (importOriginal) => {
+vi.mock('../../api/boundary/webviewProtocols', async (importOriginal) => {
   const actual = await importOriginal<typeof WebviewProtocolsModule>();
   return {
     ...actual,
@@ -172,7 +172,7 @@ vi.mock('../../api/settings/settingsPostMessage', async (importOriginal) => {
   };
 });
 
-vi.mock('../../api/getters/workspaceGetters', () => ({
+vi.mock('../../system/internals/config/read/workspaceConfigGetters', () => ({
   collectGhostPromptProjectContext: () => ({}),
   getGhostPromptMaxSuggestionChars: () => DEFAULT_MAX_SUGGESTION_CHARS,
   getGhostPromptSelectedModelId: () => 'auto',
@@ -183,7 +183,7 @@ vi.mock('../../api/getters/workspaceGetters', () => ({
   getGhostPromptOllamaExcludedModelIds: () => [],
 }));
 
-vi.mock('../../system/internals/config/readGhostPromptSuggestionModelPolicy', () => ({
+vi.mock('../../system/internals/config/read/readGhostPromptSuggestionModelPolicy', () => ({
   readGhostPromptSuggestionModelPolicy: () => 'nonPremiumOnly',
 }));
 

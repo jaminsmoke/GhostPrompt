@@ -7,3 +7,5 @@ export * from './consVsOpenCodeX';
 export * from './consDestinations';
 export * from './consCursorChat';
 export * from './consLogLimits';
+export * from './consCompletionUi';
+export * from './consOpencodeClient';

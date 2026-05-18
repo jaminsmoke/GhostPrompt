@@ -25,7 +25,7 @@ vi.mock('vscode', () => ({
   },
 }));
 
-import { OPENCODE_DEFAULT_PORT } from '../../../../system/internals/protocols/types/typeOpencodeClient';
+import { OPENCODE_DEFAULT_PORT } from '../../../../system/internals/protocols/constants/consOpencodeClient';
 
 import { listOpencodeSuggestionModels } from './opencodeModelCatalog';
 

@@ -1,5 +1,6 @@
 /**
  * @file Efectos del webview GhostPrompt (inbound, debounce, textarea).
+ * Almacena mensajes entrantes antes de que React monte el listener.
  */
 import { useCallback, useEffect } from 'react';
 
@@ -25,6 +26,20 @@ interface GhostPromptInboundEffectInput {
  * @param {object} input - Contexto de efectos (inbound + debounce).
  * @returns {{ syncTextareaHeight: () => void }} Utilidad para sincronizar altura del textarea.
  */
+const preMountBuffer: unknown[] = [];
+let preMountInstalled = false;
+function handlePreMountMessage(event: MessageEvent): void {
+  preMountBuffer.push(event.data);
+}
+function installPreMountBuffer(): void {
+  if (preMountInstalled) return;
+  preMountInstalled = true;
+  window.addEventListener('message', handlePreMountMessage);
+}
+if (typeof window?.addEventListener === 'function') {
+  installPreMountBuffer();
+}
+
 export function useGhostPromptEffects(
   input: GhostPromptInboundEffectInput & {
     isGhostUiAllowed: () => boolean;
@@ -42,6 +57,7 @@ export function useGhostPromptEffects(
     setCursorDesktopHost,
     setDebugSuggestions,
     setIsLoading,
+    setIsConfigLoaded,
     setSelectedModelId,
     setStatus,
     setSuggestion,
@@ -81,6 +97,7 @@ export function useGhostPromptEffects(
       setVsxActive,
       setSuggestion,
       setIsLoading,
+      setIsConfigLoaded,
       setStatus,
       setText,
       logToHost,
@@ -89,9 +106,16 @@ export function useGhostPromptEffects(
       handleGhostPromptInboundMessage(event, inboundContext);
 
     window.addEventListener('message', handleMessage);
+    while (preMountBuffer.length > 0) {
+      const bufferedData = preMountBuffer.shift()!;
+      handleGhostPromptInboundMessage({ data: bufferedData } as MessageEvent, inboundContext);
+    }
     postToHost({ type: 'init' });
 
-    return () => window.removeEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+      window.removeEventListener('message', handlePreMountMessage);
+    };
   }, [
     viewId,
     queryClient,
@@ -103,6 +127,7 @@ export function useGhostPromptEffects(
     setCursorDesktopHost,
     setDebugSuggestions,
     setIsLoading,
+    setIsConfigLoaded,
     setSelectedModelId,
     setStatus,
     setSuggestion,

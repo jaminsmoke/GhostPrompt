@@ -1,7 +1,7 @@
 /**
  * @file Paneles desplegables de chips del toolbar GhostPrompt.
  */
-import { COMPLETION_UI_SOURCE_VALUES } from '../../../../system/internals/protocols/types/typeCompletionUi';
+import { COMPLETION_UI_SOURCE_VALUES } from '../../../../system/internals/protocols/constants/consCompletionUi';
 
 import {
   actionButtonClass,

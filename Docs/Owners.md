@@ -24,12 +24,12 @@ Filas = carpetas principales de `src/`. Columnas = reglas de dependencia y rol.
 | Carpeta `src/` | Rol | Depende típicamente de | No debe importar desde |
 | -------------- | --- | ---------------------- | ---------------------- |
 | **`ui/`** | Interfaz: `ui/webview/` (sandbox), `ui/provider/` (WebviewViewProvider), `ui/notifications/`. | `system/internals/protocols/`, `api/`, `system/runtime/`, `destinations/`, `engines/` (solo catálogo/routing expuesto), `vscode`. | Lógica pesada de orquestación suggest (vive en `system/runtime/`). |
-| **`extension/`** | Entry point: comandos, vistas, `activate` / `deactivate`. | `ui/provider/`, `engines/` (registro motores), `destinations/`, `system/log/`, `vscode`. | Orquestación suggest, parsers Zod con logging (`api/protocols/`). |
-| **`api/`** | Boundary host↔webview: protocolos Zod con logging, inbound handlers, settings, getters. | `system/internals/protocols/`, `system/runtime/`, `system/log/`, `engines/`, `destinations/`, `ui/provider/` (draft multi-vista), `vscode`. | — |
+| **`extension/`** | Entry point: comandos, vistas, `activate` / `deactivate`. | `ui/provider/`, `engines/` (registro motores), `destinations/`, `system/log/`, `vscode`. | Orquestación suggest, parsers Zod con logging (`api/boundary/`). |
+| **`api/`** | Capa delgada webview↔host: `boundary/` (parseo+log+dispatch), `settings/settingsPostMessage` (ensamblador). | `system/internals/protocols/`, `system/internals/config/`, `system/runtime/`, `engines/`, `destinations/`, `vscode`. | Duplicar lectura/escritura de config fuera de `config/`. |
 | **`engines/`** | Motores LM (`copilot/`, `opencode/`, `ollama/`), `completion/buildCompletionInstruction.ts`, `config/completionSources.ts`, `routing/`, `catalog/mergedModelCatalog.ts`. | `system/internals/protocols/`, `engines/completion/`, `system/log/`, `vscode`. | `api/` (evitar ciclos host). |
 | **`destinations/`** | Destinos de prompt (copilotChat, cursor, vsOpenCodeX). `destinationRegistry.ts`. | `system/internals/protocols/` (tipos), `vscode`. | `api/`, `ui/`, `system/runtime/` (inyectar deps desde arriba). |
-| **`system/internals/protocols/`** | Contratos puros: `cons*`, `type*`, `guard*`, `state*`, `zschem*` (sin `vscode`). | `zod` (solo en `validations/schemas/`). | `ui/`, `api/`, `engines/`, `destinations/`, `extension/`, `system/log/`, `system/runtime/`. Parsers con logging → `api/protocols/`. |
-| **`system/internals/config/`** | Lectores tipados de `ghostPrompt.*` (p. ej. política de modelo). | `vscode`, `system/internals/protocols/`. | `ui/`, `api/` como capa de producto. |
+| **`system/internals/protocols/`** | Contratos puros: `cons*`, `type*`, `guard*`, `state*`, `zschem*` (sin `vscode`). | `zod` (solo en `validations/schemas/`). | `ui/`, `api/`, `engines/`, `destinations/`, `extension/`, `system/log/`, `system/runtime/`. Parsers con logging → `api/boundary/`. |
+| **`system/internals/config/`** | `read/` (getters workspace, política modelo), `write/` (`applyWebviewUpdateSetting`). | `vscode`, `system/internals/protocols/`, `destinations/` (solo write: `agentDestination`). | `api/boundary/` como dueño de config; parsers con log en `protocols/`. |
 | **`system/runtime/`** | Orquestación suggest, coordinator, estado de proveedores, finalize de completion. | `system/internals/protocols/`, `engines/`, `api/` (tipos DI), `system/log/`, `ui/provider/` (draft), `vscode`. | HTML/webview; duplicar contratos que ya están en `protocols/`. |
 | **`system/log/`** | Logger, LogManager, transports, persistencia en disco. | `system/internals/protocols/` (tipos/guards), `vscode`, FS. | `ui/provider/`, `ui/notifications/`, `api/`. |
 | **`system/build/`** | Verificación de empaquetado (webview bundle). | Node. | — |
@@ -61,9 +61,10 @@ No es cobertura de líneas al 100 %; es **contrato de tests que deben seguir pas
 | ----------- | ------------------------------------ |
 | `extension/extension.ts` | Indirecto: `ui/provider/MiniInputViewProvider.test.ts` |
 | `ui/` (webview, provider, notifications) | `MiniInputViewProvider.test.ts`, `multiViewDraft.test.ts`, `webviewToolbarParity.test.ts`, `webviewThemeTokens.test.ts`, `ui/webview/react/App.test.tsx`, `ui/webview/react/hooks/useGhostPrompt.test.ts`, `ui/notifications/suggestionHostNotification.test.ts` |
-| `api/protocols/*` | `api/protocols/webviewProtocols.test.ts`, `api/protocols/ghostPromptWebviewInboundHandlers.test.ts`, `system/internals/protocols/validations/schemas/zschemWebviewMessages.test.ts` |
-| `api/settings/*` | `api/settings/applyWebviewUpdateSetting.test.ts`, `MiniInputViewProvider.test.ts` |
-| `api/getters/*` | Indirecto vía `MiniInputViewProvider.test.ts`, `system/runtime/suggestRuntime.test.ts` |
+| `api/boundary/*` | `api/boundary/webviewProtocols.test.ts`, `api/boundary/ghostPromptWebviewInboundHandlers.test.ts`, `system/internals/protocols/validations/schemas/zschemWebviewMessages.test.ts` |
+| `api/settings/*` | `MiniInputViewProvider.test.ts` (flujo settings) |
+| `system/internals/config/read/` | Indirecto vía `MiniInputViewProvider.test.ts`, `suggestRuntime.test.ts` |
+| `system/internals/config/write/` | `applyWebviewUpdateSetting.test.ts` |
 | `system/internals/protocols/` | `guardModelRouting.test.ts`, `guardBoundSuggestion.test.ts`, `guardProviderId.test.ts`, `guardCopilotLm.test.ts`, `state/loading/stateLoadingLabels.test.ts`, `types/boundSuggestionText.test.ts`, `validations/schemas/zschemWebviewMessages.test.ts` |
 | `system/internals/config/` | Indirecto vía runtime/UI que leen `ghostPrompt.suggestionModelPolicy` |
 | `system/runtime/` | `suggestRuntime.test.ts`, `suggestionRequestCoordinator.test.ts`, `finalizeEngineCompletionResult.test.ts`, `providerStatusManager.test.ts`, `lastEffectiveSuggestionModel.test.ts`, `createProviderErrorRecord.test.ts` |
@@ -141,3 +142,4 @@ Orden recomendado; cada fase es **independiente** si la anterior está estable.
 | 2026-05-14 | Inicio v0.6: catálogo merged en `engines/catalog/`. |
 | 2026-05-18 | QA–QD: contratos en `protocols/`; `buildCompletionInstruction` → `engines/completion/`; `sugcore/` eliminado. |
 | 2026-05-16 | **Paso 2:** Matriz y mapa de tests alineados con `src/` actual; zona ESLint `protocols/` (reemplaza `sugcore/`). |
+| 2026-05-16 | **QG:** `config/read|write/`, `api/boundary/`; shims eliminados en QG.6. |

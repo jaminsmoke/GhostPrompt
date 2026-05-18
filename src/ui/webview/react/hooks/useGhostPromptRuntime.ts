@@ -71,6 +71,7 @@ export function useGhostPromptRuntime(input: GhostPromptRuntimeInput) {
     suggestionStyle,
     debugSuggestions,
     isLoading,
+    isConfigLoaded,
     setStatus,
   } = ui;
 
@@ -92,6 +93,7 @@ export function useGhostPromptRuntime(input: GhostPromptRuntimeInput) {
     suggestionStyle,
     debugSuggestions,
     isLoading,
+    isConfigLoaded,
     displayStatus: derived.displayStatus,
     providerStatuses,
     statusLoading,

@@ -35,12 +35,10 @@ function renderApp() {
 }
 
 vitest.describe('GhostPrompt React webview App', () => {
-  vitest.it('renders the bottom bar with initial status line', () => {
+  vitest.it('renders config skeleton before settings arrive', () => {
     const html = renderApp();
 
-    vitest.expect(html).toContain('Copilot LM');
-    vitest.expect(html).toContain('Auto');
-    vitest.expect(html).toContain('Empieza a escribir para obtener sugerencias...');
+    vitest.expect(html).toContain('Cargando configuración');
   });
 
   vitest.it('posts outbound messages using the VS Code API when available', () => {

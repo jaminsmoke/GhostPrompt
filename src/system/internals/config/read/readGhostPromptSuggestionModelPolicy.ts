@@ -4,7 +4,7 @@
 
 import * as vscode from 'vscode';
 
-import type { SuggestionModelPolicy } from '../protocols/types';
+import type { SuggestionModelPolicy } from '../../protocols/types';
 
 /**
  * Lee la política de modelo de sugerencias desde la configuración del vscode.workspace.

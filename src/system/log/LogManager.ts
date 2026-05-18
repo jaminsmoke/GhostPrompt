@@ -18,9 +18,13 @@ import {
 } from '../internals/protocols/guards/guardLogLevel';
 
 import { CaptureBreadcrumbStore } from './breadcrumbs';
+import { writeGhostPromptLogBootstrap } from './hostFault';
 import { Logger } from './Logger';
 import { QueuedNdjsonFileTransport } from './transports/file';
-import { OutputChannelLogTransport } from './transports/outputChannel';
+import {
+  disposeGhostPromptOutputChannel,
+  OutputChannelLogTransport,
+} from './transports/outputChannel';
 
 import type {
   EmitPayload,
@@ -266,6 +270,7 @@ class LogManager implements LogEmitSink {
    */
   async disposeAll(): Promise<void> {
     await Promise.all(this.transports.map((transport) => transport.dispose()));
+    disposeGhostPromptOutputChannel();
   }
 }
 
@@ -313,6 +318,14 @@ export function initGhostPromptLogging(context: vscode.ExtensionContext): void {
     return;
   }
   setLogManagerSingleton(new LogManager(context));
+  getLogManagerSingleton()?.ensureOutputChannel();
+  const package_ = context.extension?.packageJSON as { version?: string } | undefined;
+  const version = typeof package_?.version === 'string' ? package_.version : 'unknown';
+  writeGhostPromptLogBootstrap(`GhostPrompt Log initialized (extension ${version}).`);
+  getLogger('extension').info('logging-ready', {
+    channel: 'GhostPrompt Log',
+    effectiveLevel: resolveEffectiveMinLevelName(),
+  });
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('ghostPrompt')) {

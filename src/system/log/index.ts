@@ -14,6 +14,7 @@ export type {
   LogTransport,
 } from '../internals/protocols/types/typeLog';
 export {
+  GHOSTPROMPT_LOG_CHANNEL_NAME,
   LOG_FILE_ROTATE_MAX_BYTES,
   LOG_LEGACY_MD_PREVIEW_MAX_CHARS,
   LOG_OUTPUT_CHANNEL_RING_SIZE,
@@ -38,3 +39,14 @@ export {
   resolveEffectiveMinLevelName,
   toggleSuggestionDebug,
 } from './LogManager';
+export {
+  appendGhostPromptOutputLine,
+  disposeGhostPromptOutputChannel,
+  getGhostPromptOutputChannel,
+} from './transports/outputChannel';
+export {
+  formatHostFaultMessage,
+  reportHostFault,
+  revealGhostPromptLogChannel,
+  writeGhostPromptLogBootstrap,
+} from './hostFault';

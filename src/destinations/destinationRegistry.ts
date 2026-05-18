@@ -5,12 +5,13 @@
 import * as vscode from 'vscode';
 
 import { hasAnyConfigurationInspectScope } from '../system/internals/isDefined';
-import {  VS_OPEN_CODE_X_EXTENSION_ID } from '../system/internals/protocols/constants/consDestinations';
-import {
-  parseAgentDestination,
-  type AgentDestination,
-  type DestinationId,
-  type DestinationProvider,
+import { VS_OPEN_CODE_X_EXTENSION_ID } from '../system/internals/protocols/constants/consDestinations';
+import { parseAgentDestination } from '../system/internals/protocols/guards/guardAgentDestination';
+
+import type {
+  AgentDestination,
+  DestinationId,
+  DestinationProvider,
 } from '../system/internals/protocols/types/typeDestinations';
 
 export { CURSOR_CHAT_DESTINATION_ID, isCursorDesktopHost } from './cursor/cursorHost';
@@ -105,4 +106,5 @@ export function getActiveDestinationProvider(): DestinationProvider {
 }
 
 export {AGENT_DESTINATION_IDS, VS_OPEN_CODE_X_EXTENSION_ID} from '../system/internals/protocols/constants/consDestinations';
-export {type DestinationId, type DestinationProvider, type AgentDestination, parseAgentDestination} from '../system/internals/protocols/types/typeDestinations';
+export {type DestinationId, type DestinationProvider, type AgentDestination} from '../system/internals/protocols/types/typeDestinations';
+export { parseAgentDestination } from '../system/internals/protocols/guards/guardAgentDestination';

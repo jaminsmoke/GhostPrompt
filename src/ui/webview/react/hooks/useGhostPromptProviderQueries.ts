@@ -24,7 +24,7 @@ export function useGhostPromptProviderQueries() {
         { type: 'requestProviderStatus' },
         'providerStatus',
         postToHost,
-      ).then((response) => response.providers),
+      ).then((response) => response?.providers ?? []),
     staleTime: WEBVIEW_PROVIDER_STATUS_STALE_MS,
   });
 

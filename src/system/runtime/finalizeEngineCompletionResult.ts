@@ -1,12 +1,11 @@
 /**
  * @file Post-procesado del resultado crudo del motor LM antes del broadcast (acotación y rechazo).
  */
+import { DEFAULT_MAX_SUGGESTION_CHARS } from '../internals/protocols/constants/consPipelineDefaults';
 import { boundSuggestionText } from '../internals/protocols/guards/guardBoundSuggestion';
 import { looksLikeCopilotRefusal } from '../internals/protocols/guards/guardCopilotLm';
-import {
-  DEFAULT_MAX_SUGGESTION_CHARS,
-  type CompletionResult,
-} from '../internals/protocols/types';
+
+import type { CompletionResult } from '../internals/protocols/types';
 
 /**
  * Aplica límites de producto al texto devuelto por el motor (sin mutar vacíos ni errores).

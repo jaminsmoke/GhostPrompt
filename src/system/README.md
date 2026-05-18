@@ -131,7 +131,7 @@ Script de verificación CI/dev que:
 
 ## `internals/protocols/validations/schemas/zschemWebviewMessages.ts`
 
-**Single source of truth** para los contratos Zod de mensajes entre webview y host. El host parsea vía `api/protocols/webviewProtocols.ts`; el webview React vía `ui/webview/react/validators/parseWebviewInbound.ts`.
+**Single source of truth** para los contratos Zod de mensajes entre webview y host. El host parsea vía `api/boundary/webviewProtocols.ts`; el webview React vía `ui/webview/react/validators/parseWebviewInbound.ts`.
 
 ### Schemas Zod
 

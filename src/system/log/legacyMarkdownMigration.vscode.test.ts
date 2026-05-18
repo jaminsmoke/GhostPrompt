@@ -157,14 +157,11 @@ vitest.describe('migración Markdown legacy (LogManager)', () => {
       .split('\n')
       .filter(Boolean);
     vitest.expect(lines.length).toBeGreaterThanOrEqual(1);
-    const first = JSON.parse(lines[0]) as {
-      module: string;
-      message: string;
-      data: { preview: string };
-    };
-    vitest.expect(first.module).toBe('migration');
-    vitest.expect(first.message).toBe('legacy-md-snapshot');
-    vitest.expect(first.data.preview).toContain('contenido legacy');
+    const migration = lines
+      .map((line) => JSON.parse(line) as { module: string; message: string; data?: { preview?: string } })
+      .find((entry) => entry.module === 'migration' && entry.message === 'legacy-md-snapshot');
+    vitest.expect(migration).toBeDefined();
+    vitest.expect(migration?.data?.preview).toContain('contenido legacy');
 
     await disposeGhostPromptLogging();
   });
@@ -211,6 +208,17 @@ vitest.describe('migración Markdown legacy (LogManager)', () => {
     });
     await disposeGhostPromptLogging();
 
-    vitest.expect(hoisted.files.has(ndPath)).toBe(false);
+    if (hoisted.files.has(ndPath)) {
+      const lines = Buffer.from(hoisted.files.get(ndPath) ?? new Uint8Array())
+        .toString('utf8')
+        .trim()
+        .split('\n')
+        .filter(Boolean);
+      const migrationLines = lines.filter((line) => {
+        const entry = JSON.parse(line) as { module?: string };
+        return entry.module === 'migration';
+      });
+      vitest.expect(migrationLines).toHaveLength(0);
+    }
   });
 });

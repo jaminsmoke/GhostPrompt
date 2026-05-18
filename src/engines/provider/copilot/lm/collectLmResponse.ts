@@ -1,7 +1,7 @@
 /**
  * @file Recolecta texto incremental desde `vscode.LanguageModelChatResponse` (Copilot LM).
  */
-import { DEFAULT_MODEL_REQUEST_TIMEOUT_MS } from '../../../../system/internals/protocols/types';
+import { DEFAULT_MODEL_REQUEST_TIMEOUT_MS } from '../../../../system/internals/protocols/constants/consPipelineDefaults';
 
 import type * as vscode from 'vscode';
 

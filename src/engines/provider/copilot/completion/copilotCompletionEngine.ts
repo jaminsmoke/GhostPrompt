@@ -6,15 +6,16 @@
  */
 import * as vscode from 'vscode';
 
+import { DEFAULT_MODEL_REQUEST_TIMEOUT_MS } from '../../../../system/internals/protocols/constants/consPipelineDefaults';
 import { isPremiumQuotaCopilotError } from '../../../../system/internals/protocols/guards/guardCopilotLm';
-import {
-  DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
-  type CompletionRequestOptions,
-  type CompletionResult,
-} from '../../../../system/internals/protocols/types';
 import { buildCompletionInstruction } from '../../../completion/buildCompletionInstruction';
 import { describeModel, selectModelByPolicy } from '../catalog/modelCatalog';
 import { collectLmResponse } from '../lm/collectLmResponse';
+
+import type {
+  CompletionRequestOptions,
+  CompletionResult,
+} from '../../../../system/internals/protocols/types';
 
 const premiumQuotaBlockedState = { value: false };
 

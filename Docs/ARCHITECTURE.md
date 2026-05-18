@@ -29,10 +29,9 @@
 │                        │                                        │
 │                        ├──► core/suggest: suggest pipeline      │
 │                        │      (Copilot LM | OpenCode | Ollama)   │
-│                        ├──► api/protocols: inbound handlers     │
-│                        │      (Zod validation + dispatch)        │
+│                        ├──► api/boundary: inbound + Zod parse     │
 │                        ├──► api/settings: settings postMessage  │
-│                        ├──► api/getters: workspace config       │
+│                        ├──► system/internals/config: read/write │
 │                        ├──► engines/opencode/* (API client + catalog) │
 │                        ├──► destinations/ (chat.open cmd)       │
 │                        ├──► system/log/ConversationLog.ts (storageUri)  │
@@ -62,11 +61,11 @@
 | `src/vscode/MiniInputViewProvider.ts`              | Webview HTML/CSP, broadcast a Sidebar+Panel, delegación a handlers.                                                                                                                                                                                         |
 | `src/vscode/webviewHtml.ts`                        | HTML template generation, CSP nonce, secure URI substitution.                                                                                                                                                                                               |
 | `src/vscode/suggestionNotification.ts`             | Non-intrusive `vscode.window.showWarningMessage` for actionable suggestion failures.                                                                                                                                                                        |
-| `src/api/protocols/webviewProtocols.ts`            | Zod parseo de mensajes webview→host; validación de sobre `settings` host→webview.                                                                                                                                                                           |
-| `src/api/protocols/inboundHandlers.ts`             | Router/dispatch de mensajes inbound (`init`, `suggest`, `send`, `accept`, `draftChanged`, `updateSetting`).                                                                                                                                                 |
+| `src/api/boundary/webviewProtocols.ts`             | Zod parseo de mensajes webview→host; validación de sobre `settings` host→webview (con logging).                                                                                                                                                              |
+| `src/api/boundary/inboundHandlers.ts`              | Router/dispatch de mensajes inbound (`init`, `suggest`, `send`, `accept`, `draftChanged`, `updateSetting`).                                                                                                                                                 |
 | `src/api/settings/settingsPostMessage.ts`          | Construye y envía el mensaje `settings` al webview (lista de modelos, chips, etc.).                                                                                                                                                                         |
-| `src/api/settings/applyWebviewUpdate.ts`           | Aplica cambios de configuración originados en el webview (`updateSetting`).                                                                                                                                                                                 |
-| `src/api/getters/workspaceGetters.ts`              | Lectores de `vscode.workspace.getConfiguration` + resolución de destino agente.                                                                                                                                                                             |
+| `src/system/internals/config/write/applyWebviewUpdateSetting.ts` | Aplica `updateSetting` vía `vscode.workspace`.                                                                                                                                                                                              |
+| `src/system/internals/config/read/`                | Lectores de `ghostPrompt.*` (modelo, style, Ollama, contexto editor). Destino agente → `destinations/`.                                                                                                                                                     |
 | `src/core/`                                        | Dominio suggestion: tipos (`contracts/`), `prompt/`, `streaming/`, `language/`, `presentation/` (fases de carga), `routing/sources`, `state/`, `memory/` (persistencia + bootstrap README/package), `suggest/`. Catálogo merged y registry LM → `engines/`. |
 | `src/core/suggest/runSuggest.ts`                   | Orquestación del `suggest`: umbral mínimo de texto (`trim`), sesión/cancelación, routing de fuente → `engines` → fases `loading` → broadcast UI.                                                                                                            |
 | `src/core/state/GhostPromptSessionStore.ts`        | Estado compartido (borrador, suggestions, `activeCaptureId`, token de cancelación).                                                                                                                                                                         |
@@ -155,7 +154,7 @@ Each debounce cycle increments `currentCaptureId` (webview-local counter). The h
 
 ## 4. Host ↔ Webview message protocol
 
-Los mensajes son JSON. Contratos **Zod** en `src/system/internals/protocols/validations/schemas/zschemWebviewMessages.ts`; el host valida entrada con `parseWebviewInboundMessage` (`api/protocols/webviewProtocols.ts`). El webview React valida salida con `parseWebviewInbound` (`ui/webview/react/validators/parseWebviewInbound.ts`).
+Los mensajes son JSON. Contratos **Zod** en `src/system/internals/protocols/validations/schemas/zschemWebviewMessages.ts`; el host valida entrada con `parseWebviewInboundMessage` (`api/boundary/webviewProtocols.ts`). El webview React valida salida con `parseWebviewInbound` (`ui/webview/react/validators/parseWebviewInbound.ts`).
 
 ### Webview → Host (resumen)
 

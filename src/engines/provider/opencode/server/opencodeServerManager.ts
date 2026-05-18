@@ -10,8 +10,9 @@ import {
   OPENCODE_HEALTH_CHECK_TIMEOUT_MS,
   OPENCODE_START_LAST_ATTEMPT_INDEX,
   OPENCODE_START_POLL_INTERVAL_MS,
-  type OpenCodeClientOptions,
-} from '../../../../system/internals/protocols/types/typeOpencodeClient';
+} from '../../../../system/internals/protocols/constants/consOpencodeClient';
+
+import type { OpenCodeClientOptions } from '../../../../system/internals/protocols/types/typeOpencodeClient';
 
 export interface OpenCodeConnectionConfig {
   baseUrl: string;

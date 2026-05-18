@@ -240,7 +240,7 @@ Edit webview behavior in **TypeScript** under `src/ui/webview/react/` (not hand-
 ### Webview ↔ host message contracts
 
 - **Canonical Zod schemas:** [`src/system/internals/protocols/validations/schemas/zschemWebviewMessages.ts`](./src/system/internals/protocols/validations/schemas/zschemWebviewMessages.ts) — single source of truth for `postMessage` payloads (inbound to the extension host and the mirrored outbound shape from the webview).
-- **Host boundary:** [`src/api/protocols/webviewProtocols.ts`](./src/api/protocols/webviewProtocols.ts) imports those schemas and runs `parseWebviewInboundMessage` / `parseOutboundSettingsEnvelope` at the channel edge (with logging).
+- **Host boundary:** [`src/api/boundary/webviewProtocols.ts`](./src/api/boundary/webviewProtocols.ts) imports those schemas and runs `parseWebviewInboundMessage` / `parseOutboundSettingsEnvelope` at the channel edge (with logging).
 - **Webview boundary:** [`src/ui/webview/react/validators/parseWebviewInbound.ts`](./src/ui/webview/react/validators/parseWebviewInbound.ts) validates outbound messages before `postMessage`.
 
 **Checklist when you change message shapes:** edit `zschemWebviewMessages.ts` first; update `parseWebviewInbound.ts` / `webviewProtocols.ts` if needed; run **`npm run check`** (includes `zschemWebviewMessages.test.ts`, `webviewProtocols.test.ts`, and the webview bundle build).
@@ -254,7 +254,7 @@ GhostPrompt registers **two** `WebviewViewProvider` instances (`ghostPrompt.inpu
 | **Single bundle**    | HTML is built only in `src/ui/provider/webviewHtml.ts` → `src/ui/webview/dist/react/index.html` + React assets. Do not maintain separate templates per view.                                                               |
 | **Capabilities**     | `MiniInputViewProvider` passes `viewContributionId` into `window.__ghostPromptCapabilities`; use it for layout flags only—keep suggestion/settings behavior identical across views.                                        |
 | **Shared copy**      | User-visible empty/error strings for the status line live in **`webview/src/lib/userErrorMessage.ts`**. Optional host toasts (`src/host/suggestionHostNotification.ts`) should stay aligned for the same actionable cases. |
-| **Regression tests** | Before merging webview or toolbar edits, run **`npm run check`** (includes `src/ui/webview/webviewToolbarParity.test.ts`, `src/api/protocols/webviewProtocols.test.ts`, `src/ui/webview/webviewThemeTokens.test.ts`).                              |
+| **Regression tests** | Before merging webview or toolbar edits, run **`npm run check`** (includes `src/ui/webview/webviewToolbarParity.test.ts`, `src/api/boundary/webviewProtocols.test.ts`, `src/ui/webview/webviewThemeTokens.test.ts`).                              |
 
 ### Architecture and dependencies (v0.3.2)
 

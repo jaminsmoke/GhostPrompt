@@ -45,6 +45,8 @@ export interface GhostPromptUiState {
   setDebugSuggestions: Dispatch<SetStateAction<boolean>>;
   isLoading: boolean;
   setIsLoading: Dispatch<SetStateAction<boolean>>;
+  isConfigLoaded: boolean;
+  setIsConfigLoaded: Dispatch<SetStateAction<boolean>>;
   currentCaptureId: RefObject<number>;
   debounceTimer: RefObject<number | false>;
   skipSuggestionOnDraftSync: RefObject<boolean>;
@@ -53,7 +55,7 @@ export interface GhostPromptUiState {
 
 const getInitialViewId = (): string => {
   const viewId = globalThis.__ghostPromptViewId;
-  return typeof viewId === 'string' ? viewId : '';
+  return typeof viewId === 'string' && viewId.length > 0 ? viewId : 'unknown';
 };
 
 const getInitialCapabilities = (): GhostPromptCapabilities =>
@@ -85,6 +87,7 @@ export function useGhostPromptUiState(): GhostPromptUiState {
   );
   const [debugSuggestions, setDebugSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isConfigLoaded, setIsConfigLoaded] = useState(false);
   const currentCaptureId = useRef(0);
   const debounceTimer = useRef<number | false>(false);
   const skipSuggestionOnDraftSync = useRef(false);
@@ -123,6 +126,8 @@ export function useGhostPromptUiState(): GhostPromptUiState {
     setDebugSuggestions,
     isLoading,
     setIsLoading,
+    isConfigLoaded,
+    setIsConfigLoaded,
     currentCaptureId,
     debounceTimer,
     skipSuggestionOnDraftSync,

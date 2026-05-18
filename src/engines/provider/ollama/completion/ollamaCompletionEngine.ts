@@ -6,14 +6,15 @@
 
 import * as vscode from 'vscode';
 
-import {
-  DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
-  type CompletionRequestOptions,
-  type CompletionResult,
-  type SuggestionModelDescriptor,
-} from '../../../../system/internals/protocols/types';
+import { DEFAULT_MODEL_REQUEST_TIMEOUT_MS } from '../../../../system/internals/protocols/constants/consPipelineDefaults';
 import { buildCompletionInstruction } from '../../../completion/buildCompletionInstruction';
 import { listModels, generate } from '../http/ollamaApiClient';
+
+import type {
+  CompletionRequestOptions,
+  CompletionResult,
+  SuggestionModelDescriptor,
+} from '../../../../system/internals/protocols/types';
 
 /**
  * Describe un modelo Ollama para el pipeline de sugerencias.

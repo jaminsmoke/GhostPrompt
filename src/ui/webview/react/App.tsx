@@ -34,6 +34,7 @@ export function App() {
     suggestionModelPolicy,
     suggestionStyle,
     debugSuggestions,
+    isConfigLoaded,
     agentDestination,
     providerStatuses,
     statusLoading,
@@ -52,6 +53,16 @@ export function App() {
   } = useGhostPrompt();
 
   const compact = capabilities.compactToolbar === true;
+
+  if (!isConfigLoaded) {
+    return (
+      <ErrorBoundary>
+        <div className="p-4 text-sm opacity-70" style={{ color: 'var(--vscode-foreground,#cccccc)' }}>
+          Cargando configuración…
+        </div>
+      </ErrorBoundary>
+    );
+  }
 
   return (
     <ErrorBoundary>

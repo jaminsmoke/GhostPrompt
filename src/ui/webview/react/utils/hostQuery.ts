@@ -9,14 +9,17 @@ import type { OutboundMessage } from '../types';
  * @param {OutboundMessage} msg - Mensaje outbound enviado al host.
  * @param {string} responseType - Tipo de respuesta esperado en el evento de mensaje.
  * @param {(m: OutboundMessage) => void} sendMessage - Función para enviar el mensaje outbound al host.
- * @returns {Promise<T>} Promesa con la respuesta deserializada del host.
+ * @param {number} [timeoutMs=15000] - Tiempo máximo de espera en milisegundos.
+ * @returns {Promise<T | undefined>} Promesa con la respuesta o `undefined` si expira el timeout.
  */
 export function hostQuery<T>(
   msg: OutboundMessage,
   responseType: string,
   sendMessage: (m: OutboundMessage) => void,
-): Promise<T> {
+  timeoutMs: number = 15_000,
+): Promise<T | undefined> {
   return new Promise((resolve) => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const handler = (e: MessageEvent) => {
       const rawPayload = e.data as unknown;
       if (typeof rawPayload !== 'object' || !rawPayload) {
@@ -27,9 +30,16 @@ export function hostQuery<T>(
         return;
       }
       window.removeEventListener('message', handler);
+      if (timer !== undefined) {
+        clearTimeout(timer);
+      }
       resolve(rawPayload as T);
     };
     window.addEventListener('message', handler);
+    timer = setTimeout(() => {
+      window.removeEventListener('message', handler);
+      resolve(undefined);
+    }, timeoutMs);
     sendMessage(msg);
   });
 }

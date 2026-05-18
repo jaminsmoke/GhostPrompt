@@ -4,4 +4,4 @@
 
 ## `schemas/`
 
-Solo definiciones `z.*` e inferencias `z.infer` — **sin** `safeParse` con logging, **sin** imports de VS Code. Los parsers del boundary siguen en `api/protocols/` (u otro host) importando estos módulos. Los tests Zod co-localizados viven en `schemas/*.test.ts` (pueden importar `api/protocols` solo para comprobar identidad de schema con el host).
+Solo definiciones `z.*` e inferencias `z.infer` — **sin** `safeParse` con logging, **sin** imports de VS Code. Los parsers del boundary siguen en `api/boundary/` importando estos módulos. Los tests Zod co-localizados viven en `schemas/*.test.ts`; la paridad host ↔ canónico se comprueba en `api/boundary/webviewProtocols.test.ts`.

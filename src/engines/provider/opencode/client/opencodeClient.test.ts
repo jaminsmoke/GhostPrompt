@@ -5,9 +5,10 @@
 import * as vitest from 'vitest';
 import { vi } from 'vitest';
 
-import { OPENCODE_DEFAULT_PORT } from '../../../../system/internals/protocols/types/typeOpencodeClient';
+import { OPENCODE_DEFAULT_PORT } from '../../../../system/internals/protocols/constants/consOpencodeClient';
 
 import type * as OpencodeClientModule from './index';
+import type * as ConsOpencodeClientModule from '../../../../system/internals/protocols/constants/consOpencodeClient';
 import type * as TypeOpencodeClientModule from '../../../../system/internals/protocols/types/typeOpencodeClient';
 
 type OpenCodeSdkClient = TypeOpencodeClientModule.OpenCodeSdkClient;
@@ -39,8 +40,8 @@ vitest.afterEach(() => {
 vitest.describe('opencode client', () => {
   vitest.it('OPENCODE_DEFAULT_PORT es 4096', async () => {
     const loadedModule = (await import(
-      '../../../../system/internals/protocols/types/typeOpencodeClient'
-    )) as typeof TypeOpencodeClientModule;
+      '../../../../system/internals/protocols/constants/consOpencodeClient'
+    )) as typeof ConsOpencodeClientModule;
     vitest.expect(loadedModule.OPENCODE_DEFAULT_PORT).toBe(OPENCODE_DEFAULT_PORT);
   });
 

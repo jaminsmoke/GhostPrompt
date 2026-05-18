@@ -10,13 +10,18 @@ tailwind.config.js
 .vscode-test/**
 .vscode-test-profile/**
 lint-report.json
+lint*.txt
+lint*.json
+.eslint-report.json
 tmp-*.txt
 tmp-*.json
 tsconfig.eslint.json
 *.vsix
 
 # Build-only artifacts
+scripts/**
 Scripts/**
+eslint/**
 out/system/build/**
 
 # Exclude source tree; keep webview bundle assets only

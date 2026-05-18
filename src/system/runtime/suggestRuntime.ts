@@ -7,24 +7,24 @@
 import { getEnabledCompletionSources } from '../../engines/config/completionSources';
 import { resolveCompletionSourceForRequest } from '../../engines/routing/resolveCompletionSource';
 import { resolveProvider } from '../../engines/routing/resolveProvider';
+import { DEFAULT_MIN_SUGGEST_INPUT_CHARS } from '../internals/protocols/constants/consPipelineDefaults';
 import {
   suggestionLoadingStatusText,
   type SuggestionLoadingPhase,
 } from "../internals/protocols/state/loading";
-import {
-  DEFAULT_MIN_SUGGEST_INPUT_CHARS,
-  type CompletionResult,
-  type SuggestionModelPolicy,
-  type SuggestionStyle,
-} from '../internals/protocols/types';
 import { flushLogCapture, getLogger } from '../log';
 
 import { finalizeEngineCompletionResult } from './finalizeEngineCompletionResult';
 import { setLastEffectiveSuggestionModel } from './lastEffectiveSuggestionModel';
 import { suggestionRequestCoordinator } from './suggestionRequestCoordinator';
 
-import type { WebviewInboundMessage } from '../../api/protocols/webviewProtocols';
 import type { ProviderId } from '../internals/protocols/state/provider';
+import type {
+  CompletionResult,
+  SuggestionModelPolicy,
+  SuggestionStyle,
+} from '../internals/protocols/types';
+import type { WebviewInboundMessage } from '../internals/protocols/validations/schemas/zschemWebviewMessages';
 
 export type NotifyIssueCallback = (result: CompletionResult) => void;
 

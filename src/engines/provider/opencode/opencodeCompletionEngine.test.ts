@@ -5,15 +5,14 @@
 import * as vitest from 'vitest';
 import { vi } from 'vitest';
 
-import {
-  OPENCODE_DEFAULT_PORT,
-  type OpenCodeSdkClient,
-} from '../../../system/internals/protocols/types/typeOpencodeClient';
+import { OPENCODE_DEFAULT_PORT } from '../../../system/internals/protocols/constants/consOpencodeClient';
 import { emptyConfigurationInspect } from '../../../system/internals/testing/mockVscodeConfigurationInspect';
+
 
 import { resetClient } from './client';
 import { requestOpencodeCompletion } from './opencodeCompletionEngine';
 
+import type { OpenCodeSdkClient } from '../../../system/internals/protocols/types/typeOpencodeClient';
 import type * as Vscode from 'vscode';
 
 const sessionCreateMock = vi.fn<(...args: [unknown?]) => Promise<unknown>>();

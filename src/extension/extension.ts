@@ -17,10 +17,14 @@ import { registerProviderStatusRegistry } from '../engines/runtime/providerStatu
 import {
   disposeGhostPromptLogging,
   ensureSuggestionDebugChannel,
+  formatHostFaultMessage,
+  getLogger,
   initGhostPromptLogging,
   isSuggestionDebugEnabled,
+  reportHostFault,
   toggleSuggestionDebug,
 } from '../system/log';
+import { appendGhostPromptOutputLine } from '../system/log/transports/outputChannel';
 import { MiniInputViewProvider } from '../ui/provider/MiniInputViewProvider';
 
 /**
@@ -28,73 +32,89 @@ import { MiniInputViewProvider } from '../ui/provider/MiniInputViewProvider';
  * @param {vscode.ExtensionContext} context - Contexto de la extensión proporcionado por VS Code.
  */
 export function activate(context: vscode.ExtensionContext): void {
+  const package_ = context.extension.packageJSON as { version?: string };
+  const version = typeof package_.version === 'string' ? package_.version : 'unknown';
+  appendGhostPromptOutputLine(`[GhostPrompt] Activating extension v${version}…`);
   initGhostPromptLogging(context);
-  registerProviderStatusRegistry();
-  const sidebarProvider = new MiniInputViewProvider(context, MiniInputViewProvider.viewId);
-  const panelProvider = new MiniInputViewProvider(context, MiniInputViewProvider.panelViewId);
-  const openSuggestionPolicySettingsCommand = vscode.commands.registerCommand(
-    'ghostPrompt.openSuggestionPolicySettings',
-    async () => {
-      await vscode.commands.executeCommand(
-        'workbench.action.openSettings',
-        'ghostPrompt.suggestionModelPolicy',
-      );
-    },
-  );
-  const toggleSuggestionDebugCommand = vscode.commands.registerCommand(
-    'ghostPrompt.toggleSuggestionDebug',
-    async () => {
-      const enabled = await toggleSuggestionDebug();
-      const message = enabled
-        ? 'GhostPrompt debug activado (canal de salida «GhostPrompt Log»).'
-        : 'GhostPrompt debug desactivado.';
-      await vscode.window.showInformationMessage(message);
-    },
-  );
-  const runSuggestPipelineCommand = vscode.commands.registerCommand(
-    'ghostPrompt.runSuggestPipeline',
-    async (args: { text?: string } | undefined) => {
-      const text = typeof args?.text === 'string' ? args.text : '';
-      await MiniInputViewProvider.runSuggestFromExternalHost(text);
-    },
-  );
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('ghostPrompt')) {
-        MiniInputViewProvider.refreshSettingsAllViews().catch(() => {
-          /* Ignore */
-        });
-      }
-      if (e.affectsConfiguration('ghostPrompt.agentDestination')) {
-        notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
-      }
-    }),
-  );
-  notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
-  registerDiscoverCursorChatCommandsCommand(context);
+  const log = getLogger('extension');
 
-  if (isSuggestionDebugEnabled()) {
-    ensureSuggestionDebugChannel();
+  try {
+    log.info('activate-start', { version: String(context.extension.packageJSON.version ?? '') });
+    registerProviderStatusRegistry();
+    const sidebarProvider = new MiniInputViewProvider(context, MiniInputViewProvider.viewId);
+    const panelProvider = new MiniInputViewProvider(context, MiniInputViewProvider.panelViewId);
+    const openSuggestionPolicySettingsCommand = vscode.commands.registerCommand(
+      'ghostPrompt.openSuggestionPolicySettings',
+      async () => {
+        await vscode.commands.executeCommand(
+          'workbench.action.openSettings',
+          'ghostPrompt.suggestionModelPolicy',
+        );
+      },
+    );
+    const toggleSuggestionDebugCommand = vscode.commands.registerCommand(
+      'ghostPrompt.toggleSuggestionDebug',
+      async () => {
+        const enabled = await toggleSuggestionDebug();
+        const message = enabled
+          ? 'GhostPrompt debug activado (canal de salida «GhostPrompt Log»).'
+          : 'GhostPrompt debug desactivado.';
+        await vscode.window.showInformationMessage(message);
+      },
+    );
+    const runSuggestPipelineCommand = vscode.commands.registerCommand(
+      'ghostPrompt.runSuggestPipeline',
+      async (args: { text?: string } | undefined) => {
+        const text = typeof args?.text === 'string' ? args.text : '';
+        await MiniInputViewProvider.runSuggestFromExternalHost(text);
+      },
+    );
+    context.subscriptions.push(
+      vscode.workspace.onDidChangeConfiguration((e) => {
+        if (e.affectsConfiguration('ghostPrompt')) {
+          MiniInputViewProvider.refreshSettingsAllViews().catch((error: unknown) => {
+            log.error('refresh-settings-failed', {}, error);
+          });
+        }
+        if (e.affectsConfiguration('ghostPrompt.agentDestination')) {
+          notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
+        }
+      }),
+    );
+    notifyIfVsxAgentDestinationWithoutVsOpenCodeX();
+    registerDiscoverCursorChatCommandsCommand(context);
+
+    if (isSuggestionDebugEnabled()) {
+      ensureSuggestionDebugChannel();
+    }
+
+    context.subscriptions.push(
+      openSuggestionPolicySettingsCommand,
+      toggleSuggestionDebugCommand,
+      runSuggestPipelineCommand,
+      vscode.window.registerWebviewViewProvider(MiniInputViewProvider.viewId, sidebarProvider),
+      vscode.window.registerWebviewViewProvider(MiniInputViewProvider.panelViewId, panelProvider),
+    );
+    log.info('activate-complete', {
+      views: [MiniInputViewProvider.viewId, MiniInputViewProvider.panelViewId],
+    });
+  } catch (error: unknown) {
+    reportHostFault('extension', 'activate-failed', error);
+    log.error('activate-failed', {}, error);
+    void vscode.window.showErrorMessage(formatHostFaultMessage(error));
+    throw error;
   }
-
-  context.subscriptions.push(
-    openSuggestionPolicySettingsCommand,
-    toggleSuggestionDebugCommand,
-    runSuggestPipelineCommand,
-    vscode.window.registerWebviewViewProvider(MiniInputViewProvider.viewId, sidebarProvider),
-    vscode.window.registerWebviewViewProvider(MiniInputViewProvider.panelViewId, panelProvider),
-  );
 }
 
 /**
  * Limpia los recursos de la extensión al desactivarse.
  */
 export function deactivate(): void {
-  disposeGhostPromptLogging().catch(() => {
-    /* Ignore */
+  disposeGhostPromptLogging().catch((error: unknown) => {
+    reportHostFault('extension', 'dispose-logging-failed', error, { reveal: false });
   });
   resetClient();
-  ollamaModelManager.stopAll().catch(() => {
-    /* Ignore */
+  ollamaModelManager.stopAll().catch((error: unknown) => {
+    getLogger('extension').error('ollama-stop-all-failed', {}, error);
   });
 }

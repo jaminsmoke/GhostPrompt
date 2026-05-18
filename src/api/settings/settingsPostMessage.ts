@@ -3,6 +3,11 @@
  */
 import * as vscode from 'vscode';
 
+import {
+  getAgentDestination,
+  isCursorDesktopHost,
+  isVsOpenCodeXExtensionInstalled,
+} from '../../destinations/destinationRegistry';
 import { getCompletionUiKind, getEnabledCompletionSources } from '../../engines/config/completionSources';
 import { listSuggestionModels } from '../../engines/provider/copilot/catalog/modelCatalog';
 import { listMergedSuggestionModels } from '../../engines/provider/mergedModelCatalog';
@@ -15,12 +20,7 @@ import {
 } from '../../system/internals/protocols/constants/consPipelineDefaults';
 import { isSuggestionDebugEnabled } from '../../system/log';
 import { getLastEffectiveSuggestionModel } from '../../system/runtime/lastEffectiveSuggestionModel';
-import {
-  getAgentDestination,
-  isCursorDesktopHost,
-  isVsOpenCodeXExtensionInstalled,
-} from '../getters/workspaceGetters';
-import { parseOutboundSettingsEnvelope } from '../protocols/webviewProtocols';
+import { parseOutboundSettingsEnvelope } from '../boundary/webviewProtocols';
 
 
 import type {

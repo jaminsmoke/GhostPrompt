@@ -71,4 +71,4 @@ protocols/
 
 - Estado mutable y orquestación → `system/runtime/`, `ui/provider/`
 - Implementación de logging (`Logger`, transports, `LogManager`) → `system/log/` (importa tipos y guards desde aquí; el barrel público re-exporta contratos puros)
-- Parsers del boundary con logging → `api/protocols/` (importan `zschem*` desde aquí)
+- Parsers del boundary con logging → `api/boundary/` (importan `zschem*` desde aquí)

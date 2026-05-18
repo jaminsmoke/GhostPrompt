@@ -1,11 +1,8 @@
 /**
  * @file Barrel del cliente SDK OpenCode.
  */
-export {
-  OPENCODE_DEFAULT_PORT,
-  type OpenCodeClientOptions,
-  type OpenCodeSdkClient,
-} from '../../../../system/internals/protocols/types/typeOpencodeClient';
+export { OPENCODE_DEFAULT_PORT } from '../../../../system/internals/protocols/constants/consOpencodeClient';
+export type { OpenCodeClientOptions, OpenCodeSdkClient } from '../../../../system/internals/protocols/types/typeOpencodeClient';
 
 export { createOpenCodeClient } from './createClient';
 export { getGlobalClient, hasGlobalClient, resetGlobalClient } from './clientSingleton';

@@ -18,13 +18,13 @@
   "engines": {
     "vscode": "^1.90.0"
   },
-  "peerDependencies": {
-    "vscode": "^1.90.0"
-  },
   "categories": [
     "Other"
   ],
   "main": "./out/extension/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
     "viewsContainers": {
       "activitybar": [

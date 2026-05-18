@@ -25,7 +25,7 @@ Detalle de contratos: [`protocols/README.md`](./protocols/README.md). Lectores d
 ## Qué entra aquí
 
 - **Contratos** (`protocols/*`) — datos, constantes, predicados y tipos de estado sin mutación en esta capa
-- **Config host** (`config/*`) — lectura de claves `ghostPrompt.*` usadas por runtime/UI cuando conviene acoplarlas a tipos de `protocols/` sin mezclarlas con el barrel `api/getters/` (la configuración de **fuentes LM** sigue en `engines/config/`)
+- **Config host** (`config/read|write/`) — lectura y escritura de `ghostPrompt.*` (la configuración de **fuentes LM** sigue en `engines/config/`)
 
 ## Qué NO entra aquí
 
@@ -33,5 +33,5 @@ Detalle de contratos: [`protocols/README.md`](./protocols/README.md). Lectores d
 - Lógica de suggestions → `engines/` + `system/runtime/`
 - Configuración y routing de fuentes LM → `engines/`
 - Logging → `system/log/`
-- Parsers del boundary con logging → `api/protocols/` (schemas en `protocols/validations/schemas/`)
+- Parsers del boundary con logging → `api/boundary/` (schemas en `protocols/validations/schemas/`)
 - Orquestación suggest → `system/runtime/`

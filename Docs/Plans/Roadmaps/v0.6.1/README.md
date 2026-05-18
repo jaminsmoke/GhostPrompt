@@ -8,6 +8,8 @@ Extracción y consolidación de protocolos puros hacia `system/internals/protoco
 | ----- | --------- | ----------- |
 | 1 | [01-protocols-extraction.md](./01-protocols-extraction.md) | Fases PA–PM: `SuggestionStyle`, destinos, schemas webview, renaming, símbolos |
 | 2 | [02-protocols-extraction-log.md](./02-protocols-extraction-log.md) | Fase QA (cerrada) + backlog QB/QD: log → `protocols/`, routing guards, `instruction` |
+| 3 | [03-protocols-hygiene.md](./03-protocols-hygiene.md) | Higiene interna de `protocols/`: reubicaciones, barrels completos |
+| 4 | [04-webview-ui-hygiene.md](./04-webview-ui-hygiene.md) | Higiene de UI webview: renderizado, errores, inicialización |
 
 ## Contexto
 
@@ -39,3 +41,5 @@ Convención de nombres: [`Docs/ExtensionArchitecture/NamingConventions.md`](../.
 - **v0.6.1 fase 1:** Extracción de protocols (PA–PM) completada en [`01-protocols-extraction.md`](./01-protocols-extraction.md).
 - **v0.6.1 fase 2:** Extracción de `system/log/` (QA.1–QA.7) completada en [`02-protocols-extraction-log.md`](./02-protocols-extraction-log.md).
 - **v0.6.1 fase 3:** Backlog QB/QD (routing guards, `instruction`) — pendiente en el mismo doc.
+- **v0.6.1 fase 4:** Higiene interna de `protocols/` (QB–QF) completada en [`03-protocols-hygiene.md`](./03-protocols-hygiene.md).
+- **v0.6.1 fase 5:** Higiene de UI webview (PA–PD) en progreso en [`04-webview-ui-hygiene.md`](./04-webview-ui-hygiene.md).

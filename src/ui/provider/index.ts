@@ -3,6 +3,7 @@
  */
 export { MiniInputViewProvider } from './MiniInputViewProvider';
 export {
+  buildGhostPromptWebviewFaultHtml,
   buildGhostPromptWebviewHtml,
   generateGhostPromptWebviewNonce,
   type GhostPromptWebviewHtmlParameters,

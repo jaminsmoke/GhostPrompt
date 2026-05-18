@@ -42,6 +42,7 @@ export type GhostPromptInboundHandlerContext = {
   setVsxActive: Dispatch<SetStateAction<boolean>>;
   setSuggestion: Dispatch<SetStateAction<string>>;
   setIsLoading: Dispatch<SetStateAction<boolean>>;
+  setIsConfigLoaded: Dispatch<SetStateAction<boolean>>;
   setStatus: Dispatch<SetStateAction<string>>;
   setText: Dispatch<SetStateAction<string>>;
   logToHost: (
@@ -80,6 +81,7 @@ function applyGhostPromptSettingsMessage(
   handler.setVsOpenCodeXExtensionInstalled(settings.vsOpenCodeXExtensionInstalled);
   handler.setCursorDesktopHost(settings.cursorDesktopHost);
   handler.setVsxActive(settings.agentDestination === 'vsOpenCodeX');
+  handler.setIsConfigLoaded(true);
   if (settings.agentDestination === 'vsOpenCodeX') {
     handler.setStatus('Destino VSOpenCodeX: usa VSOpenCodeX para enviar prompts.');
     handler.setSuggestion('');
@@ -251,5 +253,6 @@ export function handleGhostPromptInboundMessage(
     routeGhostPromptInboundMessage(message, handler);
   } catch (error) {
     handler.logToHost('error', 'handleMessageFailed', { error: String(error) });
+    handler.setStatus('Error interno al procesar mensaje del host');
   }
 }

@@ -9,7 +9,27 @@ interface VsCodeApi {
 
 const globalWithVsCodeApi = globalThis as typeof globalThis & {
   acquireVsCodeApi?: () => VsCodeApi;
+  __ghostPromptVsCodeApi?: VsCodeApi;
 };
+
+/**
+ * Obtiene la API del webview (singleton: `acquireVsCodeApi` solo puede llamarse una vez).
+ * @returns {VsCodeApi | undefined} Instancia cacheada o ausente fuera del host.
+ */
+export function getGhostPromptVsCodeApi(): VsCodeApi | undefined {
+  if (globalWithVsCodeApi.__ghostPromptVsCodeApi) {
+    return globalWithVsCodeApi.__ghostPromptVsCodeApi;
+  }
+  if (typeof globalWithVsCodeApi.acquireVsCodeApi !== 'function') {
+    return undefined;
+  }
+  try {
+    globalWithVsCodeApi.__ghostPromptVsCodeApi = globalWithVsCodeApi.acquireVsCodeApi();
+    return globalWithVsCodeApi.__ghostPromptVsCodeApi;
+  } catch {
+    return undefined;
+  }
+}
 
 /**
  * Envía un mensaje desde el webview React al host de VS Code.
@@ -17,8 +37,5 @@ const globalWithVsCodeApi = globalThis as typeof globalThis & {
  * @returns {void}
  */
 export function postToHost(message: OutboundMessage): void {
-  if (typeof globalWithVsCodeApi.acquireVsCodeApi !== 'function') {
-    return;
-  }
-  globalWithVsCodeApi.acquireVsCodeApi().postMessage(message);
+  getGhostPromptVsCodeApi()?.postMessage(message);
 }

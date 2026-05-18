@@ -1,13 +1,12 @@
 /**
  * @file Factory del cliente SDK OpenCode.
  */
-import {
-  OPENCODE_DEFAULT_PORT,
-  type OpenCodeClientOptions,
-  type OpenCodeSdkClient,
-} from '../../../../system/internals/protocols/types/typeOpencodeClient';
+import { OPENCODE_DEFAULT_PORT } from '../../../../system/internals/protocols/constants/consOpencodeClient';
 
 import { setGlobalOpenCodeClient } from './clientSingleton';
+
+import type { OpenCodeClientOptions, OpenCodeSdkClient } from '../../../../system/internals/protocols/types/typeOpencodeClient';
+
 
 /**
  * Construye la URL base del cliente OpenCode.

@@ -85,6 +85,7 @@ export function useGhostPromptHandlers(input: GhostPromptHandlersInput) {
       syncTextareaHeight();
     } catch (error) {
       logToHost('error', 'handleTextChangeFailed', { error: String(error) });
+      setStatus('Error al procesar el texto');
     }
   };
 
