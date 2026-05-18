@@ -1,7 +1,7 @@
 /**
  * @file Fetch de texto bruto de completion OpenCode vía SDK (instrucción GhostPrompt + sesión + timeout).
  */
-import { buildCompletionInstruction } from '../../../sugcore/rules/instruction';
+import { buildCompletionInstruction } from '../../completion/buildCompletionInstruction';
 
 import { getGlobalClient, getSession, promptOpenCode } from './client';
 

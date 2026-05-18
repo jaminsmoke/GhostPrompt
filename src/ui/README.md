@@ -16,7 +16,7 @@
 
 **No debe contener:**
 
-- Lógica de suggestion (eso es `sugcore/`)
+- Lógica de suggestion (eso es `engines/` + `system/runtime/`)
 - Protocolos de mensajes (eso es `api/`)
 - Lógica de motores (eso es `engines/`)
 

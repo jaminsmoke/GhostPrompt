@@ -1,5 +1,5 @@
 /**
- * @file Instrucción de completado enviada al modelo de sugerencias.
+ * @file Instrucción de completado enviada al modelo de sugerencias (compartida por motores).
  */
 
 /**

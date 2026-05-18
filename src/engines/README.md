@@ -23,6 +23,9 @@ Las sugerencias con `kind: 'suggestion'` salen **del motor como texto crudo** de
 ```text
 engines/
 ├── index.ts                     # Barrel público delgado
+├── completion/
+│   ├── buildCompletionInstruction.ts  # Prompt LM compartido (Copilot, OpenCode, Ollama)
+│   └── index.ts
 ├── runtime/
 │   └── providerStatusRegistry.ts  # Registro de *Status → `system/runtime/providerStatusManager`
 ├── config/
@@ -107,8 +110,8 @@ Configuración de fuentes habilitadas: `config/completionSources.ts` (`ghostProm
 
 | Importa de                  | Por qué                                               |
 | --------------------------- | ----------------------------------------------------- |
-| `sugcore/types`                | `SuggestionModelDescriptor`, `CompletionResult`, etc. |
-| `sugcore/rules/instruction`    | `buildCompletionInstruction` para el prompt del LM    |
+| `system/internals/protocols/types` | `SuggestionModelDescriptor`, `CompletionResult`, etc. |
+| `engines/completion/`          | `buildCompletionInstruction` para el prompt del LM    |
 | `copilot/lm/collectLmResponse`       | `collectLmResponse` (stream LM VS Code)         |
 | `system/internals/protocols/state/loading` | `SuggestionLoadingPhase`, textos de fase    |
 | `engines/runtime/providerStatusRegistry` | Registro de módulos *Status en el host |

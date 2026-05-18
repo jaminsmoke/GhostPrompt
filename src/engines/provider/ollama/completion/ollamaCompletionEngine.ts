@@ -6,13 +6,13 @@
 
 import * as vscode from 'vscode';
 
-import { buildCompletionInstruction } from '../../../../sugcore/rules/instruction';
 import {
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
   type CompletionRequestOptions,
   type CompletionResult,
   type SuggestionModelDescriptor,
 } from '../../../../system/internals/protocols/types';
+import { buildCompletionInstruction } from '../../../completion/buildCompletionInstruction';
 import { listModels, generate } from '../http/ollamaApiClient';
 
 /**

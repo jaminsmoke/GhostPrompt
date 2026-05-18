@@ -6,13 +6,13 @@
  */
 import * as vscode from 'vscode';
 
-import { buildCompletionInstruction } from '../../../../sugcore/rules/instruction';
 import { isPremiumQuotaCopilotError } from '../../../../system/internals/protocols/guards/guardCopilotLm';
 import {
   DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
   type CompletionRequestOptions,
   type CompletionResult,
 } from '../../../../system/internals/protocols/types';
+import { buildCompletionInstruction } from '../../../completion/buildCompletionInstruction';
 import { describeModel, selectModelByPolicy } from '../catalog/modelCatalog';
 import { collectLmResponse } from '../lm/collectLmResponse';
 

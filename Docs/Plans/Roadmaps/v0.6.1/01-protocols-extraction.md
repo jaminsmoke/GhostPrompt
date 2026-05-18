@@ -26,6 +26,7 @@
 | `sugcore/sugstyle/styleLengthController.ts` | Eliminado (sin consumidores) | Hecho (PL) | — |
 | Contratos log (`LogLevel`, límites, guards) | `consLogLimits`, `typeLog`, `guardLogLevel` | Hecho (QA) | Ver [`02-protocols-extraction-log.md`](./02-protocols-extraction-log.md) |
 | Guards routing `looksLike*ModelId` | `protocols/guards/guardModelRouting.ts` | Hecho (QB) | Ver [`02-protocols-extraction-log.md`](./02-protocols-extraction-log.md) |
+| `buildCompletionInstruction` | `engines/completion/` | Hecho (QD) | `sugcore/` eliminado |
 | Validadores HTTP Ollama | `engines/provider/ollama/http/ollamaValidators.ts` | Contrato API externa Ollama, no wire GhostPrompt | Fuera de alcance |
 | Constantes pool OpenCode | `engines/provider/opencode/client/constants.ts` | Config motor, no protocolo extensión | Fuera de alcance |
 | Símbolos `GHOST_PROMPT_*`, `parseGhostPrompt*` | Renombrados (ver mapa PG en NamingConventions) | Hecho (PG) | — |

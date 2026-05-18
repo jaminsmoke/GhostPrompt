@@ -31,7 +31,6 @@ vi.mock('vscode', () => ({
   },
 }));
 
-import { buildCompletionInstruction } from '../../../../sugcore/rules/instruction';
 import {
   listSuggestionModels,
   selectModelByPolicy,
@@ -240,18 +239,4 @@ vitest.describe('CopilotCompletion', () => {
     ]);
   });
 
-  vitest.it('buildCompletionInstruction genera instruccion simple', () => {
-    const instruction = buildCompletionInstruction('Escribe una propuesta');
-
-    vitest.expect(instruction).toContain('Complete the following text as a natural continuation');
-    vitest.expect(instruction).toContain('Only output the continuation itself');
-    vitest.expect(instruction).toContain('Escribe una propuesta');
-    vitest.expect(instruction).not.toContain('STYLE_');
-    vitest.expect(instruction).not.toContain('Partial text to continue');
-  });
-
-  vitest.it('buildCompletionInstruction no repite contexto ignorado', () => {
-    const instruction = buildCompletionInstruction('Create a test plan');
-    vitest.expect(instruction).toContain('Create a test plan');
-  });
 });

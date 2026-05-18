@@ -29,7 +29,7 @@ La v0.6 ya estableció `system/internals/protocols/` como la capa de contratos p
 - **v0.6.1 protocols extraction:** completado (PA–PM). Ver [`01-protocols-extraction.md`](./01-protocols-extraction.md).
 - Extracción log → `protocols/` (`consLogLimits`, `typeLog`, `guardLogLevel`) — QA 🟢
 - Guards routing `looksLike*ModelId` (`guardModelRouting`) — QB 🟢
-- Destino `buildCompletionInstruction` (`sugcore/`) — QD ⚪
+- `buildCompletionInstruction` → `engines/completion/`; `sugcore/` eliminado — QD 🟢
 
 Convención de nombres: [`Docs/ExtensionArchitecture/NamingConventions.md`](../../ExtensionArchitecture/NamingConventions.md).
 

@@ -10,7 +10,7 @@
 
 **No debe contener:**
 
-- Lógica de suggestion (eso es `sugcore/`)
+- Lógica de suggestion (eso es `engines/` + `system/runtime/`)
 - Providers de vistas VS Code (eso es `vscode/`)
 - HTML/CSP generation (eso es `vscode/`)
 - Lógica de negocio de motores (eso es `engines/`)
@@ -92,7 +92,7 @@ Los schemas canónicos viven en `system/internals/protocols/validations/schemas/
 
 | Importa de                               | Por qué                                                    |
 | ---------------------------------------- | ---------------------------------------------------------- |
-| `sugcore/`                               | Types, `listSuggestionModels`, `getCompletionUiKind`, etc. |
+| `engines/`                               | Motores, `listMergedSuggestionModels`, `getCompletionUiKind`, etc. |
 | `system/runtime/lastEffectiveSuggestionModel` | Último modelo de suggestion exitosa (settings)           |
 | `ui/provider/multiViewDraft`            | Borrador compartido Sidebar + Panel                        |
 | `system/runtime/providerStatusManager` | Estado de proveedores LM (start/stop, refresh)         |

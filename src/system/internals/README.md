@@ -30,7 +30,7 @@ Detalle de contratos: [`protocols/README.md`](./protocols/README.md). Lectores d
 ## Qué NO entra aquí
 
 - Estado mutable del host → `system/runtime/`, `ui/provider/multiViewDraft.ts`
-- Lógica de suggestions → `sugcore/`
+- Lógica de suggestions → `engines/` + `system/runtime/`
 - Configuración y routing de fuentes LM → `engines/`
 - Logging → `system/log/`
 - Parsers del boundary con logging → `api/protocols/` (schemas en `protocols/validations/schemas/`)

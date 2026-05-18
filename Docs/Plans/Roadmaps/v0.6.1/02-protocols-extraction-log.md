@@ -103,7 +103,7 @@ Verificación en código: canónicos `consLogLimits`, `typeLog`, `guardLogLevel`
 | `engines/config/completionSources.ts` | No | Lee `vscode.workspace` |
 | `engines/routing/resolveProvider.ts` (`EngineProvider`) | No | Adaptadores con implementación de motores |
 | `system/runtime/createProviderErrorRecord.ts` | No | Factory con texto de UI; usa tipos ya en `protocols/state/` |
-| `sugcore/rules/instruction.ts` | Evaluar (QD) | Función pura de prompt; dominio “reglas”, no contrato wire |
+| `buildCompletionInstruction` | `engines/completion/` | Hecho (QD) | Prompt LM compartido; carpeta `sugcore/` eliminada |
 | Validadores HTTP Ollama / constantes OpenCode client | No | Contrato API de terceros (igual que v0.6.1) |
 
 ---
@@ -157,34 +157,31 @@ Verificación en código: canónicos `consLogLimits`, `typeLog`, `guardLogLevel`
 
 ---
 
-### QD — `buildCompletionInstruction` (`sugcore/rules/`)
+### QD — `buildCompletionInstruction` (ex `sugcore/rules/`)
 
-> **Motivo:** `sugcore/` solo contiene `rules/instruction.ts` (función pura). Decidir destino antes de mover código.
+> **Motivo:** Último resto de `sugcore/` era `rules/instruction.ts`. No es contrato wire host↔webview; es detalle de cómo los motores arman el prompt LM.
 
 #### QD.1 — Decidir destino canónico
 
-| Opción | Recomendación |
-|--------|----------------|
-| (a) `protocols/` | Solo si lo tratáis como contrato estable host↔engines |
-| (b) `engines/completion/` | Preferible si es detalle de cómo los motores arman el prompt |
-| (c) Dejar en `sugcore/` | Aceptable de baja prioridad hasta vaciar carpeta |
+**Decisión:** **(b) `engines/completion/`** — compartido solo por motores (Copilot, OpenCode, Ollama); no pertenece a `protocols/`.
 
-- [ ] Registrar decisión en este doc y en `NamingConventions.md` si aplica
+- [x] Registrar decisión en este doc
 
 **Criterio de hecho:** Destino acordado por escrito (a / b / c).
 
 #### QD.2 — Migrar símbolo al destino elegido
 
-- [ ] Mover `buildCompletionInstruction` y actualizar imports en engines
-- [ ] Re-export temporal o eliminar `sugcore/rules/instruction.ts` si queda vacío
+- [x] Crear `engines/completion/buildCompletionInstruction.ts` + tests + barrel
+- [x] Actualizar imports en `copilot`, `ollama`, `opencode`
+- [x] Eliminar `sugcore/rules/instruction.ts` y `sugcore/README.md` (carpeta vacía)
 
-**Criterio de hecho:** 0 imports de `sugcore/rules/instruction` salvo re-export documentado.
+**Criterio de hecho:** 0 imports de `sugcore/` en `src/`.
 
 #### QD.3 — Verificar regresión
 
-- [ ] `npm run check` — 0 errores
+- [x] `npm run check` — 0 errores
 
-**Criterio de hecho:** Build, lint, typecheck y 285 tests en verde.
+**Criterio de hecho:** Build, lint, typecheck y tests en verde.
 
 ---
 
@@ -197,9 +194,9 @@ Verificación en código: canónicos `consLogLimits`, `typeLog`, `guardLogLevel`
 | QB.3 | Migrar consumidores (routing, ui, tests) | 🟢 Completado |
 | QB.4 | Verificar regresión (`npm run check`) | 🟢 Completado |
 | QC | Shims `system/log/` (limpieza) | 🟢 Completado (QA.7) |
-| QD.1 | Decidir destino de `buildCompletionInstruction` | ⚪ Pendiente |
-| QD.2 | Migrar símbolo al destino elegido | ⚪ Pendiente |
-| QD.3 | Verificar regresión (`npm run check`) | ⚪ Pendiente |
+| QD.1 | Decidir destino de `buildCompletionInstruction` | 🟢 Completado (opción b) |
+| QD.2 | Migrar símbolo a `engines/completion/` | 🟢 Completado |
+| QD.3 | Verificar regresión (`npm run check`) | 🟢 Completado |
 
 ---
 
@@ -226,3 +223,4 @@ Verificación en código: canónicos `consLogLimits`, `typeLog`, `guardLogLevel`
 | 2026-05-18 | QA.7 | Shims eliminados; barrel e implementación apuntan a `protocols/`. `protocols/README.md` actualizado. |
 | 2026-05-18 | — | Revisión post-QA: fases QB y QD desglosadas con tabla de estado; QC fusionada en QA.7. |
 | 2026-05-18 | QB | **QB completa:** `guardModelRouting.ts`; re-exports en engines; `ui/` ya no importa `engines/provider` por guards. `npm run check` — 287 tests. |
+| 2026-05-18 | QD | **QD completa:** `buildCompletionInstruction` → `engines/completion/`; `sugcore/` eliminado. Decisión (b). |
