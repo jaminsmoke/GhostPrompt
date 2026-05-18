@@ -4,7 +4,7 @@
 
 import * as vitest from 'vitest';
 
-import { looksLikeOpencodeModelId } from './routingModelId';
+import { looksLikeOpencodeModelId } from '../../../system/internals/protocols/guards/guardModelRouting';
 
 vitest.describe('looksLikeOpencodeModelId', () => {
   vitest.it('detecta formato provider/model', () => {

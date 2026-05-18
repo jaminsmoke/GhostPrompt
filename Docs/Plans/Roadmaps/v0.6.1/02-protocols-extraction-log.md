@@ -118,29 +118,30 @@ Verificación en código: canónicos `consLogLimits`, `typeLog`, `guardLogLevel`
 
 #### QB.1 — Crear guard canónico en `protocols/`
 
-- [ ] Crear `protocols/guards/guardModelRouting.ts` (o `guardOllamaModelId.ts` + `guardOpencodeModelId.ts`) con las dos funciones
-- [ ] Exportar desde `protocols/guards/index.ts`
+- [x] Crear `protocols/guards/guardModelRouting.ts` con `looksLikeOllamaModelId` y `looksLikeOpencodeModelId`
+- [x] Exportar desde `protocols/guards/index.ts`
+- [x] Tests en `protocols/guards/guardModelRouting.test.ts`
 
 **Criterio de hecho:** Funciones puras en `protocols/guards/` sin imports de `engines/` ni `vscode`.
 
 #### QB.2 — Re-export temporal en engines
 
-- [ ] `engines/provider/ollama/routing/routingModelId.ts` → re-exporta `looksLikeOllamaModelId`
-- [ ] `engines/provider/opencode/routing/routingModelId.ts` → re-exporta `looksLikeOpencodeModelId`
+- [x] `engines/provider/ollama/routing/routingModelId.ts` → re-exporta `looksLikeOllamaModelId`
+- [x] `engines/provider/opencode/routing/routingModelId.ts` → re-exporta `looksLikeOpencodeModelId`
 
 **Criterio de hecho:** Rutas legacy siguen resolviendo durante la migración de imports.
 
 #### QB.3 — Migrar consumidores
 
-- [ ] `engines/routing/resolveCompletionSource.ts`
-- [ ] `ui/provider/MiniInputViewProvider.ts`
-- [ ] Tests (`routingModelId.test.ts`, `resolveCompletionSource.test.ts`, mocks en `MiniInputViewProvider.test.ts`)
+- [x] `engines/routing/resolveCompletionSource.ts`
+- [x] `ui/provider/MiniInputViewProvider.ts`
+- [x] Tests (`routingModelId.test.ts`, `resolveCompletionSource.test.ts`, mocks en `MiniInputViewProvider.test.ts`)
 
 **Criterio de hecho:** 0 imports de `ui/` → `engines/provider/` solo por estos guards.
 
 #### QB.4 — Verificar regresión
 
-- [ ] `npm run check` — 0 errores
+- [x] `npm run check` — 0 errores (287 tests)
 
 **Criterio de hecho:** Build, lint, typecheck y 285 tests en verde.
 
@@ -191,10 +192,10 @@ Verificación en código: canónicos `consLogLimits`, `typeLog`, `guardLogLevel`
 
 | Fase | Descripción | Estado |
 | ---- | ----------- | ------ |
-| QB.1 | Crear `guardModelRouting` en `protocols/` | ⚪ Pendiente |
-| QB.2 | Re-export temporal en `engines/provider/*/routing/` | ⚪ Pendiente |
-| QB.3 | Migrar consumidores (routing, ui, tests) | ⚪ Pendiente |
-| QB.4 | Verificar regresión (`npm run check`) | ⚪ Pendiente |
+| QB.1 | Crear `guardModelRouting` en `protocols/` | 🟢 Completado |
+| QB.2 | Re-export temporal en `engines/provider/*/routing/` | 🟢 Completado |
+| QB.3 | Migrar consumidores (routing, ui, tests) | 🟢 Completado |
+| QB.4 | Verificar regresión (`npm run check`) | 🟢 Completado |
 | QC | Shims `system/log/` (limpieza) | 🟢 Completado (QA.7) |
 | QD.1 | Decidir destino de `buildCompletionInstruction` | ⚪ Pendiente |
 | QD.2 | Migrar símbolo al destino elegido | ⚪ Pendiente |
@@ -224,3 +225,4 @@ Verificación en código: canónicos `consLogLimits`, `typeLog`, `guardLogLevel`
 | 2026-05-18 | QA | **QA completa (QA.1–QA.6):** canónicos `consLogLimits`, `typeLog`, `guardLogLevel`; barrels; shims temporales; webview sin `LogLevel` local. `npm run check` — 285 tests. |
 | 2026-05-18 | QA.7 | Shims eliminados; barrel e implementación apuntan a `protocols/`. `protocols/README.md` actualizado. |
 | 2026-05-18 | — | Revisión post-QA: fases QB y QD desglosadas con tabla de estado; QC fusionada en QA.7. |
+| 2026-05-18 | QB | **QB completa:** `guardModelRouting.ts`; re-exports en engines; `ui/` ya no importa `engines/provider` por guards. `npm run check` — 287 tests. |

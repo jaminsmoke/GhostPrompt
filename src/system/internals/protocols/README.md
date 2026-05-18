@@ -32,6 +32,8 @@ protocols/
 │   ├── guardProviderId.ts
 │   ├── guardProviderId.test.ts
 │   ├── guardLogLevel.ts
+│   ├── guardModelRouting.ts
+│   ├── guardModelRouting.test.ts
 │   └── index.ts
 ├── types/
 │   ├── typeCompletion.ts

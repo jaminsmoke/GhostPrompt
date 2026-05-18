@@ -4,8 +4,10 @@
  * Selecciona la fuente de completado (`copilot`, `opencode`, `ollama`) en función del
  * modelo solicitado y de las fuentes habilitadas por configuración.
  */
-import { looksLikeOllamaModelId } from '../provider/ollama/routing/routingModelId';
-import { looksLikeOpencodeModelId } from '../provider/opencode/routingModelId';
+import {
+  looksLikeOllamaModelId,
+  looksLikeOpencodeModelId,
+} from '../../system/internals/protocols/guards/guardModelRouting';
 
 import type { ProviderId } from '../../system/internals/protocols/state/provider';
 

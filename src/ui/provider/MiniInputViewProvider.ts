@@ -44,8 +44,8 @@ import {
 import { buildAndPostGhostPromptSettings } from '../../api/settings/settingsPostMessage';
 import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from '../../destinations/vsOpenCodeX/vsOpenCodeXDestination';
 import { ollamaModelManager } from '../../engines/provider/ollama';
-import { looksLikeOllamaModelId } from '../../engines/provider/ollama/routing/routingModelId';
 import { readGhostPromptSuggestionModelPolicy } from '../../system/internals/config/readGhostPromptSuggestionModelPolicy';
+import { looksLikeOllamaModelId } from '../../system/internals/protocols/guards/guardModelRouting';
 import { getLogger } from '../../system/log';
 import { providerStatusManager } from '../../system/runtime/providerStatusManager';
 import {

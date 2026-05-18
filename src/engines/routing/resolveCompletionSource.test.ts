@@ -3,22 +3,6 @@
  */
 
 import * as vitest from 'vitest';
-import { vi } from 'vitest';
-
-vi.mock('../provider/ollama/routing/routingModelId', () => ({
-  looksLikeOllamaModelId: (id: string) => id.includes(':') && !id.includes('/'),
-}));
-
-vi.mock('../provider/opencode/routingModelId', () => ({
-  looksLikeOpencodeModelId: (id: string) => {
-    const t = id.trim();
-    const slash = t.indexOf('/');
-    if (slash <= 0 || slash === t.length - 1) {
-      return false;
-    }
-    return !t.includes('//') && t.split('/').length === 2;
-  },
-}));
 
 import { resolveCompletionSourceForRequest } from './resolveCompletionSource';
 
