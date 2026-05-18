@@ -19,6 +19,6 @@ export class MockCancellationTokenSource {
    * @returns {void}
    */
   public dispose(): void {
-    /* no-op */
+    /* No-op */
   }
 }

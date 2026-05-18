@@ -54,7 +54,7 @@ function evictStaleSessions(): void {
   sessionPool = sessionPool.filter((e) => {
     if (isSessionStale(e)) {
       deleteSessionInternal(e.sessionId, client).catch(() => {
-        /* evicción en segundo plano */
+        /* Evicción en segundo plano */
       });
       return false;
     }

@@ -250,7 +250,7 @@ class OllamaModelManager {
         ? OllamaModelManager.execAsync(`ollama stop ${target}`, OLLAMA_CLI_LONG_TIMEOUT_MS)
         : OllamaModelManager.execAsync('ollama stop', OLLAMA_CLI_LONG_TIMEOUT_MS));
     } catch {
-      // ollama stop puede fallar si el modelo no estaba corriendo — se ignora
+      // Ollama stop puede fallar si el modelo no estaba corriendo — se ignora
     }
 
     if (this._ollamaProcess && !this._ollamaProcess.killed) {

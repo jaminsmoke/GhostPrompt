@@ -62,7 +62,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration('ghostPrompt')) {
         MiniInputViewProvider.refreshSettingsAllViews().catch(() => {
-          /* ignore */
+          /* Ignore */
         });
       }
       if (e.affectsConfiguration('ghostPrompt.agentDestination')) {
@@ -91,10 +91,10 @@ export function activate(context: vscode.ExtensionContext): void {
  */
 export function deactivate(): void {
   disposeGhostPromptLogging().catch(() => {
-    /* ignore */
+    /* Ignore */
   });
   resetClient();
   ollamaModelManager.stopAll().catch(() => {
-    /* ignore */
+    /* Ignore */
   });
 }

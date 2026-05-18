@@ -41,8 +41,6 @@ const CORE_DEFERRED_SKIP = new Set([
   'no-restricted-syntax',
   'no-restricted-modules',
   'no-restricted-exports',
-  'no-inline-comments',
-  'capitalized-comments',
   'id-match',
   'id-blacklist',
   'id-denylist',
@@ -948,6 +946,15 @@ const coreDeferredTranche11Rules = {
 };
 
 /**
+ * Grupo 25 — core diferidas (tranche 12): comentarios en línea y mayúscula inicial.
+ * @type {import('eslint').Linter.RulesRecord}
+ */
+const coreDeferredTranche12Rules = {
+  'no-inline-comments': 'error',
+  'capitalized-comments': ['error', 'always'],
+};
+
+/**
  * Grupo 13 — unicorn tranche 3 (antes en `UNICORN_PERMANENT_SKIP`).
  * @type {import('eslint').Linter.RulesRecord}
  */
@@ -1046,6 +1053,7 @@ const sharedActiveRules = {
   ...coreDeferredTranche9Rules,
   ...coreDeferredTranche10Rules,
   ...coreDeferredTranche11Rules,
+  ...coreDeferredTranche12Rules,
   ...typescriptStylisticCompanionRules,
   ...typescriptRecommendedTypeCheckedCompanionRules,
   ...typescriptStrictTypeCheckedCompanionRules,
@@ -1089,6 +1097,7 @@ module.exports = {
   coreDeferredTranche9Rules,
   coreDeferredTranche10Rules,
   coreDeferredTranche11Rules,
+  coreDeferredTranche12Rules,
   typescriptRules,
   typescriptRecommendedRules,
   typescriptStylisticRules,

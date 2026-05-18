@@ -150,7 +150,7 @@ class LogManager implements LogEmitSink {
     const entries: LogEntry[] = snapshotGroups.flat();
     for (const e of entries) {
       this.fileTransport.write(e).catch(() => {
-        /* ignore */
+        /* Ignore */
       });
     }
     try {
@@ -244,7 +244,7 @@ class LogManager implements LogEmitSink {
     }
     for (const t of this.transports) {
       t.write(entry).catch(() => {
-        /* ignore */
+        /* Ignore */
       });
     }
   }
@@ -287,7 +287,7 @@ function clearLogManagerSingleton(): void {
 
 const inactiveSink: LogEmitSink = {
   emit() {
-    /* sink inactivo antes de initGhostPromptLogging */
+    /* Sink inactivo antes de initGhostPromptLogging */
   },
 };
 const inactiveLoggers = new Map<string, Logger>();
@@ -310,7 +310,7 @@ export function initGhostPromptLogging(context: vscode.ExtensionContext): void {
     }),
     new vscode.Disposable(() => {
       getLogManagerSingleton()?.disposeAll().catch(() => {
-        /* ignore */
+        /* Ignore */
       });
       clearLogManagerSingleton();
     }),

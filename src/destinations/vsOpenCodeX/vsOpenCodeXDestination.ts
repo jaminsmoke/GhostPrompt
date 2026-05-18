@@ -72,12 +72,12 @@ export function notifyIfVsxAgentDestinationWithoutVsOpenCodeX(): void {
         Promise.resolve(
           vscode.commands.executeCommand('workbench.action.openSettings', 'ghostPrompt.agentDestination'),
         ).catch(() => {
-          /* ignore */
+          /* Ignore */
         });
       }
     })
     .catch(() => {
-      /* ignore */
+      /* Ignore */
     });
 }
 

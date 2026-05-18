@@ -58,7 +58,7 @@ function notify(text: string, key: string): void {
     return;
   }
   Promise.resolve(vscode.window.showWarningMessage(`GhostPrompt: ${text}`)).catch(() => {
-    /* ignore */
+    /* Ignore */
   });
 }
 

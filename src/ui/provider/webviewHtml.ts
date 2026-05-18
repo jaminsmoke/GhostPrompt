@@ -55,7 +55,7 @@ export function buildGhostPromptWebviewHtml(params: GhostPromptWebviewHtmlParame
     },
   );
   // Vite emite el <meta CSP> en varias líneas; si no coincide el reemplazo, VS Code deja
-  // script-src 'unsafe-inline' y bloquea los bundles servidos vía asWebviewUri (vscode-cdn).
+  // Script-src 'unsafe-inline' y bloquea los bundles servidos vía asWebviewUri (vscode-cdn).
   const cspMetaPattern = /<meta\s[^>]*?http-equiv\s*=\s*["']content-security-policy["'][^>]*>/gius;
   const htmlWithCsp = htmlWithAssets.replaceAll(
     cspMetaPattern,

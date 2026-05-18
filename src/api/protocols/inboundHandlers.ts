@@ -103,7 +103,7 @@ export async function handleGhostPromptInboundUpdateSetting(
     typeof message.value === 'string'
   ) {
     dispatchServices.onSettingChanged(message.key, message.value).catch(() => {
-      /* best-effort refresh */
+      /* Best-effort refresh */
     });
   }
 }

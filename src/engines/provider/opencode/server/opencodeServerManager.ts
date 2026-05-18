@@ -41,7 +41,7 @@ export function getOpenCodeConnectionConfig(): OpenCodeConnectionConfig {
         authToken,
       };
     } catch {
-      // fallback below
+      // Fallback below
     }
   }
 

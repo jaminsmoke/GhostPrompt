@@ -105,7 +105,7 @@ export class QueuedNdjsonFileTransport {
     queueMicrotask(() => {
       this.flushScheduled = false;
       this.flushOnce().catch(() => {
-        /* ignore */
+        /* Ignore */
       });
     });
   }
@@ -152,7 +152,7 @@ export class QueuedNdjsonFileTransport {
     try {
       existing = Buffer.from(await vscode.workspace.fs.readFile(ndjsonUri));
     } catch {
-      // archivo nuevo
+      // Archivo nuevo
     }
     const next = Buffer.concat([existing, Buffer.from(lines, 'utf8')]);
     await vscode.workspace.fs.writeFile(ndjsonUri, next);

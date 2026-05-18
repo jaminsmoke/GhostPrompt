@@ -37,7 +37,7 @@ export function useGhostPromptProviderQueries() {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['providerStatus'] }).catch(() => {
-        /* ignore */
+        /* Ignore */
       });
     },
   });
@@ -51,7 +51,7 @@ export function useGhostPromptProviderQueries() {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['providerStatus'] }).catch(() => {
-        /* ignore */
+        /* Ignore */
       });
     },
   });

@@ -192,7 +192,7 @@ async function streamGenerate(
               options.onStreamPreview?.(nextText);
             }
           } catch {
-            // skip malformed lines
+            // Skip malformed lines
           }
         }
       }
