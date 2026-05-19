@@ -135,10 +135,11 @@ vitest.describe('runGhostPromptSuggestPipeline', () => {
     );
   });
 
-  vitest.it('post-procesado: negativa del LM se emite como empty content-blocked', async () => {
+  vitest.it('passthrough: negativa del LM llega al webview sin filtrar (diagnóstico v0.6.2)', async () => {
+    const refusal = "I'm sorry, I can't assist with that.";
     requestCompletion.mockResolvedValue({
       kind: 'suggestion',
-      suggestion: "I'm sorry, I can't assist with that.",
+      suggestion: refusal,
       model: { id: 'gpt', label: 'GPT', tier: 'included' },
     });
     const deps = minimalDeps();
@@ -146,17 +147,18 @@ vitest.describe('runGhostPromptSuggestPipeline', () => {
     await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 51 }, deps);
     vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
       vitest.expect.objectContaining({
-        type: 'empty',
-        reason: 'content-blocked',
+        type: 'suggestion',
+        suggestion: refusal,
         captureId: 51,
       }),
     );
   });
 
-  vitest.it('post-procesado: acota suggestion según getMaxSuggestionChars', async () => {
+  vitest.it('passthrough: no recorta suggestion según getMaxSuggestionChars', async () => {
+    const full = 'abcdefghijklmnopqrstuvwxyz';
     requestCompletion.mockResolvedValue({
       kind: 'suggestion',
-      suggestion: 'abcdefghijklmnopqrstuvwxyz',
+      suggestion: full,
       model: { id: 'gpt', label: 'GPT', tier: 'included' },
     });
     const deps = minimalDeps({
@@ -167,7 +169,7 @@ vitest.describe('runGhostPromptSuggestPipeline', () => {
     vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
       vitest.expect.objectContaining({
         type: 'suggestion',
-        suggestion: 'abcdefghij',
+        suggestion: full,
         captureId: 52,
       }),
     );

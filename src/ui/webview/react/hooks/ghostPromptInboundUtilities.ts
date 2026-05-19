@@ -36,6 +36,40 @@ export type GhostPromptInboundCaptureCarrier = {
 };
 
 /**
+ * Invalida la generación actual del borrador (cada edición local del usuario).
+ * Las respuestas inbound con `captureId` menor deben descartarse hasta el próximo `suggest`.
+ * @param {number} captureReference - Valor actual del ref de generación del borrador.
+ * @returns {number} Nuevo `captureId` de generación del borrador.
+ */
+export function bumpDraftCaptureGeneration(captureReference: number): number {
+  return captureReference + 1;
+}
+
+/** Acciones mínimas para aplicar un borrador remoto (hydrate / sync entre vistas). */
+export type RemoteDraftRelayActions = {
+  getCaptureId: () => number;
+  setCaptureId: (value: number) => void;
+  setSuggestion: (value: string) => void;
+  setIsLoading: (value: boolean) => void;
+  armSkipSuggestionOnDraftRelay: () => void;
+  setText: (value: string) => void;
+};
+
+/**
+ * Sincroniza texto remoto invalidando suggestion, loading y capturas in-flight previas.
+ * @param {string} text - Borrador compartido desde el host u otra vista.
+ * @param {RemoteDraftRelayActions} actions - Setters del webview.
+ * @returns {void}
+ */
+export function applyRemoteDraftRelay(text: string, actions: RemoteDraftRelayActions): void {
+  actions.setCaptureId(bumpDraftCaptureGeneration(actions.getCaptureId()));
+  actions.setSuggestion('');
+  actions.setIsLoading(false);
+  actions.armSkipSuggestionOnDraftRelay();
+  actions.setText(text);
+}
+
+/**
  * Actualiza el ref de correlación y decide si el mensaje entrante debe descartar la respuesta obsoleta.
  * @param {number} refBefore - Ref anterior de captura.
  * @param {GhostPromptInboundCaptureCarrier} message - Mensaje entrante con posible captureId/broadcast.

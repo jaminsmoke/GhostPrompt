@@ -33,9 +33,10 @@ export default defineConfig({
     rollupOptions: {
       input: path.resolve(__dirname, 'src/ui/webview/react/index.html'),
       output: {
+        // IIFE + entrada única → Vite 8 usa codeSplitting: false (un solo JS para el webview).
+        // No usar inlineDynamicImports (deprecado; genera WARN si codeSplitting ya es false).
         format: 'iife',
         name: 'GhostPromptWebview',
-        inlineDynamicImports: true,
         entryFileNames: 'assets/[name].js',
       },
     },

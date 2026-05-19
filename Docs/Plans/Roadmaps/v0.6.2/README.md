@@ -7,6 +7,7 @@ Consolidación de límites **host ↔ webview** y cierre de deuda arquitectónic
 | Orden | Documento | Descripción |
 | ----- | --------- | ----------- |
 | 1 | [01-consolidation-boundary-webview.md](./01-consolidation-boundary-webview.md) | Fases **FA–FE**: shims, parse webview, tipos UI, docs, cierre release |
+| 2 | [02-chat-webview-presuggestions.md](./02-chat-webview-presuggestions.md) | Fases **FF–FJ**: stale captures, sync dual-view, overlay ghost, UX chat, QA |
 
 ## Contexto
 
@@ -37,6 +38,9 @@ Límites de capa: [`Docs/Owners.md`](../../Owners.md).
 | **FC** | Afinar barrel de tipos React (`ui/webview/react/types.ts`) | Completado |
 | **FD** | Docs / CHANGELOG / referencias `api/protocols` | Completado |
 | **FE** | Verificación release 0.6.2 | En curso (VSIX `0.6.2` empaquetado; smoke manual pendiente) |
+| **FF** | Invalidación captureId stale en edición local | Completado |
+| **FG** | Limpieza suggestion en draftSync / draftHydrate dual-view | Completado |
+| **FH–FJ** | Overlay ghost, UX chat, QA | Planificado |
 
 ## Verificación habitual (cada fase)
 

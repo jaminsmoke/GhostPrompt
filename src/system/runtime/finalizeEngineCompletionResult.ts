@@ -1,32 +1,26 @@
 /**
- * @file Post-procesado del resultado crudo del motor LM antes del broadcast (acotación y rechazo).
+ * @file Post-procesado del resultado crudo del motor LM antes del broadcast.
+ *
+ * Modo diagnóstico v0.6.2 (colocación ghost): passthrough sin acotación ni heurística de rechazo.
+ * Reintroducir `boundSuggestionText` / `looksLikeCopilotRefusal` cuando el formato crudo esté validado.
  */
-import { DEFAULT_MAX_SUGGESTION_CHARS } from '../internals/protocols/constants/consPipelineDefaults';
-import { boundSuggestionText } from '../internals/protocols/guards/guardBoundSuggestion';
-import { looksLikeCopilotRefusal } from '../internals/protocols/guards/guardCopilotLm';
-
 import type { CompletionResult } from '../internals/protocols/types';
 
 /**
- * Aplica límites de producto al texto devuelto por el motor (sin mutar vacíos ni errores).
+ * Devuelve el resultado del motor sin transformar el texto de suggestion (solo vacío explícito).
  * @param {CompletionResult} result - Resultado tal cual devuelve `EngineProvider.requestCompletion`.
- * @param {number} [maxSuggestionChars] - Tope de caracteres para la sugerencia enviada al webview.
- * @returns {CompletionResult} Resultado listo para UI y logs.
+ * @param {number} [_maxSuggestionChars] - Reservado; sin efecto en modo passthrough.
+ * @returns {CompletionResult} Mismo resultado o `empty-response` si la suggestion es cadena vacía.
  */
 export function finalizeEngineCompletionResult(
   result: CompletionResult,
-  maxSuggestionChars: number = DEFAULT_MAX_SUGGESTION_CHARS,
+  _maxSuggestionChars?: number,
 ): CompletionResult {
   if (result.kind !== 'suggestion') {
     return result;
   }
-  const raw = result.suggestion;
-  if (looksLikeCopilotRefusal(raw)) {
-    return { kind: 'empty', reason: 'content-blocked' };
-  }
-  const bounded = boundSuggestionText(raw, maxSuggestionChars);
-  if (!bounded) {
+  if (result.suggestion.length === 0) {
     return { kind: 'empty', reason: 'empty-response' };
   }
-  return { ...result, suggestion: bounded };
+  return result;
 }

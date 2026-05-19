@@ -17,12 +17,16 @@ import type * as UseGhostPromptModule from './useGhostPrompt';
 let isDraftSyncForAnotherView: typeof UseGhostPromptModule.isDraftSyncForAnotherView;
 let shouldSkipSuggestionOnRemoteDraft: typeof UseGhostPromptModule.shouldSkipSuggestionOnRemoteDraft;
 let ghostPromptApplyInboundCaptureReference: typeof UseGhostPromptModule.ghostPromptApplyInboundCaptureReference;
+let bumpDraftCaptureGeneration: typeof UseGhostPromptModule.bumpDraftCaptureGeneration;
+let applyRemoteDraftRelay: typeof UseGhostPromptModule.applyRemoteDraftRelay;
 
 vitest.beforeAll(async () => {
   ({
     isDraftSyncForAnotherView,
     shouldSkipSuggestionOnRemoteDraft,
     ghostPromptApplyInboundCaptureReference,
+    bumpDraftCaptureGeneration,
+    applyRemoteDraftRelay,
   } = await import('./useGhostPrompt'));
 });
 
@@ -126,6 +130,81 @@ vitest.describe('useGhostPrompt skip suggestion guard', () => {
     } as const;
 
     vitest.expect(shouldSkipSuggestionOnRemoteDraft(message, 'current-view')).toBe(false);
+  });
+});
+
+const IN_FLIGHT_CAPTURE_ID = 1;
+const AFTER_EDIT_CAPTURE_ID = 2;
+const AFTER_REQUEST_CAPTURE_ID = 3;
+const REMOTE_DRAFT_START_CAPTURE = 6;
+
+vitest.describe('applyRemoteDraftRelay (fase FG)', () => {
+  vitest.it('limpia suggestion, loading, invalida capture y arma skip debounce', () => {
+    let captureId = REMOTE_DRAFT_START_CAPTURE;
+    let suggestion = 'stale';
+    let isLoading = true;
+    let text = 'old';
+    let skipArmed = false;
+
+    applyRemoteDraftRelay('remote text', {
+      getCaptureId: () => captureId,
+      setCaptureId: (value) => {
+        captureId = value;
+      },
+      setSuggestion: (value) => {
+        suggestion = value;
+      },
+      setIsLoading: (value) => {
+        isLoading = value;
+      },
+      armSkipSuggestionOnDraftRelay: () => {
+        skipArmed = true;
+      },
+      setText: (value) => {
+        text = value;
+      },
+    });
+
+    vitest.expect(text).toBe('remote text');
+    vitest.expect(suggestion).toBe('');
+    vitest.expect(isLoading).toBe(false);
+    vitest.expect(skipArmed).toBe(true);
+    vitest.expect(captureId).toBe(REMOTE_DRAFT_START_CAPTURE + 1);
+  });
+});
+
+vitest.describe('bumpDraftCaptureGeneration (fase FF)', () => {
+  vitest.it('incrementa de forma monotónica', () => {
+    vitest.expect(bumpDraftCaptureGeneration(0)).toBe(1);
+    vitest.expect(bumpDraftCaptureGeneration(IN_FLIGHT_CAPTURE_ID)).toBe(AFTER_EDIT_CAPTURE_ID);
+  });
+
+  vitest.it('tras editar local, inbound con captureId anterior no repinta suggestion', () => {
+    let captureReference = IN_FLIGHT_CAPTURE_ID;
+
+    captureReference = bumpDraftCaptureGeneration(captureReference);
+
+    const staleTypes = [
+      { type: 'suggestion', suggestion: 'stale', captureId: IN_FLIGHT_CAPTURE_ID },
+      { type: 'suggestion-stream', text: 'stale stream', captureId: IN_FLIGHT_CAPTURE_ID },
+      { type: 'loading', captureId: IN_FLIGHT_CAPTURE_ID, broadcast: true },
+      { type: 'empty', reason: 'too-short', captureId: IN_FLIGHT_CAPTURE_ID },
+      { type: 'error', message: 'fail', captureId: IN_FLIGHT_CAPTURE_ID },
+    ] as const;
+
+    for (const payload of staleTypes) {
+      const result = ghostPromptApplyInboundCaptureReference(captureReference, payload);
+      vitest.expect(result.drop, payload.type).toBe(true);
+    }
+
+    captureReference = bumpDraftCaptureGeneration(captureReference);
+    const fresh = ghostPromptApplyInboundCaptureReference(captureReference, {
+      type: 'suggestion',
+      suggestion: 'fresh',
+      captureId: AFTER_REQUEST_CAPTURE_ID,
+      broadcast: true,
+    } as const);
+    vitest.expect(fresh.drop).toBe(false);
   });
 });
 

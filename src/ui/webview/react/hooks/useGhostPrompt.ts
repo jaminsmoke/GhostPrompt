@@ -2,6 +2,8 @@
  * @file Hook React para el estado y comunicación del webview GhostPrompt.
  */
 export {
+  applyRemoteDraftRelay,
+  bumpDraftCaptureGeneration,
   ghostPromptApplyInboundCaptureReference,
   isDraftSyncForAnotherView,
   shouldSkipSuggestionOnRemoteDraft,

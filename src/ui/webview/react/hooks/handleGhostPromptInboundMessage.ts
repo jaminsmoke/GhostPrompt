@@ -2,9 +2,14 @@
  * @file Despacho de mensajes inbound del host hacia el estado del webview GhostPrompt.
  */
 import { parseWebviewInboundMessage } from '../validators/parseWebviewInbound';
-import { DEFAULT_SUGGESTION_DEBOUNCE_MS, MIN_SUGGESTION_DEBOUNCE_MS } from '../webviewProtocolConstants';
+import {
+  DEFAULT_SUGGESTION_DEBOUNCE_MS,
+  MIN_SUGGESTION_DEBOUNCE_MS,
+  WEBVIEW_DEBUG_TEXT_PREVIEW_CHARS,
+} from '../webviewProtocolConstants';
 
 import {
+  applyRemoteDraftRelay,
   ghostPromptApplyInboundCaptureReference,
   shouldSkipSuggestionOnRemoteDraft,
   type GhostPromptInboundCaptureCarrier,
@@ -102,7 +107,12 @@ function applyGhostPromptSuggestionInbound(
 ): void {
   switch (message.type) {
     case 'suggestion': {
-      handler.setSuggestion(message.suggestion || '');
+      handler.logToHost('debug', 'suggestionInbound', {
+        chars: message.suggestion.length,
+        preview: message.suggestion.slice(0, WEBVIEW_DEBUG_TEXT_PREVIEW_CHARS),
+        captureId: message.captureId,
+      });
+      handler.setSuggestion(message.suggestion);
       handler.setIsLoading(false);
       handler.setStatus('Suggestion recibida. Presiona Tab para aceptar o Envía para enviar.');
       break;
@@ -162,18 +172,14 @@ function applyGhostPromptDraftAndProviderInbound(
       break;
     }
     case 'draftHydrate': {
-      if (shouldSkipSuggestionOnRemoteDraft(message, handler.viewId)) {
-        handler.armSkipSuggestionOnDraftRelay();
-      }
-      handler.setText(message.text);
+      applyRemoteDraftRelay(message.text, handler);
       break;
     }
     case 'draftSync': {
       if (!shouldSkipSuggestionOnRemoteDraft(message, handler.viewId)) {
         return;
       }
-      handler.armSkipSuggestionOnDraftRelay();
-      handler.setText(message.text);
+      applyRemoteDraftRelay(message.text, handler);
       break;
     }
     case 'providerStatus': {

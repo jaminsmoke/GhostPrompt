@@ -47,6 +47,7 @@ export interface GhostPromptUiState {
   setIsLoading: Dispatch<SetStateAction<boolean>>;
   isConfigLoaded: boolean;
   setIsConfigLoaded: Dispatch<SetStateAction<boolean>>;
+  /** Generación monotónica del borrador local; sube en cada edición y otra vez al enviar `suggest`. */
   currentCaptureId: RefObject<number>;
   debounceTimer: RefObject<number | false>;
   skipSuggestionOnDraftSync: RefObject<boolean>;
@@ -88,6 +89,7 @@ export function useGhostPromptUiState(): GhostPromptUiState {
   const [debugSuggestions, setDebugSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isConfigLoaded, setIsConfigLoaded] = useState(false);
+  /** Correlación draft: invalidar en cada tecla; el host devuelve el mismo id en loading/suggestion/empty/error. */
   const currentCaptureId = useRef(0);
   const debounceTimer = useRef<number | false>(false);
   const skipSuggestionOnDraftSync = useRef(false);

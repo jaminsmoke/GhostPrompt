@@ -3,6 +3,7 @@
  */
 import { useCallback, type ChangeEvent } from 'react';
 
+import { bumpDraftCaptureGeneration } from './ghostPromptInboundUtilities';
 import { logToHost } from './ghostPromptLog';
 import { postToHost } from './ghostPromptPostMessage';
 import { useGhostPromptEffects } from './useGhostPromptEffects';
@@ -57,6 +58,8 @@ export function useGhostPromptHandlers(input: GhostPromptHandlersInput) {
     setDebugSuggestions,
     skipSuggestionOnDraftSync,
     textareaReference,
+    currentCaptureId,
+    setIsLoading,
   } = ui;
 
   const { syncTextareaHeight } = useGhostPromptEffects({
@@ -75,9 +78,12 @@ export function useGhostPromptHandlers(input: GhostPromptHandlersInput) {
   const handleTextChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     try {
       const nextText = event.target.value;
-      logToHost('debug', 'textChange', { length: nextText.length });
+      const nextCaptureId = bumpDraftCaptureGeneration(currentCaptureId.current);
+      currentCaptureId.current = nextCaptureId;
+      logToHost('debug', 'textChange', { length: nextText.length, captureId: nextCaptureId });
       skipSuggestionOnDraftSync.current = false;
       setSuggestion('');
+      setIsLoading(false);
       setText(nextText);
       if (viewId) {
         postToHost({ type: 'draftChanged', text: nextText, originViewId: viewId });

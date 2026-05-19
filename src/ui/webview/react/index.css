@@ -47,3 +47,30 @@ body {
   background: var(--vscode-button-background);
   color: var(--vscode-button-foreground);
 }
+
+/* Prompt field: textarea y ghost comparten celda grid; tipografía heredada de VS Code. */
+.gp-prompt-field {
+  font-family: var(--vscode-font-family, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--vscode-font-size, 13px);
+  line-height: 1.5;
+}
+
+.gp-prompt-field__editor {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* Capa ghost: scroll sincronizado con el textarea; scrollbar oculta. */
+.gp-prompt-ghost {
+  scrollbar-width: none;
+}
+
+.gp-prompt-ghost::-webkit-scrollbar {
+  display: none;
+}
+
+.gp-prompt-ghost__suggestion {
+  color: var(--vscode-input-foreground, #cccccc);
+  opacity: 0.55;
+}

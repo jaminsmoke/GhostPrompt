@@ -8,8 +8,7 @@ import { DEFAULT_MAX_SUGGESTION_CHARS } from '../internals/protocols/constants/c
 
 import { finalizeEngineCompletionResult } from './finalizeEngineCompletionResult';
 
-const TEST_TRIM_MAX_CHARS = 5;
-const TEST_PRESERVE_MODEL_MAX_CHARS = 10;
+const IGNORED_MAX_CHARS = 5;
 
 vitest.describe('finalizeEngineCompletionResult', () => {
   vitest.it('no altera empty ni error', () => {
@@ -27,23 +26,23 @@ vitest.describe('finalizeEngineCompletionResult', () => {
     });
   });
 
-  vitest.it('convierte rechazo típico del LM en content-blocked', () => {
+  vitest.it('passthrough: no filtra rechazos ni recorta (modo diagnóstico v0.6.2)', () => {
+    const refusal = "I'm sorry, I can't assist with that.";
     vitest.expect(
       finalizeEngineCompletionResult(
-        { kind: 'suggestion', suggestion: "I'm sorry, I can't assist with that." },
+        { kind: 'suggestion', suggestion: refusal },
         DEFAULT_MAX_SUGGESTION_CHARS,
       ),
-    ).toEqual({ kind: 'empty', reason: 'content-blocked' });
-  });
+    ).toEqual({ kind: 'suggestion', suggestion: refusal });
 
-  vitest.it('recorta la sugerencia al máximo configurado', () => {
+    const long = 'abcdefghijklmnopqrstuvwxyz';
     vitest.expect(
-      finalizeEngineCompletionResult({ kind: 'suggestion', suggestion: 'hello world' }, TEST_TRIM_MAX_CHARS),
-    ).toEqual({ kind: 'suggestion', suggestion: 'hello' });
+      finalizeEngineCompletionResult({ kind: 'suggestion', suggestion: long }, IGNORED_MAX_CHARS),
+    ).toEqual({ kind: 'suggestion', suggestion: long });
   });
 
-  vitest.it('vacío tras acotación emite empty-response', () => {
-    vitest.expect(finalizeEngineCompletionResult({ kind: 'suggestion', suggestion: 'text' }, 0)).toEqual({
+  vitest.it('vacío explícito emite empty-response', () => {
+    vitest.expect(finalizeEngineCompletionResult({ kind: 'suggestion', suggestion: '' }, 0)).toEqual({
       kind: 'empty',
       reason: 'empty-response',
     });
@@ -54,7 +53,7 @@ vitest.describe('finalizeEngineCompletionResult', () => {
     vitest.expect(
       finalizeEngineCompletionResult(
         { kind: 'suggestion', suggestion: 'ok', model },
-        TEST_PRESERVE_MODEL_MAX_CHARS,
+        DEFAULT_MAX_SUGGESTION_CHARS,
       ),
     ).toEqual({ kind: 'suggestion', suggestion: 'ok', model });
   });

@@ -8,6 +8,22 @@ import {
   WEBVIEW_TEXTAREA_MIN_HEIGHT_PX,
 } from '../webviewProtocolConstants';
 
+/** Contenedor grid: textarea + ghost comparten la misma celda. */
+export const GP_PROMPT_FIELD_CLASS = 'gp-prompt-field';
+
+/** Tipografía y padding compartidos (deben coincidir en textarea y capa ghost). */
+export const GP_PROMPT_FIELD_EDITOR_CLASS =
+  'gp-prompt-field__editor px-3 py-2 text-sm leading-6 whitespace-pre-wrap break-words [overflow-wrap:anywhere] font-[family-name:inherit] [font-size:inherit] min-w-0 w-full box-border m-0';
+
+/**
+ * True when a ref holds a mounted DOM node (not `false` sentinel nor React `null`).
+ * @param {HTMLElement | false | null | undefined} value - Ref current value.
+ * @returns {value is HTMLElement} Whether the value is a live element.
+ */
+export function isMountedElement(value: HTMLElement | false | null | undefined): value is HTMLElement {
+  return value instanceof HTMLElement;
+}
+
 interface PromptInputProperties {
   text: string;
   suggestion: string;
@@ -48,66 +64,118 @@ export function PromptInput(props: PromptInputProperties): React.JSX.Element {
     onAccept,
     onCursorCheck,
   } = props;
-  const ghostReference = useRef<HTMLPreElement | false>(false);
+  const ghostOverlayReference = useRef<HTMLDivElement | null>(null);
+  const fieldShellReference = useRef<HTMLDivElement | null>(null);
+
+  const showGhostOverlay = Boolean(suggestion) && text.length > 0;
+  const minHeightPx = compact ? WEBVIEW_TEXTAREA_COMPACT_MIN_HEIGHT_PX : WEBVIEW_TEXTAREA_MIN_HEIGHT_PX;
 
   const syncTextareaHeight = useCallback(() => {
     const input = textareaRef.current;
-    if (input === false) {
+    const shell = fieldShellReference.current;
+    if (!isMountedElement(input)) {
       return;
     }
     input.style.height = 'auto';
-    input.style.height = `${Math.max(
-      input.scrollHeight,
-      compact ? WEBVIEW_TEXTAREA_COMPACT_MIN_HEIGHT_PX : WEBVIEW_TEXTAREA_MIN_HEIGHT_PX,
-    )}px`;
-  }, [textareaRef, compact]);
+    const nextHeight = Math.max(input.scrollHeight, minHeightPx);
+    input.style.height = `${nextHeight}px`;
+    if (isMountedElement(shell)) {
+      shell.style.minHeight = `${nextHeight}px`;
+    }
+  }, [textareaRef, minHeightPx]);
 
-  useEffect(() => {
-    syncTextareaHeight();
-  }, [text, syncTextareaHeight]);
+  const syncGhostScrollbarGutter = useCallback(() => {
+    const input = textareaRef.current;
+    const ghost = ghostOverlayReference.current;
+    if (!isMountedElement(input) || !isMountedElement(ghost)) {
+      return;
+    }
+    const gutterPx = input.offsetWidth - input.clientWidth;
+    const inputStyle = globalThis.getComputedStyle(input);
+    const basePaddingRightPx = Number.parseFloat(inputStyle.paddingRight) || 0;
+    ghost.style.paddingRight = `${basePaddingRightPx + gutterPx}px`;
+  }, [textareaRef]);
 
   const syncScroll = useCallback(() => {
     const input = textareaRef.current;
-    const ghost = ghostReference.current;
-    if (input && ghost !== false) {
-      ghost.scrollTop = input.scrollTop;
-      ghost.scrollLeft = input.scrollLeft;
+    const ghost = ghostOverlayReference.current;
+    if (!isMountedElement(input) || !isMountedElement(ghost)) {
+      return;
     }
-  }, [textareaRef, ghostReference]);
+    ghost.scrollTop = input.scrollTop;
+    ghost.scrollLeft = input.scrollLeft;
+  }, [textareaRef]);
 
-  const ghostContent = useMemo(() => {
-    if (!suggestion || !text.trim()) {
+  const handleTextareaScroll = useCallback(() => {
+    syncScroll();
+    syncGhostScrollbarGutter();
+  }, [syncGhostScrollbarGutter, syncScroll]);
+
+  useEffect(() => {
+    syncTextareaHeight();
+    if (showGhostOverlay) {
+      syncGhostScrollbarGutter();
+      syncScroll();
+    }
+  }, [showGhostOverlay, text, suggestion, syncGhostScrollbarGutter, syncScroll, syncTextareaHeight]);
+
+  useEffect(() => {
+    const input = textareaRef.current;
+    let disconnectObserver: (() => void) | false = false;
+    if (isMountedElement(input) && showGhostOverlay) {
+      syncGhostScrollbarGutter();
+      const observer = new ResizeObserver(() => {
+        syncGhostScrollbarGutter();
+      });
+      observer.observe(input);
+      disconnectObserver = () => {
+        observer.disconnect();
+      };
+    }
+    return () => {
+      if (disconnectObserver) {
+        disconnectObserver();
+      }
+    };
+  }, [showGhostOverlay, syncGhostScrollbarGutter, textareaRef]);
+
+  const ghostOverlay = useMemo(() => {
+    if (!showGhostOverlay) {
       return false;
     }
     return (
-      <pre
-        ref={ghostReference as unknown as React.Ref<HTMLPreElement>}
-        className="absolute inset-px pointer-events-none m-0 px-3 py-2 whitespace-pre-wrap wrap-break-word text-sm leading-6 overflow-auto"
+      <div
+        ref={ghostOverlayReference}
+        className={`gp-prompt-ghost col-start-1 row-start-1 z-10 pointer-events-none overflow-auto ${GP_PROMPT_FIELD_EDITOR_CLASS}`}
         aria-hidden="true"
       >
-        <span className="opacity-0">{text}</span>
-        <span className="text-(--vscode-input-foreground)/70">{suggestion}</span>
-      </pre>
+        <span className="opacity-0 select-none">{text}</span>
+        <span className="gp-prompt-ghost__suggestion">{suggestion}</span>
+      </div>
     );
-  }, [suggestion, text]);
+  }, [showGhostOverlay, suggestion, text]);
+
+  const minHeightClass = compact ? 'min-h-16' : 'min-h-25';
 
   return (
-    <div className="relative mb-2">
-      {ghostContent}
+    <div
+      ref={fieldShellReference}
+      className={`${GP_PROMPT_FIELD_CLASS} relative mb-2 grid grid-cols-1 grid-rows-1 rounded-md border border-(--vscode-input-border) bg-(--vscode-input-background) focus-within:border-(--vscode-focusBorder) focus-within:ring-1 focus-within:ring-(--vscode-focusBorder) ${minHeightClass}`}
+    >
       <textarea
         ref={textareaRef as unknown as React.Ref<HTMLTextAreaElement>}
         id="prompt-input"
-        className={`w-full rounded-md border border-(--vscode-input-border) bg-(--vscode-input-background) px-3 py-2 text-sm leading-6 text-(--vscode-input-foreground) outline-none transition focus:border-(--vscode-focusBorder) focus:ring-1 focus:ring-(--vscode-focusBorder) resize-none ${compact ? 'min-h-16' : 'min-h-25'}`}
+        className={`gp-prompt-field__textarea col-start-1 row-start-1 z-0 block resize-none border-0 bg-transparent text-(--vscode-input-foreground) outline-none [scrollbar-gutter:stable] ${GP_PROMPT_FIELD_EDITOR_CLASS}`}
         value={text}
         onChange={onTextChange}
-        onScroll={syncScroll}
+        onScroll={handleTextareaScroll}
         onMouseUp={onCursorCheck}
         onKeyUp={onCursorCheck}
         onKeyDown={(event) => {
           if (event.key === 'Tab' && suggestion && isGhostUiAllowed()) {
-              event.preventDefault();
-              onAccept();
-            }
+            event.preventDefault();
+            onAccept();
+          }
           if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
             onSend();
@@ -123,6 +191,7 @@ export function PromptInput(props: PromptInputProperties): React.JSX.Element {
         spellCheck={false}
         autoFocus
       />
+      {ghostOverlay}
     </div>
   );
 }
