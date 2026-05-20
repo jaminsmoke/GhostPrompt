@@ -2,6 +2,76 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.6.2] - 2026-05-18
+
+Consolidación boundary host↔webview (roadmap v0.6.2 FA–FC): una sola línea de contratos sobre `system/internals/protocols/` sin carpeta legacy `api/protocols/`.
+
+### Added
+
+- **Barrels webview:** `ui/webview/react/webviewProtocolConstants.ts` y `webviewProtocolSchemas.ts` para constantes `cons*` y schemas Zod del panel sin rutas profundas repetidas.
+- **Paridad parse:** fixtures `webviewOutboundMessageFixtures.ts` y tests `parseWebviewInbound.test.ts` + ampliación de `api/boundary/webviewProtocols.test.ts` (mismo schema host→panel).
+- **Superficies webview (FW):** enrutado por `window.__ghostPromptViewId` — sidebar `ChatApp` (prompt, envío, chip Destino); panel `HubApp` (Motor, Modelo, Composición, debug, placeholder Estadísticas). Un solo bundle Vite.
+- **Host superficies (FX):** `surfaceRole` chat vs hub; mensajes outbound de suggestion/carga/clear solo a la webview chat; hub no persiste `draftChanged` ni recibe `draftHydrate` en init.
+- **Tipo público:** `GhostPromptWebviewSurfaceRole` reexportado desde `api/index.ts`.
+- **Manifest hub (FZ):** contenedor panel y vista `ghostPrompt.inputPanel` titulados **GhostPrompt — Ajustes**; comando de paleta **GhostPrompt: Open Settings Hub** (`ghostPrompt.openHub`) para abrir y enfocar el hub.
+
+### Removed
+
+- **`src/api/protocols/`** — shims duplicados de `api/boundary/` (handlers, tests, mocks).
+- **`src/api/settings/applyWebviewUpdate.ts`** — duplicado; canónico en `system/internals/config/write/applyWebviewUpdateSetting.ts`.
+- **`ghostPrompt.suggestionStyle`** — setting y enum `SuggestionStyle`; sustituido por `maxSuggestionChars` como única perilla de longitud.
+- **`resolveEffectiveMaxSuggestionChars`** y factores por estilo; pipeline usa el tope configurado directamente.
+- **Dual-view chat (FY):** mensaje outbound `draftSync`, `broadcastDraftToPeers` y utilidades/tests asociados al sync entre dos chats.
+
+### Changed
+
+- **Imports `api/`:** parseo con logging y dispatch inbound solo desde `api/boundary/` (`api/index.ts` reexporta boundary).
+- **Webview React:** hooks y componentes importan tipos/constantes vía barrels locales; `parseWebviewInbound.ts` documentado como validación de mensajes **host→panel** (`webviewOutboundMessageSchema`).
+- **Default `ghostPrompt.maxSuggestionChars`:** 270 (preset Normal). Migración one-shot desde `suggestionStyle` al activar la extensión.
+- **UX dual superficie:** el chat con sugerencias está en la barra lateral **GhostPrompt**; el panel inferior es solo **ajustes**. Si solías escribir en el panel, abre el chat desde el icono de actividad y el hub con **GhostPrompt: Open Settings Hub** (`ghostPrompt.openHub`).
+- **Documentación (GA):** `src/ui/README.md` (superficies, `__ghostPromptViewId`, `surfaceRole`, comando hub), `Docs/Owners.md` (tests `webviewSurfaces`), plan 02 con nota post-FY.
+- **Cierre plan 05 (GB):** bitácora QA en `05-dual-surface-chat-hub.md` (`npm run check` 2026-05-20); `system/README.md` sin carpeta `policies/` inexistente; smoke manual EDH pendiente operador para release FE/FV.
+
+## [Unreleased]
+
+### Added
+
+- **Sistema de logging unificado** (`src/system/log/`): `Logger` por módulo, canal **GhostPrompt Log**, persistencia NDJSON + Markdown bajo `globalStorageUri/ghostPrompt/logs/v1/` con cola asíncrona y rotación gzip de `events.ndjson`; settings `ghostPrompt.logLevel`, `ghostPrompt.logFileEnabled`, `ghostPrompt.logFileMaxBytes`; shim `ghostPrompt.debugSuggestions` + `flushLogCapture` en el pipeline `suggest`. Sustituye `SuggestionDebug`, `SuggestionLog` y `ConversationLog`.
+
+### Changed
+
+- **Protocols v0.6.1:** contratos bajo `src/system/internals/protocols/` con prefijos de archivo (`cons*`, `guard*`, `type*`, `state*`, `zschem*`); schemas Zod canónicos en `zschemWebviewMessages.ts`; adaptador webview `parseWebviewInbound.ts`; símbolos sin prefijo `GHOST_PROMPT_*` (`AGENT_DESTINATION_IDS`, `parseAgentDestination`, `getAgentDestination`, …); `CompletionCancellationToken` sin import de `vscode` en protocols.
+- **Fuentes de completado → `engines/`:** `getEnabledCompletionSources`, `getCompletionUiKind` en `engines/config/completionSources.ts`; `resolveCompletionSourceForRequest` y `CompletionSourceId` en `engines/routing/resolveCompletionSource.ts` y `engines/completionSourceId.ts`. Eliminados `system/internals/config/sources.ts` y `system/internals/protocols/routing.ts`.
+- **Stream Copilot LM → `engines/copilot/`:** `collectLmResponse` en `engines/copilot/collectLmResponse.ts` (antes `system/internals/streaming/collect.ts` / `collectResponseText`). Carpeta `system/internals/streaming/` eliminada.
+- **`system/internals/` reorganizado:** contratos en `protocols/types/` + `protocols/state/`; implementación en `state/` (`sessionStore`, `providerManager`). Eliminada carpeta `states/`.
+- **Loading en `protocols/state/loading/`:** `loadingPhase.ts` + `loadingLabels.ts` (`suggestionLoadingStatusText`). Eliminado `state/loadingUi.ts`.
+- **ESLint:** zonas `import/no-restricted-paths` actualizadas (`sugcore/`, `system/log/`, `engines/`); `npm run lint` y `npm run validate` en verde sin relajar reglas.
+- **`src/core/routing/sources.ts`:** movido desde `src/core/sources.ts` (Fase G — routing); actualizar imports a `core/routing/sources` o seguir usando el barrel `core/index.ts`.
+- **`src/core/contracts/completion.ts` + `types.ts`:** tipos y contratos de completion viven en `contracts/`; `types.ts` reexporta para compatibilidad.
+- **`src/core/suggest/`** (antes `core/pipeline/`): orquestación del mensaje `suggest` en `runSuggest.ts` (antes `suggestPipeline.ts`), barrel `suggest/index.ts`; consumidores importan `core/suggest` o el barrel `core/index.ts`.
+- **`src/core/prompt/`** (`instruction.ts`, `normalize.ts`, barrel `prompt/index.ts`): prompt LM y post-proceso defensivo; el barrel `core/index.ts` reexporta vía `./prompt`.
+- **`src/core/presentation/`** (`loading.ts`, barrel `presentation/index.ts`): fases de carga host↔webview y textos de estado; el barrel `core/index.ts` reexporta `SuggestionLoadingPhase` / `suggestionLoadingStatusText` vía `./presentation`.
+- **`src/core/streaming/`** (`collect.ts`, barrel `streaming/index.ts`): `collectResponseText` para el stream del LM de VS Code; el barrel `core/index.ts` reexporta vía `./streaming`.
+- **`src/core/state/`** (`GhostPromptSessionStore.ts`): singleton host Sidebar+Panel (antes `core/session/`).
+- **`src/core/language/`** (`index.ts`): detección y resolución de idioma (antes `language.ts` en raíz).
+- **Limpieza `core/`:** eliminadas carpetas vacías `catalog/`, `pipeline/`, `session/` (restos previos a Fase G).
+- **`projectBootstrapContext`:** movido de `src/core/context/` a `src/core/memory/projectBootstrapContext.ts`; carpeta `core/context/` eliminada.
+- **`SuggestionRequestGovernor`:** movido de `src/core/governor/` a `src/system/policies/SuggestionRequestGovernor.ts`; carpeta `core/governor/` eliminada; importar desde `system/policies/...` (tests y referencia legacy).
+- **`npm run validate` / `check`:** incluye `compile` antes de `verify:webview-bundle`, de modo que tras `npm run clean` (borra `out/`) la verificación del bundle no falle por falta de `out/system/build/verifyWebviewBundle.js`.
+
+## [0.6.0] - 2026-05-14
+
+Versión **0.6.0**: reorganización de owners del dominio **suggestion** (roadmap v0.6) — el barrel `core` deja de reexportar motores y catálogos; catálogo merged multi-motor bajo `engines/catalog/`; pipeline con umbral mínimo de entrada; governor legacy fuera del API público del barrel; documentación (`Owners`, `core/README`, `ARCHITECTURE`) y tests alineados.
+
+### Changed
+
+- **Catálogo merged de modelos** (`listMergedSuggestionModels`): de `src/core/catalog/` a `src/engines/catalog/mergedModelCatalog.ts`. Ya no se reexporta desde `src/core/index.ts`; importar desde `src/engines/...` o el barrel `engines`.
+- **`api/settings/settingsPostMessage`**: listas por motor (`listSuggestionModels`, OpenCode, Ollama) importadas desde `engines/.../catalog`; tipos y routing de fuentes desde `core/types` y `core/routing/sources` (sin barrel `core/index`).
+- **`api/getters/workspaceGetters`**: tipos desde `core/types` (sin barrel `core/index`).
+- **Pipeline `suggest`** (`suggestPipeline.ts`): si el texto `trim` tiene menos de 3 caracteres, se emite `empty` con razón `too-short` sin llamar al LM ni fase `loading`.
+- **Barrel `src/core/index.ts`**: deja de reexportar catálogo Copilot (`modelCatalog`), `requestCompletion`, tipo `CompletionProvider` y funciones del registry, listas OpenCode/Ollama, y `SuggestionRequestGovernor`. Consumidores: rutas explícitas `engines/...` o `system/policies/SuggestionRequestGovernor` (legacy).
+- **`SuggestionRequestGovernor`**: en `src/system/policies/` para tests y referencia legacy; **no** participa en el pipeline `suggest` ni en el barrel `core/index.ts`.
+
 ## [0.5.3] - 2026-05-13
 
 Versión **0.5.3**: `host/` desmantelado en dominios canónicos `api/` + `vscode/` + `core/pipeline/`. `projectMemory/` movido a `core/memory/` con subcarpetas.

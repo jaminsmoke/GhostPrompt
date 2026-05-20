@@ -7,7 +7,7 @@
 
 ## Árbol de directorios
 
-```
+```text
 VsCodeExtension-InlineChatSuggestions/
 │
 ├── src/                              # Código fuente TypeScript (lado host)
@@ -17,9 +17,10 @@ VsCodeExtension-InlineChatSuggestions/
 │   ├── completion/index.ts             # Barrel del dominio completion
 │   ├── governor/SuggestionRequestGovernor.ts
 │   ├── bridge/ChatBridge.ts
-│   ├── log/ConversationLog.ts
-│   ├── log/SuggestionLog.ts
-│   └── debug/SuggestionDebug.ts
+│   ├── system/internals/protocols/validations/schemas/zschemWebviewMessages.ts
+│   ├── system/log/ConversationLog.ts
+│   ├── system/log/SuggestionLog.ts
+│   └── system/log/LogManager.ts
 │
 ├── webview/                          # Assets del lado webview (sandboxed)
 │   ├── index.html                    # Plantilla HTML de la vista mini-input
@@ -36,7 +37,8 @@ VsCodeExtension-InlineChatSuggestions/
 │   │   └── Adopted/
 │   │       └── Option-C--Hybrid-TextEditor-Plus-Positioning.md
 │   ├── ExtensionArchitecture/
-│   │   └── PhysicalStructure.md      ← este archivo
+│   │   ├── PhysicalStructure.md      ← este archivo
+│   │   └── NamingConventions.md    # Convenciones de nombres (protocols, …)
 │   └── MyConversation/
 │       └── conversation.md           # Log de prompts enviados (runtime artifact)
 │
@@ -59,9 +61,11 @@ VsCodeExtension-InlineChatSuggestions/
 
 - Exporta `activate(context)` y `deactivate()`.
 - Instancia `MiniInputViewProvider` y lo registra:
+
   ```ts
-  vscode.window.registerWebviewViewProvider('inlineChatInput.miniInput', provider)
+  vscode.window.registerWebviewViewProvider('inlineChatInput.miniInput', provider);
   ```
+
 - Registra cualquier comando adicional de la extensión.
 - No contiene lógica de negocio — solo wiring.
 
@@ -82,16 +86,18 @@ VsCodeExtension-InlineChatSuggestions/
 ### `src/bridge/ChatBridge.ts` — Puente al chat de Copilot
 
 - Única responsabilidad: enviar un prompt al chat oficial.
+
   ```ts
   export async function sendToChat(query: string): Promise<void> {
     await vscode.commands.executeCommand('workbench.action.chat.open', { query });
   }
   ```
+
 - Aislado en su propio módulo para facilitar el mock en tests y futuros cambios de API.
 
 ---
 
-### `src/log/ConversationLog.ts` — Log persistente
+### `src/system/log/ConversationLog.ts` — Log persistente
 
 - Lee y hace append al archivo `Docs/MyConversation/conversation.md`.
 - Cada entrada tiene timestamp y el texto del prompt.
@@ -159,7 +165,7 @@ Secciones clave:
 
 Los siguientes directorios **no se incluyen** en el `.vsix` publicado:
 
-```
+```text
 Docs/**
 src/**          # Solo se empaqueta el output compilado en out/
 .vscode/**
@@ -172,11 +178,11 @@ node_modules/**
 
 ## Diagrama de dependencias entre módulos
 
-```
+```text
 extension/extension.ts
     ├── host/MiniInputViewProvider.ts
     │       ├── bridge/ChatBridge.ts
-    │       ├── log/ConversationLog.ts
+    │       ├── system/log/ConversationLog.ts
     │       ├── completion/index.ts
     │       └── …
     └── (comandos adicionales)
@@ -190,8 +196,8 @@ webview/main.js  ←→  host/MiniInputViewProvider.ts   (postMessage / onDidRec
 
 | Capa           | Archivos                        | Acceso a API de VS Code |
 | -------------- | ------------------------------- | ----------------------- |
-| Host (Node.js) | `src/*.ts`                      | ✅ Completo              |
-| Webview (DOM)  | `webview/main.js`, `index.html` | ❌ Solo via postMessage  |
+| Host (Node.js) | `src/*.ts`                      | ✅ Completo             |
+| Webview (DOM)  | `webview/main.js`, `index.html` | ❌ Solo via postMessage |
 
 Esta separación es obligatoria por el modelo de seguridad de VS Code.
 Todo lo que requiera `vscode.*` debe vivir en `src/`.

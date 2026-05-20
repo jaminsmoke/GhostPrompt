@@ -1,0 +1,76 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: var(--vscode-colorScheme, dark);
+  font-family: var(--vscode-font-family, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--vscode-font-size, 13px);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background-color: var(--vscode-sideBar-background, #1e1e1e);
+  color: var(--vscode-foreground, #cccccc);
+}
+
+#root {
+  padding: 8px;
+  min-height: 120px;
+}
+
+#gp-boot {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.error-boundary {
+  background: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+}
+
+.error-boundary__title {
+  color: var(--vscode-errorForeground);
+}
+
+.error-boundary__details {
+  background: var(--vscode-textBlockQuote-background);
+  border: 1px solid var(--vscode-widget-border);
+  overflow: auto;
+  max-height: 200px;
+  white-space: pre-wrap;
+}
+
+.error-boundary__retry {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
+/* Prompt field: textarea y ghost comparten celda grid; tipografía heredada de VS Code. */
+.gp-prompt-field {
+  font-family: var(--vscode-font-family, ui-sans-serif, system-ui, sans-serif);
+  font-size: var(--vscode-font-size, 13px);
+  line-height: 1.5;
+}
+
+.gp-prompt-field__editor {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* Capa ghost: scroll sincronizado con el textarea; scrollbar oculta. */
+.gp-prompt-ghost {
+  scrollbar-width: none;
+}
+
+.gp-prompt-ghost::-webkit-scrollbar {
+  display: none;
+}
+
+.gp-prompt-ghost__suggestion {
+  color: var(--vscode-input-foreground, #cccccc);
+  opacity: 0.55;
+}

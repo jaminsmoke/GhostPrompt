@@ -1,88 +1,94 @@
 /**
- * @fileoverview WebviewViewProvider para el input de GhostPrompt.
+ * @file WebviewViewProvider para el input de GhostPrompt.
  *
- * **Composición (v0.5.3):**
- * - Contratos Zod y parseo: `api/protocols/webviewProtocols.ts`
- * - HTML/CSP y plantilla: `ui/provider/webviewHtml.ts`
- * - Mensaje `settings` → webview: `api/settings/settingsPostMessage.ts`
- * - Mensaje `suggest`: `core/pipeline/suggestPipeline.ts`
- * - Router/handlers webview → host (`init`, `draftChanged`, `updateSetting`, `send`, `accept`): `api/protocols/inboundHandlers.ts`
- * - Lectura de workspace / contexto editor: `api/getters/workspaceGetters.ts`
- * - Actualización desde chips (`updateSetting`): `api/settings/applyWebviewUpdate.ts`
+ * WebviewViewProvider para el input de GhostPrompt.
+ *
+ * Composición de dependencias y flujos para GhostPrompt input v0.5.3.
+ *
+ * - Contratos Zod: `protocols/validations/schemas/`; parseo boundary: `api/boundary/webviewProtocols.ts`.
+ * - HTML/CSP y plantilla: `ui/provider/webviewHtml.ts`.
+ * - Mensaje `settings` → webview: `api/settings/settingsPostMessage.ts`.
+ * - Mensaje `suggest`: `core/suggest/runSuggest.ts`.
+ * - Handlers webview → host: `api/boundary/inboundHandlers.ts`.
+ * - Workspace y política de modelo: `system/internals/config/read/`.
+ * - Actualización desde chips (`updateSetting`): `system/internals/config/write/`.
  *
  * Registra la vista en el activity bar y el panel inferior (C2).
  * Protocolo host↔webview:
- *   - `suggest`    (webview → host): solicitar suggestion para el texto parcial.
- *   - `loading`    (host → webview): suggestion en curso; opcional `phase`, `statusText` (fases OpenCode / Copilot).
- *   - `suggestion-stream` (host → webview): OpenCode — texto acumulado vía SSE antes del resultado final.
- *   - `suggestion` (host → webview): devolver el texto de la suggestion capturada.
- *   - `empty`      (host → webview): no hay suggestion disponible.
- *   - `error`      (host → webview): error al pedir suggestion.
- *   - `accept`     (webview → host): el usuario aceptó la suggestion con Tab.
- *   - `send`       (webview → host): enviar el prompt completo al chat de Copilot.
- *   - `clear`      (host → webview): resetear el input tras un envío exitoso.
- *   - `draftChanged` (webview → host): texto del borrador para sincronizar vistas.
- *   - `draftSync` / `draftHydrate` (host → webview): aplicar borrador remoto o estado inicial.
- *   - Mensajes de suggestion pueden llevar `broadcast: true` para espejar Sidebar + Panel.
- *   - Contratos Zod (`system/contracts/webviewMessageSchemas.ts` / `api/protocols/webviewProtocols.ts`): entrada webview → host y salida `settings`.
+ * - `suggest` (webview → host): solicitar suggestion para el texto parcial.
+ * - `loading` (host → webview): suggestion en curso; opcional `phase`, `statusText` (fases OpenCode / Copilot).
+ * - `suggestion-stream` (host → webview): OpenCode — texto acumulado vía SSE antes del resultado final.
+ * - `suggestion` (host → webview): devolver el texto de la suggestion capturada.
+ * - `empty` (host → webview): no hay suggestion disponible.
+ * - `error` (host → webview): error al pedir suggestion.
+ * - `accept` (webview → host): el usuario aceptó la suggestion con Tab.
+ * - `send` (webview → host): enviar el prompt completo al chat de Copilot.
+ * - `clear` (host → webview): resetear el input tras un envío exitoso.
+ * - `draftChanged` (webview → host): texto del borrador (solo superficie chat persiste en el host).
+ * - `draftHydrate` (host → webview): aplicar borrador al abrir la vista chat.
+ * - Mensajes de suggestion pueden llevar `broadcast: true` para correlación de `captureId` en la vista chat.
+ * - Esquemas Zod en `zschemWebviewMessages.ts`; parseo en `api/boundary/webviewProtocols.ts`.
  */
-import * as vscode from "vscode";
-import { ghostPromptSessionStore } from '../../core/session/GhostPromptSessionStore';
-import { buildAndPostGhostPromptSettings } from "../../api/settings/settingsPostMessage";
-import { buildGhostPromptWebviewHtml } from "./webviewHtml";
-import { getProjectMemoryBaseDir } from "../../core/memory/activate";
+import * as vscode from 'vscode';
+
+import { dispatchGhostPromptInboundMessage } from '../../api/boundary/inboundHandlers';
 import {
-  reconcileProjectMemoryForSuggest,
-  writeReconciledProjectBootstrapSnapshot,
-} from "../../core/memory/persist";
-import { NodeProjectMemoryFs } from "../../core/memory/io/fs";
-import { ProjectMemoryStore } from "../../core/memory/Store";
+  parseWebviewInboundMessage,
+  parseWebviewOutboundMessage,
+} from '../../api/boundary/webviewProtocols';
+import { buildAndPostGhostPromptSettings } from '../../api/settings/settingsPostMessage';
+import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from '../../destinations/vsOpenCodeX/vsOpenCodeXDestination';
+import { ollamaModelManager } from '../../engines/provider/ollama';
+import { readGhostPromptSuggestionModelPolicy } from '../../system/internals/config/read/readGhostPromptSuggestionModelPolicy';
 import {
-  collectGhostPromptProjectContext,
-  getGhostPromptContextMode,
   getGhostPromptMaxSuggestionChars,
-  getGhostPromptProjectMemoryEnabled,
   getGhostPromptSelectedModelId,
-  getGhostPromptSuggestionLanguage,
-  getGhostPromptSuggestionLanguageChoice,
-  getGhostPromptSuggestionLanguageMode,
-  getGhostPromptSuggestionModelPolicy,
-  getGhostPromptSuggestionStyle,
-} from "../../api/getters/workspaceGetters";
-import { handleGhostPromptSuggest } from "../../core/pipeline";
+} from '../../system/internals/config/read/workspaceConfigGetters';
+import { looksLikeOllamaModelId } from '../../system/internals/protocols/guards/guardModelRouting';
+import { getLogger, reportHostFault } from '../../system/log';
+import { providerStatusManager } from '../../system/runtime/providers/providerStatusManager';
 import {
-  dispatchGhostPromptInboundMessage,
-} from "../../api/protocols/inboundHandlers";
-import type { GhostPromptSuggestDeps } from "../../core/pipeline";
-import { parseWebviewInboundMessage } from "../../api/protocols/webviewProtocols";
-import { forwardGhostPromptInlineUiToVsOpenCodeIfApplicable } from "../../destinations/vsOpenCodeX/vsOpenCodeXDestination";
+  handleGhostPromptSuggest,
+  type GhostPromptSuggestDeps,
+} from '../../system/runtime/suggest/suggestPipeline';
+import { maybeNotifySuggestionIssue } from '../notifications/suggestionNotification';
+
+import { buildGhostPromptWebviewFaultHtml, buildGhostPromptWebviewHtml } from './webviewHtml';
 
 export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   /** View ID for the activity bar container. */
-  public static readonly viewId = "ghostPrompt.input";
+  public static readonly viewId = 'ghostPrompt.input';
   /** View ID for the bottom panel container. */
-  public static readonly panelViewId = "ghostPrompt.inputPanel";
+  public static readonly panelViewId = 'ghostPrompt.inputPanel';
 
-  private static readonly _instances = new Set<MiniInputViewProvider>();
+  private static readonly instances = new Set<MiniInputViewProvider>();
 
-  private _view?: vscode.WebviewView;
+  /** Tipos host→webview que solo deben aplicarse en la superficie chat (sidebar). */
+  private static readonly chatOnlyOutboundUiTypes = new Set<string>([
+    'loading',
+    'suggestion',
+    'suggestion-stream',
+    'empty',
+    'error',
+    'clear',
+  ]);
 
-  private _ghostProjectMemoryStore?: ProjectMemoryStore;
+  private webviewView?: vscode.WebviewView;
 
   constructor(
-    private readonly _context: vscode.ExtensionContext,
+    private readonly extensionContext: vscode.ExtensionContext,
     /** Identificador de contribución de la vista (`ghostPrompt.input` vs `ghostPrompt.inputPanel`). */
     public readonly viewContributionId: string,
   ) {
-    MiniInputViewProvider._instances.add(this);
+    MiniInputViewProvider.instances.add(this);
   }
 
-  private _getGhostProjectMemoryStore(): ProjectMemoryStore {
-    this._ghostProjectMemoryStore ??= new ProjectMemoryStore(
-      getProjectMemoryBaseDir(this._context.globalStorageUri.fsPath),
-      new NodeProjectMemoryFs(),
-    );
-    return this._ghostProjectMemoryStore;
+  /**
+   * `chat` = sidebar; `hub` = panel de ajustes.
+   * @returns {'chat' | 'hub'} Rol de la superficie según el id de contribución de la vista.
+   */
+  public get surfaceRole(): 'chat' | 'hub' {
+    return this.viewContributionId === MiniInputViewProvider.panelViewId ? 'hub' : 'chat';
   }
 
   /**
@@ -90,187 +96,224 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
    * @internal
    */
   public static clearWebviewRegistrationsForTests(): void {
-    MiniInputViewProvider._instances.clear();
+    MiniInputViewProvider.instances.clear();
   }
 
-  /** Emite a todas las vistas el mismo UI de suggestion/loading/idioma (`broadcast: true` en webview). */
-  private static _broadcastUi(payload: Record<string, unknown>): void {
+  /**
+   * Emite UI a las instancias del webview. Suggestion/carga/clear solo en **chat**;
+   * `settings` y `providerStatus` a todas. Forwardea a VSOpenCodeX si aplica.
+   * @param {Record<string, unknown>} payload - Mensaje (se añade `broadcast: true` cuando aplica).
+   * @returns {void}
+   */
+  private static broadcastUi(payload: Record<string, unknown>): void {
     const message = { ...payload, broadcast: true };
-    for (const instance of MiniInputViewProvider._instances) {
-      instance._view?.webview.postMessage(message);
+    const validated = parseWebviewOutboundMessage(message);
+    if (!validated) {
+      return;
     }
-    forwardGhostPromptInlineUiToVsOpenCodeIfApplicable(message);
-  }
-
-  /** Propaga borrador a la otra vista GhostPrompt (Sidebar ↔ Panel). */
-  private static _broadcastDraftSync(originViewId: string, text: string): void {
-    for (const instance of MiniInputViewProvider._instances) {
-      if (instance.viewContributionId === originViewId) {
-        continue;
+    const chatOnly = MiniInputViewProvider.chatOnlyOutboundUiTypes.has(validated.type);
+    for (const instance of MiniInputViewProvider.instances) {
+      if (!chatOnly || instance.surfaceRole === 'chat') {
+        instance.webviewView?.webview.postMessage(validated);
       }
-      instance._view?.webview.postMessage({
-        type: "draftSync",
-        text,
-        originViewId,
-      });
     }
+    forwardGhostPromptInlineUiToVsOpenCodeIfApplicable(validated);
   }
 
-  /** Vacía el composer en todas las vistas (p. ej. tras enviar al chat). */
-  private static _broadcastClearAll(): void {
+  /** Vacía el compositor solo en la vista chat (tras enviar al destino). */
+  private static broadcastClearAll(): void {
     forwardGhostPromptInlineUiToVsOpenCodeIfApplicable({
-      type: "clear",
+      type: 'clear',
       broadcast: true,
     });
-    for (const instance of MiniInputViewProvider._instances) {
-      instance._view?.webview.postMessage({ type: "clear" });
+    const msg = { type: 'clear' as const };
+    const validated = parseWebviewOutboundMessage(msg);
+    if (!validated) {
+      return;
+    }
+    for (const instance of MiniInputViewProvider.instances) {
+      if (instance.surfaceRole === 'chat') {
+        instance.webviewView?.webview.postMessage(validated);
+      }
     }
   }
 
-  private static ghostPromptSuggestDeps(
-    provider: MiniInputViewProvider | undefined,
-  ): GhostPromptSuggestDeps {
-    const base: GhostPromptSuggestDeps = {
-      broadcastUi: MiniInputViewProvider._broadcastUi,
-      getSuggestionModelPolicy: () => getGhostPromptSuggestionModelPolicy(),
-      getSelectedModelId: () => getGhostPromptSelectedModelId(),
-      getSuggestionStyle: () => getGhostPromptSuggestionStyle(),
-      getContextMode: () => getGhostPromptContextMode(),
-      getSuggestionLanguageMode: () => getGhostPromptSuggestionLanguageMode(),
-      getSuggestionLanguage: () => getGhostPromptSuggestionLanguage(),
-      getMaxSuggestionChars: () => getGhostPromptMaxSuggestionChars(),
-      collectProjectContext: () => collectGhostPromptProjectContext(),
-    };
-    if (!provider || !getGhostPromptProjectMemoryEnabled()) {
-      return base;
-    }
+  private static ghostPromptSuggestDeps(): GhostPromptSuggestDeps {
     return {
-      ...base,
-      reconcileGhostPromptBootstrap: (args) =>
-        reconcileProjectMemoryForSuggest({
-          store: provider._getGhostProjectMemoryStore(),
-          ...args,
-        }),
-      writeGhostPromptBootstrapSnapshot: (snapshot) =>
-        writeReconciledProjectBootstrapSnapshot({
-          store: provider._getGhostProjectMemoryStore(),
-          workspaceKey: snapshot.workspaceKey,
-          mergedItems: snapshot.mergedItems,
-        }),
+      broadcastUi: (...args: Parameters<typeof MiniInputViewProvider.broadcastUi>) =>
+        MiniInputViewProvider.broadcastUi(...args),
+      getSuggestionModelPolicy: () => readGhostPromptSuggestionModelPolicy(),
+      getSelectedModelId: () => getGhostPromptSelectedModelId(),
+      getMaxSuggestionChars: () => getGhostPromptMaxSuggestionChars(),
+      notifyIssue: maybeNotifySuggestionIssue,
     };
   }
 
   /**
    * API para VSOpenCodeX (executeCommand): ejecuta el pipeline de suggestion con el texto actual del chat VSX.
    * Ignorar cuando el usuario usa destino Copilot (sigue usando la webview).
+   * @param {string} text - Texto que se debe sugerir desde el host externo.
+   * @returns {Promise<void>} Promise que indica cuando el proceso de suggest se completa.
    */
   public static async runSuggestFromExternalHost(text: string): Promise<void> {
     const trimmed = text.trim();
     if (!trimmed) {
       return;
     }
-    const first =
-      [...MiniInputViewProvider._instances][0] ??
-      undefined;
     const captureId = Date.now();
     await handleGhostPromptSuggest(
-      { type: "suggest", text: trimmed, captureId },
-      MiniInputViewProvider.ghostPromptSuggestDeps(first),
+      { type: 'suggest', text: trimmed, captureId },
+      MiniInputViewProvider.ghostPromptSuggestDeps(),
     );
   }
 
-  private async _postSettings(webview: vscode.Webview): Promise<void> {
+  private static async postSettings(webview: vscode.Webview): Promise<void> {
     await buildAndPostGhostPromptSettings(webview, {
-      getSuggestionModelPolicy: () => getGhostPromptSuggestionModelPolicy(),
+      getSuggestionModelPolicy: () => readGhostPromptSuggestionModelPolicy(),
       getSelectedModelId: () => getGhostPromptSelectedModelId(),
-      getSuggestionStyle: () => getGhostPromptSuggestionStyle(),
-      getContextMode: () => getGhostPromptContextMode(),
-      getSuggestionLanguageChoice: () => getGhostPromptSuggestionLanguageChoice(),
+      getMaxSuggestionChars: () => getGhostPromptMaxSuggestionChars(),
     });
   }
 
-  private async _postSettingsIfReady(): Promise<void> {
-    if (!this._view) {
+  private async postSettingsIfReady(): Promise<void> {
+    if (!this.webviewView) {
       return;
     }
-    await this._postSettings(this._view.webview);
+    await MiniInputViewProvider.postSettings(this.webviewView.webview);
   }
 
-  private static async _broadcastSettingsToAllViews(): Promise<void> {
+  private static async broadcastSettingsToAllViews(): Promise<void> {
     await Promise.all(
-      Array.from(MiniInputViewProvider._instances, (instance) =>
-        instance._postSettingsIfReady(),
-      ),
+      Array.from(MiniInputViewProvider.instances, (instance) => instance.postSettingsIfReady()),
     );
   }
 
   /** Actualiza chips + lista de modelos en Sidebar y Panel (tras cambiar Settings). */
   public static async refreshSettingsAllViews(): Promise<void> {
-    await MiniInputViewProvider._broadcastSettingsToAllViews();
+    await MiniInputViewProvider.broadcastSettingsToAllViews();
+  }
+
+  /**
+   * Maneja efectos secundarios de cambio de modelo/provider (Ollama lifecycle).
+   * Extraído de `inboundHandlers.ts` para separar lógica de negocio del protocol handler.
+   * @param {string} key - Clave de configuración cambiada.
+   * @param {string} value - Nuevo valor de la configuración.
+   * @returns {Promise<void>} Promise que se resuelve cuando el lifecycle termina.
+   */
+  private static async onSettingChanged(
+    key: 'completionProvider' | 'selectedModelId',
+    value: string,
+  ): Promise<void> {
+    if (key === 'selectedModelId' && looksLikeOllamaModelId(value)) {
+      await ollamaModelManager.stopAll();
+      try {
+        await ollamaModelManager.startModel(value);
+      } catch {
+        // Best-effort: el status se refresca igual.
+      }
+      const providers = await providerStatusManager.refreshAll();
+      MiniInputViewProvider.broadcastUi({ type: 'providerStatus', providers });
+    }
+
+    if (key === 'completionProvider' && value !== 'ollama') {
+      await ollamaModelManager.stopAll();
+      const providers = await providerStatusManager.refreshAll();
+      MiniInputViewProvider.broadcastUi({ type: 'providerStatus', providers });
+    }
   }
 
   /**
    * Payload opcional para `window.__ghostPromptCapabilities` (webview).
    *
    * **Paridad v0.3.1:** Sidebar (`ghostPrompt.input`) y Panel (`ghostPrompt.inputPanel`)
-   * comparten el mismo `index.html` / `dist/main.js`; este objeto debe ser **funcionalmente
+   * comparten el mismo bundle React (`dist/react/index.html`); este objeto debe ser **funcionalmente
    * idéntico** para ambas contribuciones (misma forma y mismos flags). Solo se permiten
-   * claves que afecten **presentación** en CSS (p. ej. `compactToolbar`), nunca un catálogo
+   * claves que afecten **presentación** en CSS (p. Ej. `compactToolbar`), nunca un catálogo
    * distinto de controles por vista.
    *
    * Por defecto vacío: misma UX en ambas superficies.
+   * @returns {Record<string, unknown>} Payload de capacidades para el webview.
    */
-  private _webviewCapabilitiesPayload(): Record<string, unknown> {
+  private webviewCapabilitiesPayload(): Record<string, unknown> {
     return {};
   }
 
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
-    _context: vscode.WebviewViewResolveContext,
-    _token: vscode.CancellationToken,
+    _resolveContext: vscode.WebviewViewResolveContext,
+    _cancellationToken: vscode.CancellationToken,
   ): void {
-    this._view = webviewView;
-    const { extensionUri, storageUri, globalStorageUri } = this._context;
+    this.webviewView = webviewView;
+    const { extensionUri, storageUri, globalStorageUri } = this.extensionContext;
     const dataUri = storageUri ?? globalStorageUri;
 
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [vscode.Uri.joinPath(extensionUri, "src", "ui", "webview")],
+      localResourceRoots: [
+        vscode.Uri.joinPath(extensionUri, 'src', 'ui', 'webview', 'dist', 'react'),
+      ],
     };
 
-    webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+    try {
+      const html = this.getHtmlForWebview(webviewView.webview);
+      webviewView.webview.html = html;
+      getLogger('ui').info('webview-resolved', {
+        viewContributionId: this.viewContributionId,
+        htmlLength: html.length,
+      });
+    } catch (error: unknown) {
+      const detail = error instanceof Error ? error.message : String(error);
+      getLogger('ui').error('webview-html-failed', { viewContributionId: this.viewContributionId }, error);
+      reportHostFault('ui', 'webview-html-failed', error);
+      webviewView.webview.html = buildGhostPromptWebviewFaultHtml(detail);
+      return;
+    }
 
     webviewView.webview.onDidReceiveMessage(async (raw: unknown) => {
+      const uiLog = getLogger('ui');
+      uiLog.debug('webview-raw-message', {});
       const message = parseWebviewInboundMessage(raw);
       if (!message) {
+        uiLog.debug('webview-inbound-invalid', {});
         return;
       }
-      await dispatchGhostPromptInboundMessage(message, {
-        viewContributionId: this.viewContributionId,
-        webview: webviewView.webview,
-        dataUri,
-        postSettings: (w) => this._postSettings(w),
-        broadcastDraftSync: MiniInputViewProvider._broadcastDraftSync,
-        broadcastSettingsToAllViews:
-          MiniInputViewProvider._broadcastSettingsToAllViews,
-        broadcastClearAll: MiniInputViewProvider._broadcastClearAll,
-        suggestDeps:
-          MiniInputViewProvider.ghostPromptSuggestDeps(this),
-      });
+      uiLog.debug('webview-inbound-parsed', { type: message.type });
+      try {
+        await dispatchGhostPromptInboundMessage(message, {
+          viewContributionId: this.viewContributionId,
+          surfaceRole: this.surfaceRole,
+          webview: webviewView.webview,
+          dataUri,
+          postSettings: (w) => MiniInputViewProvider.postSettings(w),
+          broadcastSettingsToAllViews: (
+            ...args: Parameters<typeof MiniInputViewProvider.broadcastSettingsToAllViews>
+          ) => MiniInputViewProvider.broadcastSettingsToAllViews(...args),
+          broadcastClearAll: (...args: Parameters<typeof MiniInputViewProvider.broadcastClearAll>) =>
+            MiniInputViewProvider.broadcastClearAll(...args),
+          broadcastUi: (...args: Parameters<typeof MiniInputViewProvider.broadcastUi>) =>
+            MiniInputViewProvider.broadcastUi(...args),
+          suggestDeps: MiniInputViewProvider.ghostPromptSuggestDeps(),
+          onSettingChanged: (...args: Parameters<typeof MiniInputViewProvider.onSettingChanged>) =>
+            MiniInputViewProvider.onSettingChanged(...args),
+        });
+      } catch (error: unknown) {
+        uiLog.error('webview-dispatch-failed', { type: message.type }, error);
+        reportHostFault('ui', 'webview-dispatch-failed', error);
+      }
     });
   }
 
   /**
-   * Loads `src/ui/webview/index.html` and injects secure asset URIs and the CSP nonce.
-   *
-   * @param webview - The webview instance to generate HTML for.
+   * Builds HTML from the React webview bundle and injects secure asset URIs and the CSP nonce.
+   * @param {vscode.Webview} webview - The webview instance to generate HTML for.
+   * @returns {string} HTML string for the webview.
    */
-  private _getHtmlForWebview(webview: vscode.Webview): string {
+  private getHtmlForWebview(webview: vscode.Webview): string {
     return buildGhostPromptWebviewHtml({
-      extensionUri: this._context.extensionUri,
+      extensionUri: this.extensionContext.extensionUri,
       webview,
       viewContributionId: this.viewContributionId,
-      capabilitiesPayload: this._webviewCapabilitiesPayload(),
+      capabilitiesPayload: this.webviewCapabilitiesPayload(),
     });
   }
 }

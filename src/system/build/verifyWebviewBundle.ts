@@ -1,31 +1,45 @@
 /**
- * Smoke check: existe `src/ui/webview/dist/main.js` y contiene la firma esperada del cliente webview.
- * Ejecutar desde la raíz del repo (`npm run verify:webview-bundle`).
+ * @file Smoke check de bundle webview React generado.
  *
- * Compila a `out/system/build/` — excluido del VSIX (`.vscodeignore`): solo herramienta de desarrollo/CI,
- * no forma parte del runtime de la extensión instalada.
+ * Comprueba que el build de webview existe y contiene la firma esperada.
  */
-import * as fs from "node:fs";
-import * as path from "node:path";
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+/**
+ * Escribe en stderr y aborta el script con código de salida distinto de cero.
+ * @param {string} message - Mensaje de error (se añade salto de línea si falta).
+ * @throws {Error} Siempre aborta el script de verificación.
+ * @returns {never} No retorna.
+ */
+function fail(message: string): never {
+  const line = message.endsWith('\n') ? message : `${message}\n`;
+  process.stderr.write(line);
+  throw new Error(line.trim());
+}
 
 const root = process.cwd();
-const bundlePath = path.join(root, "src", "ui", "webview", "dist", "main.js");
+const reactBuildRoot = join(root, 'src', 'ui', 'webview', 'dist', 'react');
+const indexHtmlPath = join(reactBuildRoot, 'index.html');
 
-if (!fs.existsSync(bundlePath)) {
-  console.error(
-    "[GhostPrompt] Falta src/ui/webview/dist/main.js — ejecuta npm run build:webview",
-  );
-  process.exit(1);
+if (!existsSync(indexHtmlPath)) {
+  fail('[GhostPrompt] Falta src/ui/webview/dist/react/index.html — ejecuta npm run build:webview');
 }
 
-const body = fs.readFileSync(bundlePath, "utf8");
-if (!body.includes("acquireVsCodeApi")) {
-  console.error(
-    "[GhostPrompt] Bundle webview sin firma esperada (acquireVsCodeApi).",
-  );
-  process.exit(1);
+const html = readFileSync(indexHtmlPath, 'utf8');
+const scriptMatch = /<script[^>]+src="(?<src>[^"]+)"[^>]*>/u.exec(html);
+if (!scriptMatch?.groups?.src) {
+  fail('[GhostPrompt] No se encontró un script válido en src/ui/webview/dist/react/index.html.');
 }
 
-console.log(
-  `[GhostPrompt] Webview bundle OK (${bundlePath}, ${body.length} bytes)`,
-);
+const scriptPath = join(reactBuildRoot, scriptMatch.groups.src.replace(/^\.\//u, ''));
+if (!existsSync(scriptPath)) {
+  fail(`[GhostPrompt] No se encontró el asset de script compilado: ${scriptPath}`);
+}
+
+const body = readFileSync(scriptPath, 'utf8');
+if (!body.includes('acquireVsCodeApi')) {
+  fail('[GhostPrompt] Bundle React webview sin firma esperada (acquireVsCodeApi).');
+}
+
+process.stdout.write(`[GhostPrompt] Webview bundle OK (${scriptPath}, ${body.length} bytes)\n`);

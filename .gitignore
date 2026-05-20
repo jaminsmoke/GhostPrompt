@@ -3,7 +3,9 @@ node_modules/
 .npm/
 
 # VS Code
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .history/
 *.code-workspace
 
@@ -25,6 +27,8 @@ Thumbs.db
 
 # Test
 *.snap
+.vscode-test/
+.vscode-test-profile/
 
 # Extension packaging
 *.vsix
@@ -32,6 +36,9 @@ Thumbs.db
 # Private
 .env
 .env.*
+
+# ESLint
+.eslintcache
 
 # Misc
 *.swp
@@ -42,5 +49,8 @@ Thumbs.db
 !ImagesReadme*.png
 !img/icon.png
 !media/**
+
 # Exclude extension private storage (if any)
 .globalStorage/
+
+# Misc

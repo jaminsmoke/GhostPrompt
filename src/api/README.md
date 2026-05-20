@@ -1,34 +1,43 @@
 # `api/` — API interna webview↔host
 
-> Dominio canónico que gestiona toda la comunicación entre el webview (UI del mini-input) y el extension host.
+> Capa delgada entre el webview (UI) y el extension host: boundary postMessage, dispatch inbound y ensamblador de settings.
 
 ---
 
 ## Rol
 
-`api/` es la **capa de protocolo** de GhostPrompt. Gestiona la validación de mensajes entrantes desde el webview, el dispatch a los handlers correctos, la construcción y envío del envelope `settings`, y la aplicación de cambios de configuración. También expone los getters de configuración del workspace.
+`api/` orquesta la comunicación webview↔host. Los **contratos puros** viven en `system/internals/protocols/`; la **configuración** (`ghostPrompt.*`) en `system/internals/config/`.
 
 **No debe contener:**
-- Lógica de suggestion (eso es `core/`)
-- Providers de vistas VS Code (eso es `vscode/`)
-- HTML/CSP generation (eso es `vscode/`)
-- Lógica de negocio de motores (eso es `engines/`)
+
+- Lógica de suggestion (→ `system/runtime/` + `engines/`)
+- Providers de vistas VS Code (→ `ui/provider/`)
+- Lectura/escritura de settings (→ `system/internals/config/`)
 
 ---
 
 ## Estructura
 
-```
+```text
 api/
-├── protocols/
-│   ├── webviewProtocols.ts    # Validación Zod boundary postMessage (inbound + outbound)
-│   └── inboundHandlers.ts     # Router/dispatch de mensajes inbound por tipo
+├── boundary/
+│   ├── webviewProtocols.ts      # Parseo Zod + logging en el límite postMessage
+│   ├── inboundHandlers.ts       # Router/dispatch de mensajes inbound por tipo
+│   └── testing/                 # Mocks para tests de boundary
 ├── settings/
-│   ├── settingsPostMessage.ts # Construye y envía el envelope `settings` al webview
-│   └── applyWebviewUpdate.ts  # Aplica `updateSetting` via `vscode.workspace` config API
-├── getters/
-│   └── workspaceGetters.ts    # Lectores de `vscode.workspace.getConfiguration` + destino agente
-└── index.ts                   # Barrel público (re-exports de todo el dominio)
+│   └── settingsPostMessage.ts   # Ensambla y envía el envelope `settings` al webview
+└── index.ts                     # Barrel público (re-exporta boundary, settings, config, destinations)
+```
+
+Configuración canónica en `system/internals/config/`:
+
+```text
+config/
+├── read/
+│   ├── workspaceConfigGetters.ts
+│   └── readGhostPromptSuggestionModelPolicy.ts
+└── write/
+    └── applyWebviewUpdateSetting.ts
 ```
 
 ---
@@ -37,76 +46,38 @@ api/
 
 ### Webview → Host (inbound)
 
-```
+```text
 Webview.postMessage({ type: 'suggest', text, captureId })
     │
     ▼
-`api/protocols/webviewProtocols.ts` — parseWebviewInboundMessage (Zod validation)
+api/boundary/webviewProtocols.ts — parseWebviewInboundMessage
     │
-    ▼ (si válido)
-`api/protocols/inboundHandlers.ts` — dispatchGhostPromptInboundMessage
+    ▼
+api/boundary/inboundHandlers.ts — dispatchGhostPromptInboundMessage
     ├── init → handleGhostPromptInboundInit
-    ├── suggest → core/pipeline → handleGhostPromptSuggest
-    ├── draftChanged → handleGhostPromptInboundDraftChanged
-    ├── updateSetting → api/settings → applyWebviewUpdateSetting
-    ├── accept → handleGhostPromptInboundAccept (log suggestion)
-    └── send → handleGhostPromptInboundSend (enviar al destino)
+    ├── suggest → system/runtime/suggest/suggestPipeline
+    ├── updateSetting → config/write/applyWebviewUpdateSetting
+    └── …
 ```
 
-### Host → Webview (outbound)
+### Host → Webview (settings)
 
+```text
+api/settings/settingsPostMessage.ts — buildAndPostGhostPromptSettings
+    │
+    ▼
+api/boundary/webviewProtocols.ts — parseOutboundSettingsEnvelope
+    │
+    ▼
+webview.postMessage({ type: 'settings', settings })
 ```
-`api/settings/settingsPostMessage.ts` — buildAndPostGhostPromptSettings
-    ├── Collect enabled sources, model list, policy, style, context, language, debug
-    ├── Build envelope { type: 'settings', settings: {...} }
-    ├── Validate with parseOutboundSettingsEnvelope (Zod)
-    └── webview.postMessage(validated)
-```
 
 ---
 
-## Mensajes inbound soportados
+## Tests
 
-| `type` | Campos | Rol |
-|--------|--------|-----|
-| `init` | — | Primera carga de la vista |
-| `suggest` | `text`, `captureId` | Pedir suggestion para texto parcial |
-| `draftChanged` | `text`, `originViewId` | Sincronizar borrador entre vistas |
-| `updateSetting` | `key`, `value` | Cambiar configuración desde chips |
-| `accept` | `suggestion`, `context` | Usuario aceptó suggestion con Tab |
-| `send` | `text` | Enviar prompt al destino (Copilot Chat / VSOpenCodeX) |
-
----
-
-## Contratos Zod
-
-Los schemas canónicos viven en `system/contracts/webviewMessageSchemas.ts`. `api/protocols/webviewProtocols.ts` los re-exporta y expone las funciones de parseo:
-
-- `parseWebviewInboundMessage(raw)` → `WebviewInboundMessage | undefined`
-- `parseOutboundSettingsEnvelope(raw)` → validated envelope
-
----
-
-## Dependencias
-
-| Importa de | Por qué |
-|------------|---------|
-| `core/` | Types, `listSuggestionModels`, `getCompletionUiKind`, etc. |
-| `core/session/GhostPromptSessionStore` | Estado compartido (draft, language, model) |
-| `core/pipeline` | `handleGhostPromptSuggest` para el mensaje `suggest` |
-| `system/contracts/webviewMessageSchemas` | Schemas Zod canónicos |
-| `system/log/*` | Logging de conversation y suggestions |
-| `system/debug/SuggestionDebug` | Debug toggle check |
-| `destinations/destinationRegistry` | Resolución de destino agente |
-
----
-
-## Tests relevantes
-
-| Test | Qué cubre |
-|------|-----------|
-| `webviewProtocols.test.ts` | Parseo Zod de mensajes inbound |
-| `host/ghostPromptWebviewInboundHandlers.test.ts` | Dispatch por tipo de mensaje |
-| `host/applyWebviewUpdateSetting.test.ts` | Aplicación de `updateSetting` |
-| `shared/webviewMessageSchemas.test.ts` | Validación de schemas Zod |
-| `MiniInputViewProvider.test.ts` | Flujo end-to-end con mocks |
+| Archivo | Qué cubre |
+| ------- | --------- |
+| `boundary/webviewProtocols.test.ts` | Parseo boundary + paridad schema con `protocols/` |
+| `boundary/ghostPromptWebviewInboundHandlers.test.ts` | Dispatch por tipo |
+| `system/internals/config/write/applyWebviewUpdateSetting.test.ts` | `updateSetting` → `vscode.workspace` |

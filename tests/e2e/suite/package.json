@@ -1,0 +1,10 @@
+{
+  "name": "ghost-prompt-e2e-suite",
+  "displayName": "GhostPrompt E2E Suite",
+  "publisher": "jaminsmoke",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "main": "./index.js"
+}

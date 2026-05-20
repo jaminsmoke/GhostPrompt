@@ -1,0 +1,25 @@
+strict digraph "dependency-cruiser output"{
+    rankdir="LR" splines="true" overlap="false" nodesep="0.16" ranksep="0.18" fontname="Helvetica-bold" fontsize="9" style="rounded,bold,filled" fillcolor="#ffffff" compound="true"
+    node [shape="box" style="rounded, filled" height="0.2" color="black" fillcolor="#ffffcc" fontcolor="black" fontname="Helvetica" fontsize="9"]
+    edge [arrowhead="normal" arrowsize="0.6" penwidth="2.0" color="#00000033" fontname="Helvetica" fontsize="9"]
+
+    subgraph "cluster_.." {label=".." subgraph "cluster_../core" {label="core" subgraph "cluster_../core/memory" {label="memory" "../core/memory/activate" [label=<activate> tooltip="activate" color="red" fontcolor="red"] } } }
+    subgraph "cluster_.." {label=".." subgraph "cluster_../destinations" {label="destinations" subgraph "cluster_../destinations/copilotChat" {label="copilotChat" "../destinations/copilotChat/copilotChatDestination" [label=<copilotChatDestination> tooltip="copilotChatDestination" color="red" fontcolor="red"] } } }
+    subgraph "cluster_.." {label=".." subgraph "cluster_../destinations" {label="destinations" subgraph "cluster_../destinations/vsOpenCodeX" {label="vsOpenCodeX" "../destinations/vsOpenCodeX/vsOpenCodeXDestination" [label=<vsOpenCodeXDestination> tooltip="vsOpenCodeXDestination" color="red" fontcolor="red"] } } }
+    subgraph "cluster_.." {label=".." subgraph "cluster_../engines" {label="engines" "../engines/ollama" [label=<ollama> tooltip="ollama" color="red" fontcolor="red"] } }
+    subgraph "cluster_.." {label=".." subgraph "cluster_../engines" {label="engines" subgraph "cluster_../engines/opencode" {label="opencode" "../engines/opencode/opencodeApiClient" [label=<opencodeApiClient> tooltip="opencodeApiClient" color="red" fontcolor="red"] } } }
+    subgraph "cluster_.." {label=".." subgraph "cluster_../system" {label="system" subgraph "cluster_../system/debug" {label="debug" "../system/debug/SuggestionDebug" [label=<SuggestionDebug> tooltip="SuggestionDebug" color="red" fontcolor="red"] } } }
+    subgraph "cluster_.." {label=".." subgraph "cluster_../system" {label="system" subgraph "cluster_../system/status" {label="status" "../system/status/registerModules" [label=<registerModules> tooltip="registerModules" color="red" fontcolor="red"] } } }
+    subgraph "cluster_.." {label=".." subgraph "cluster_../ui" {label="ui" subgraph "cluster_../ui/provider" {label="provider" "../ui/provider/MiniInputViewProvider" [label=<MiniInputViewProvider> tooltip="MiniInputViewProvider" color="red" fontcolor="red"] } } }
+    subgraph "cluster_src" {label="src" subgraph "cluster_src/extension" {label="extension" "src/extension/extension.ts" [label=<extension.ts> tooltip="extension.ts" URL="src/extension/extension.ts" fillcolor="#ddfeff"] } }
+    "src/extension/extension.ts" -> "../core/memory/activate"
+    "src/extension/extension.ts" -> "../destinations/copilotChat/copilotChatDestination"
+    "src/extension/extension.ts" -> "../destinations/vsOpenCodeX/vsOpenCodeXDestination"
+    "src/extension/extension.ts" -> "../engines/ollama"
+    "src/extension/extension.ts" -> "../engines/opencode/opencodeApiClient"
+    "src/extension/extension.ts" -> "../system/debug/SuggestionDebug"
+    "src/extension/extension.ts" -> "../system/status/registerModules"
+    "src/extension/extension.ts" -> "../ui/provider/MiniInputViewProvider"
+    "src/extension/extension.ts" -> "vscode"
+    "vscode" [label=<vscode> tooltip="vscode" color="red" fontcolor="red"]
+}

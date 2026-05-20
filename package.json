@@ -2,7 +2,7 @@
   "name": "ghost-prompt",
   "displayName": "GhostPrompt",
   "description": "Ghost-text completions for your Copilot prompts — write faster, think clearer.",
-  "version": "0.5.3",
+  "version": "0.6.2",
   "publisher": "jaminsmoke",
   "author": "JaminSmoke",
   "icon": "media/img/icon.png",
@@ -22,6 +22,9 @@
     "Other"
   ],
   "main": "./out/extension/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
     "viewsContainers": {
       "activitybar": [
@@ -34,7 +37,7 @@
       "panel": [
         {
           "id": "ghostPromptPanel",
-          "title": "GhostPrompt",
+          "title": "GhostPrompt — Ajustes",
           "icon": "media/icon.svg"
         }
       ]
@@ -45,6 +48,7 @@
           "type": "webview",
           "id": "ghostPrompt.input",
           "name": "GhostPrompt",
+          "icon": "media/icon.svg",
           "when": "true"
         }
       ],
@@ -52,7 +56,8 @@
         {
           "type": "webview",
           "id": "ghostPrompt.inputPanel",
-          "name": "GhostPrompt",
+          "name": "GhostPrompt — Ajustes",
+          "icon": "media/icon.svg",
           "when": "true"
         }
       ]
@@ -73,6 +78,14 @@
       {
         "command": "ghostPrompt.runSuggestPipeline",
         "title": "GhostPrompt: Run Suggest Pipeline (External / VSOpenCodeX API)"
+      },
+      {
+        "command": "ghostPrompt.discoverCursorChatCommands",
+        "title": "GhostPrompt: Discover Cursor Chat Commands (dev)"
+      },
+      {
+        "command": "ghostPrompt.openHub",
+        "title": "GhostPrompt: Open Settings Hub"
       }
     ],
     "configuration": {
@@ -138,7 +151,30 @@
         "ghostPrompt.debugSuggestions": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Enable structured debug logs for suggestion lifecycle in the `GhostPrompt Suggestions` output channel."
+          "markdownDescription": "Compatibility shim: when **on** and `ghostPrompt.logLevel` has never been set in User/Workspace/Folder settings, effective log level is **debug** (verbose pipeline + `GhostPrompt Log` channel). If `logLevel` is set explicitly, it wins. Prefer `ghostPrompt.logLevel` for new setups."
+        },
+        "ghostPrompt.logLevel": {
+          "type": "string",
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
+          "default": "info",
+          "markdownDescription": "Minimum verbosity for **GhostPrompt Log** and structured file logs. `error` shows only errors; `debug` includes fine-grained host traces. When this key is unset at all scopes, `debugSuggestions` may still elevate to debug (see its description)."
+        },
+        "ghostPrompt.logFileEnabled": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "When enabled, append NDJSON + Markdown session logs under global storage `ghostPrompt/logs/v1/`."
+        },
+        "ghostPrompt.logFileMaxBytes": {
+          "type": "number",
+          "default": 5242880,
+          "minimum": 1048576,
+          "maximum": 104857600,
+          "markdownDescription": "Maximum size in bytes of `events.ndjson` before it is rotated (gzipped archive + new file)."
         },
         "ghostPrompt.showSuggestionIssueNotifications": {
           "type": "boolean",
@@ -147,48 +183,10 @@
         },
         "ghostPrompt.maxSuggestionChars": {
           "type": "number",
-          "default": 180,
+          "default": 270,
           "minimum": 40,
           "maximum": 500,
-          "markdownDescription": "Maximum number of characters for each inline suggestion after normalization."
-        },
-        "ghostPrompt.suggestionStyle": {
-          "type": "string",
-          "enum": [
-            "concise",
-            "balanced",
-            "detailed"
-          ],
-          "default": "balanced",
-          "markdownDescription": "Controls how specific and long inline suggestions should be. `concise` keeps short continuations, `balanced` keeps practical context-rich responses, `detailed` allows richer multi-sentence continuations."
-        },
-        "ghostPrompt.contextMode": {
-          "type": "string",
-          "enum": [
-            "off",
-            "basic",
-            "project"
-          ],
-          "default": "basic",
-          "markdownDescription": "Controls whether context is used to shape inline suggestions. `off` disables context, `basic` uses recent session prompt/suggestion signals, `project` also includes lightweight active workspace/file context."
-        },
-        "ghostPrompt.suggestionLanguageMode": {
-          "type": "string",
-          "enum": [
-            "auto",
-            "manual"
-          ],
-          "default": "auto",
-          "markdownDescription": "Language mode for suggestions. `auto` detects language from current input, `manual` forces the configured suggestion language."
-        },
-        "ghostPrompt.suggestionLanguage": {
-          "type": "string",
-          "enum": [
-            "es",
-            "en"
-          ],
-          "default": "en",
-          "markdownDescription": "Suggestion output language used when `ghostPrompt.suggestionLanguageMode` is `manual`."
+          "markdownDescription": "Maximum characters per inline suggestion (40–500). Toolbar presets: 40 muy conciso, 155 conciso, 270 normal, 385 extenso, 500 muy extenso."
         },
         "ghostPrompt.minCharsForSuggestion": {
           "type": "number",
@@ -208,10 +206,11 @@
           "type": "string",
           "enum": [
             "copilotChat",
-            "vsOpenCodeX"
+            "vsOpenCodeX",
+            "cursorChat"
           ],
           "default": "copilotChat",
-          "markdownDescription": "Where the **full prompt** is sent from. `copilotChat` keeps GhostPrompt’s inline composer and **Send to Copilot**. `vsOpenCodeX` disables that inline surface in the webview (chips stay); VSOpenCodeX drives focus and calls `ghostPrompt.runSuggestPipeline` with `{ text }` for suggestions. Inline UI updates are forwarded to VSOpenCodeX via `vsopencodex.ghostPromptInlineUi` when this is `vsOpenCodeX`. **Effective default:** if **VSOpenCodeX** is installed and you have **never** saved this key (User/Workspace), GhostPrompt behaves as **`vsOpenCodeX`** until you set it explicitly (Settings or **Destino** dropdown in the GhostPrompt view)."
+          "markdownDescription": "Where the **full prompt** is sent from. `copilotChat` keeps GhostPrompt’s inline composer and **Send to Copilot**. `cursorChat` (Cursor IDE only) keeps the same GhostPrompt surface and sends to the native Cursor chat when the destination provider is registered. `vsOpenCodeX` disables that inline surface in the webview (chips stay); VSOpenCodeX drives focus and calls `ghostPrompt.runSuggestPipeline` with `{ text }` for suggestions. Inline UI updates are forwarded to VSOpenCodeX via `vsopencodex.ghostPromptInlineUi` when this is `vsOpenCodeX`. **Effective default:** if **VSOpenCodeX** is installed and you have **never** saved this key (User/Workspace), GhostPrompt behaves as **`vsOpenCodeX`** until you set it explicitly (Settings or **Destino** dropdown in the GhostPrompt view)."
         },
         "ghostPrompt.requestCooldownMs": {
           "type": "number",
@@ -247,76 +246,6 @@
           "minimum": 1,
           "maximum": 2000,
           "markdownDescription": "Maximum number of suggestion model requests allowed per extension session."
-        },
-        "ghostPrompt.projectMemoryUnusedStoreTtlDays": {
-          "type": "number",
-          "default": 30,
-          "minimum": 1,
-          "maximum": 3650,
-          "markdownDescription": "Days since last GhostPrompt activity before **deleting on-disk project memory** for that workspace root (`registry.json` + `stores/` under extension global storage). Open workspace folders refresh `lastSeenAt` during extension activation."
-        },
-        "ghostPrompt.projectMemoryEnabled": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "When **true**, GhostPrompt **persists validated bootstrap excerpts** (`README*` / `package.json`) under extension global storage when `contextMode` is **project** and a real LM request runs (see roadmap v0.4 phase C)."
-        },
-        "ghostPrompt.projectMemoryEditorIngestEnabled": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Requires **projectMemoryEnabled**. When **true**, GhostPrompt **indexes short excerpts** from workspace files you focus in the editor (filtered by extension/size) into project memory and may include them in **project** mode suggestions (phase D)."
-        },
-        "ghostPrompt.projectMemoryMaxTotalBytes": {
-          "type": "number",
-          "default": 393216,
-          "minimum": 16384,
-          "maximum": 4194304,
-          "markdownDescription": "Soft cap on **serialized size** of **editor-ingest** entries per workspace root before LRU eviction (bytes)."
-        },
-        "ghostPrompt.projectMemoryMaxEntryBytes": {
-          "type": "number",
-          "default": 32768,
-          "minimum": 512,
-          "maximum": 512000,
-          "markdownDescription": "Maximum **raw file bytes** read from disk when indexing an editor-ingest excerpt (truncated UTF-8)."
-        },
-        "ghostPrompt.projectMemoryMaxEditorSources": {
-          "type": "number",
-          "default": 48,
-          "minimum": 1,
-          "maximum": 500,
-          "markdownDescription": "Maximum number of **editor-ingest** entries kept per workspace before LRU eviction."
-        },
-        "ghostPrompt.projectMemoryEditorMaxFileBytes": {
-          "type": "number",
-          "default": 512000,
-          "minimum": 1024,
-          "maximum": 10485760,
-          "markdownDescription": "Skip indexing files larger than this many bytes (stat size)."
-        },
-        "ghostPrompt.projectMemoryEditorAllowedExtensions": {
-          "type": "string",
-          "default": ".ts,.tsx,.js,.jsx,.mjs,.cjs,.json,.md,.css,.scss,.html,.vue,.py,.rs,.go,.java,.cs,.cpp,.c,.h,.yaml,.yml,.toml,.xml,.sql,.sh,.ps1",
-          "markdownDescription": "Comma-separated **file extensions** (with leading `.`) eligible for editor-ingest."
-        },
-        "ghostPrompt.projectMemoryEditorPathExcludeGlobs": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "markdownDescription": "Optional extra path fragments or simple patterns (best-effort; always excludes `node_modules`, `.git`, and `.env*` segments)."
-        },
-        "ghostPrompt.projectMemoryFileWatcherEnabled": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "When **true**, GhostPrompt watches **only indexed file paths** (from project memory) for changes/deletes and removes stale entries proactively (phase E). Disabling avoids extra file watchers (lower background activity). Requires **projectMemoryEnabled**."
-        },
-        "ghostPrompt.projectMemoryFileWatcherThrottleMs": {
-          "type": "number",
-          "default": 400,
-          "minimum": 50,
-          "maximum": 5000,
-          "markdownDescription": "Debounce for grouping filesystem invalidation events from **projectMemoryFileWatcherEnabled** (milliseconds)."
         }
       }
     }
@@ -325,34 +254,58 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "clean": "node -e \"require('fs').rmSync('out',{recursive:true,force:true});require('fs').rmSync('src/ui/webview/dist',{recursive:true,force:true})\"",
-    "lint": "eslint src --ext ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:stats": "node eslint/print-stats.js",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p src/ui/webview/tsconfig.json",
     "typecheck:webview": "tsc -p src/ui/webview/tsconfig.json",
-    "build:webview": "esbuild src/ui/webview/main.ts --bundle --outfile=src/ui/webview/dist/main.js --platform=browser --target=es2022 --format=iife --legal-comments=none",
+    "build:webview": "vite build --config vite.config.ts",
+    "bundle:extension": "npx esbuild src/extension/extension.ts --bundle --platform=node --target=node18 --outfile=out/extension/extension.js --external:vscode --format=cjs --tsconfig=tsconfig.json",
+    "dev:webview": "vite --config vite.config.ts",
     "verify:webview-bundle": "node out/system/build/verifyWebviewBundle.js",
-    "validate": "npm run lint && npm run deps:circular && npm run compile && npm run typecheck:webview && npm run build:webview && npm run verify:webview-bundle",
+    "validate": "npm run lint && npm run deps:circular && npm run typecheck && npm run compile && npm run build:webview && npm run verify:webview-bundle",
     "test": "vitest run",
     "test:integration": "vitest run tests/opencodeSuggestions.integration.test.ts",
-    "deps:graph": "madge --ts-config tsconfig.json --extensions ts src/extension/extension.ts",
-    "deps:circular": "madge --ts-config tsconfig.json --extensions ts --circular src/extension/extension.ts",
+    "test:e2e": "npm run build:webview && npm run compile && node ./tests/e2e/runTest.js",
+    "deps:graph": "depcruise --config .dependency-cruiser.js --output-type dot src/extension/extension.ts > dependency-graph.dot",
+    "deps:circular": "depcruise --config .dependency-cruiser.js src/extension/extension.ts",
     "check": "npm run validate && npm run test",
-    "vscode:prepublish": "npm run clean && npm run build:webview && npm run compile",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,css,scss,html,mdx}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md,css,scss,html,mdx}\"",
+    "vscode:prepublish": "npm run clean && npm run bundle:extension && npm run build:webview",
     "vsix": "npx vsce package"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
+    "@tailwindcss/vite": "^4.3.0",
+    "@types/node": "^25.7.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@types/vscode": "^1.90.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.3",
+    "@typescript-eslint/parser": "^8.59.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
-    "esbuild": "^0.25.5",
-    "eslint": "^8.0.0",
-    "eslint-plugin-import": "^2.29.1",
-    "madge": "^8.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^4.1.5"
+    "clsx": "^2.1.1",
+    "dependency-cruiser": "^17.4.0",
+    "esbuild": "^0.28.0",
+    "eslint": "^9.39.4",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsdoc": "^62.9.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-unicorn": "^64.0.0",
+    "prettier": "^3.8.3",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "tailwindcss": "^4.3.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.13",
+    "vitest": "^4.1.6"
   },
   "dependencies": {
-    "@opencode-ai/sdk": "^1.14.44",
-    "zod": "^3.25.76"
+    "@opencode-ai/sdk": "^1.14.50",
+    "@tanstack/react-query": "^5.100.10",
+    "zod": "^4.4.3"
   }
 }

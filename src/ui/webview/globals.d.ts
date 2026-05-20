@@ -1,9 +1,9 @@
 /**
- * APIs globales del webview VS Code (no exportadas por `@types/vscode` para el panel web).
+ * @file APIs globales del webview VS Code (no exportadas por `@types/vscode` para el panel web).
  */
 
 declare function acquireVsCodeApi(): {
-  postMessage(message: unknown): void;
+  postMessage: (message: unknown) => void;
 };
 
 interface GhostPromptCapabilities {
@@ -14,3 +14,5 @@ interface Window {
   __ghostPromptViewId?: string;
   __ghostPromptCapabilities?: GhostPromptCapabilities;
 }
+
+declare module '*.css';

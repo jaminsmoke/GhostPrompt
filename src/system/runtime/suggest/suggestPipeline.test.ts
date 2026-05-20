@@ -1,0 +1,291 @@
+/**
+ * @file Tests del runtime de sugerencias del host.
+ */
+
+import * as vitest from 'vitest';
+import { vi } from 'vitest';
+
+const { showWarningMessageMock, wsConfigGetMock } = vi.hoisted(() => ({
+  showWarningMessageMock: vi.fn(),
+  wsConfigGetMock: vi.fn((key: string, fallback: unknown) => fallback),
+}));
+
+vi.mock('vscode', () => ({
+  'CancellationTokenSource': class {
+    public token = { isCancellationRequested: false };
+    cancel(): void {
+      this.token.isCancellationRequested = true;
+    }
+    dispose(): void {}
+  },
+  'Uri': {
+    file: (p: string) => ({ scheme: 'file', fsPath: p, path: p, toString: () => `file://${p}` }),
+  },
+  workspace: {
+    getConfiguration: () => ({
+      get: wsConfigGetMock,
+      inspect: () => ({}),
+    }),
+  },
+  window: {
+    createOutputChannel: vi.fn(() => ({ appendLine: vi.fn() })),
+    showWarningMessage: showWarningMessageMock,
+  },
+}));
+
+import { resolveCompletionSourceForRequest } from '../../../engines/routing/resolveCompletionSource';
+import { resetSuggestionHostNotificationThrottleForTests, maybeNotifySuggestionIssue } from '../../../ui/notifications/suggestionNotification';
+import { DEFAULT_MAX_SUGGESTION_CHARS } from '../../internals/protocols/constants/consPipelineDefaults';
+import { resetGhostPromptHostRuntimeForTests } from '../testing/resetHostRuntimeForTests';
+
+import {
+  runGhostPromptSuggestPipeline,
+  type GhostPromptSuggestDeps,
+} from './suggestPipeline';
+
+const MOCK_MIN_CHARS_FOR_SUGGESTION = 3;
+
+vi.mock('../../internals/config/read/workspaceConfigGetters', () => ({
+  getGhostPromptMinCharsForSuggestion: () => MOCK_MIN_CHARS_FOR_SUGGESTION,
+}));
+
+const requestCompletion = vi.fn();
+
+vi.mock('../../../engines/routing/resolveProvider', () => ({
+  resolveProvider: () => ({
+    id: 'copilotLm',
+    requestCompletion,
+  }),
+}));
+
+vi.mock('../../../engines/routing/resolveCompletionSource', () => ({
+  resolveCompletionSourceForRequest: vi.fn(() => 'copilot' as const),
+}));
+
+vi.mock('../../../engines/config/completionSources', () => ({
+  getEnabledCompletionSources: () => ['copilot'] as const,
+}));
+
+/**
+ * Creates a minimal runtime dependencies object for suggest pipeline tests.
+ * @param {Partial<GhostPromptSuggestDeps>} [overrides] - Optional overrides to customize the returned dependencies.
+ * @returns {GhostPromptSuggestDeps} A GhostPromptSuggestDeps object with defaults suitable for tests.
+ */
+function minimalDeps(overrides?: Partial<GhostPromptSuggestDeps>): GhostPromptSuggestDeps {
+  return {
+    broadcastUi: vi.fn(),
+    getSuggestionModelPolicy: () => 'nonPremiumOnly',
+    getSelectedModelId: () => 'auto',
+    getMaxSuggestionChars: () => DEFAULT_MAX_SUGGESTION_CHARS,
+    notifyIssue: maybeNotifySuggestionIssue,
+    ...overrides,
+  };
+}
+
+/**
+ * Restaura mocks del pipeline de sugerencias antes de cada test.
+ * @returns {void}
+ */
+function suggestPipelineBeforeEach(): void {
+  vi.clearAllMocks();
+  wsConfigGetMock.mockImplementation((key: string, fallback: unknown) => fallback);
+  resetSuggestionHostNotificationThrottleForTests();
+  resetGhostPromptHostRuntimeForTests();
+  requestCompletion.mockResolvedValue({
+    kind: 'suggestion',
+    suggestion: 'mocked suggestion text',
+    model: {
+      id: 'copilot/gpt',
+      label: 'GPT',
+      tier: 'included',
+    },
+  });
+}
+
+vitest.describe('runGhostPromptSuggestPipeline', () => {
+  vitest.beforeEach(suggestPipelineBeforeEach);
+
+  vitest.it('no emite UI si text está vacío', async () => {
+    const deps = minimalDeps();
+    await runGhostPromptSuggestPipeline({ type: 'suggest', text: '', captureId: 1 }, deps);
+    vitest.expect(deps.broadcastUi).not.toHaveBeenCalled();
+    vitest.expect(requestCompletion).not.toHaveBeenCalled();
+  });
+
+  vitest.it('bloquea texto corto y emite empty (too-short) sin llamar al LM', async () => {
+    const deps = minimalDeps();
+    await runGhostPromptSuggestPipeline({ type: 'suggest', text: 'ab', captureId: 2 }, deps);
+    vitest.expect(requestCompletion).not.toHaveBeenCalled();
+    vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
+      vitest.expect.objectContaining({
+        type: 'empty',
+        reason: 'too-short',
+        captureId: 2,
+      }),
+    );
+    vitest.expect(showWarningMessageMock).not.toHaveBeenCalled();
+  });
+
+  vitest.it('tras decisión request llama al proveedor y emite suggestion', async () => {
+    const deps = minimalDeps();
+    const text = 'hello world pipeline test phrase here unique-a';
+    await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 3 }, deps);
+    vitest.expect(requestCompletion).toHaveBeenCalled();
+    vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
+      vitest.expect.objectContaining({
+        type: 'suggestion',
+        suggestion: 'mocked suggestion text',
+        captureId: 3,
+      }),
+    );
+  });
+
+  vitest.it('filtra rechazo típico del LM como content-blocked', async () => {
+    const refusal = "I'm sorry, I can't assist with that.";
+    requestCompletion.mockResolvedValue({
+      kind: 'suggestion',
+      suggestion: refusal,
+      model: { id: 'gpt', label: 'GPT', tier: 'included' },
+    });
+    const deps = minimalDeps();
+    const text = 'long enough phrase for finalize refusal unique-fr';
+    await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 51 }, deps);
+    vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
+      vitest.expect.objectContaining({
+        type: 'empty',
+        reason: 'content-blocked',
+        captureId: 51,
+      }),
+    );
+  });
+
+  vitest.it('recorta suggestion según max efectivo (estilo balanced)', async () => {
+    const configuredMaxChars = 50;
+    const suggestionLength = 80;
+    const full = 'a'.repeat(suggestionLength);
+    requestCompletion.mockResolvedValue({
+      kind: 'suggestion',
+      suggestion: full,
+      model: { id: 'gpt', label: 'GPT', tier: 'included' },
+    });
+    const deps = minimalDeps({
+      getMaxSuggestionChars: () => configuredMaxChars,
+    });
+    const text = 'long enough phrase for finalize bound unique-bd';
+    await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 52 }, deps);
+    vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
+      vitest.expect.objectContaining({
+        type: 'suggestion',
+        suggestion: 'a'.repeat(configuredMaxChars),
+        captureId: 52,
+      }),
+    );
+  });
+
+});
+
+vitest.describe('runGhostPromptSuggestPipeline (opencode y errores)', () => {
+  vitest.beforeEach(suggestPipelineBeforeEach);
+
+  vitest.it('ruta OpenCode: loading inicial opencode-start y onStreamPreview en opciones', async () => {
+    vi.mocked(resolveCompletionSourceForRequest).mockReturnValue('opencode');
+    try {
+      const deps = minimalDeps();
+      const text = 'long enough phrase for governor pass unique-oc';
+      await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 20 }, deps);
+      vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
+        vitest.expect.objectContaining({
+          type: 'loading',
+          phase: 'opencode-start',
+          captureId: 20,
+        }),
+      );
+      const options = requestCompletion.mock.calls[0]?.[1] as {
+        onStreamPreview?: (s: string) => void;
+      };
+      vitest.expect(options).toBeDefined();
+      vitest.expect(typeof options.onStreamPreview).toBe('function');
+    } finally {
+      vi.mocked(resolveCompletionSourceForRequest).mockReturnValue('copilot');
+    }
+  });
+
+  vitest.it('resultado empty del LM emite broadcast empty con reason', async () => {
+    requestCompletion.mockResolvedValue({
+      kind: 'empty',
+      reason: 'no-model',
+    });
+    const deps = minimalDeps();
+    const text = 'long enough phrase for governor pass unique-empty';
+    await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 30 }, deps);
+    vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
+      vitest.expect.objectContaining({
+        type: 'empty',
+        reason: 'no-model',
+        captureId: 30,
+      }),
+    );
+    vitest.expect(showWarningMessageMock).toHaveBeenCalledTimes(1);
+    vitest.expect(showWarningMessageMock.mock.calls[0]?.[0]).toContain('No hay motor');
+  });
+
+  vitest.it('empty no-model repetido respeta throttle de aviso en host', async () => {
+    requestCompletion.mockResolvedValue({
+      kind: 'empty',
+      reason: 'no-model',
+    });
+    const deps = minimalDeps();
+    const t1 = 'long enough phrase governor empty dup one';
+    const t2 = 'long enough phrase governor empty dup two';
+    await runGhostPromptSuggestPipeline({ type: 'suggest', text: t1, captureId: 40 }, deps);
+    await runGhostPromptSuggestPipeline({ type: 'suggest', text: t2, captureId: 41 }, deps);
+    vitest.expect(showWarningMessageMock).toHaveBeenCalledTimes(1);
+  });
+
+  vitest.it('resultado error del LM emite broadcast error', async () => {
+    requestCompletion.mockResolvedValue({
+      kind: 'error',
+      message: 'provider exploded',
+    });
+    const deps = minimalDeps();
+    const text = 'long enough phrase for governor pass unique-err';
+    await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 31 }, deps);
+    vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
+      vitest.expect.objectContaining({
+        type: 'error',
+        message: 'provider exploded',
+        captureId: 31,
+      }),
+    );
+    vitest.expect(showWarningMessageMock).not.toHaveBeenCalled();
+  });
+
+  vitest.it('error con patrón OpenCode muestra aviso en host', async () => {
+    requestCompletion.mockResolvedValue({
+      kind: 'error',
+      message: 'Failed to start OpenCode server: nope',
+    });
+    const deps = minimalDeps();
+    const text = 'long enough phrase for governor pass unique-oc-err';
+    await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 32 }, deps);
+    vitest.expect(showWarningMessageMock).toHaveBeenCalledTimes(1);
+    vitest.expect(showWarningMessageMock.mock.calls[0]?.[0]).toContain('OpenCode');
+  });
+
+  vitest.it('no muestra aviso si showSuggestionIssueNotifications está desactivado', async () => {
+    wsConfigGetMock.mockImplementation((key: string, fallback: unknown) => {
+      if (key === 'showSuggestionIssueNotifications') {
+        return false;
+      }
+      return fallback;
+    });
+    requestCompletion.mockResolvedValue({
+      kind: 'empty',
+      reason: 'no-model',
+    });
+    const deps = minimalDeps();
+    const text = 'long enough phrase for governor pass unique-notify-off';
+    await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 33 }, deps);
+    vitest.expect(showWarningMessageMock).not.toHaveBeenCalled();
+  });
+});

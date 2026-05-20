@@ -1,15 +1,49 @@
+# Development docs and tooling
 Docs/**
+.github/**
+CHANGELOG.md
+dependency-graph.dot
+eslint.config.js
+tailwind.config.js
+
+# Local artefacts / dumps (often untracked; must not ship — vsce packs the working tree)
+.vscode-test/**
+.vscode-test-profile/**
+lint-report.json
+lint*.txt
+lint*.json
+.eslint-report.json
+tmp-*.txt
+tmp-*.json
+tsconfig.eslint.json
+*.vsix
+
+# Build-only artifacts
+scripts/**
 Scripts/**
-# Scripts de tooling compilados (smoke webview); no runtime del usuario
+eslint/**
 out/system/build/**
-# Incluir assets estáticos del webview (cargados en runtime por webviewHtml.ts)
-!src/ui/webview/index.html
-!src/ui/webview/style.css
-!src/ui/webview/dist/**
+
+# Exclude source tree; keep webview bundle assets only
 src/**
+!src/ui/webview/dist/
+!src/ui/webview/dist/**
+
+# Test sources
 tests/**
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+
+# Editor/dev config
 .gitignore
 .vscode/**
+.dependency-cruiser.js
+.prettierignore
+validate.out
+package-lock.json
+node_modules/**
 **/*.map
 **/*.ts
 .eslintrc.json

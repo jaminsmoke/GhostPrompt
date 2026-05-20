@@ -26,9 +26,9 @@ Suite: [`tests/opencodeSuggestions.integration.test.ts`](../../tests/opencodeSug
 
 ## GitHub Actions
 
-| Workflow | Cuándo |
-|----------|--------|
-| **`ci.yml`** | Push/PR a `main` — `npm run check` (sin OpenCode). |
+| Workflow                       | Cuándo                                                                                                                                                                          |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`ci.yml`**                   | Push/PR a `main` — `npm run check` (sin OpenCode).                                                                                                                              |
 | **`opencode-integration.yml`** | Solo **manual** (`workflow_dispatch`). Falla si no hay `opencode` en el PATH del runner; usar **runner self-hosted** con CLI instalado o ejecutar integración **local** arriba. |
 
 No se ejecuta integración OpenCode en cada PR de forma automática (dependencias externas y coste).

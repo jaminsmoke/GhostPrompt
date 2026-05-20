@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "./**/*.ts",
+    "./**/*.tsx",
+    "./globals.d.ts",
+    "../../system/internals/protocols/validations/schemas/zschemWebviewMessages.ts"
+  ],
+  "exclude": ["node_modules", "dist/**"]
+}

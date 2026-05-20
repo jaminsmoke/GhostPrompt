@@ -9,6 +9,7 @@
 `destinations/` implementa el patrón **`DestinationProvider`**. Cada destino expone cómo enviar el prompt final (Copilot Chat, VSOpenCodeX) y se registra en el `destinationRegistry`. El destino activo se resuelve via `ghostPrompt.agentDestination` o auto-detección si VSOpenCodeX está instalada.
 
 **Diferencia clave con `engines/`:**
+
 - `engines/` = **motor de suggestion** (genera ghost-text continuations)
 - `destinations/` = **destino del prompt** (dónde se envía el texto final del usuario)
 
@@ -31,7 +32,7 @@ destinations/
 
 ```ts
 interface DestinationProvider {
-  id: "copilotChat" | "vsOpenCodeX";
+  id: 'copilotChat' | 'vsOpenCodeX';
   sendPrompt?: (text: string) => Promise<void>;
 }
 ```
@@ -47,7 +48,7 @@ registerDestination("vsOpenCodeX", { id: "vsOpenCodeX", sendPrompt: ... });
 
 ```ts
 getActiveDestinationProvider(); // → provider del destino activo
-getGhostPromptAgentDestination(); // → "copilotChat" | "vsOpenCodeX"
+getAgentDestination(); // → "copilotChat" | "vsOpenCodeX"
 ```
 
 ---
@@ -73,31 +74,31 @@ getGhostPromptAgentDestination(); // → "copilotChat" | "vsOpenCodeX"
 
 ## Matriz motor/destino
 
-| Motor | Destino | Comportamiento |
-|-------|---------|----------------|
-| Copilot LM | Copilot Chat | Suggestion + send a Copilot Chat |
-| Copilot LM | VSOpenCodeX | Suggestion via VSOpenCodeX, send a VSOpenCodeX |
-| OpenCode | Copilot Chat | Suggestion via OpenCode, send a Copilot Chat |
-| OpenCode | VSOpenCodeX | Suggestion via OpenCode, send a VSOpenCodeX |
-| Ollama | Copilot Chat | Suggestion via Ollama, send a Copilot Chat |
-| Ollama | VSOpenCodeX | Suggestion via Ollama, send a VSOpenCodeX |
+| Motor      | Destino      | Comportamiento                                 |
+| ---------- | ------------ | ---------------------------------------------- |
+| Copilot LM | Copilot Chat | Suggestion + send a Copilot Chat               |
+| Copilot LM | VSOpenCodeX  | Suggestion via VSOpenCodeX, send a VSOpenCodeX |
+| OpenCode   | Copilot Chat | Suggestion via OpenCode, send a Copilot Chat   |
+| OpenCode   | VSOpenCodeX  | Suggestion via OpenCode, send a VSOpenCodeX    |
+| Ollama     | Copilot Chat | Suggestion via Ollama, send a Copilot Chat     |
+| Ollama     | VSOpenCodeX  | Suggestion via Ollama, send a VSOpenCodeX      |
 
 ---
 
 ## Dependencias
 
-| Importa de | Por qué |
-|------------|---------|
-| `vscode` | Commands, extensions API |
+| Importa de | Por qué                  |
+| ---------- | ------------------------ |
+| `vscode`   | Commands, extensions API |
 
-**No importa de:** `host/`, `api/`, `core/` (los destinos son independientes del pipeline)
+**No importa de:** `host/`, `api/`, `engines/` (los destinos son independientes del pipeline)
 
 ---
 
 ## Tests relevantes
 
-| Test | Qué cubre |
-|------|-----------|
-| `destinationRegistry.test.ts` | Registro y resolución de destinos |
-| `copilotChatDestination.test.ts` | Envío de prompt a Copilot Chat |
+| Test                             | Qué cubre                                      |
+| -------------------------------- | ---------------------------------------------- |
+| `destinationRegistry.test.ts`    | Registro y resolución de destinos              |
+| `copilotChatDestination.test.ts` | Envío de prompt a Copilot Chat                 |
 | `vsOpenCodeXDestination.test.ts` | Forward UI, notify si VSOpenCodeX no instalada |

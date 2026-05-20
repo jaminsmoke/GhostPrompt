@@ -1,5 +1,7 @@
 # `ui/` — Dominio de interfaz de usuario
 
+<!-- markdownlint-disable MD032 MD040 MD060 -->
+
 > Dominio canónico que contiene todo el código de interfaz de usuario de GhostPrompt, tanto el que corre en el webview (sandbox del navegador) como el que corre en el extension host (Node).
 
 ---
@@ -13,7 +15,8 @@
 - **`ui/notifications/`** — Corre en Node. Contiene notificaciones al usuario via `vscode.window.showWarningMessage`.
 
 **No debe contener:**
-- Lógica de suggestion (eso es `core/`)
+
+- Lógica de suggestion (eso es `engines/` + `system/runtime/`)
 - Protocolos de mensajes (eso es `api/`)
 - Lógica de motores (eso es `engines/`)
 
@@ -24,23 +27,20 @@
 ```
 ui/
 ├── README.md
-├── webview/                          # Sandbox del navegador (IIFE bundle via esbuild)
-│   ├── index.html                    # Template HTML con placeholders {{nonce}}, {{cspSource}}, etc.
-│   ├── style.css                     # Estilos del webview (basados en variables VS Code)
+├── webview/                          # Sandbox del navegador (React + Vite)
 │   ├── tsconfig.json                 # TypeScript config para el webview (lib: ["ES2022", "DOM"])
-│   ├── dist/
-│   │   └── main.js                   # Build output (esbuild)
-│   ├── main.ts                       # Entry point: init, handlers, message loop
 │   ├── globals.d.ts                  # Type declarations para window.__ghostPrompt*
-│   ├── lib/
-│   │   ├── composeLabels.ts          # Textos cortos para chips de configuración
-│   │   ├── htmlEscape.ts             # HTML entity escaping
-│   │   └── userErrorMessage.ts       # Mensajes de error para el usuario
-│   ├── protocol/
-│   │   └── postToHost.ts             # Validación Zod antes de postMessage al host
-│   └── panels/
-│       ├── capabilities.ts           # Detección de capacidades por viewId
-│       └── register.ts               # Handlers específicos por panel
+│   ├── dist/
+│   │   └── react/                    # Vite build output for the React webview
+│   │       └── index.html
+│   ├── react/
+│   │   ├── index.html                # Vite entry template
+│   │   ├── index.css                 # Tailwind + global styles
+│   │   ├── css.d.ts
+│   │   ├── main.tsx                  # React entry point
+│   │   ├── App.tsx                   # Raíz: delega en GhostPromptRoot
+│   │   └── surfaces/                 # ChatApp (sidebar) y HubApp (panel)
+│   ├── globals.d.ts                  # Type declarations para window.__ghostPrompt*
 ├── provider/                         # Extension host (Node)
 │   ├── MiniInputViewProvider.ts      # WebviewViewProvider (sidebar + panel)
 │   ├── webviewHtml.ts                # HTML template + CSP nonce generation
@@ -61,35 +61,39 @@ extension.ts: activate
 ui/provider/MiniInputViewProvider.ts
     ├── Resolve webview view (sidebar o panel)
     ├── ui/provider/webviewHtml.ts → build HTML con CSP
-    └── ui/webview/index.html + ui/webview/dist/main.js ← carga en el webview
+    └── ui/webview/dist/react/index.html (React bundle generado por Vite) ← carga en el webview
     │
     ▼
-ui/webview/main.ts (corre en el navegador)
-    ├── window.__ghostPromptCapabilities → detecta panel
-    ├── ui/webview/lib/composeLabels → etiquetas de chips
-    ├── ui/webview/protocol/postToHost.ts → valida mensajes antes de enviar
-    └── ui/webview/lib/userErrorMessage → mensajes de error
+ui/webview/react/main.tsx (corre en el navegador)
+    ├── window.__ghostPromptViewId (inyectado en ui/provider/webviewHtml.ts; coincide con el id de contribución de la vista VS Code)
+    ├── GhostPromptRoot → ChatApp | HubApp
+    └── …
     │
     ▼
-postMessage → api/protocols/inboundHandlers.ts → core/pipeline/
+postMessage → api/boundary/inboundHandlers.ts → system/runtime/suggest/suggestPipeline
 ```
 
 ---
 
-## Paneles (sidebar vs bottom panel)
+## Paneles (sidebar vs panel inferior)
 
-GhostPrompt registra dos vistas `WebviewViewProvider` (sidebar `ghostPrompt.input` y panel `ghostPrompt.inputPanel`) que comparten el **mismo bundle HTML/JS/CSS**. La diferenciación es via `window.__ghostPromptCapabilities.viewId` inyectado en el HTML.
+GhostPrompt registra dos vistas `WebviewViewProvider` que comparten el **mismo bundle** Vite. El host inyecta en el HTML del webview `window.__ghostPromptViewId` con el id de contribución de la vista (`ghostPrompt.input` vs `ghostPrompt.inputPanel`). Ese valor es la fuente de verdad del enrutado React; no basta con “capabilities” genéricas si el script no recibe el `viewId` correcto.
 
-Ambos paneles deben mantener **paridad funcional**: los chips, el protocolo de mensajes y el comportamiento de suggestion deben ser idénticos. Solo cambian hints de layout (compact toolbar en sidebar).
+- **Sidebar (`ghostPrompt.input`):** superficie **chat** — compositor de prompt, overlay ghost, envío y chip **Destino** (v0.6.2 plan 05, fases FW–FX).
+- **Panel (`ghostPrompt.inputPanel`):** superficie **hub** — chips Motor, Modelo, Composición, debug y sección Estadísticas (placeholder); sin textarea de chat. En el manifest el contenedor y la vista se titulan **GhostPrompt — Ajustes**; la paleta expone **GhostPrompt: Open Settings Hub** (`ghostPrompt.openHub`) para abrirlo y enfocarlo.
+
+El host asigna `surfaceRole` `chat` | `hub` por vista: el pipeline de sugerencias y los mensajes outbound `loading` / `suggestion` / … solo se envían a la instancia **chat** (plan 05 FX).
+
+El estado de producto (`ghostPrompt.*`) sigue siendo único; **ambas** vistas reciben `settings` (y el hub puede enviar `updateSetting` sin disparar suggest).
 
 ---
 
 ## Tests relevantes
 
-| Test | Qué cubre |
-|------|-----------|
+| Test                            | Qué cubre                                             |
+| ------------------------------- | ----------------------------------------------------- |
 | `MiniInputViewProvider.test.ts` | Flujo completo: init, suggest, accept, send, settings |
-| `webviewToolbarParity.test.ts` | Paridad dual vista (sidebar + panel) |
-| `webviewThemeTokens.test.ts` | Tokens CSS del webview |
-| `webview/composeLabels.test.ts` | Etiquetas de configuración |
-| `webview/userErrorMessage.test.ts` | Mensajes de error |
+| `webviewToolbarParity.test.ts`  | Chips y `data-key` estables donde la toolbar se comparte entre superficies |
+| `webviewSurfaces.test.ts`       | Chat monta el compositor; hub monta controles sin chat (plan 05 FW) |
+| `webviewThemeTokens.test.ts`    | Tokens CSS del webview                                |
+| `src/ui/webview/react/App.test.tsx`    | React webview render smoke test                       |

@@ -1,13 +1,28 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "DOM"],
+    "lib": ["ES2023", "DOM"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "types": ["react", "react-dom", "vite/client"],
     "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "noEmit": true,
     "skipLibCheck": true,
     "isolatedModules": true
   },
-  "include": ["./**/*.ts", "../../system/contracts/webviewMessageSchemas.ts"]
+  "include": [
+    "./**/*.ts",
+    "./**/*.tsx",
+    "./globals.d.ts",
+    "../../system/internals/protocols/validations/schemas/zschemWebviewMessages.ts",
+    "../../system/internals/protocols/state/provider/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ]
 }

@@ -1,15 +1,12 @@
 /**
- * @fileoverview Barrel público de la API interna webview↔host.
+ * @file Barrel público de la API interna webview↔host.
  *
- * La API interna de GhostPrompt gestiona toda la comunicación entre el webview
- * (UI del mini-input) y el extension host. Se organiza en tres subdominios:
- *
- * - **protocols/** — Validación Zod en el boundary postMessage, router de mensajes inbound.
- * - **settings/** — Construcción/envío del envelope `settings`, aplicación de `updateSetting`.
- * - **getters/** — Lectores de configuración `vscode.workspace` + resolución de destino agente.
+ * - **boundary/** — Validación Zod en el límite postMessage (con logging) y dispatch inbound.
+ * - **settings/** — Ensamblador del envelope `settings` hacia el webview.
+ * - Config lectura/escritura: `system/internals/config/read|write/`.
  */
 
-// Protocols
+// Boundary (postMessage host)
 export {
   parseWebviewInboundMessage,
   parseOutboundSettingsEnvelope,
@@ -20,7 +17,7 @@ export {
   webviewUpdateSettingSchema,
   type WebviewInboundMessage,
   type WebviewSettingsPayload,
-} from "./protocols/webviewProtocols";
+} from './boundary/webviewProtocols';
 
 export {
   dispatchGhostPromptInboundMessage,
@@ -31,30 +28,35 @@ export {
   handleGhostPromptInboundSend,
   type GhostPromptInboundBroadcastServices,
   type GhostPromptInboundDispatchServices,
-} from "./protocols/inboundHandlers";
+  type GhostPromptWebviewSurfaceRole,
+} from './boundary/inboundHandlers';
 
-// Settings
-export { applyWebviewUpdateSetting } from "./settings/applyWebviewUpdate";
+// Config write
+export { applyWebviewUpdateSetting } from '../system/internals/config/write/applyWebviewUpdateSetting';
+
+// Settings envelope assembler
 export {
   buildAndPostGhostPromptSettings,
   type GhostPromptSettingsGetters,
-} from "./settings/settingsPostMessage";
+} from './settings/settingsPostMessage';
 
-// Getters
+// Config read
 export {
-  type GhostPromptAgentDestination,
-  getGhostPromptAgentDestination,
-  isVsOpenCodeXExtensionInstalled,
-  getGhostPromptSuggestionModelPolicy,
-  getGhostPromptSelectedModelId,
+  collectGhostPromptProjectContext,
   getGhostPromptMaxSuggestionChars,
-  getGhostPromptSuggestionStyle,
-  getGhostPromptContextMode,
-  getGhostPromptProjectMemoryEnabled,
-  getGhostPromptSuggestionLanguageMode,
-  getGhostPromptSuggestionLanguage,
-  getGhostPromptSuggestionLanguageChoice,
+  getGhostPromptMinCharsForSuggestion,
   getGhostPromptOllamaBaseUrl,
   getGhostPromptOllamaExcludedModelIds,
-  collectGhostPromptProjectContext,
-} from "./getters/workspaceGetters";
+  getGhostPromptSelectedModelId,
+  getGhostPromptSuggestionDebounceMs,
+  readGhostPromptSuggestionModelPolicy,
+} from '../system/internals/config/read';
+
+// Destinations (agente de envío)
+export {
+  type AgentDestination,
+  getAgentDestination,
+  isCursorDesktopHost,
+  isVsOpenCodeXExtensionInstalled,
+  parseAgentDestination,
+} from '../destinations/destinationRegistry';
