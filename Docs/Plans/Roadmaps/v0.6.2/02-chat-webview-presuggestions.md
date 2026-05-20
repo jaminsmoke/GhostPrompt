@@ -8,6 +8,12 @@
 
 ---
 
+## Historico dual-view (tras plan 05 FY, v0.6.2)
+
+El panel inferior dejo de ser un segundo chat: ya no existe el mensaje host→webview `draftSync` ni sincronizacion de borrador entre dos compositores. La fase **FG** de este plan sigue aplicando a **`draftHydrate`** al reabrir el sidebar (borrador persistido en el host) y a la correlacion `captureId`; las tareas y tests que mencionaban **dos chats** enlazados por `draftSync` son **legacy** de producto.
+
+---
+
 ## Diagnostico inicial
 
 | Area | Hallazgo | Archivos principales |
@@ -114,6 +120,7 @@
 | 2026-05-18 | FG | `applyRemoteDraftRelay` en `draftHydrate`/`draftSync`; tests handler + utility. |
 | 2026-05-19 | FH | Grid `gp-prompt-field`, clases editor compartidas, gutter compensado vía `paddingRight`, scroll sincronizado, CSS tipografía VS Code, tests ampliados. |
 | 2026-05-19 | FH fix | Crash `Cannot read properties of null (reading 'style')`: guard `isMountedElement` (refs React `null` al desmontar overlay); sync ghost solo si overlay visible. |
+| 2026-05-20 | Post-FY | Plan 05 FY elimina `draftSync`; dual segunda vista sin segundo chat. FG queda acotada a `draftHydrate` + capturas. |
 
 ## Bitacora
 

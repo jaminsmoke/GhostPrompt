@@ -65,7 +65,8 @@ ui/provider/MiniInputViewProvider.ts
     │
     ▼
 ui/webview/react/main.tsx (corre en el navegador)
-    ├── window.__ghostPromptViewId → GhostPromptRoot → ChatApp | HubApp
+    ├── window.__ghostPromptViewId (inyectado en ui/provider/webviewHtml.ts; coincide con el id de contribución de la vista VS Code)
+    ├── GhostPromptRoot → ChatApp | HubApp
     └── …
     │
     ▼
@@ -76,12 +77,14 @@ postMessage → api/boundary/inboundHandlers.ts → system/runtime/suggest/sugge
 
 ## Paneles (sidebar vs panel inferior)
 
-GhostPrompt registra dos vistas `WebviewViewProvider` que comparten el **mismo bundle** Vite. El host inyecta `window.__ghostPromptViewId` (`ghostPrompt.input` vs `ghostPrompt.inputPanel`).
+GhostPrompt registra dos vistas `WebviewViewProvider` que comparten el **mismo bundle** Vite. El host inyecta en el HTML del webview `window.__ghostPromptViewId` con el id de contribución de la vista (`ghostPrompt.input` vs `ghostPrompt.inputPanel`). Ese valor es la fuente de verdad del enrutado React; no basta con “capabilities” genéricas si el script no recibe el `viewId` correcto.
 
-- **Sidebar (`ghostPrompt.input`):** superficie **chat** — compositor de prompt, overlay ghost, envío y chip **Destino** (v0.6.2 plan 05, fase FW).
-- **Panel (`ghostPrompt.inputPanel`):** superficie **hub** — chips Motor, Modelo, Composición, debug y sección Estadísticas (placeholder); sin textarea de chat.
+- **Sidebar (`ghostPrompt.input`):** superficie **chat** — compositor de prompt, overlay ghost, envío y chip **Destino** (v0.6.2 plan 05, fases FW–FX).
+- **Panel (`ghostPrompt.inputPanel`):** superficie **hub** — chips Motor, Modelo, Composición, debug y sección Estadísticas (placeholder); sin textarea de chat. En el manifest el contenedor y la vista se titulan **GhostPrompt — Ajustes**; la paleta expone **GhostPrompt: Open Settings Hub** (`ghostPrompt.openHub`) para abrirlo y enfocarlo.
 
-El estado de producto (`ghostPrompt.*`) sigue siendo único; ambas vistas reciben mensajes `settings` desde el host.
+El host asigna `surfaceRole` `chat` | `hub` por vista: el pipeline de sugerencias y los mensajes outbound `loading` / `suggestion` / … solo se envían a la instancia **chat** (plan 05 FX).
+
+El estado de producto (`ghostPrompt.*`) sigue siendo único; **ambas** vistas reciben `settings` (y el hub puede enviar `updateSetting` sin disparar suggest).
 
 ---
 
@@ -90,7 +93,7 @@ El estado de producto (`ghostPrompt.*`) sigue siendo único; ambas vistas recibe
 | Test                            | Qué cubre                                             |
 | ------------------------------- | ----------------------------------------------------- |
 | `MiniInputViewProvider.test.ts` | Flujo completo: init, suggest, accept, send, settings |
-| `webviewToolbarParity.test.ts`  | Chips y `data-key` estables en toolbar/paneles        |
-| `webviewSurfaces.test.ts`       | Reparto chat vs hub (plan 05 FW)                      |
+| `webviewToolbarParity.test.ts`  | Chips y `data-key` estables donde la toolbar se comparte entre superficies |
+| `webviewSurfaces.test.ts`       | Chat monta el compositor; hub monta controles sin chat (plan 05 FW) |
 | `webviewThemeTokens.test.ts`    | Tokens CSS del webview                                |
 | `src/ui/webview/react/App.test.tsx`    | React webview render smoke test                       |

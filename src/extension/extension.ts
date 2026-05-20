@@ -1,9 +1,9 @@
 /**
  * @file Extension entry point.
  *
- * Registers the GhostPromptViewProvider in both the activity bar container
- * and the bottom panel container, so the user can place the view wherever
- * they prefer relative to the Copilot chat.
+ * Registers GhostPrompt webview views: **chat** in the activity bar (`ghostPrompt.input`)
+ * and **hub** in the bottom panel (`ghostPrompt.inputPanel`, manifest title **GhostPrompt — Ajustes**).
+ * The `ghostPrompt.openHub` command reveals and focuses the hub view.
  */
 import * as vscode from 'vscode';
 

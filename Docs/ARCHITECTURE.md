@@ -230,7 +230,7 @@ When **`ghostPrompt.projectMemoryEnabled`** is on and **`ghostPrompt.contextMode
 
 ## 6. VS Code registration model
 
-The extension declares two `viewsContainers` — Activity Bar + Panel — each with a webview view (IDs **`ghostPrompt.input`** and **`ghostPrompt.inputPanel`**; containers **`ghostPrompt`** / **`ghostPromptPanel`**). Ver `package.json` → `contributes`.
+The extension declares two `viewsContainers` — Activity Bar + Panel — each with a webview view (IDs **`ghostPrompt.input`** and **`ghostPrompt.inputPanel`**; containers **`ghostPrompt`** / **`ghostPromptPanel`**). The panel view is labeled **GhostPrompt — Ajustes** (settings hub only); the command **`ghostPrompt.openHub`** focuses it. See `package.json` → `contributes`.
 
 Two `MiniInputViewProvider` instances are registered in `extension/extension.ts`. Share `ExtensionContext` and storage.
 

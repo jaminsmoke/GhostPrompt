@@ -60,7 +60,7 @@ No es cobertura de líneas al 100 %; es **contrato de tests que deben seguir pas
 | Área `src/` | Ficheros de test relevantes (Vitest) |
 | ----------- | ------------------------------------ |
 | `extension/extension.ts` | Indirecto: `ui/provider/MiniInputViewProvider.test.ts` |
-| `ui/` (webview, provider, notifications) | `MiniInputViewProvider.test.ts`, `multiViewDraft.test.ts`, `webviewToolbarParity.test.ts`, `webviewThemeTokens.test.ts`, `ui/webview/react/App.test.tsx`, `ui/webview/react/hooks/useGhostPrompt.test.ts`, `ui/webview/react/validators/parseWebviewInbound.test.ts`, `ui/notifications/suggestionHostNotification.test.ts` |
+| `ui/` (webview, provider, notifications) | `MiniInputViewProvider.test.ts`, `multiViewDraft.test.ts`, `webviewToolbarParity.test.ts`, `webviewSurfaces.test.ts`, `webviewThemeTokens.test.ts`, `ui/webview/react/App.test.tsx`, `ui/webview/react/hooks/useGhostPrompt.test.ts`, `ui/webview/react/validators/parseWebviewInbound.test.ts`, `ui/notifications/suggestionHostNotification.test.ts` |
 | `api/boundary/*` | `api/boundary/webviewProtocols.test.ts`, `api/boundary/ghostPromptWebviewInboundHandlers.test.ts`, `system/internals/protocols/validations/schemas/zschemWebviewMessages.test.ts` |
 | `api/settings/*` | `MiniInputViewProvider.test.ts` (flujo settings) |
 | `system/internals/config/read/` | Indirecto vía `MiniInputViewProvider.test.ts`, `suggest/suggestPipeline.test.ts` |
