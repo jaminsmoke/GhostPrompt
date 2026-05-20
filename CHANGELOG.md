@@ -13,6 +13,7 @@ Consolidación boundary host↔webview (roadmap v0.6.2 FA–FC): una sola línea
 - **Superficies webview (FW):** enrutado por `window.__ghostPromptViewId` — sidebar `ChatApp` (prompt, envío, chip Destino); panel `HubApp` (Motor, Modelo, Composición, debug, placeholder Estadísticas). Un solo bundle Vite.
 - **Host superficies (FX):** `surfaceRole` chat vs hub; mensajes outbound de suggestion/carga/clear solo a la webview chat; hub no persiste `draftChanged` ni recibe `draftHydrate` en init.
 - **Tipo público:** `GhostPromptWebviewSurfaceRole` reexportado desde `api/index.ts`.
+- **Manifest hub (FZ):** contenedor panel y vista `ghostPrompt.inputPanel` titulados **GhostPrompt — Ajustes**; comando de paleta **GhostPrompt: Open Settings Hub** (`ghostPrompt.openHub`) para abrir y enfocar el hub.
 
 ### Removed
 
@@ -27,6 +28,7 @@ Consolidación boundary host↔webview (roadmap v0.6.2 FA–FC): una sola línea
 - **Imports `api/`:** parseo con logging y dispatch inbound solo desde `api/boundary/` (`api/index.ts` reexporta boundary).
 - **Webview React:** hooks y componentes importan tipos/constantes vía barrels locales; `parseWebviewInbound.ts` documentado como validación de mensajes **host→panel** (`webviewOutboundMessageSchema`).
 - **Default `ghostPrompt.maxSuggestionChars`:** 270 (preset Normal). Migración one-shot desde `suggestionStyle` al activar la extensión.
+- **UX dual superficie:** el chat con sugerencias está en la barra lateral **GhostPrompt**; el panel inferior es solo **ajustes**. Si solías escribir en el panel, abre el chat desde el icono de actividad y el hub con **GhostPrompt: Open Settings Hub** (`ghostPrompt.openHub`).
 
 ## [Unreleased]
 

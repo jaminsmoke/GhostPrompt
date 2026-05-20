@@ -80,6 +80,10 @@ export function activate(context: vscode.ExtensionContext): void {
         await MiniInputViewProvider.runSuggestFromExternalHost(text);
       },
     );
+    const openHubCommand = vscode.commands.registerCommand('ghostPrompt.openHub', async () => {
+      await vscode.commands.executeCommand('workbench.view.extension.ghostPromptPanel');
+      await vscode.commands.executeCommand(`${MiniInputViewProvider.panelViewId}.focus`);
+    });
     context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration('ghostPrompt')) {
@@ -103,6 +107,7 @@ export function activate(context: vscode.ExtensionContext): void {
       openSuggestionPolicySettingsCommand,
       toggleSuggestionDebugCommand,
       runSuggestPipelineCommand,
+      openHubCommand,
       vscode.window.registerWebviewViewProvider(MiniInputViewProvider.viewId, sidebarProvider),
       vscode.window.registerWebviewViewProvider(MiniInputViewProvider.panelViewId, panelProvider),
     );

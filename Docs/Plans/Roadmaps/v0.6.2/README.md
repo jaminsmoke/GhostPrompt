@@ -48,7 +48,7 @@ Límites de capa: [`Docs/Owners.md`](../../Owners.md).
 | **FK–FP** | Config canónica + pipeline estilo + reorganizar runtime | Completado |
 | **FQ–FU** | Slider longitud + 5 atajos; eliminado `suggestionStyle` | Completado |
 | **FV** | Smoke manual (checklist plan 04) | En curso — resto automatizado hecho |
-| **FW–GB** | Superficies chat (sidebar) + hub (panel); fin paridad dual chat | En curso — **FW**, **FX** y **FY** hechos; ver [05-dual-surface-chat-hub.md](./05-dual-surface-chat-hub.md) |
+| **FW–GB** | Superficies chat (sidebar) + hub (panel); fin paridad dual chat | En curso — **FW**, **FX**, **FY** y **FZ** hechos; ver [05-dual-surface-chat-hub.md](./05-dual-surface-chat-hub.md) |
 
 ## Verificación habitual (cada fase)
 
