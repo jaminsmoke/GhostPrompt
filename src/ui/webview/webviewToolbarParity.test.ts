@@ -1,7 +1,7 @@
 /**
- * @file Regresión: paridad funcional del toolbar entre sidebar y panel (mismo bundle webview).
+ * @file Regresión: toolbar y chips estables (mismo bundle webview; reparto chat/hub v0.6.2 FW).
  * @see Docs/Plans/Roadmaps/Roadmap-v0.3.1-webview-parity-contracts-ux.md Fase A
- * @see Docs/Plans/Roadmaps/Roadmap-v0.4.3-quality-resilience.md Fase 5 (gobernanza dual webview)
+ * @see Docs/Plans/Roadmaps/v0.6.2/05-dual-surface-chat-hub.md fase FW
  */
 /// <reference types="node" />
 import { readFileSync } from 'node:fs';
@@ -42,7 +42,7 @@ vitest.describe('React webview toolbar parity', () => {
   vitest.it('component files expose stable toolbar chip ids shared by both webviews', () => {
     const toolbar = read('src/ui/webview/react/components/GhostToolbar.tsx');
     const input = read('src/ui/webview/react/components/PromptInput.tsx');
-    const app = read('src/ui/webview/react/App.tsx');
+    const chatApp = read('src/ui/webview/react/surfaces/chat/ChatApp.tsx');
 
     vitest.expect(toolbar).toContain('id="motor-chip"');
     vitest.expect(toolbar).toContain('id="modelo-chip"');
@@ -52,7 +52,7 @@ vitest.describe('React webview toolbar parity', () => {
     vitest.expect(toolbar).toContain('id="debug-btn"');
 
     vitest.expect(input).toContain('id="prompt-input"');
-    vitest.expect(app).toContain('id="gp-vsx-surface-note"');
+    vitest.expect(chatApp).toContain('id="gp-vsx-surface-note"');
     const bottomBar = read('src/ui/webview/react/components/BottomBar.tsx');
     vitest.expect(bottomBar).toContain('id="send-btn"');
   });

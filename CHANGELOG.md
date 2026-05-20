@@ -10,7 +10,7 @@ Consolidación boundary host↔webview (roadmap v0.6.2 FA–FC): una sola línea
 
 - **Barrels webview:** `ui/webview/react/webviewProtocolConstants.ts` y `webviewProtocolSchemas.ts` para constantes `cons*` y schemas Zod del panel sin rutas profundas repetidas.
 - **Paridad parse:** fixtures `webviewOutboundMessageFixtures.ts` y tests `parseWebviewInbound.test.ts` + ampliación de `api/boundary/webviewProtocols.test.ts` (mismo schema host→panel).
-- **Longitud de pre-suggestion (FQ–FT):** slider 40–500 y cinco atajos (muy conciso → muy extenso) en chip Composición; presets 40 / 155 / 270 / 385 / 500; etiqueta derivada (`deriveSuggestionLengthLabel`); hints LM por banda en `buildCompletionInstruction`.
+- **Superficies webview (FW):** enrutado por `window.__ghostPromptViewId` — sidebar `ChatApp` (prompt, envío, chip Destino); panel `HubApp` (Motor, Modelo, Composición, debug, placeholder Estadísticas). Un solo bundle Vite.
 
 ### Removed
 

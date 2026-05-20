@@ -38,7 +38,8 @@ ui/
 │   │   ├── index.css                 # Tailwind + global styles
 │   │   ├── css.d.ts
 │   │   ├── main.tsx                  # React entry point
-│   │   └── App.tsx                   # React component tree
+│   │   ├── App.tsx                   # Raíz: delega en GhostPromptRoot
+│   │   └── surfaces/                 # ChatApp (sidebar) y HubApp (panel)
 │   ├── globals.d.ts                  # Type declarations para window.__ghostPrompt*
 ├── provider/                         # Extension host (Node)
 │   ├── MiniInputViewProvider.ts      # WebviewViewProvider (sidebar + panel)
@@ -64,8 +65,8 @@ ui/provider/MiniInputViewProvider.ts
     │
     ▼
 ui/webview/react/main.tsx (corre en el navegador)
-    ├── window.__ghostPromptCapabilities → detecta panel
-    └── App.tsx → maneja UI, comunicación host y lógica de sugerencias
+    ├── window.__ghostPromptViewId → GhostPromptRoot → ChatApp | HubApp
+    └── …
     │
     ▼
 postMessage → api/boundary/inboundHandlers.ts → system/runtime/suggest/suggestPipeline
@@ -73,11 +74,14 @@ postMessage → api/boundary/inboundHandlers.ts → system/runtime/suggest/sugge
 
 ---
 
-## Paneles (sidebar vs bottom panel)
+## Paneles (sidebar vs panel inferior)
 
-GhostPrompt registra dos vistas `WebviewViewProvider` (sidebar `ghostPrompt.input` y panel `ghostPrompt.inputPanel`) que comparten el **mismo bundle HTML/JS/CSS**. La diferenciación es via `window.__ghostPromptCapabilities.viewId` inyectado en el HTML.
+GhostPrompt registra dos vistas `WebviewViewProvider` que comparten el **mismo bundle** Vite. El host inyecta `window.__ghostPromptViewId` (`ghostPrompt.input` vs `ghostPrompt.inputPanel`).
 
-Ambos paneles deben mantener **paridad funcional**: los chips, el protocolo de mensajes y el comportamiento de suggestion deben ser idénticos. Solo cambian hints de layout (compact toolbar en sidebar).
+- **Sidebar (`ghostPrompt.input`):** superficie **chat** — compositor de prompt, overlay ghost, envío y chip **Destino** (v0.6.2 plan 05, fase FW).
+- **Panel (`ghostPrompt.inputPanel`):** superficie **hub** — chips Motor, Modelo, Composición, debug y sección Estadísticas (placeholder); sin textarea de chat.
+
+El estado de producto (`ghostPrompt.*`) sigue siendo único; ambas vistas reciben mensajes `settings` desde el host.
 
 ---
 
@@ -86,6 +90,7 @@ Ambos paneles deben mantener **paridad funcional**: los chips, el protocolo de m
 | Test                            | Qué cubre                                             |
 | ------------------------------- | ----------------------------------------------------- |
 | `MiniInputViewProvider.test.ts` | Flujo completo: init, suggest, accept, send, settings |
-| `webviewToolbarParity.test.ts`  | Paridad dual vista (sidebar + panel)                  |
+| `webviewToolbarParity.test.ts`  | Chips y `data-key` estables en toolbar/paneles        |
+| `webviewSurfaces.test.ts`       | Reparto chat vs hub (plan 05 FW)                      |
 | `webviewThemeTokens.test.ts`    | Tokens CSS del webview                                |
 | `src/ui/webview/react/App.test.tsx`    | React webview render smoke test                       |
