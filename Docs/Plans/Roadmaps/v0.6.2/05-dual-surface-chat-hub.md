@@ -133,7 +133,7 @@ Documentar matriz en `api/boundary/README` o cabecera de `zschemWebviewMessages.
 | **FY** | Limpieza dual-view (`draftSync`, `originViewId`, tests paridad) | Completado |
 | **FZ** | Manifest: nombres de vistas, comando opcional “Abrir hub” | Completado |
 | **GA** | Tests superficies + docs (`ui/README`, ARCHITECTURE) | Completado |
-| **GB** | QA manual + CHANGELOG; migraciones canónicas acotadas (opcional) | Planificado |
+| **GB** | QA manual + CHANGELOG; migraciones canónicas acotadas (opcional) | Completado |
 
 ---
 
@@ -224,6 +224,14 @@ Documentar matriz en `api/boundary/README` o cabecera de `zschemWebviewMessages.
 6. VSOpenCodeX / Cursor / Copilot sin regresión en envío.
 7. Canal **GhostPrompt Log** sin errores de mensajes rechazados desde hub.
 
+### Bitácora (plan 05 GB)
+
+| Fecha | Ámbito | Resultado |
+| ----- | ------ | --------- |
+| 2026-05-20 | Automatizado | `npm run check` verde en rama `feature/react-vite-tailwind-webview` (lint, typecheck, compile, bundle webview, Vitest). |
+| 2026-05-20 | Docs | `src/system/README.md`: eliminada carpeta `policies/` inexistente del árbol (P0 del plan). |
+| — | Manual (EDH) | Operador: marcar ítems 1–7 del checklist arriba al preparar release **0.6.2** (véase también FE / FV). |
+
 ### Migraciones canónicas (PR separado recomendado)
 
 | Prioridad | Tarea | Ruta objetivo |
@@ -232,7 +240,7 @@ Documentar matriz en `api/boundary/README` o cabecera de `zschemWebviewMessages.
 | P1 | Tests config | `workspaceConfigGetters.test.ts`, `migrateGhostPromptSuggestionLength.test.ts` |
 | P0 | README `system/` (quitar `policies/` inexistente) | `system/README.md` |
 
-**Criterio de hecho:** `npm run check`; checklist QA firmado en este doc o en bitácora del PR.
+**Criterio de hecho:** `npm run check`; checklist QA documentado en este doc; ítems 1–7 marcados por operador al cerrar release (FE/FV).
 
 ---
 
@@ -258,7 +266,7 @@ Documentar matriz en `api/boundary/README` o cabecera de `zschemWebviewMessages.
 | 1 | **FW** | Solo React; host aún permisivo |
 | 2 | **FX** + **FY** | Host + limpieza protocolo |
 | 3 | **FZ** + **GA** | Manifest + docs + tests |
-| 4 | **GB** (opcional) | QA + migraciones `system/` |
+| 4 | **GB** (opcional) | QA + migraciones `system/` | Completado en rama (bitácora + README `system/`); migraciones P1 en PR aparte si aplica |
 
 ---
 

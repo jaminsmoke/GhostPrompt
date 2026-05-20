@@ -10,7 +10,7 @@
 
 **No debe contener:**
 
-- Lógica del **pipeline suggest activo** (`system/runtime/suggest.ts` y routing a motores)
+- Lógica del **pipeline suggest activo** detallada (eso vive en `system/runtime/suggest/` y motores en `engines/`)
 - Protocolos de mensajes (eso es `api/`)
 - Integración con VS Code providers (eso es `vscode/`)
 
@@ -28,7 +28,7 @@ system/
 │   │   ├── state/               # state*
 │   │   └── validations/schemas/ # zschem* (p. ej. zschemWebviewMessages.ts)
 │   └── config/                  # Lectores tipados de ghostPrompt.* (sin vscode en protocols)
-├── runtime/                     # Orquestación suggest, coordinator, provider status
+├── runtime/                     # Orquestación suggest, coordinator, estado de proveedores (`suggest/`, `providers/`, …)
 ├── log/
 │   ├── breadcrumbs.ts
 │   ├── emitContract.ts
@@ -40,8 +40,6 @@ system/
 │   └── transports/
 │       ├── file.ts
 │       └── outputChannel.ts
-├── policies/
-│   └── SuggestionRequestGovernor.ts  # Legacy: límites/caché; no en hot path suggest
 └── build/
     └── verifyWebviewBundle.ts   # Verificación del bundle webview en CI/dev
 ```

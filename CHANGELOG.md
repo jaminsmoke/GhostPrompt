@@ -30,6 +30,7 @@ Consolidación boundary host↔webview (roadmap v0.6.2 FA–FC): una sola línea
 - **Default `ghostPrompt.maxSuggestionChars`:** 270 (preset Normal). Migración one-shot desde `suggestionStyle` al activar la extensión.
 - **UX dual superficie:** el chat con sugerencias está en la barra lateral **GhostPrompt**; el panel inferior es solo **ajustes**. Si solías escribir en el panel, abre el chat desde el icono de actividad y el hub con **GhostPrompt: Open Settings Hub** (`ghostPrompt.openHub`).
 - **Documentación (GA):** `src/ui/README.md` (superficies, `__ghostPromptViewId`, `surfaceRole`, comando hub), `Docs/Owners.md` (tests `webviewSurfaces`), plan 02 con nota post-FY.
+- **Cierre plan 05 (GB):** bitácora QA en `05-dual-surface-chat-hub.md` (`npm run check` 2026-05-20); `system/README.md` sin carpeta `policies/` inexistente; smoke manual EDH pendiente operador para release FE/FV.
 
 ## [Unreleased]
 
