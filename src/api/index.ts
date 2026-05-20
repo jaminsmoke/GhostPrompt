@@ -28,6 +28,7 @@ export {
   handleGhostPromptInboundSend,
   type GhostPromptInboundBroadcastServices,
   type GhostPromptInboundDispatchServices,
+  type GhostPromptWebviewSurfaceRole,
 } from './boundary/inboundHandlers';
 
 // Config write

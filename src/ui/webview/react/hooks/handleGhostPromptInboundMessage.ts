@@ -11,7 +11,6 @@ import {
 import {
   applyRemoteDraftRelay,
   ghostPromptApplyInboundCaptureReference,
-  shouldSkipSuggestionOnRemoteDraft,
   type GhostPromptInboundCaptureCarrier,
 } from './ghostPromptInboundUtilities';
 
@@ -163,10 +162,7 @@ function applyGhostPromptSuggestionInbound(
  * @returns {void}
  */
 function applyGhostPromptDraftAndProviderInbound(
-  message: Extract<
-    InboundMessage,
-    { type: 'clear' | 'draftHydrate' | 'draftSync' | 'providerStatus' }
-  >,
+  message: Extract<InboundMessage, { type: 'clear' | 'draftHydrate' | 'providerStatus' }>,
   handler: GhostPromptInboundHandlerContext,
 ): void {
   switch (message.type) {
@@ -177,13 +173,6 @@ function applyGhostPromptDraftAndProviderInbound(
       break;
     }
     case 'draftHydrate': {
-      applyRemoteDraftRelay(message.text, handler);
-      break;
-    }
-    case 'draftSync': {
-      if (!shouldSkipSuggestionOnRemoteDraft(message, handler.viewId)) {
-        return;
-      }
       applyRemoteDraftRelay(message.text, handler);
       break;
     }

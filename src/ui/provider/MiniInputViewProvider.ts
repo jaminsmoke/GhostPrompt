@@ -24,9 +24,9 @@
  * - `accept` (webview → host): el usuario aceptó la suggestion con Tab.
  * - `send` (webview → host): enviar el prompt completo al chat de Copilot.
  * - `clear` (host → webview): resetear el input tras un envío exitoso.
- * - `draftChanged` (webview → host): texto del borrador para sincronizar vistas.
- * - `draftSync` / `draftHydrate` (host → webview): aplicar borrador remoto o estado inicial.
- * - Mensajes de suggestion pueden llevar `broadcast: true` para espejar Sidebar + Panel.
+ * - `draftChanged` (webview → host): texto del borrador (solo superficie chat persiste en el host).
+ * - `draftHydrate` (host → webview): aplicar borrador al abrir la vista chat.
+ * - Mensajes de suggestion pueden llevar `broadcast: true` para correlación de `captureId` en la vista chat.
  * - Esquemas Zod en `zschemWebviewMessages.ts`; parseo en `api/boundary/webviewProtocols.ts`.
  */
 import * as vscode from 'vscode';
@@ -63,6 +63,16 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
 
   private static readonly instances = new Set<MiniInputViewProvider>();
 
+  /** Tipos host→webview que solo deben aplicarse en la superficie chat (sidebar). */
+  private static readonly chatOnlyOutboundUiTypes = new Set<string>([
+    'loading',
+    'suggestion',
+    'suggestion-stream',
+    'empty',
+    'error',
+    'clear',
+  ]);
+
   private webviewView?: vscode.WebviewView;
 
   constructor(
@@ -74,6 +84,14 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   }
 
   /**
+   * `chat` = sidebar; `hub` = panel de ajustes.
+   * @returns {'chat' | 'hub'} Rol de la superficie según el id de contribución de la vista.
+   */
+  public get surfaceRole(): 'chat' | 'hub' {
+    return this.viewContributionId === MiniInputViewProvider.panelViewId ? 'hub' : 'chat';
+  }
+
+  /**
    * Limpia el registro de instancias (solo tests; la extensión real mantiene 2 providers vivos).
    * @internal
    */
@@ -82,11 +100,9 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
   }
 
   /**
-   * Emite el mismo payload de UI a TODAS las instancias del webview registradas
-   * (sidebar + panel inferior), añadiendo `broadcast: true` para que cada webview
-   * pueda sincronizar su `captureId`. También forwardea a VSOpenCodeX si aplica.
-   * @param {Record<string, unknown>} payload - Mensaje a emitir (se le añade `{ broadcast: true }`).
-   * Se valida con `parseWebviewOutboundMessage` en desarrollo.
+   * Emite UI a las instancias del webview. Suggestion/carga/clear solo en **chat**;
+   * `settings` y `providerStatus` a todas. Forwardea a VSOpenCodeX si aplica.
+   * @param {Record<string, unknown>} payload - Mensaje (se añade `broadcast: true` cuando aplica).
    * @returns {void}
    */
   private static broadcastUi(payload: Record<string, unknown>): void {
@@ -95,31 +111,16 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     if (!validated) {
       return;
     }
+    const chatOnly = MiniInputViewProvider.chatOnlyOutboundUiTypes.has(validated.type);
     for (const instance of MiniInputViewProvider.instances) {
-      instance.webviewView?.webview.postMessage(validated);
+      if (!chatOnly || instance.surfaceRole === 'chat') {
+        instance.webviewView?.webview.postMessage(validated);
+      }
     }
     forwardGhostPromptInlineUiToVsOpenCodeIfApplicable(validated);
   }
 
-  /**
-   * Propaga borrador a la otra vista GhostPrompt (Sidebar ↔ Panel).
-   * @param {string} originViewId - Identificador de la vista origen que no debe recibir el sync.
-   * @param {string} text - Texto del borrador que se sincroniza.
-   * @returns {void}
-   */
-  private static broadcastDraftToPeers(originViewId: string, text: string): void {
-    for (const instance of MiniInputViewProvider.instances) {
-      if (instance.viewContributionId !== originViewId) {
-        const msg = { type: 'draftSync' as const, text, originViewId };
-        const validated = parseWebviewOutboundMessage(msg);
-        if (validated) {
-          instance.webviewView?.webview.postMessage(validated);
-        }
-      }
-    }
-  }
-
-  /** Vacía el composer en todas las vistas (p. Ej. Tras enviar al chat). */
+  /** Vacía el compositor solo en la vista chat (tras enviar al destino). */
   private static broadcastClearAll(): void {
     forwardGhostPromptInlineUiToVsOpenCodeIfApplicable({
       type: 'clear',
@@ -131,7 +132,9 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
       return;
     }
     for (const instance of MiniInputViewProvider.instances) {
-      instance.webviewView?.webview.postMessage(validated);
+      if (instance.surfaceRole === 'chat') {
+        instance.webviewView?.webview.postMessage(validated);
+      }
     }
   }
 
@@ -277,22 +280,21 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
       uiLog.debug('webview-inbound-parsed', { type: message.type });
       try {
         await dispatchGhostPromptInboundMessage(message, {
-        viewContributionId: this.viewContributionId,
-        webview: webviewView.webview,
-        dataUri,
-        postSettings: (w) => MiniInputViewProvider.postSettings(w),
-        broadcastDraftToPeers: (...args: Parameters<typeof MiniInputViewProvider.broadcastDraftToPeers>) =>
-          MiniInputViewProvider.broadcastDraftToPeers(...args),
-        broadcastSettingsToAllViews: (
-          ...args: Parameters<typeof MiniInputViewProvider.broadcastSettingsToAllViews>
-        ) => MiniInputViewProvider.broadcastSettingsToAllViews(...args),
-        broadcastClearAll: (...args: Parameters<typeof MiniInputViewProvider.broadcastClearAll>) =>
-          MiniInputViewProvider.broadcastClearAll(...args),
-        broadcastUi: (...args: Parameters<typeof MiniInputViewProvider.broadcastUi>) =>
-          MiniInputViewProvider.broadcastUi(...args),
-        suggestDeps: MiniInputViewProvider.ghostPromptSuggestDeps(),
-        onSettingChanged: (...args: Parameters<typeof MiniInputViewProvider.onSettingChanged>) =>
-          MiniInputViewProvider.onSettingChanged(...args),
+          viewContributionId: this.viewContributionId,
+          surfaceRole: this.surfaceRole,
+          webview: webviewView.webview,
+          dataUri,
+          postSettings: (w) => MiniInputViewProvider.postSettings(w),
+          broadcastSettingsToAllViews: (
+            ...args: Parameters<typeof MiniInputViewProvider.broadcastSettingsToAllViews>
+          ) => MiniInputViewProvider.broadcastSettingsToAllViews(...args),
+          broadcastClearAll: (...args: Parameters<typeof MiniInputViewProvider.broadcastClearAll>) =>
+            MiniInputViewProvider.broadcastClearAll(...args),
+          broadcastUi: (...args: Parameters<typeof MiniInputViewProvider.broadcastUi>) =>
+            MiniInputViewProvider.broadcastUi(...args),
+          suggestDeps: MiniInputViewProvider.ghostPromptSuggestDeps(),
+          onSettingChanged: (...args: Parameters<typeof MiniInputViewProvider.onSettingChanged>) =>
+            MiniInputViewProvider.onSettingChanged(...args),
         });
       } catch (error: unknown) {
         uiLog.error('webview-dispatch-failed', { type: message.type }, error);

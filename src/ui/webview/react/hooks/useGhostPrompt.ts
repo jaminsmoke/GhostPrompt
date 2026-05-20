@@ -5,8 +5,6 @@ export {
   applyRemoteDraftRelay,
   bumpDraftCaptureGeneration,
   ghostPromptApplyInboundCaptureReference,
-  isDraftSyncForAnotherView,
-  shouldSkipSuggestionOnRemoteDraft,
 } from './ghostPromptInboundUtilities';
 export type { GhostPromptInboundCaptureCarrier } from './ghostPromptInboundUtilities';
 

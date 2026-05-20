@@ -11,6 +11,8 @@ Consolidación boundary host↔webview (roadmap v0.6.2 FA–FC): una sola línea
 - **Barrels webview:** `ui/webview/react/webviewProtocolConstants.ts` y `webviewProtocolSchemas.ts` para constantes `cons*` y schemas Zod del panel sin rutas profundas repetidas.
 - **Paridad parse:** fixtures `webviewOutboundMessageFixtures.ts` y tests `parseWebviewInbound.test.ts` + ampliación de `api/boundary/webviewProtocols.test.ts` (mismo schema host→panel).
 - **Superficies webview (FW):** enrutado por `window.__ghostPromptViewId` — sidebar `ChatApp` (prompt, envío, chip Destino); panel `HubApp` (Motor, Modelo, Composición, debug, placeholder Estadísticas). Un solo bundle Vite.
+- **Host superficies (FX):** `surfaceRole` chat vs hub; mensajes outbound de suggestion/carga/clear solo a la webview chat; hub no persiste `draftChanged` ni recibe `draftHydrate` en init.
+- **Tipo público:** `GhostPromptWebviewSurfaceRole` reexportado desde `api/index.ts`.
 
 ### Removed
 
@@ -18,6 +20,7 @@ Consolidación boundary host↔webview (roadmap v0.6.2 FA–FC): una sola línea
 - **`src/api/settings/applyWebviewUpdate.ts`** — duplicado; canónico en `system/internals/config/write/applyWebviewUpdateSetting.ts`.
 - **`ghostPrompt.suggestionStyle`** — setting y enum `SuggestionStyle`; sustituido por `maxSuggestionChars` como única perilla de longitud.
 - **`resolveEffectiveMaxSuggestionChars`** y factores por estilo; pipeline usa el tope configurado directamente.
+- **Dual-view chat (FY):** mensaje outbound `draftSync`, `broadcastDraftToPeers` y utilidades/tests asociados al sync entre dos chats.
 
 ### Changed
 

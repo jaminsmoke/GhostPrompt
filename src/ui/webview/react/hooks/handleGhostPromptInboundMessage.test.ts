@@ -1,5 +1,5 @@
 /**
- * @file Tests de relay de borrador remoto (fase FG) en el handler inbound.
+ * @file Tests de relay de borrador remoto (hydrate) en el handler inbound.
  */
 import * as vitest from 'vitest';
 
@@ -13,7 +13,7 @@ import type { QueryClient } from '@tanstack/react-query';
 const INITIAL_CAPTURE_ID = 4;
 
 /**
- * Crea un contexto mock mínimo para mensajes draftHydrate / draftSync.
+ * Crea un contexto mock mínimo para mensajes draftHydrate.
  * @param {string} [viewId] - Identificador de la vista webview bajo prueba.
  * @returns {object} Handler mock y lectura del estado mutado.
  */
@@ -65,7 +65,7 @@ function createDraftHandlerMock(viewId = 'panel-a') {
   };
 }
 
-vitest.describe('handleGhostPromptInboundMessage remote draft (fase FG)', () => {
+vitest.describe('handleGhostPromptInboundMessage remote draft (hydrate)', () => {
   vitest.it('draftHydrate limpia suggestion, loading e invalida capture', () => {
     const mock = createDraftHandlerMock();
     handleGhostPromptInboundMessage(
@@ -78,46 +78,6 @@ vitest.describe('handleGhostPromptInboundMessage remote draft (fase FG)', () => 
     vitest.expect(state.isLoading).toBe(false);
     vitest.expect(state.skipRelayArmed).toBe(true);
     vitest.expect(state.captureId).toBe(INITIAL_CAPTURE_ID + 1);
-  });
-
-  vitest.it('draftSync desde otra vista aplica el mismo relay', () => {
-    const mock = createDraftHandlerMock('panel-a');
-    handleGhostPromptInboundMessage(
-      {
-        data: {
-          type: 'draftSync',
-          text: 'synced from sidebar',
-          originViewId: 'sidebar-b',
-        },
-      } as MessageEvent,
-      mock.handler,
-    );
-    const state = mock.state();
-    vitest.expect(state.text).toBe('synced from sidebar');
-    vitest.expect(state.suggestion).toBe('');
-    vitest.expect(state.isLoading).toBe(false);
-    vitest.expect(state.skipRelayArmed).toBe(true);
-    vitest.expect(state.captureId).toBe(INITIAL_CAPTURE_ID + 1);
-  });
-
-  vitest.it('draftSync desde la misma vista no muta estado', () => {
-    const mock = createDraftHandlerMock('panel-a');
-    handleGhostPromptInboundMessage(
-      {
-        data: {
-          type: 'draftSync',
-          text: 'echo own view',
-          originViewId: 'panel-a',
-        },
-      } as MessageEvent,
-      mock.handler,
-    );
-    const state = mock.state();
-    vitest.expect(state.text).toBe('before');
-    vitest.expect(state.suggestion).toBe('ghost-from-other-draft');
-    vitest.expect(state.isLoading).toBe(true);
-    vitest.expect(state.skipRelayArmed).toBe(false);
-    vitest.expect(state.captureId).toBe(INITIAL_CAPTURE_ID);
   });
 
   vitest.it('suggestion stale tras hydrate se descarta por capture invalidado', () => {

@@ -126,14 +126,6 @@ export const webviewOutboundDraftHydrateSchema = z.object({
   broadcast: z.boolean().optional(),
 });
 
-export const webviewOutboundDraftSyncSchema = z.object({
-  type: z.literal('draftSync'),
-  text: z.string(),
-  originViewId: z.string(),
-  captureId: z.number().optional(),
-  broadcast: z.boolean().optional(),
-});
-
 /** Union discriminada de todos los mensajes host → webview. */
 export const webviewOutboundMessageSchema = z.discriminatedUnion('type', [
   webviewOutboundSettingsEnvelopeSchema,
@@ -145,7 +137,6 @@ export const webviewOutboundMessageSchema = z.discriminatedUnion('type', [
   webviewOutboundErrorSchema,
   webviewOutboundClearSchema,
   webviewOutboundDraftHydrateSchema,
-  webviewOutboundDraftSyncSchema,
 ]);
 
 export type WebviewOutboundMessage = z.infer<typeof webviewOutboundMessageSchema>;

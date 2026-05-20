@@ -23,8 +23,9 @@ import {
   type WebviewInboundMessage,
 } from './webviewProtocols';
 
+export type GhostPromptWebviewSurfaceRole = 'chat' | 'hub';
+
 export type GhostPromptInboundBroadcastServices = {
-  broadcastDraftToPeers: (originViewId: string, text: string) => void;
   broadcastSettingsToAllViews: () => Promise<void>;
   broadcastClearAll: () => void;
   broadcastUi: (payload: Record<string, unknown>) => void;
@@ -32,6 +33,8 @@ export type GhostPromptInboundBroadcastServices = {
 
 export type GhostPromptInboundDispatchServices = GhostPromptInboundBroadcastServices & {
   viewContributionId: string;
+  /** Superficie webview: solo `chat` dispara suggest/send/accept y borrador local. */
+  surfaceRole: GhostPromptWebviewSurfaceRole;
   webview: vscode.Webview;
   /** `storageUri ?? GlobalStorageUri` del ExtensionContext (siempre hay `globalStorageUri`). */
   dataUri: vscode.Uri;
@@ -45,13 +48,18 @@ export type GhostPromptInboundDispatchServices = GhostPromptInboundBroadcastServ
  * Inicializa la vista webview y envía el estado inicial a la UI.
  * @param {vscode.Webview} webview - Webview que recibe el mensaje init.
  * @param {(w: vscode.Webview) => Promise<void>} postSettings - Callback para enviar el payload de configuración.
+ * @param {'chat' | 'hub'} surfaceRole - Solo la superficie chat rehidrata el borrador compartido.
  * @returns {Promise<void>} Promise que se resuelve cuando la inicialización termina.
  */
 export async function handleGhostPromptInboundInit(
   webview: vscode.Webview,
   postSettings: (w: vscode.Webview) => Promise<void>,
+  surfaceRole: 'chat' | 'hub',
 ): Promise<void> {
   await postSettings(webview);
+  if (surfaceRole !== 'chat') {
+    return;
+  }
   const draftPayload = {
     type: 'draftHydrate' as const,
     text: getMultiViewDraftText(),
@@ -71,13 +79,15 @@ export async function handleGhostPromptInboundInit(
  */
 export function handleGhostPromptInboundDraftChanged(
   message: Extract<WebviewInboundMessage, { type: 'draftChanged' }>,
-  services: Pick<GhostPromptInboundDispatchServices, 'broadcastDraftToPeers' | 'viewContributionId'>,
+  services: Pick<GhostPromptInboundDispatchServices, 'viewContributionId' | 'surfaceRole'>,
 ): void {
+  if (services.surfaceRole !== 'chat') {
+    return;
+  }
   if (message.originViewId !== services.viewContributionId) {
     return;
   }
   setMultiViewDraftText(message.text);
-  services.broadcastDraftToPeers(message.originViewId, message.text);
 }
 
 /**
@@ -249,7 +259,11 @@ export async function dispatchGhostPromptInboundMessage(
   getLogger('inbound').debug('dispatch', { type: message.type });
   switch (message.type) {
     case 'init': {
-      await handleGhostPromptInboundInit(dispatchServices.webview, dispatchServices.postSettings);
+      await handleGhostPromptInboundInit(
+        dispatchServices.webview,
+        dispatchServices.postSettings,
+        dispatchServices.surfaceRole,
+      );
       return;
     }
     case 'log': {
@@ -257,7 +271,10 @@ export async function dispatchGhostPromptInboundMessage(
       return;
     }
     case 'draftChanged': {
-      handleGhostPromptInboundDraftChanged(message, dispatchServices);
+      handleGhostPromptInboundDraftChanged(message, {
+        viewContributionId: dispatchServices.viewContributionId,
+        surfaceRole: dispatchServices.surfaceRole,
+      });
       return;
     }
     case 'updateSetting': {
@@ -269,6 +286,9 @@ export async function dispatchGhostPromptInboundMessage(
       return;
     }
     case 'suggest': {
+      if (dispatchServices.surfaceRole !== 'chat') {
+        return;
+      }
       if (getAgentDestination() === 'vsOpenCodeX') {
         return;
       }
@@ -276,10 +296,16 @@ export async function dispatchGhostPromptInboundMessage(
       return;
     }
     case 'accept': {
+      if (dispatchServices.surfaceRole !== 'chat') {
+        return;
+      }
       await handleGhostPromptInboundAccept(message, dispatchServices.dataUri);
       return;
     }
     case 'send': {
+      if (dispatchServices.surfaceRole !== 'chat') {
+        return;
+      }
       await handleGhostPromptInboundSend(
         message,
         dispatchServices.dataUri,

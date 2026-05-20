@@ -14,71 +14,13 @@ import { parseWebviewInboundMessage } from '../validators/parseWebviewInbound';
 
 import type * as UseGhostPromptModule from './useGhostPrompt';
 
-let isDraftSyncForAnotherView: typeof UseGhostPromptModule.isDraftSyncForAnotherView;
-let shouldSkipSuggestionOnRemoteDraft: typeof UseGhostPromptModule.shouldSkipSuggestionOnRemoteDraft;
 let ghostPromptApplyInboundCaptureReference: typeof UseGhostPromptModule.ghostPromptApplyInboundCaptureReference;
 let bumpDraftCaptureGeneration: typeof UseGhostPromptModule.bumpDraftCaptureGeneration;
 let applyRemoteDraftRelay: typeof UseGhostPromptModule.applyRemoteDraftRelay;
 
 vitest.beforeAll(async () => {
-  ({
-    isDraftSyncForAnotherView,
-    shouldSkipSuggestionOnRemoteDraft,
-    ghostPromptApplyInboundCaptureReference,
-    bumpDraftCaptureGeneration,
-    applyRemoteDraftRelay,
-  } = await import('./useGhostPrompt'));
-});
-
-vitest.describe('useGhostPrompt draft sync and hydrate handling', () => {
-  vitest.it('returns true for draftSync from a different view', () => {
-    const message = {
-      type: 'draftSync',
-      text: 'hello',
-      originViewId: 'other-view',
-    } as const;
-
-    vitest.expect(isDraftSyncForAnotherView(message, 'current-view')).toBe(true);
-  });
-
-  vitest.it('returns false for draftSync from the same view', () => {
-    const message = {
-      type: 'draftSync',
-      text: 'hello',
-      originViewId: 'current-view',
-    } as const;
-
-    vitest.expect(isDraftSyncForAnotherView(message, 'current-view')).toBe(false);
-  });
-
-  vitest.it('returns false when viewId is missing', () => {
-    const message = {
-      type: 'draftSync',
-      text: 'hello',
-      originViewId: 'other-view',
-    } as const;
-
-    vitest.expect(isDraftSyncForAnotherView(message, '')).toBe(false);
-  });
-
-  vitest.it('returns true for draftHydrate messages', () => {
-    const message = {
-      type: 'draftHydrate',
-      text: 'hello',
-    } as const;
-
-    vitest.expect(shouldSkipSuggestionOnRemoteDraft(message, 'current-view')).toBe(true);
-  });
-
-  vitest.it('returns false for non-draft messages', () => {
-    const message = {
-      type: 'suggestion',
-      suggestion: 'world',
-      captureId: 1,
-    } as const;
-
-    vitest.expect(isDraftSyncForAnotherView(message, 'current-view')).toBe(false);
-  });
+  ({ ghostPromptApplyInboundCaptureReference, bumpDraftCaptureGeneration, applyRemoteDraftRelay } =
+    await import('./useGhostPrompt'));
 });
 
 vitest.describe('webview inbound message validation', () => {
@@ -98,38 +40,6 @@ vitest.describe('webview inbound message validation', () => {
     vitest.expect(validPayload).toBeDefined();
     vitest.expect(parseWebviewInboundMessage(validPayload)).toEqual(validPayload);
     vitest.expect(minimalWebviewSettingsPayload.completionProvider).toBe('copilot');
-  });
-});
-
-vitest.describe('useGhostPrompt skip suggestion guard', () => {
-  vitest.it('shouldSkipSuggestionOnRemoteDraft returns true for draftSync from another view', () => {
-    const message = {
-      type: 'draftSync',
-      text: 'sync text',
-      originViewId: 'other-view',
-    } as const;
-
-    vitest.expect(shouldSkipSuggestionOnRemoteDraft(message, 'current-view')).toBe(true);
-  });
-
-  vitest.it('shouldSkipSuggestionOnRemoteDraft returns false for draftSync from same view', () => {
-    const message = {
-      type: 'draftSync',
-      text: 'sync text',
-      originViewId: 'current-view',
-    } as const;
-
-    vitest.expect(shouldSkipSuggestionOnRemoteDraft(message, 'current-view')).toBe(false);
-  });
-
-  vitest.it('shouldSkipSuggestionOnRemoteDraft returns false for suggestion messages', () => {
-    const message = {
-      type: 'suggestion',
-      suggestion: 'hello',
-      captureId: 1,
-    } as const;
-
-    vitest.expect(shouldSkipSuggestionOnRemoteDraft(message, 'current-view')).toBe(false);
   });
 });
 

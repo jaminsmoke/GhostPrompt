@@ -186,7 +186,7 @@ Fixtures compartidos: `system/internals/protocols/validations/schemas/fixtures/w
 | `suggestion-stream`              | OpenCode: texto acumulado por SSE antes del resultado final (`captureId`).                                                              |
 | `suggestion` / `empty` / `error` | Resultado del intento (`captureId`).                                                                                                    |
 | `languageEffective`              | Contrato host→webview; el flujo `suggest` actual **no** emite este mensaje (el webview lo ignora o lo tolera si reapareciera).          |
-| `draftSync` / `draftHydrate`     | Estado de borrador entre Sidebar y Panel.                                                                                               |
+| `draftHydrate`                   | Hidrata el borrador en la webview **chat** al abrir/init (sin sync panel↔sidebar; `draftSync` eliminado en v0.6.2).                      |
 | `clear`                          | Tras envío exitoso al chat.                                                                                                             |
 
 Lista exhaustiva y campos: código fuente + tests `webviewProtocols.test.ts`.

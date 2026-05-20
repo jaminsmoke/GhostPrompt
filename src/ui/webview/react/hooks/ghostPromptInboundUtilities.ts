@@ -1,33 +1,6 @@
 /**
  * @file Utilidades compartidas para mensajes inbound del webview GhostPrompt.
  */
-import type { InboundMessage } from '../types';
-
-/**
- * Determina si un mensaje de borrador remoto proviene de otra vista GhostPrompt.
- * @param {InboundMessage} message - Mensaje entrante desde el host.
- * @param {string} viewId - Identificador de la vista actual.
- * @returns {message is Extract<InboundMessage, { type: 'draftSync' }>} True si es borrador sincronizado de otra vista.
- */
-export function isDraftSyncForAnotherView(
-  message: InboundMessage,
-  viewId: string,
-): message is Extract<InboundMessage, { type: 'draftSync' }> {
-  return message.type === 'draftSync' && Boolean(viewId) && message.originViewId !== viewId;
-}
-
-/**
- * Comprueba si la sugerencia debe saltarse porque el mensaje es un borrador remoto.
- * @param {InboundMessage} message - Mensaje entrante desde el host.
- * @param {string} viewId - Identificador de la vista actual.
- * @returns {boolean} True si debe saltarse la sugerencia.
- */
-export function shouldSkipSuggestionOnRemoteDraft(
-  message: InboundMessage,
-  viewId: string,
-): boolean {
-  return message.type === 'draftHydrate' || isDraftSyncForAnotherView(message, viewId);
-}
 
 /** Mensajes host→webview que pueden llevar `captureId` / `broadcast` para correlación. */
 export type GhostPromptInboundCaptureCarrier = {
@@ -45,7 +18,7 @@ export function bumpDraftCaptureGeneration(captureReference: number): number {
   return captureReference + 1;
 }
 
-/** Acciones mínimas para aplicar un borrador remoto (hydrate / sync entre vistas). */
+/** Acciones mínimas para aplicar un borrador remoto (hydrate desde el host). */
 export type RemoteDraftRelayActions = {
   getCaptureId: () => number;
   setCaptureId: (value: number) => void;
@@ -56,9 +29,10 @@ export type RemoteDraftRelayActions = {
 };
 
 /**
- * Sincroniza texto remoto invalidando suggestion, loading y capturas in-flight previas.
- * @param {string} text - Borrador compartido desde el host u otra vista.
- * @param {RemoteDraftRelayActions} actions - Setters del webview.
+ * Sincroniza el texto remoto con el compositor del webview.
+ * Invalida la sugerencia pendiente, el estado de carga y las capturas en curso.
+ * @param {string} text - Texto del borrador enviado por el host al abrir o hidratar la vista chat.
+ * @param {RemoteDraftRelayActions} actions - Callbacks de estado del webview.
  * @returns {void}
  */
 export function applyRemoteDraftRelay(text: string, actions: RemoteDraftRelayActions): void {

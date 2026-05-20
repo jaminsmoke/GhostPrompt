@@ -129,8 +129,8 @@ Documentar matriz en `api/boundary/README` o cabecera de `zschemWebviewMessages.
 | Fase | Tema | Estado |
 | ---- | ---- | ------ |
 | **FW** | Estructura surfaces + router + reparto chips (opción 2) | Completado |
-| **FX** | Host: rol chat/hub, suggest y broadcast solo chat | Planificado |
-| **FY** | Limpieza dual-view (`draftSync`, `originViewId`, tests paridad) | Planificado |
+| **FX** | Host: rol chat/hub, suggest y broadcast solo chat | Completado |
+| **FY** | Limpieza dual-view (`draftSync`, `originViewId`, tests paridad) | Completado |
 | **FZ** | Manifest: nombres de vistas, comando opcional “Abrir hub” | Planificado |
 | **GA** | Tests superficies + docs (`ui/README`, ARCHITECTURE) | Planificado |
 | **GB** | QA manual + CHANGELOG; migraciones canónicas acotadas (opcional) | Planificado |

@@ -91,14 +91,6 @@ export const webviewOutboundValidFixtures: readonly WebviewOutboundValidFixture[
     id: 'draftHydrate',
     raw: { type: 'draftHydrate', text: 'hydrated' },
   },
-  {
-    id: 'draftSync',
-    raw: {
-      type: 'draftSync',
-      text: 'sync',
-      originViewId: 'ghostPrompt.input',
-    },
-  },
 ];
 
 /** Settings con `tier` de modelo inválido (caso usado en boundary + webview). */
