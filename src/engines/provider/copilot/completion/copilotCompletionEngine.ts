@@ -2,7 +2,7 @@
  * @file Motor de completions Copilot LM para GhostPrompt (`vscode.lm`).
  *
  * Errores de cuota premium: `system/internals/protocols/guards/guardCopilotLm`.
- * Acotación y rechazo de contenido: `system/runtime/finalizeEngineCompletionResult`.
+ * Acotación y rechazo de contenido: `system/runtime/suggest/finalizeEngineCompletionResult`.
  */
 import * as vscode from 'vscode';
 
@@ -55,7 +55,7 @@ export async function requestCopilotLmCompletion(
     token,
     policy,
     preferredModelId,
-    style: _style,
+    maxChars,
     context: _context,
     requestTimeoutMs = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
     onLoadingPhase,
@@ -75,7 +75,7 @@ export async function requestCopilotLmCompletion(
   }
 
   try {
-    const instruction = buildCompletionInstruction(userText);
+    const instruction = buildCompletionInstruction(userText, { maxChars });
     let requestTokenSource: vscode.CancellationTokenSource | false = false;
     let requestCancellation: vscode.Disposable | false = false;
     let timeoutHandle: ReturnType<typeof setTimeout> | false = false;

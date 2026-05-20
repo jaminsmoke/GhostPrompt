@@ -124,8 +124,8 @@ vitest.describe('webviewProtocols (v0.3.1 Fase B)', () => {
     vitest.expect(
       parseWebviewInboundMessage({
         type: 'updateSetting',
-        key: 'suggestionStyle',
-        value: 'fancy',
+        key: 'maxSuggestionChars',
+        value: 10,
       }),
     ).toBe(false);
     vitest.expect(
@@ -185,8 +185,8 @@ vitest.describe('webviewProtocols (v0.3.1 Fase B)', () => {
   vitest.it('webviewInboundMessageSchema cubre updateSetting discriminado', () => {
     const r = webviewInboundMessageSchema.safeParse({
       type: 'updateSetting',
-      key: 'suggestionStyle',
-      value: 'concise',
+      key: 'maxSuggestionChars',
+      value: 40,
     });
     vitest.expect(r.success).toBe(true);
   });

@@ -1,10 +1,11 @@
 /**
  * @file Administrador de estado de proveedores LM (registry + refresh/start/stop).
  */
-import { createProviderErrorRecord } from './createProviderErrorRecord';
-import { SimpleEventEmitter } from './simpleEventEmitter';
+import { SimpleEventEmitter } from '../simpleEventEmitter';
 
-import type { ProviderStateRecord, ProviderStatusModule } from '../internals/protocols/state/provider';
+import { createProviderErrorRecord } from './createProviderErrorRecord';
+
+import type { ProviderStateRecord, ProviderStatusModule } from '../../internals/protocols/state/provider';
 
 /**
  * Registro central de módulos de estado de proveedores y notificaciones de cambio.

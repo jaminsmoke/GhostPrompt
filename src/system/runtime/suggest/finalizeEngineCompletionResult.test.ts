@@ -4,11 +4,11 @@
 
 import * as vitest from 'vitest';
 
-import { DEFAULT_MAX_SUGGESTION_CHARS } from '../internals/protocols/constants/consPipelineDefaults';
+import { DEFAULT_MAX_SUGGESTION_CHARS } from '../../internals/protocols/constants/consPipelineDefaults';
 
 import { finalizeEngineCompletionResult } from './finalizeEngineCompletionResult';
 
-const IGNORED_MAX_CHARS = 5;
+const TEST_TRIM_MAX_CHARS = 5;
 
 vitest.describe('finalizeEngineCompletionResult', () => {
   vitest.it('no altera empty ni error', () => {
@@ -26,23 +26,23 @@ vitest.describe('finalizeEngineCompletionResult', () => {
     });
   });
 
-  vitest.it('passthrough: no filtra rechazos ni recorta (modo diagnóstico v0.6.2)', () => {
-    const refusal = "I'm sorry, I can't assist with that.";
+  vitest.it('convierte rechazo típico del LM en content-blocked', () => {
     vitest.expect(
       finalizeEngineCompletionResult(
-        { kind: 'suggestion', suggestion: refusal },
+        { kind: 'suggestion', suggestion: "I'm sorry, I can't assist with that." },
         DEFAULT_MAX_SUGGESTION_CHARS,
       ),
-    ).toEqual({ kind: 'suggestion', suggestion: refusal });
-
-    const long = 'abcdefghijklmnopqrstuvwxyz';
-    vitest.expect(
-      finalizeEngineCompletionResult({ kind: 'suggestion', suggestion: long }, IGNORED_MAX_CHARS),
-    ).toEqual({ kind: 'suggestion', suggestion: long });
+    ).toEqual({ kind: 'empty', reason: 'content-blocked' });
   });
 
-  vitest.it('vacío explícito emite empty-response', () => {
-    vitest.expect(finalizeEngineCompletionResult({ kind: 'suggestion', suggestion: '' }, 0)).toEqual({
+  vitest.it('recorta la sugerencia al máximo configurado', () => {
+    vitest.expect(
+      finalizeEngineCompletionResult({ kind: 'suggestion', suggestion: 'hello world' }, TEST_TRIM_MAX_CHARS),
+    ).toEqual({ kind: 'suggestion', suggestion: 'hello' });
+  });
+
+  vitest.it('vacío tras acotación emite empty-response', () => {
+    vitest.expect(finalizeEngineCompletionResult({ kind: 'suggestion', suggestion: 'text' }, 0)).toEqual({
       kind: 'empty',
       reason: 'empty-response',
     });

@@ -43,10 +43,11 @@ export {
 export {
   collectGhostPromptProjectContext,
   getGhostPromptMaxSuggestionChars,
+  getGhostPromptMinCharsForSuggestion,
   getGhostPromptOllamaBaseUrl,
   getGhostPromptOllamaExcludedModelIds,
   getGhostPromptSelectedModelId,
-  getGhostPromptSuggestionStyle,
+  getGhostPromptSuggestionDebounceMs,
   readGhostPromptSuggestionModelPolicy,
 } from '../system/internals/config/read';
 

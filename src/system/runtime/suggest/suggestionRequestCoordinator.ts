@@ -3,7 +3,7 @@
  */
 import * as vscode from 'vscode';
 
-import { clearOptionalProperty } from '../internals/isDefined';
+import { clearOptionalProperty } from '../../internals/isDefined';
 
 /**
  * Gestiona el captureId activo y el token de cancelación de la suggestion en curso.

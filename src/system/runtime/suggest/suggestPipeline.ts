@@ -4,27 +4,23 @@
  * Orquestación del mensaje webview `suggest`: LM (Copilot/OpenCode) y broadcast UI.
  * Invocado desde `suggest/index.ts` (alias `handleGhostPromptSuggest` para imports existentes).
  */
-import { getEnabledCompletionSources } from '../../engines/config/completionSources';
-import { resolveCompletionSourceForRequest } from '../../engines/routing/resolveCompletionSource';
-import { resolveProvider } from '../../engines/routing/resolveProvider';
-import { DEFAULT_MIN_SUGGEST_INPUT_CHARS } from '../internals/protocols/constants/consPipelineDefaults';
+import { getEnabledCompletionSources } from '../../../engines/config/completionSources';
+import { resolveCompletionSourceForRequest } from '../../../engines/routing/resolveCompletionSource';
+import { resolveProvider } from '../../../engines/routing/resolveProvider';
+import { getGhostPromptMinCharsForSuggestion } from '../../internals/config/read/workspaceConfigGetters';
 import {
   suggestionLoadingStatusText,
   type SuggestionLoadingPhase,
-} from "../internals/protocols/state/loading";
-import { flushLogCapture, getLogger } from '../log';
+} from '../../internals/protocols/state/loading';
+import { flushLogCapture, getLogger } from '../../log';
 
 import { finalizeEngineCompletionResult } from './finalizeEngineCompletionResult';
 import { setLastEffectiveSuggestionModel } from './lastEffectiveSuggestionModel';
 import { suggestionRequestCoordinator } from './suggestionRequestCoordinator';
 
-import type { ProviderId } from '../internals/protocols/state/provider';
-import type {
-  CompletionResult,
-  SuggestionModelPolicy,
-  SuggestionStyle,
-} from '../internals/protocols/types';
-import type { WebviewInboundMessage } from '../internals/protocols/validations/schemas/zschemWebviewMessages';
+import type { ProviderId } from '../../internals/protocols/state/provider';
+import type { CompletionResult, SuggestionModelPolicy } from '../../internals/protocols/types';
+import type { WebviewInboundMessage } from '../../internals/protocols/validations/schemas/zschemWebviewMessages';
 
 export type NotifyIssueCallback = (result: CompletionResult) => void;
 
@@ -47,7 +43,6 @@ export type GhostPromptSuggestDeps = {
   broadcastUi: (payload: Record<string, unknown>) => void;
   getSuggestionModelPolicy: () => SuggestionModelPolicy;
   getSelectedModelId: () => string;
-  getSuggestionStyle: () => SuggestionStyle;
   getMaxSuggestionChars: () => number;
   notifyIssue?: NotifyIssueCallback;
 };
@@ -114,7 +109,7 @@ export async function runGhostPromptSuggestPipeline(
     return;
   }
   const trimmed = text.trim();
-  if (!trimmed || trimmed.length < DEFAULT_MIN_SUGGEST_INPUT_CHARS) {
+  if (!trimmed || trimmed.length < getGhostPromptMinCharsForSuggestion()) {
     deps.broadcastUi({
       type: 'empty',
       reason: 'too-short',
@@ -124,7 +119,7 @@ export async function runGhostPromptSuggestPipeline(
   }
   const policy = deps.getSuggestionModelPolicy();
   const selectedModelId = deps.getSelectedModelId();
-  const style = deps.getSuggestionStyle();
+  const maxSuggestionChars = deps.getMaxSuggestionChars();
 
   const log = getLogger('suggest');
 
@@ -139,7 +134,7 @@ export async function runGhostPromptSuggestPipeline(
     policy,
     selectedModelId,
     source: routedSource,
-    style,
+    maxSuggestionChars,
   });
   const initialPhase = initialSuggestionLoadingPhase(routedSource);
   const emitLoadingPhase = (phase: SuggestionLoadingPhase) => {
@@ -164,7 +159,7 @@ export async function runGhostPromptSuggestPipeline(
       token: tokenSource.token,
       policy,
       ...selectedModelId === 'auto' ? {} : { preferredModelId: selectedModelId },
-      style,
+      maxChars: maxSuggestionChars,
       onLoadingPhase: emitLoadingPhase,
       ...routedSource === 'opencode' || routedSource === 'ollama'
         ? {
@@ -182,7 +177,7 @@ export async function runGhostPromptSuggestPipeline(
         : {},
     });
 
-    const result = finalizeEngineCompletionResult(rawResult, deps.getMaxSuggestionChars());
+    const result = finalizeEngineCompletionResult(rawResult, maxSuggestionChars);
 
     if (
       tokenSource.token.isCancellationRequested ||

@@ -70,7 +70,7 @@ export async function requestOllamaCompletion(
   const {
     token,
     preferredModelId,
-    style: _style,
+    maxChars,
     context: _context,
     requestTimeoutMs = DEFAULT_MODEL_REQUEST_TIMEOUT_MS,
     onLoadingPhase,
@@ -87,7 +87,7 @@ export async function requestOllamaCompletion(
   const baseUrl = vscode.workspace
     .getConfiguration('ghostPrompt')
     .get<string>('ollamaBaseUrl', 'http://localhost:11434');
-  const instruction = buildCompletionInstruction(userText);
+  const instruction = buildCompletionInstruction(userText, { maxChars });
 
   onLoadingPhase?.('ollama-loading');
 

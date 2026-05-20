@@ -3,7 +3,10 @@
  */
 import { useRef, useState, type Dispatch, type RefObject, type SetStateAction } from 'react';
 
-import { DEFAULT_SUGGESTION_DEBOUNCE_MS } from '../webviewProtocolConstants';
+import {
+  DEFAULT_MAX_SUGGESTION_CHARS,
+  DEFAULT_SUGGESTION_DEBOUNCE_MS,
+} from '../webviewProtocolConstants';
 
 import type {
   AgentDestination,
@@ -39,8 +42,8 @@ export interface GhostPromptUiState {
   setAvailableModels: Dispatch<SetStateAction<SuggestionModel[]>>;
   suggestionModelPolicy: 'anyModel' | 'nonPremiumOnly';
   setSuggestionModelPolicy: Dispatch<SetStateAction<'anyModel' | 'nonPremiumOnly'>>;
-  suggestionStyle: 'balanced' | 'concise' | 'detailed';
-  setSuggestionStyle: Dispatch<SetStateAction<'balanced' | 'concise' | 'detailed'>>;
+  maxSuggestionChars: number;
+  setMaxSuggestionChars: Dispatch<SetStateAction<number>>;
   debugSuggestions: boolean;
   setDebugSuggestions: Dispatch<SetStateAction<boolean>>;
   isLoading: boolean;
@@ -83,9 +86,7 @@ export function useGhostPromptUiState(): GhostPromptUiState {
   const [suggestionModelPolicy, setSuggestionModelPolicy] = useState<'anyModel' | 'nonPremiumOnly'>(
     'nonPremiumOnly',
   );
-  const [suggestionStyle, setSuggestionStyle] = useState<'balanced' | 'concise' | 'detailed'>(
-    'balanced',
-  );
+  const [maxSuggestionChars, setMaxSuggestionChars] = useState(DEFAULT_MAX_SUGGESTION_CHARS);
   const [debugSuggestions, setDebugSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isConfigLoaded, setIsConfigLoaded] = useState(false);
@@ -122,8 +123,8 @@ export function useGhostPromptUiState(): GhostPromptUiState {
     setAvailableModels,
     suggestionModelPolicy,
     setSuggestionModelPolicy,
-    suggestionStyle,
-    setSuggestionStyle,
+    maxSuggestionChars,
+    setMaxSuggestionChars,
     debugSuggestions,
     setDebugSuggestions,
     isLoading,

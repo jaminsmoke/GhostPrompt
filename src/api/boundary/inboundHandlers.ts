@@ -10,8 +10,8 @@ import {
 } from '../../destinations/destinationRegistry';
 import { applyWebviewUpdateSetting } from '../../system/internals/config/write/applyWebviewUpdateSetting';
 import { getLogger } from '../../system/log';
-import { providerStatusManager } from '../../system/runtime/providerStatusManager';
-import { type GhostPromptSuggestDeps, handleGhostPromptSuggest } from '../../system/runtime/suggestRuntime';
+import { providerStatusManager } from '../../system/runtime/providers/providerStatusManager';
+import { type GhostPromptSuggestDeps, handleGhostPromptSuggest } from '../../system/runtime/suggest/suggestPipeline';
 import {
   getMultiViewDraftText,
   resetMultiViewDraftText,
@@ -85,17 +85,18 @@ export function handleGhostPromptInboundDraftChanged(
  * las vistas. Efectos secundarios delegados al callback `onSettingChanged` si
  * está presente en los servicios de dispatch.
  * @param {WebviewInboundMessage} message - Mensaje `updateSetting` del webview.
- * @param {() => Promise<void>} broadcastSettingsToAllViews - Callback para re-enviar settings a todas las vistas.
+ * @param {() => Promise<void>} _broadcastSettingsToAllViews - Reservado; el refresh va por `onDidChangeConfiguration`.
  * @param {GhostPromptInboundDispatchServices | undefined} [dispatchServices] - Servicios de dispatch opcionales.
  * @returns {Promise<void>} Promise que se resuelve cuando la actualización termina.
  */
 export async function handleGhostPromptInboundUpdateSetting(
   message: Extract<WebviewInboundMessage, { type: 'updateSetting' }>,
-  broadcastSettingsToAllViews: () => Promise<void>,
+  _broadcastSettingsToAllViews: () => Promise<void>,
   dispatchServices?: GhostPromptInboundDispatchServices,
 ): Promise<void> {
   await applyWebviewUpdateSetting(message);
-  await broadcastSettingsToAllViews();
+  // Settings se reenvían vía `onDidChangeConfiguration('ghostPrompt')` en extension.ts;
+  // Evitar doble broadcast que hace parpadear el slider.
 
   if (
     dispatchServices?.onSettingChanged &&

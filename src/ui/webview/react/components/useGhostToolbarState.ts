@@ -4,6 +4,10 @@
 import { useMemo, useState } from 'react';
 
 import {
+  deriveSuggestionLengthLabel,
+} from '../webviewProtocolConstants';
+
+import {
   agentDestinationLabel,
   completionSourceLabel,
   providerStatusMatches,
@@ -21,7 +25,7 @@ interface GhostToolbarStateInput {
   completionProvider: CompletionProvider;
   selectedModelId: string;
   availableModels: SuggestionModel[];
-  suggestionStyle: 'balanced' | 'concise' | 'detailed';
+  maxSuggestionChars: number;
   agentDestination: AgentDestination;
   providerStatuses: CompletionSourceStateRecord[];
   onCompletionProviderChange: (value: CompletionProvider) => void;
@@ -40,7 +44,7 @@ export function useGhostToolbarState(input: GhostToolbarStateInput) {
     completionProvider,
     selectedModelId,
     availableModels,
-    suggestionStyle,
+    maxSuggestionChars,
     agentDestination,
     providerStatuses,
     onCompletionProviderChange,
@@ -80,12 +84,8 @@ export function useGhostToolbarState(input: GhostToolbarStateInput) {
     currentModel?.label ?? (selectedModelId === 'auto' ? 'Auto' : selectedModelId);
   const currentModelLabel = currentModel?.label ?? '--';
 
-  let styleLabel = 'Extenso';
-  if (suggestionStyle === 'concise') {
-    styleLabel = 'Breve';
-  } else if (suggestionStyle === 'balanced') {
-    styleLabel = 'Normal';
-  }
+  const lengthLabel = deriveSuggestionLengthLabel(maxSuggestionChars);
+  const styleLabel = `${lengthLabel} (${maxSuggestionChars})`;
 
   const handleProvider = (value: CompletionProvider) => {
     onCompletionProviderChange(value);
@@ -116,6 +116,7 @@ export function useGhostToolbarState(input: GhostToolbarStateInput) {
     modeloLabel,
     currentModelLabel,
     styleLabel,
+    lengthLabel,
     destinoLabel: agentDestinationLabel(agentDestination),
     handleProvider,
     handleDestino,

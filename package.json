@@ -179,20 +179,10 @@
         },
         "ghostPrompt.maxSuggestionChars": {
           "type": "number",
-          "default": 180,
+          "default": 270,
           "minimum": 40,
           "maximum": 500,
-          "markdownDescription": "Maximum number of characters for each inline suggestion after normalization."
-        },
-        "ghostPrompt.suggestionStyle": {
-          "type": "string",
-          "enum": [
-            "concise",
-            "balanced",
-            "detailed"
-          ],
-          "default": "balanced",
-          "markdownDescription": "Controls how specific and long inline suggestions should be. `concise` keeps short continuations, `balanced` keeps practical context-rich responses, `detailed` allows richer multi-sentence continuations."
+          "markdownDescription": "Maximum characters per inline suggestion (40–500). Toolbar presets: 40 muy conciso, 155 conciso, 270 normal, 385 extenso, 500 muy extenso."
         },
         "ghostPrompt.minCharsForSuggestion": {
           "type": "number",

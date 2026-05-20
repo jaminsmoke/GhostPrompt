@@ -4,27 +4,46 @@
 
 ---
 
-## Archivos
+## Estructura
 
-| Archivo | Descripción |
-|---|---|
-| `suggestRuntime.ts` | Pipeline `suggest` (LM + broadcast UI) |
-| `finalizeEngineCompletionResult.ts` | Acotación `maxSuggestionChars` y rechazo LM antes del broadcast |
-| `suggestionRequestCoordinator.ts` | `captureId` activo y cancelación in-flight |
-| `lastEffectiveSuggestionModel.ts` | Último modelo usado en suggestion exitosa (settings UI) |
-| `providerStatusManager.ts` | Registry + refresh/start/stop de proveedores LM |
-| `createProviderErrorRecord.ts` | Registro de error cuando falla `check()` |
-| `resetHostRuntimeForTests.ts` | Reinicio de singletons para tests |
+```text
+runtime/
+├── suggest/
+│   ├── suggestPipeline.ts              # Pipeline `suggest` (LM + broadcast UI)
+│   ├── suggestionRequestCoordinator.ts
+│   ├── finalizeEngineCompletionResult.ts
+│   └── lastEffectiveSuggestionModel.ts
+├── providers/
+│   ├── providerStatusManager.ts
+│   └── createProviderErrorRecord.ts
+├── testing/
+│   └── resetHostRuntimeForTests.ts
+└── simpleEventEmitter.ts
+```
+
+---
+
+## Imports canónicos
+
+| Módulo | Ruta |
+| --- | --- |
+| Pipeline suggest | `system/runtime/suggest/suggestPipeline` |
+| Post-procesado LM | `system/runtime/suggest/finalizeEngineCompletionResult` |
+| Coordinator / capture | `system/runtime/suggest/suggestionRequestCoordinator` |
+| Modelo efectivo (settings) | `system/runtime/suggest/lastEffectiveSuggestionModel` |
+| Estado proveedores | `system/runtime/providers/providerStatusManager` |
+| Errores de proveedor | `system/runtime/providers/createProviderErrorRecord` |
+| Reset tests | `system/runtime/testing/resetHostRuntimeForTests` |
 
 ---
 
 ## Tests
 
 | Archivo | Cubre |
-|---|---|
-| `suggestRuntime.test.ts` | Pipeline de suggestion |
-| `finalizeEngineCompletionResult.test.ts` | Post-procesado sugerencia cruda → UI |
-| `suggestionRequestCoordinator.test.ts` | Cancelación y capture obsoleto |
-| `lastEffectiveSuggestionModel.test.ts` | Modelo efectivo en settings |
-| `providerStatusManager.test.ts` | Estado de proveedores LM |
-| `createProviderErrorRecord.test.ts` | Registro de error de proveedor |
+| --- | --- |
+| `suggest/suggestPipeline.test.ts` | Pipeline de suggestion |
+| `suggest/finalizeEngineCompletionResult.test.ts` | Post-procesado sugerencia cruda → UI |
+| `suggest/suggestionRequestCoordinator.test.ts` | Cancelación y capture obsoleto |
+| `suggest/lastEffectiveSuggestionModel.test.ts` | Modelo efectivo en settings |
+| `providers/providerStatusManager.test.ts` | Estado de proveedores LM |
+| `providers/createProviderErrorRecord.test.ts` | Registro de error de proveedor |

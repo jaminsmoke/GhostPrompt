@@ -22,7 +22,9 @@ interface GhostToolbarProperties {
   selectedModelId: string;
   availableModels: SuggestionModel[];
   suggestionModelPolicy: 'anyModel' | 'nonPremiumOnly';
-  suggestionStyle: 'balanced' | 'concise' | 'detailed';
+  maxSuggestionChars: number;
+  onPreviewMaxSuggestionChars: (value: number) => void;
+  onCommitMaxSuggestionChars: (value: number) => void;
   debugSuggestions: boolean;
   agentDestination: AgentDestination;
   vsOpenCodeXExtensionInstalled: boolean;
@@ -54,7 +56,9 @@ export function GhostToolbar(props: GhostToolbarProperties) {
     selectedModelId,
     availableModels,
     suggestionModelPolicy,
-    suggestionStyle,
+    maxSuggestionChars,
+    onPreviewMaxSuggestionChars,
+    onCommitMaxSuggestionChars,
     debugSuggestions,
     agentDestination,
     vsOpenCodeXExtensionInstalled,
@@ -75,7 +79,7 @@ export function GhostToolbar(props: GhostToolbarProperties) {
     completionProvider,
     selectedModelId,
     availableModels,
-    suggestionStyle,
+    maxSuggestionChars,
     agentDestination,
     providerStatuses,
     onCompletionProviderChange,
@@ -150,7 +154,7 @@ export function GhostToolbar(props: GhostToolbarProperties) {
         id="composicion-chip"
         label={toolbar.styleLabel}
         chipLabel="Composición"
-        tooltip="Estilo de las sugerencias"
+        tooltip="Longitud máxima de las pre-sugerencias"
         isOpen={toolbar.openChip === 'composicion'}
         onToggle={() => toolbar.toggleChip('composicion')}
         onClose={toolbar.closeChips}
@@ -158,8 +162,9 @@ export function GhostToolbar(props: GhostToolbarProperties) {
       >
         <GhostToolbarComposicionPanel
           compact={compact}
-          suggestionStyle={suggestionStyle}
-          onToggleStyle={(value) => toolbar.handleToggle('suggestionStyle', value)}
+          maxSuggestionChars={maxSuggestionChars}
+          onPreviewMaxSuggestionChars={onPreviewMaxSuggestionChars}
+          onCommitMaxSuggestionChars={onCommitMaxSuggestionChars}
         />
       </ToolbarChip>
 

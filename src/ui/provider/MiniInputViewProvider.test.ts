@@ -9,7 +9,7 @@ import {
   DEFAULT_SUGGESTION_DEBOUNCE_MS,
 } from '../../system/internals/protocols/constants/consPipelineDefaults';
 import { suggestionLoadingStatusText } from '../../system/internals/protocols/state/loading';
-import { resetGhostPromptHostRuntimeForTests } from '../../system/runtime/resetHostRuntimeForTests';
+import { resetGhostPromptHostRuntimeForTests } from '../../system/runtime/testing/resetHostRuntimeForTests';
 
 import { MiniInputViewProvider } from './MiniInputViewProvider';
 
@@ -17,7 +17,7 @@ import type * as InboundHandlersModule from '../../api/boundary/inboundHandlers'
 import type * as WebviewProtocolsModule from '../../api/boundary/webviewProtocols';
 import type * as SettingsPostMessageModule from '../../api/settings/settingsPostMessage';
 import type { SuggestionModelDescriptor } from '../../system/internals/protocols/types';
-import type * as SuggestRuntimeModule from '../../system/runtime/suggestRuntime';
+import type * as SuggestRuntimeModule from '../../system/runtime/suggest/suggestPipeline';
 
 type GhostPromptSuggestDeps = SuggestRuntimeModule.GhostPromptSuggestDeps;
 
@@ -104,7 +104,7 @@ vi.mock('../../api/boundary/inboundHandlers', async (importOriginal) => {
         (message as { type: string }).type === 'suggest'
       ) {
         const runtime = await vi.importActual<typeof SuggestRuntimeModule>(
-          '../../system/runtime/suggestRuntime',
+          '../../system/runtime/suggest/suggestPipeline',
         );
         const deps = (services as { suggestDeps: GhostPromptSuggestDeps }).suggestDeps;
         return runtime.handleGhostPromptSuggest(
@@ -159,7 +159,7 @@ vi.mock('../../api/settings/settingsPostMessage', async (importOriginal) => {
             suggestionModelPolicy: 'nonPremiumOnly',
             selectedModelId: 'auto',
             availableModels: models,
-            suggestionStyle: 'balanced',
+            maxSuggestionChars: 270,
             debugSuggestions: false,
             suggestionDebounceMs: DEFAULT_SUGGESTION_DEBOUNCE_MS,
             agentDestination: 'copilotChat',
@@ -175,8 +175,9 @@ vi.mock('../../api/settings/settingsPostMessage', async (importOriginal) => {
 vi.mock('../../system/internals/config/read/workspaceConfigGetters', () => ({
   collectGhostPromptProjectContext: () => ({}),
   getGhostPromptMaxSuggestionChars: () => DEFAULT_MAX_SUGGESTION_CHARS,
+  getGhostPromptMinCharsForSuggestion: () => 1,
+  getGhostPromptSuggestionDebounceMs: () => DEFAULT_SUGGESTION_DEBOUNCE_MS,
   getGhostPromptSelectedModelId: () => 'auto',
-  getGhostPromptSuggestionStyle: () => 'balanced',
   getAgentDestination: () => 'copilotChat',
   isVsOpenCodeXExtensionInstalled: () => false,
   getGhostPromptOllamaBaseUrl: () => 'http://localhost:11434',
@@ -192,6 +193,10 @@ vi.mock('../../destinations/copilotChat/copilotChatDestination', () => ({
 }));
 
 vi.mock('vscode', () => ({
+  window: {
+    createOutputChannel: vi.fn(() => ({ appendLine: vi.fn(), show: vi.fn() })),
+    showWarningMessage: vi.fn(),
+  },
   workspace: {
     getConfiguration: () => ({
       get: (key: string, fallback: unknown) => {

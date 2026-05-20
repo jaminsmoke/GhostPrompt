@@ -38,7 +38,7 @@ function createDraftHandlerMock(viewId = 'panel-a') {
     setSelectedModelId: vitest.vi.fn(),
     setAvailableModels: vitest.vi.fn(),
     setSuggestionModelPolicy: vitest.vi.fn(),
-    setSuggestionStyle: vitest.vi.fn(),
+    setMaxSuggestionChars: vitest.vi.fn(),
     setSuggestionDebounceMs: vitest.vi.fn(),
     setDebugSuggestions: vitest.vi.fn(),
     setAgentDestination: vitest.vi.fn(),

@@ -21,4 +21,12 @@ vitest.describe('buildCompletionInstruction', () => {
     const instruction = buildCompletionInstruction('Create a test plan');
     vitest.expect(instruction).toContain('Create a test plan');
   });
+
+  vitest.it('incluye hint distinto por maxChars', () => {
+    const short = buildCompletionInstruction('hola', { maxChars: 40 });
+    const long = buildCompletionInstruction('hola', { maxChars: 500 });
+    vitest.expect(short).toContain('extremely short');
+    vitest.expect(long).toContain('at length');
+    vitest.expect(short).not.toContain('at length');
+  });
 });

@@ -46,8 +46,8 @@ vitest.describe('zschemWebviewMessages', () => {
       },
       {
         type: 'updateSetting' as const,
-        key: 'suggestionStyle' as const,
-        value: 'detailed' as const,
+        key: 'maxSuggestionChars' as const,
+        value: 385,
       },
       {
         type: 'updateSetting' as const,
@@ -78,7 +78,7 @@ vitest.describe('zschemWebviewMessages', () => {
       suggestionModelPolicy: 'anyModel',
       selectedModelId: 'auto',
       availableModels: [],
-      suggestionStyle: 'concise',
+      maxSuggestionChars: 40,
       effectiveModel: {
         id: 'x',
         label: 'X',
@@ -103,7 +103,7 @@ vitest.describe('zschemWebviewMessages', () => {
         suggestionModelPolicy: 'nonPremiumOnly' as const,
         selectedModelId: 'auto',
         availableModels: [],
-        suggestionStyle: 'balanced' as const,
+        maxSuggestionChars: 270,
         debugSuggestions: false,
         suggestionDebounceMs: DEFAULT_SUGGESTION_DEBOUNCE_MS,
         agentDestination: 'copilotChat' as const,

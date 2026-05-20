@@ -32,7 +32,9 @@ export function App() {
     selectedModelId,
     availableModels,
     suggestionModelPolicy,
-    suggestionStyle,
+    maxSuggestionChars,
+    previewMaxSuggestionChars,
+    commitMaxSuggestionChars,
     debugSuggestions,
     isConfigLoaded,
     agentDestination,
@@ -72,7 +74,9 @@ export function App() {
         selectedModelId={selectedModelId}
         availableModels={availableModels}
         suggestionModelPolicy={suggestionModelPolicy}
-        suggestionStyle={suggestionStyle}
+        maxSuggestionChars={maxSuggestionChars}
+        onPreviewMaxSuggestionChars={previewMaxSuggestionChars}
+        onCommitMaxSuggestionChars={commitMaxSuggestionChars}
         debugSuggestions={debugSuggestions}
         agentDestination={agentDestination}
         vsOpenCodeXExtensionInstalled={vsOpenCodeXExtensionInstalled}

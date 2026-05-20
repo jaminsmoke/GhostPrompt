@@ -43,15 +43,14 @@ import { readGhostPromptSuggestionModelPolicy } from '../../system/internals/con
 import {
   getGhostPromptMaxSuggestionChars,
   getGhostPromptSelectedModelId,
-  getGhostPromptSuggestionStyle,
 } from '../../system/internals/config/read/workspaceConfigGetters';
 import { looksLikeOllamaModelId } from '../../system/internals/protocols/guards/guardModelRouting';
 import { getLogger, reportHostFault } from '../../system/log';
-import { providerStatusManager } from '../../system/runtime/providerStatusManager';
+import { providerStatusManager } from '../../system/runtime/providers/providerStatusManager';
 import {
   handleGhostPromptSuggest,
   type GhostPromptSuggestDeps,
-} from '../../system/runtime/suggestRuntime';
+} from '../../system/runtime/suggest/suggestPipeline';
 import { maybeNotifySuggestionIssue } from '../notifications/suggestionNotification';
 
 import { buildGhostPromptWebviewFaultHtml, buildGhostPromptWebviewHtml } from './webviewHtml';
@@ -142,7 +141,6 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
         MiniInputViewProvider.broadcastUi(...args),
       getSuggestionModelPolicy: () => readGhostPromptSuggestionModelPolicy(),
       getSelectedModelId: () => getGhostPromptSelectedModelId(),
-      getSuggestionStyle: () => getGhostPromptSuggestionStyle(),
       getMaxSuggestionChars: () => getGhostPromptMaxSuggestionChars(),
       notifyIssue: maybeNotifySuggestionIssue,
     };
@@ -170,7 +168,7 @@ export class MiniInputViewProvider implements vscode.WebviewViewProvider {
     await buildAndPostGhostPromptSettings(webview, {
       getSuggestionModelPolicy: () => readGhostPromptSuggestionModelPolicy(),
       getSelectedModelId: () => getGhostPromptSelectedModelId(),
-      getSuggestionStyle: () => getGhostPromptSuggestionStyle(),
+      getMaxSuggestionChars: () => getGhostPromptMaxSuggestionChars(),
     });
   }
 

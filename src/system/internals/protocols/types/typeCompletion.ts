@@ -1,7 +1,6 @@
 /**
  * @file Tipos y contratos comunes para solicitudes y resultados de completado.
  */
-import type { SuggestionStyle } from './typeSuggestionStyle';
 import type { SuggestionLoadingPhase } from '../state/loading/stateLoadingPhase';
 import type { ProviderId } from '../state/provider/stateProviderId';
 
@@ -42,7 +41,8 @@ export interface CompletionRequestOptions {
   token: CompletionCancellationToken;
   policy: SuggestionModelPolicy;
   preferredModelId?: string;
-  style?: SuggestionStyle;
+  /** Tope de caracteres de la pre-suggestion (instrucción + finalize). */
+  maxChars?: number;
   context?: SuggestionContext;
   requestTimeoutMs?: number;
   /** Actualiza mensaje de carga en el webview (OpenCode: varias fases). */

@@ -102,7 +102,7 @@ vitest.describe('requestOpencodeCompletion', () => {
       token,
       policy: 'anyModel',
       preferredModelId: 'anthropic/claude-3',
-      style: 'balanced',
+      maxChars: 270,
     });
 
     vitest.expect(result.kind).toBe('suggestion');
@@ -183,7 +183,7 @@ vitest.describe('requestOpencodeCompletion', () => {
       token: token as unknown as Vscode.CancellationToken,
       policy: 'anyModel' as const,
       preferredModelId: 'anthropic/claude-3',
-      style: 'balanced' as const,
+      maxChars: 270,
     };
 
     await requestOpencodeCompletion('First line for suggest.', options);

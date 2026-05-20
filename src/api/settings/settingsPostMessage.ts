@@ -1,8 +1,6 @@
 /**
  * @file Construye y envía el mensaje `settings` al webview (lista de modelos, chips, etc.).
  */
-import * as vscode from 'vscode';
-
 import {
   getAgentDestination,
   isCursorDesktopHost,
@@ -13,36 +11,19 @@ import { listSuggestionModels } from '../../engines/provider/copilot/catalog/mod
 import { listMergedSuggestionModels } from '../../engines/provider/mergedModelCatalog';
 import { listOllamaSuggestionModels } from '../../engines/provider/ollama/catalog/ollamaModelCatalog';
 import { listOpencodeSuggestionModels } from '../../engines/provider/opencode/catalog/opencodeModelCatalog';
-import {
-  DEFAULT_SUGGESTION_DEBOUNCE_MS,
-  MAX_SUGGESTION_DEBOUNCE_MS,
-  MIN_SUGGESTION_DEBOUNCE_MS,
-} from '../../system/internals/protocols/constants/consPipelineDefaults';
+import { getGhostPromptSuggestionDebounceMs } from '../../system/internals/config/read/workspaceConfigGetters';
 import { isSuggestionDebugEnabled } from '../../system/log';
-import { getLastEffectiveSuggestionModel } from '../../system/runtime/lastEffectiveSuggestionModel';
+import { getLastEffectiveSuggestionModel } from '../../system/runtime/suggest/lastEffectiveSuggestionModel';
 import { parseOutboundSettingsEnvelope } from '../boundary/webviewProtocols';
 
-
-import type {
-  SuggestionModelDescriptor,
-  SuggestionModelPolicy,
-  SuggestionStyle,
-} from '../../system/internals/protocols/types';
+import type { SuggestionModelDescriptor, SuggestionModelPolicy } from '../../system/internals/protocols/types';
+import type * as vscode from 'vscode';
 
 export type GhostPromptSettingsGetters = {
   getSuggestionModelPolicy: () => SuggestionModelPolicy;
   getSelectedModelId: () => string;
-  getSuggestionStyle: () => SuggestionStyle;
+  getMaxSuggestionChars: () => number;
 };
-
-/**
- * Normaliza el debounce de sugerencia al rango permitido.
- * @param {number} value - Valor de debounce de configuración.
- * @returns {number} Valor ajustado dentro del rango mínimo y máximo.
- */
-function clampSuggestionDebounceMs(value: number): number {
-  return Math.min(MAX_SUGGESTION_DEBOUNCE_MS, Math.max(MIN_SUGGESTION_DEBOUNCE_MS, Math.round(value)));
-}
 
 /**
  * Construye y envía el payload de configuración al webview.
@@ -54,10 +35,7 @@ export async function buildAndPostGhostPromptSettings(
   webview: vscode.Webview,
   getters: GhostPromptSettingsGetters,
 ): Promise<void> {
-  const gpCfg = vscode.workspace.getConfiguration('ghostPrompt');
-  const suggestionDebounceMs = clampSuggestionDebounceMs(
-    gpCfg.get<number>('suggestionDebounceMs', DEFAULT_SUGGESTION_DEBOUNCE_MS),
-  );
+  const suggestionDebounceMs = getGhostPromptSuggestionDebounceMs();
   const policy = getters.getSuggestionModelPolicy();
   const enabledSources = getEnabledCompletionSources();
   const completionUiKind = getCompletionUiKind();
@@ -83,7 +61,7 @@ export async function buildAndPostGhostPromptSettings(
       suggestionModelPolicy: policy,
       selectedModelId: getters.getSelectedModelId(),
       availableModels,
-      suggestionStyle: getters.getSuggestionStyle(),
+      maxSuggestionChars: getters.getMaxSuggestionChars(),
       effectiveModel: getLastEffectiveSuggestionModel(),
       debugSuggestions: isSuggestionDebugEnabled(),
       suggestionDebounceMs,

@@ -33,30 +33,36 @@ vi.mock('vscode', () => ({
   },
 }));
 
-import { resolveCompletionSourceForRequest } from '../../engines/routing/resolveCompletionSource';
-import { resetSuggestionHostNotificationThrottleForTests, maybeNotifySuggestionIssue } from '../../ui/notifications/suggestionNotification';
-import { DEFAULT_MAX_SUGGESTION_CHARS } from '../internals/protocols/constants/consPipelineDefaults';
+import { resolveCompletionSourceForRequest } from '../../../engines/routing/resolveCompletionSource';
+import { resetSuggestionHostNotificationThrottleForTests, maybeNotifySuggestionIssue } from '../../../ui/notifications/suggestionNotification';
+import { DEFAULT_MAX_SUGGESTION_CHARS } from '../../internals/protocols/constants/consPipelineDefaults';
+import { resetGhostPromptHostRuntimeForTests } from '../testing/resetHostRuntimeForTests';
 
-import { resetGhostPromptHostRuntimeForTests } from './resetHostRuntimeForTests';
 import {
   runGhostPromptSuggestPipeline,
   type GhostPromptSuggestDeps,
-} from './suggestRuntime';
+} from './suggestPipeline';
+
+const MOCK_MIN_CHARS_FOR_SUGGESTION = 3;
+
+vi.mock('../../internals/config/read/workspaceConfigGetters', () => ({
+  getGhostPromptMinCharsForSuggestion: () => MOCK_MIN_CHARS_FOR_SUGGESTION,
+}));
 
 const requestCompletion = vi.fn();
 
-vi.mock('../../engines/routing/resolveProvider', () => ({
+vi.mock('../../../engines/routing/resolveProvider', () => ({
   resolveProvider: () => ({
     id: 'copilotLm',
     requestCompletion,
   }),
 }));
 
-vi.mock('../../engines/routing/resolveCompletionSource', () => ({
+vi.mock('../../../engines/routing/resolveCompletionSource', () => ({
   resolveCompletionSourceForRequest: vi.fn(() => 'copilot' as const),
 }));
 
-vi.mock('../../engines/config/completionSources', () => ({
+vi.mock('../../../engines/config/completionSources', () => ({
   getEnabledCompletionSources: () => ['copilot'] as const,
 }));
 
@@ -70,7 +76,6 @@ function minimalDeps(overrides?: Partial<GhostPromptSuggestDeps>): GhostPromptSu
     broadcastUi: vi.fn(),
     getSuggestionModelPolicy: () => 'nonPremiumOnly',
     getSelectedModelId: () => 'auto',
-    getSuggestionStyle: () => 'balanced',
     getMaxSuggestionChars: () => DEFAULT_MAX_SUGGESTION_CHARS,
     notifyIssue: maybeNotifySuggestionIssue,
     ...overrides,
@@ -135,7 +140,7 @@ vitest.describe('runGhostPromptSuggestPipeline', () => {
     );
   });
 
-  vitest.it('passthrough: negativa del LM llega al webview sin filtrar (diagnóstico v0.6.2)', async () => {
+  vitest.it('filtra rechazo típico del LM como content-blocked', async () => {
     const refusal = "I'm sorry, I can't assist with that.";
     requestCompletion.mockResolvedValue({
       kind: 'suggestion',
@@ -147,29 +152,31 @@ vitest.describe('runGhostPromptSuggestPipeline', () => {
     await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 51 }, deps);
     vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
       vitest.expect.objectContaining({
-        type: 'suggestion',
-        suggestion: refusal,
+        type: 'empty',
+        reason: 'content-blocked',
         captureId: 51,
       }),
     );
   });
 
-  vitest.it('passthrough: no recorta suggestion según getMaxSuggestionChars', async () => {
-    const full = 'abcdefghijklmnopqrstuvwxyz';
+  vitest.it('recorta suggestion según max efectivo (estilo balanced)', async () => {
+    const configuredMaxChars = 50;
+    const suggestionLength = 80;
+    const full = 'a'.repeat(suggestionLength);
     requestCompletion.mockResolvedValue({
       kind: 'suggestion',
       suggestion: full,
       model: { id: 'gpt', label: 'GPT', tier: 'included' },
     });
     const deps = minimalDeps({
-      getMaxSuggestionChars: () => 10,
+      getMaxSuggestionChars: () => configuredMaxChars,
     });
     const text = 'long enough phrase for finalize bound unique-bd';
     await runGhostPromptSuggestPipeline({ type: 'suggest', text, captureId: 52 }, deps);
     vitest.expect(deps.broadcastUi).toHaveBeenCalledWith(
       vitest.expect.objectContaining({
         type: 'suggestion',
-        suggestion: full,
+        suggestion: 'a'.repeat(configuredMaxChars),
         captureId: 52,
       }),
     );

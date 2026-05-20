@@ -55,7 +55,7 @@ api/boundary/webviewProtocols.ts — parseWebviewInboundMessage
     ▼
 api/boundary/inboundHandlers.ts — dispatchGhostPromptInboundMessage
     ├── init → handleGhostPromptInboundInit
-    ├── suggest → system/runtime/suggestRuntime
+    ├── suggest → system/runtime/suggest/suggestPipeline
     ├── updateSetting → config/write/applyWebviewUpdateSetting
     └── …
 ```

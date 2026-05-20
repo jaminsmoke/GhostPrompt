@@ -38,7 +38,7 @@ protocols/
 ├── types/
 │   ├── typeCompletion.ts
 │   ├── typeDestinations.ts
-│   ├── typeSuggestionStyle.ts
+│   ├── (longitud: `constants/consSuggestionLength.ts`, `suggestionLength/`)
 │   ├── typeOpencodeClient.ts
 │   ├── typeCompletionUi.ts
 │   ├── typeLog.ts

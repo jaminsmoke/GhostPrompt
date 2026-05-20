@@ -1,7 +1,7 @@
 /**
  * @file Registros de estado de error al comprobar un proveedor LM.
  */
-import type { ProviderStateRecord, ProviderStatusModule } from '../internals/protocols/state/provider';
+import type { ProviderStateRecord, ProviderStatusModule } from '../../internals/protocols/state/provider';
 
 /**
  * Construye un registro de estado de error cuando `check()` de un módulo falla.

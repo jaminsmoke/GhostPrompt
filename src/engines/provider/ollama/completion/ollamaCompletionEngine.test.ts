@@ -69,7 +69,7 @@ vitest.describe('requestOllamaCompletion (model resolution)', () => {
       policy: 'anyModel',
       token,
       preferredModelId: 'mistral:latest',
-      style: 'balanced',
+      maxChars: 270,
     });
 
     vitest.expect(result.kind).toBe('suggestion');

@@ -26,13 +26,14 @@ vitest.describe('React webview toolbar parity', () => {
   vitest.it('GhostToolbar defines exactly four setting groups with stable data-keys', () => {
     const toolbar = read('src/ui/webview/react/components/GhostToolbar.tsx');
     const panels = read('src/ui/webview/react/components/GhostToolbarPanels.tsx');
-    const source = `${toolbar}\n${panels}`;
+    const composicion = read('src/ui/webview/react/components/GhostToolbarComposicionPanel.tsx');
+    const source = `${toolbar}\n${panels}\n${composicion}`;
     vitest.expect(source.match(/data-key="/gu)?.length).toBe(WEBVIEW_TOOLBAR_SETTING_GROUP_COUNT);
     for (const key of [
       'completionProvider',
       'agentDestination',
       'suggestionModelPolicy',
-      'suggestionStyle',
+      'maxSuggestionChars',
     ]) {
       vitest.expect(source).toContain(`data-key="${key}"`);
     }

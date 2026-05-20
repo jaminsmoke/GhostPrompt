@@ -11,7 +11,7 @@ export const minimalWebviewSettingsPayload = {
   suggestionModelPolicy: 'nonPremiumOnly' as const,
   selectedModelId: 'auto',
   availableModels: [] as const,
-  suggestionStyle: 'balanced' as const,
+  maxSuggestionChars: 270,
   debugSuggestions: false,
   suggestionDebounceMs: DEFAULT_SUGGESTION_DEBOUNCE_MS,
   agentDestination: 'copilotChat' as const,

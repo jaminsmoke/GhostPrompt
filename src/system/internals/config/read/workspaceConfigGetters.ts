@@ -6,11 +6,14 @@ import * as vscode from 'vscode';
 
 import {
   DEFAULT_MAX_SUGGESTION_CHARS,
-  MAX_MAX_SUGGESTION_CHARS,
-  MIN_MAX_SUGGESTION_CHARS,
+  DEFAULT_MIN_CHARS_FOR_SUGGESTION,
+  DEFAULT_SUGGESTION_DEBOUNCE_MS,
+  MAX_MIN_CHARS_FOR_SUGGESTION,
+  MAX_SUGGESTION_DEBOUNCE_MS,
+  MIN_MIN_CHARS_FOR_SUGGESTION,
+  MIN_SUGGESTION_DEBOUNCE_MS,
 } from '../../protocols/constants/consPipelineDefaults';
-
-import type { SuggestionStyle } from '../../protocols/types';
+import { clampMaxSuggestionChars } from '../../protocols/suggestionLength/suggestionLength';
 
 /**
  * Obtiene el identificador del modelo seleccionado en la configuración.
@@ -31,24 +34,41 @@ export function getGhostPromptMaxSuggestionChars(): number {
   const rawValue = vscode.workspace
     .getConfiguration('ghostPrompt')
     .get<number>('maxSuggestionChars', DEFAULT_MAX_SUGGESTION_CHARS);
-  if (!Number.isFinite(rawValue)) {
-    return DEFAULT_MAX_SUGGESTION_CHARS;
-  }
-  return Math.max(MIN_MAX_SUGGESTION_CHARS, Math.min(MAX_MAX_SUGGESTION_CHARS, Math.floor(rawValue)));
+  return clampMaxSuggestionChars(rawValue);
 }
 
 /**
- * Obtiene el estilo de sugerencia seleccionado en la configuración.
- * @returns {SuggestionStyle} Estilo de sugerencia válido.
+ * Obtiene el mínimo de caracteres (tras trim) para solicitar una suggestion.
+ * @returns {number} Umbral alineado a `ghostPrompt.minCharsForSuggestion`.
  */
-export function getGhostPromptSuggestionStyle(): SuggestionStyle {
-  const value = vscode.workspace
+export function getGhostPromptMinCharsForSuggestion(): number {
+  const rawValue = vscode.workspace
     .getConfiguration('ghostPrompt')
-    .get<string>('suggestionStyle', 'balanced');
-  if (value === 'concise' || value === 'detailed') {
-    return value;
+    .get<number>('minCharsForSuggestion', DEFAULT_MIN_CHARS_FOR_SUGGESTION);
+  if (!Number.isFinite(rawValue)) {
+    return DEFAULT_MIN_CHARS_FOR_SUGGESTION;
   }
-  return 'balanced';
+  return Math.max(
+    MIN_MIN_CHARS_FOR_SUGGESTION,
+    Math.min(MAX_MIN_CHARS_FOR_SUGGESTION, Math.floor(rawValue)),
+  );
+}
+
+/**
+ * Obtiene el debounce del webview antes de pedir suggestion (ms).
+ * @returns {number} Valor dentro del rango permitido por producto.
+ */
+export function getGhostPromptSuggestionDebounceMs(): number {
+  const rawValue = vscode.workspace
+    .getConfiguration('ghostPrompt')
+    .get<number>('suggestionDebounceMs', DEFAULT_SUGGESTION_DEBOUNCE_MS);
+  if (!Number.isFinite(rawValue)) {
+    return DEFAULT_SUGGESTION_DEBOUNCE_MS;
+  }
+  return Math.max(
+    MIN_SUGGESTION_DEBOUNCE_MS,
+    Math.min(MAX_SUGGESTION_DEBOUNCE_MS, Math.round(rawValue)),
+  );
 }
 
 /**

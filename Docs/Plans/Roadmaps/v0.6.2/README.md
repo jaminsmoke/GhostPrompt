@@ -8,6 +8,9 @@ Consolidación de límites **host ↔ webview** y cierre de deuda arquitectónic
 | ----- | --------- | ----------- |
 | 1 | [01-consolidation-boundary-webview.md](./01-consolidation-boundary-webview.md) | Fases **FA–FE**: shims, parse webview, tipos UI, docs, cierre release |
 | 2 | [02-chat-webview-presuggestions.md](./02-chat-webview-presuggestions.md) | Fases **FF–FJ**: stale captures, sync dual-view, overlay ghost, UX chat, QA |
+| 3 | [03-runtime-config-pipeline.md](./03-runtime-config-pipeline.md) | Fases **FK–FP**: config canónica, estilo conectado al LM, finalize, reorganizar `system/runtime/` |
+| 4 | [04-suggestion-length-slider.md](./04-suggestion-length-slider.md) | Fases **FQ–FV**: slider + 5 atajos, eliminar `suggestionStyle`, `maxSuggestionChars` como única perilla |
+| 5 | [05-dual-surface-chat-hub.md](./05-dual-surface-chat-hub.md) | Fases **FW–GB**: chat en sidebar (chips esenciales), hub en panel (ajustes + estadísticas) |
 
 ## Contexto
 
@@ -40,7 +43,12 @@ Límites de capa: [`Docs/Owners.md`](../../Owners.md).
 | **FE** | Verificación release 0.6.2 | En curso (VSIX `0.6.2` empaquetado; smoke manual pendiente) |
 | **FF** | Invalidación captureId stale en edición local | Completado |
 | **FG** | Limpieza suggestion en draftSync / draftHydrate dual-view | Completado |
-| **FH–FJ** | Overlay ghost, UX chat, QA | Planificado |
+| **FH** | Alineación overlay ghost (grid, scroll, visibilidad) | Completado |
+| **FI–FJ** | UX chat, QA manual plan 02 | Planificado |
+| **FK–FP** | Config canónica + pipeline estilo + reorganizar runtime | Completado |
+| **FQ–FU** | Slider longitud + 5 atajos; eliminado `suggestionStyle` | Completado |
+| **FV** | Smoke manual (checklist plan 04) | En curso — resto automatizado hecho |
+| **FW–GB** | Superficies chat (sidebar) + hub (panel); fin paridad dual chat | Planificado — ver [05-dual-surface-chat-hub.md](./05-dual-surface-chat-hub.md) |
 
 ## Verificación habitual (cada fase)
 

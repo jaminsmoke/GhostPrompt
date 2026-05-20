@@ -30,15 +30,18 @@ export function resolveOpenCodeModelId(preferredModelId: string | undefined): st
 export async function fetchOpenCodeCompletionText(
   userText: string,
   modelId: string,
-  options: Pick<CompletionRequestOptions, 'onLoadingPhase' | 'requestTimeoutMs' | 'token'>,
+  options: Pick<
+    CompletionRequestOptions,
+    'onLoadingPhase' | 'requestTimeoutMs' | 'maxChars' | 'token'
+  >,
 ): Promise<string> {
-  const { token, requestTimeoutMs = 30_000, onLoadingPhase } = options;
+  const { token, requestTimeoutMs = 30_000, onLoadingPhase, maxChars } = options;
 
   onLoadingPhase?.('opencode-generating');
 
   const client = getGlobalClient();
   const sessionId = await getSession(client);
-  const instruction = buildCompletionInstruction(userText);
+  const instruction = buildCompletionInstruction(userText, { maxChars });
 
   return Promise.race([
     promptOpenCode(

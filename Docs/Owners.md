@@ -63,7 +63,7 @@ No es cobertura de líneas al 100 %; es **contrato de tests que deben seguir pas
 | `ui/` (webview, provider, notifications) | `MiniInputViewProvider.test.ts`, `multiViewDraft.test.ts`, `webviewToolbarParity.test.ts`, `webviewThemeTokens.test.ts`, `ui/webview/react/App.test.tsx`, `ui/webview/react/hooks/useGhostPrompt.test.ts`, `ui/webview/react/validators/parseWebviewInbound.test.ts`, `ui/notifications/suggestionHostNotification.test.ts` |
 | `api/boundary/*` | `api/boundary/webviewProtocols.test.ts`, `api/boundary/ghostPromptWebviewInboundHandlers.test.ts`, `system/internals/protocols/validations/schemas/zschemWebviewMessages.test.ts` |
 | `api/settings/*` | `MiniInputViewProvider.test.ts` (flujo settings) |
-| `system/internals/config/read/` | Indirecto vía `MiniInputViewProvider.test.ts`, `suggestRuntime.test.ts` |
+| `system/internals/config/read/` | Indirecto vía `MiniInputViewProvider.test.ts`, `suggest/suggestPipeline.test.ts` |
 | `system/internals/config/write/` | `applyWebviewUpdateSetting.test.ts` |
 | `system/internals/protocols/` | `guardModelRouting.test.ts`, `guardBoundSuggestion.test.ts`, `guardProviderId.test.ts`, `guardCopilotLm.test.ts`, `state/loading/stateLoadingLabels.test.ts`, `types/boundSuggestionText.test.ts`, `validations/schemas/zschemWebviewMessages.test.ts` |
 | `system/internals/config/` | Indirecto vía runtime/UI que leen `ghostPrompt.suggestionModelPolicy` |
@@ -107,7 +107,7 @@ Orden recomendado; cada fase es **independiente** si la anterior está estable.
 
 ### Fase C — Orquestación de `suggest`
 
-**Estado:** **Hecho (2026-05-10)** — Pipeline en `system/runtime/suggestRuntime.ts`; tests en `suggestRuntime.test.ts`.
+**Estado:** **Hecho (2026-05-10)** — Pipeline en `system/runtime/suggest/suggestPipeline.ts`; tests en `suggest/suggestPipeline.test.ts`.
 
 ---
 

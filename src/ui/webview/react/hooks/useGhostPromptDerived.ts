@@ -80,6 +80,25 @@ export function useGhostPromptDerived(input: GhostPromptDerivedInput) {
     postToHost(message);
   }, []);
 
+  const previewMaxSuggestionChars = useCallback(
+    (value: number) => {
+      ui.setMaxSuggestionChars(value);
+    },
+    [ui],
+  );
+
+  const commitMaxSuggestionChars = useCallback(
+    (value: number) => {
+      ui.setMaxSuggestionChars(value);
+      sendUpdateSetting({
+        type: 'updateSetting',
+        key: 'maxSuggestionChars',
+        value,
+      });
+    },
+    [sendUpdateSetting, ui],
+  );
+
   const makeToggle = useCallback(
     (key: string, value: string) => {
       sendUpdateSetting({ type: 'updateSetting', key, value } as UpdateSettingMessage);
@@ -142,6 +161,8 @@ export function useGhostPromptDerived(input: GhostPromptDerivedInput) {
     canSend,
     displayStatus,
     makeToggle,
+    previewMaxSuggestionChars,
+    commitMaxSuggestionChars,
     acceptSuggestion,
     requestSuggestion,
     sendUpdateSetting,

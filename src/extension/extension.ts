@@ -14,6 +14,7 @@ import { notifyIfVsxAgentDestinationWithoutVsOpenCodeX } from '../destinations/v
 import { ollamaModelManager } from '../engines/provider/ollama';
 import { resetClient } from '../engines/provider/opencode/client';
 import { registerProviderStatusRegistry } from '../engines/runtime/providerStatusRegistry';
+import { migrateGhostPromptSuggestionLengthSettings } from '../system/internals/config/read/migrateGhostPromptSuggestionLength';
 import { isDefined } from '../system/internals/isDefined';
 import {
   disposeGhostPromptLogging,
@@ -47,6 +48,9 @@ export function activate(context: vscode.ExtensionContext): void {
 
   try {
     log.info('activate-start', { version });
+    migrateGhostPromptSuggestionLengthSettings(context).catch((error: unknown) => {
+      log.error('migrate-suggestion-length-failed', {}, error);
+    });
     registerProviderStatusRegistry();
     const sidebarProvider = new MiniInputViewProvider(context, MiniInputViewProvider.viewId);
     const panelProvider = new MiniInputViewProvider(context, MiniInputViewProvider.panelViewId);

@@ -28,6 +28,19 @@ config/
 
 ---
 
+## Claves del pipeline suggest (lectura canónica)
+
+| Clave `ghostPrompt.*` | Getter | Consumidor principal |
+| --------------------- | ------ | -------------------- |
+| `maxSuggestionChars` | `getGhostPromptMaxSuggestionChars()` | `suggest/suggestPipeline` → motores → `buildCompletionInstruction` + `finalizeEngineCompletionResult` |
+| `minCharsForSuggestion` | `getGhostPromptMinCharsForSuggestion()` | `suggest/suggestPipeline` (umbral `too-short`) |
+| `suggestionDebounceMs` | `getGhostPromptSuggestionDebounceMs()` | `settingsPostMessage` → webview |
+| `suggestionModelPolicy` | `readGhostPromptSuggestionModelPolicy()` | `suggest/suggestPipeline`, catálogos |
+| `selectedModelId` | `getGhostPromptSelectedModelId()` | routing + suggest |
+| `enabledCompletionSources` | `engines/config/completionSources` | routing (no duplicar aquí) |
+
+---
+
 ## Consumidores típicos
 
 | Consumidor | Importa |
@@ -35,3 +48,4 @@ config/
 | `ui/provider/MiniInputViewProvider` | `config/read/*`, `api/boundary/*` |
 | `api/boundary/inboundHandlers` | `config/write/applyWebviewUpdateSetting` |
 | `api/settings/settingsPostMessage` | `config/read`, `destinations/` |
+| `system/runtime/suggest/suggestPipeline` | `getGhostPromptMinCharsForSuggestion`, estilo vía deps |

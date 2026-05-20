@@ -7,7 +7,7 @@ import { vi } from 'vitest';
 
 import { ProviderStatusManager } from './providerStatusManager';
 
-import type { ProviderStatusModule } from '../internals/protocols/state/provider';
+import type { ProviderStatusModule } from '../../internals/protocols/state/provider';
 
 vitest.describe('ProviderStatusManager', () => {
   let manager: ProviderStatusManager;

@@ -35,7 +35,7 @@ export type GhostPromptInboundHandlerContext = {
   setSelectedModelId: Dispatch<SetStateAction<string>>;
   setAvailableModels: Dispatch<SetStateAction<SuggestionModel[]>>;
   setSuggestionModelPolicy: Dispatch<SetStateAction<'anyModel' | 'nonPremiumOnly'>>;
-  setSuggestionStyle: Dispatch<SetStateAction<'balanced' | 'concise' | 'detailed'>>;
+  setMaxSuggestionChars: Dispatch<SetStateAction<number>>;
   setSuggestionDebounceMs: Dispatch<SetStateAction<number>>;
   setDebugSuggestions: Dispatch<SetStateAction<boolean>>;
   setAgentDestination: Dispatch<SetStateAction<AgentDestination>>;
@@ -70,7 +70,12 @@ function applyGhostPromptSettingsMessage(
   handler.setSelectedModelId(settings.selectedModelId);
   handler.setAvailableModels(settings.availableModels);
   handler.setSuggestionModelPolicy(settings.suggestionModelPolicy);
-  handler.setSuggestionStyle(settings.suggestionStyle);
+  handler.setMaxSuggestionChars((current) => {
+    if (current === settings.maxSuggestionChars) {
+      return current;
+    }
+    return settings.maxSuggestionChars;
+  });
   handler.setSuggestionDebounceMs(settings.suggestionDebounceMs);
   if (settings.suggestionDebounceMs < MIN_SUGGESTION_DEBOUNCE_MS) {
     handler.logToHost('warn', 'invalidSuggestionDebounce', {

@@ -66,12 +66,12 @@ vi.mock('../../system/internals/config/write/applyWebviewUpdateSetting', () => (
   applyWebviewUpdateSetting: applyWebviewUpdateSettingMock,
 }));
 
-vi.mock('../../system/runtime/suggestRuntime', () => ({
+vi.mock('../../system/runtime/suggest/suggestPipeline', () => ({
   handleGhostPromptSuggest: handleGhostPromptSuggestMock,
 }));
 
 import { DEFAULT_MAX_SUGGESTION_CHARS } from '../../system/internals/protocols/constants/consPipelineDefaults';
-import { resetGhostPromptHostRuntimeForTests } from '../../system/runtime/resetHostRuntimeForTests';
+import { resetGhostPromptHostRuntimeForTests } from '../../system/runtime/testing/resetHostRuntimeForTests';
 import {
   getMultiViewDraftText,
   setMultiViewDraftText,
@@ -85,7 +85,7 @@ import {
   type GhostPromptInboundDispatchServices,
 } from './inboundHandlers';
 
-import type { GhostPromptSuggestDeps } from '../../system/runtime/suggestRuntime';
+import type { GhostPromptSuggestDeps } from '../../system/runtime/suggest/suggestPipeline';
 import type * as Vscode from 'vscode';
 
 
@@ -98,7 +98,6 @@ function minimalSuggestDeps(): GhostPromptSuggestDeps {
     broadcastUi: vi.fn(),
     getSuggestionModelPolicy: () => 'nonPremiumOnly',
     getSelectedModelId: () => 'auto',
-    getSuggestionStyle: () => 'balanced',
     getMaxSuggestionChars: () => DEFAULT_MAX_SUGGESTION_CHARS,
   };
 }
@@ -231,7 +230,7 @@ vitest.describe('handleGhostPromptInboundSend', () => {
 vitest.describe('dispatchGhostPromptInboundMessage', () => {
   vitest.beforeEach(resetInboundHandlerMocks);
 
-  vitest.it('enruta updateSetting a apply + refresh de settings', async () => {
+  vitest.it('enruta updateSetting a apply (refresh vía onDidChangeConfiguration)', async () => {
       applyWebviewUpdateSettingMock.mockResolvedValue();
       const broadcastSettings = vi.fn().mockResolvedValue();
       const webview = {} as Vscode.Webview;
@@ -251,8 +250,8 @@ vitest.describe('dispatchGhostPromptInboundMessage', () => {
       await dispatchGhostPromptInboundMessage(
         {
           type: 'updateSetting',
-          key: 'suggestionStyle',
-          value: 'concise',
+          key: 'maxSuggestionChars',
+          value: 40,
         },
         services,
       );
@@ -260,11 +259,11 @@ vitest.describe('dispatchGhostPromptInboundMessage', () => {
       vitest.expect(applyWebviewUpdateSettingMock).toHaveBeenCalledWith(
         vitest.expect.objectContaining({
           type: 'updateSetting',
-          key: 'suggestionStyle',
-          value: 'concise',
+          key: 'maxSuggestionChars',
+          value: 40,
         }),
       );
-      vitest.expect(broadcastSettings).toHaveBeenCalled();
+      vitest.expect(broadcastSettings).not.toHaveBeenCalled();
     });
 
     vitest.it('ignora suggest si agentDestination es vsOpenCodeX', async () => {

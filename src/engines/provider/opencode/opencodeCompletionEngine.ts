@@ -37,6 +37,7 @@ export async function requestOpencodeCompletion(
   const {
     token,
     preferredModelId,
+    maxChars,
     requestTimeoutMs,
     onLoadingPhase,
   } = options;
@@ -55,6 +56,7 @@ export async function requestOpencodeCompletion(
   try {
     const completionText = await fetchOpenCodeCompletionText(userText, modelId, {
       token,
+      maxChars,
       requestTimeoutMs,
       onLoadingPhase,
     });

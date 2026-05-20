@@ -9,7 +9,9 @@ import {
   COMPLETION_UI_SOURCE_VALUES,
 } from '../../constants/consCompletionUi';
 import {
+  MAX_MAX_SUGGESTION_CHARS,
   MAX_SUGGESTION_DEBOUNCE_MS,
+  MIN_MAX_SUGGESTION_CHARS,
   MIN_SUGGESTION_DEBOUNCE_MS,
 } from '../../constants/consPipelineDefaults';
 
@@ -32,7 +34,7 @@ export const webviewSettingsPayloadSchema = z.object({
   suggestionModelPolicy: z.enum(['nonPremiumOnly', 'anyModel']),
   selectedModelId: z.string(),
   availableModels: z.array(suggestionModelDescriptorSchema),
-  suggestionStyle: z.enum(['concise', 'balanced', 'detailed']),
+  maxSuggestionChars: z.number().min(MIN_MAX_SUGGESTION_CHARS).max(MAX_MAX_SUGGESTION_CHARS),
   effectiveModel: suggestionModelDescriptorSchema.optional(),
   debugSuggestions: z.boolean(),
   /** Tiempo de inactividad tras teclear antes de pedir suggestion (webview debounce). */
@@ -163,8 +165,8 @@ export const webviewUpdateSettingSchema = z.discriminatedUnion('key', [
   }),
   z.object({
     type: z.literal('updateSetting'),
-    key: z.literal('suggestionStyle'),
-    value: z.enum(['concise', 'balanced', 'detailed']),
+    key: z.literal('maxSuggestionChars'),
+    value: z.number().min(MIN_MAX_SUGGESTION_CHARS).max(MAX_MAX_SUGGESTION_CHARS),
   }),
   z.object({
     type: z.literal('updateSetting'),

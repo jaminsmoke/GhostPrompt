@@ -10,16 +10,20 @@ Consolidación boundary host↔webview (roadmap v0.6.2 FA–FC): una sola línea
 
 - **Barrels webview:** `ui/webview/react/webviewProtocolConstants.ts` y `webviewProtocolSchemas.ts` para constantes `cons*` y schemas Zod del panel sin rutas profundas repetidas.
 - **Paridad parse:** fixtures `webviewOutboundMessageFixtures.ts` y tests `parseWebviewInbound.test.ts` + ampliación de `api/boundary/webviewProtocols.test.ts` (mismo schema host→panel).
+- **Longitud de pre-suggestion (FQ–FT):** slider 40–500 y cinco atajos (muy conciso → muy extenso) en chip Composición; presets 40 / 155 / 270 / 385 / 500; etiqueta derivada (`deriveSuggestionLengthLabel`); hints LM por banda en `buildCompletionInstruction`.
 
 ### Removed
 
 - **`src/api/protocols/`** — shims duplicados de `api/boundary/` (handlers, tests, mocks).
 - **`src/api/settings/applyWebviewUpdate.ts`** — duplicado; canónico en `system/internals/config/write/applyWebviewUpdateSetting.ts`.
+- **`ghostPrompt.suggestionStyle`** — setting y enum `SuggestionStyle`; sustituido por `maxSuggestionChars` como única perilla de longitud.
+- **`resolveEffectiveMaxSuggestionChars`** y factores por estilo; pipeline usa el tope configurado directamente.
 
 ### Changed
 
 - **Imports `api/`:** parseo con logging y dispatch inbound solo desde `api/boundary/` (`api/index.ts` reexporta boundary).
 - **Webview React:** hooks y componentes importan tipos/constantes vía barrels locales; `parseWebviewInbound.ts` documentado como validación de mensajes **host→panel** (`webviewOutboundMessageSchema`).
+- **Default `ghostPrompt.maxSuggestionChars`:** 270 (preset Normal). Migración one-shot desde `suggestionStyle` al activar la extensión.
 
 ## [Unreleased]
 

@@ -3,6 +3,8 @@
  */
 import { COMPLETION_UI_SOURCE_VALUES } from '../webviewProtocolConstants';
 
+export { GhostToolbarComposicionPanel } from './GhostToolbarComposicionPanel';
+
 import {
   actionButtonClass,
   chipLabelClass,
@@ -334,46 +336,6 @@ function PolicyToggles(props: {
         () => onTogglePolicy('anyModel'),
         'Cualquiera',
       )}
-    </div>
-  );
-}
-
-interface GhostToolbarComposicionPanelProperties {
-  compact: boolean;
-  suggestionStyle: 'balanced' | 'concise' | 'detailed';
-  onToggleStyle: (value: string) => void;
-}
-
-/**
- * Panel del chip Composición (estilo de sugerencias).
- * @param {GhostToolbarComposicionPanelProperties} props - Propiedades del panel.
- * @returns {import('react').JSX.Element} Contenido del chip composición.
- */
-export function GhostToolbarComposicionPanel(props: GhostToolbarComposicionPanelProperties) {
-  const { compact, suggestionStyle, onToggleStyle } = props;
-
-  return (
-    <div className="p-2 space-y-3 min-w-55">
-      <div data-key="suggestionStyle" className="flex flex-col gap-1">
-        <span className={chipLabelClass(compact)}>Estilo</span>
-        <div className="flex gap-1">
-          {renderToggleOption(
-            suggestionStyle === 'concise',
-            () => onToggleStyle('concise'),
-            'Breve',
-          )}
-          {renderToggleOption(
-            suggestionStyle === 'balanced',
-            () => onToggleStyle('balanced'),
-            'Normal',
-          )}
-          {renderToggleOption(
-            suggestionStyle === 'detailed',
-            () => onToggleStyle('detailed'),
-            'Extenso',
-          )}
-        </div>
-      </div>
     </div>
   );
 }

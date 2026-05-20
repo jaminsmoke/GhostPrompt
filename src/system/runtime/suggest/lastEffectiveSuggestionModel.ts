@@ -1,9 +1,9 @@
 /**
  * @file Último modelo efectivo usado en una suggestion exitosa (payload settings).
  */
-import { clearOptionalProperty, isDefined } from '../internals/isDefined';
+import { clearOptionalProperty, isDefined } from '../../internals/isDefined';
 
-import type { SuggestionModelDescriptor } from '../internals/protocols/types';
+import type { SuggestionModelDescriptor } from '../../internals/protocols/types';
 
 const lastEffectiveModelSlot: { current?: SuggestionModelDescriptor } = {};
 

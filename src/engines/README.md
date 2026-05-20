@@ -8,7 +8,7 @@
 
 `engines/` expone adaptadores LM por proveedor (`EngineProvider`: `id` + `requestCompletion`). El routing elige fuente (`resolveCompletionSourceForRequest`) y adaptador (`resolveProvider`). Por modelo: `model:tag` → Ollama, `providerID/modelID` → OpenCode, id de chat Copilot → LM.
 
-Las sugerencias con `kind: 'suggestion'` salen **del motor como texto crudo** del LM (salvo respuestas vacías factuales en algunos proveedores). La acotación (`ghostPrompt.maxSuggestionChars`) y la heurística de rechazo (`content-blocked`) se aplican en `system/runtime/finalizeEngineCompletionResult`, llamado desde `runGhostPromptSuggestPipeline`.
+Las sugerencias con `kind: 'suggestion'` salen **del motor como texto crudo** del LM (salvo respuestas vacías factuales en algunos proveedores). La acotación (`ghostPrompt.maxSuggestionChars`) y la heurística de rechazo (`content-blocked`) se aplican en `system/runtime/suggest/finalizeEngineCompletionResult`, llamado desde `runGhostPromptSuggestPipeline`.
 
 **No debe contener:**
 
@@ -27,7 +27,7 @@ engines/
 │   ├── buildCompletionInstruction.ts  # Prompt LM compartido (Copilot, OpenCode, Ollama)
 │   └── index.ts
 ├── runtime/
-│   └── providerStatusRegistry.ts  # Registro de *Status → `system/runtime/providerStatusManager`
+│   └── providerStatusRegistry.ts  # Registro de *Status → `system/runtime/providers/providerStatusManager`
 ├── config/
 │   └── completionSources.ts     # getEnabledCompletionSources, getCompletionUiKind (VS Code settings)
 ├── routing/

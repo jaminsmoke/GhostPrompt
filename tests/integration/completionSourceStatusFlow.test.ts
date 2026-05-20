@@ -11,7 +11,7 @@ vi.mock('vscode', () => ({
   workspace: { getConfiguration: () => ({ get: vi.fn() }) },
 }));
 
-import { ProviderStatusManager } from '../../src/system/runtime/providerStatusManager';
+import { ProviderStatusManager } from '../../src/system/runtime/providers/providerStatusManager';
 
 import type { ProviderStatusModule } from '../../src/system/internals/protocols/state/provider';
 

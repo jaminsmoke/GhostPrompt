@@ -180,8 +180,7 @@ _See **3 · Next to Copilot Chat** in [Preview](#preview)._
 
 ### Suggestion quality
 
-- `ghostPrompt.maxSuggestionChars` (default `180`)
-- `ghostPrompt.suggestionStyle` (`concise` | `balanced` | `detailed`, default `balanced`)
+- `ghostPrompt.maxSuggestionChars` (default `270`, range 40–500; toolbar presets: 40 / 155 / 270 / 385 / 500)
 - `ghostPrompt.contextMode` (`off` | `basic` | `project`, default `basic`)
 
 ### Request governor (cost/frequency protection)
@@ -393,7 +392,7 @@ For complete details and historical versions, see [`CHANGELOG.md`](./CHANGELOG.m
 - **Suggestion pipeline**: typed results (`suggestion`, `empty`, `error`, `loading`), no silent failures.
 - **Request governor** (dedupe, cache, cooldown, rate limit, session budget) to limit accidental over-calling.
 - **Model policy**: default **included-model** selection with optional `anyModel` override; commands and settings for policy/debug.
-- **Quality controls**: suggestion style (`concise` / `balanced` / `detailed`), `maxSuggestionChars`, optional **session context** (`contextMode`).
+- **Quality controls**: `maxSuggestionChars` (slider + five presets in Composición chip), optional **session context** (`contextMode`).
 - **Webview UX**: compact chip controls, keyboard/a11y polish, layout fixes for narrow Activity Bar views.
 - **Tests**: Vitest suite (`npm run test` / `npm run check`).
 - **Docs**: debug flow guide, README screenshots (collapsible), repository metadata for marketplace.

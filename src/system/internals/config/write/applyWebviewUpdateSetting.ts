@@ -5,6 +5,7 @@
 import * as vscode from 'vscode';
 
 import { parseAgentDestination } from '../../../../destinations/destinationRegistry';
+import { clampMaxSuggestionChars } from '../../protocols/suggestionLength/suggestionLength';
 
 import type { WebviewInboundMessage } from '../../protocols/validations/schemas/zschemWebviewMessages';
 
@@ -38,10 +39,12 @@ export async function applyWebviewUpdateSetting(
     await config.update('selectedModelId', value, vscode.ConfigurationTarget.Global);
     return;
   }
-  if (message.key === 'suggestionStyle') {
-    const value =
-      message.value === 'concise' || message.value === 'detailed' ? message.value : 'balanced';
-    await config.update('suggestionStyle', value, vscode.ConfigurationTarget.Global);
+  if (message.key === 'maxSuggestionChars') {
+    await config.update(
+      'maxSuggestionChars',
+      clampMaxSuggestionChars(message.value),
+      vscode.ConfigurationTarget.Global,
+    );
     return;
   }
   if (message.key === 'debugSuggestions') {
